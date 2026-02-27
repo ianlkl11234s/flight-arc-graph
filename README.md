@@ -56,6 +56,25 @@
 - Info 面板：網站使用說明、參數介紹、資料來源、DIY 指引
 - 外部連結：[GitHub](https://github.com/ianlkl11234s/flight-arc-graph) / [Threads](https://www.threads.com/@ianlkl1314) / [Mini Taiwan](https://mini-taiwan-learning-project.zeabur.app/)
 
+### Flight Statistics 側邊面板
+
+右側可拖拉寬度（280~720px）的統計分析面板，JetBrains Mono 字型 + glass-morphism 風格：
+
+| 區塊 | 說明 |
+|------|------|
+| Date Selector | 多選日期篩選（ALL / 單日 / 多日），所有統計即時更新 |
+| Departures & Arrivals | SVG 折線圖，實線=起飛、虛線=降落。ALL 模式顯示跨日時間軸（含日期分隔線），單日模式顯示 24h |
+| Hourly Pattern | 垂直長條圖，24 小時分佈 |
+| Airlines Share | 堆疊水平長條，前 4 大航空公司市佔比例 |
+| Top Routes | 卡片式航線清單，含航空公司代碼，可 drill-down 查看航班明細 |
+| Top Destinations | 按國家分組的目的地統計，可 drill-down 至各機場 |
+| Aircraft Types | 前 4 大機型水平長條 |
+| Fleet Mix | Narrowbody / Widebody / Regional 分類統計 |
+| Flight Duration | 短程 / 區域 / 中程 / 長程分佈 |
+| All Taiwan Tab | 14 座機場比較、可達目的地（按國家）、國內航線統計 |
+
+互動功能：所有 section 可收合（chevron toggle）、hover 回饋（亮度/背景變化）、drill-down 導航、點擊航班追蹤至地圖。
+
 ### 手機版適配（Responsive）
 
 在 768px 以下自動切換為手機版 layout，最大化地圖可視區域：
@@ -102,6 +121,8 @@ Taiwan Flight Arc/
 ├── public/
 │   ├── aviation_data.json        # FR24 航班軌跡（gitignored，由腳本產生）
 │   └── airports.geojson          # OSM 台灣機場邊界（13 座）
+├── docs/
+│   └── data-inventory.md         # 資料欄位清單 + 可衍生統計 + 視覺化方向
 ├── scripts/
 │   ├── fetch-flights.ts          # Step 1: 航班清單擷取
 │   └── fetch-tracks.ts           # Step 2: 飛行軌跡擷取
@@ -110,7 +131,8 @@ Taiwan Flight Arc/
 │   ├── App.tsx                   # 主應用 + 所有狀態管理 + UI
 │   ├── types/index.ts            # 型別定義
 │   ├── data/
-│   │   └── flightLoader.ts       # 資料載入、篩選
+│   │   ├── flightLoader.ts       # 資料載入、篩選、前處理
+│   │   └── flightStats.ts        # 統計計算（hourly/daily/airline/route/fleet 等）
 │   ├── map/
 │   │   ├── MapView.tsx           # Mapbox 容器 + 機場圖層
 │   │   ├── customLayer.ts        # CustomLayer ↔ Three.js 橋接
@@ -129,6 +151,7 @@ Taiwan Flight Arc/
 │   ├── components/
 │   │   ├── AirportSelector.tsx
 │   │   ├── FlightPicker.tsx       # 支援 isMobile（2×2 grid）
+│   │   ├── FlightStatsPanel.tsx   # 右側統計面板（可拖拉寬度）
 │   │   ├── TimelineControls.tsx   # 支援 isMobile（加大觸控區）
 │   │   ├── StyleSelector.tsx
 │   │   └── MobileBottomSheet.tsx  # 手機版三段式底部面板

@@ -700,20 +700,40 @@ export function FlightStatsPanel({
   const [tab, setTab] = useState<StatsTab>("airport");
   const [drillDown, setDrillDown] = useState<StatsDrillDown | null>(null);
   const [visible, setVisible] = useState(true);
+  const [panelWidth, setPanelWidth] = useState(340);
 
   const handleClose = () => { setVisible(false); setTimeout(onClose, 300); };
   const handleSelectAirport = (icao: string) => { onSelectAirport(icao); setTab("airport"); setDrillDown(null); };
 
+  const handleDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = panelWidth;
+    const onMove = (ev: MouseEvent) => {
+      setPanelWidth(Math.min(Math.max(startW + (startX - ev.clientX), 280), 720));
+    };
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+
   return (
     <div style={{
-      position: "fixed", top: 0, right: 0, bottom: 0, width: 340, zIndex: 50,
+      position: "fixed", top: 0, right: 0, bottom: 0, width: panelWidth, zIndex: 50,
       background: colors.bg, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
       borderLeft: `1px solid ${colors.divider}`,
       display: "flex", flexDirection: "column", fontFamily: font,
       transform: visible ? "translateX(0)" : "translateX(100%)",
-      transition: "transform 0.3s ease",
+      transition: visible ? "transform 0.3s ease" : "transform 0.3s ease",
     }}>
-      {/* Hover styles */}
+      {/* Hover + drag styles */}
       <style>{`
         .fp-row { transition: background 0.12s ease; }
         .fp-row:hover { background: ${dark ? "rgba(136,136,136,0.08)" : "rgba(0,0,0,0.04)"} !important; }
@@ -721,7 +741,17 @@ export function FlightStatsPanel({
         .fp-card:hover { filter: brightness(${dark ? 1.4 : 0.95}); }
         .fp-bar { transition: filter 0.12s ease; }
         .fp-bar:hover { filter: brightness(1.5); }
+        .fp-drag { opacity: 0; transition: opacity 0.2s ease; }
+        .fp-drag:hover, .fp-drag:active { opacity: 1; }
       `}</style>
+
+      {/* Drag handle */}
+      <div className="fp-drag" onMouseDown={handleDragStart} style={{
+        position: "absolute", left: 0, top: 0, bottom: 0, width: 6,
+        cursor: "col-resize", zIndex: 51, display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <div style={{ width: 3, height: 48, borderRadius: 2, background: colors.textMuted }} />
+      </div>
 
       {/* Header */}
       <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
