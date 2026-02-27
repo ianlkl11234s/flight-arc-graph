@@ -1,21 +1,8 @@
 import { useMemo, useState } from "react";
-import type {
-  Flight,
-  StatsTab,
-  StatsDrillDown,
-  DailyStat,
-  HourlyStat,
-  CountryGroup,
-  AircraftTypeStat,
-  AirlineStat,
-  DurationBucket,
-  AirportComparison,
-  DomesticRoute,
-} from "../types";
+import type { Flight, StatsTab, StatsDrillDown } from "../types";
 import { AIRPORT_INFO } from "../map/cameraPresets";
 import { ICAO_TO_IATA } from "../data/flightLoader";
 import {
-  computeDailyStats,
   computeHourlyStats,
   computeDestinationStats,
   groupByCountry,
@@ -27,6 +14,10 @@ import {
   computeReachableDestinations,
   computeDomesticRoutes,
   getUniqueDays,
+  getCountryCode,
+  computeTopRoutes,
+  getFleetMix,
+  getDepArrCount,
 } from "../data/flightStats";
 
 interface Props {
@@ -38,270 +29,165 @@ interface Props {
   onSelectFlight: (flightId: string) => void;
 }
 
-/* ── Style helpers ── */
+/* ── Color tokens (matching Pencil design) ── */
 
-const glass = (dark: boolean): React.CSSProperties => ({
-  background: dark ? "rgba(15,15,25,0.92)" : "rgba(245,245,250,0.92)",
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
-});
+const C = {
+  bg: "#0C0C0C",
+  cardBg: "#141414",
+  divider: "#2f2f2f",
+  textWhite: "#FFFFFF",
+  textGray: "#888888",
+  textDim: "#8a8a8a",
+  textMuted: "#6a6a6a",
+  barFull: "#888888",
+  bar80: "#88888880",
+  bar60: "#88888860",
+  bar40: "#88888840",
+  tabActiveBg: "#88888820",
+};
 
-const sectionTitle = (dark: boolean): React.CSSProperties => ({
-  fontSize: 10,
-  fontWeight: 700,
-  letterSpacing: 1.5,
-  color: dark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)",
-  margin: "16px 0 8px",
-  fontFamily: "monospace",
-});
+/* ── Light theme overrides ── */
 
-const textPrimary = (dark: boolean) =>
-  dark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.85)";
-const textSecondary = (dark: boolean) =>
-  dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)";
-const textMuted = (dark: boolean) =>
-  dark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.25)";
-const barColor = (dark: boolean) =>
-  dark ? "rgba(100,170,255,0.6)" : "rgba(60,130,230,0.5)";
-const barBg = (dark: boolean) =>
-  dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
-const accentColor = "rgba(100,170,255,0.8)";
+const CL = {
+  bg: "rgba(245,245,250,0.95)",
+  cardBg: "rgba(0,0,0,0.04)",
+  divider: "rgba(0,0,0,0.08)",
+  textWhite: "#1a1a1a",
+  textGray: "#666666",
+  textDim: "#777777",
+  textMuted: "#999999",
+  barFull: "#888888",
+  bar80: "#88888880",
+  bar60: "#88888860",
+  bar40: "#88888840",
+  tabActiveBg: "rgba(0,0,0,0.08)",
+};
 
-/* ── Bar Chart ── */
+function t(dark: boolean) { return dark ? C : CL; }
 
-function BarChart({
-  items,
-  maxValue,
-  dark,
-  labelWidth,
-  onClickItem,
-  renderLabel,
-  renderValue,
+const font = "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace";
+
+/* ── Reusable: Divider ── */
+
+function Divider({ dark }: { dark: boolean }) {
+  return <div style={{ height: 1, background: t(dark).divider, width: "100%" }} />;
+}
+
+/* ── Reusable: Collapsible Section ── */
+
+function Section({
+  title, dark, right, children, defaultOpen = true,
 }: {
-  items: { key: string; value: number; label: string }[];
-  maxValue: number;
-  dark: boolean;
-  labelWidth?: number;
-  onClickItem?: (key: string) => void;
-  renderLabel?: (item: { key: string; label: string; value: number }) => React.ReactNode;
-  renderValue?: (item: { key: string; label: string; value: number }) => React.ReactNode;
+  title: string; dark: boolean; right?: React.ReactNode;
+  children: React.ReactNode; defaultOpen?: boolean;
 }) {
-  if (items.length === 0) return null;
-  const max = maxValue || Math.max(...items.map((i) => i.value));
-
+  const [open, setOpen] = useState(defaultOpen);
+  const colors = t(dark);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {items.map((item) => (
-        <div
-          key={item.key}
-          onClick={onClickItem ? () => onClickItem(item.key) : undefined}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            cursor: onClickItem ? "pointer" : "default",
-            padding: "2px 0",
-            borderRadius: 3,
-          }}
-        >
-          <span
-            style={{
-              width: labelWidth ?? 36,
-              fontSize: 11,
-              fontFamily: "monospace",
-              color: textSecondary(dark),
-              textAlign: "right",
-              flexShrink: 0,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {renderLabel ? renderLabel(item) : item.label}
+    <div style={{ padding: "10px 20px", display: "flex", flexDirection: "column", gap: open ? 8 : 0 }}>
+      <div
+        onClick={() => setOpen((o) => !o)}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", cursor: "pointer", userSelect: "none" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textGray} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.2s ease" }}>
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, color: colors.textWhite, fontFamily: font }}>
+            {title}
           </span>
-          <div
-            style={{
-              flex: 1,
-              height: 14,
-              background: barBg(dark),
-              borderRadius: 2,
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                width: `${max > 0 ? (item.value / max) * 100 : 0}%`,
-                height: "100%",
-                background: barColor(dark),
-                borderRadius: 2,
-                transition: "width 0.3s ease",
-              }}
-            />
-          </div>
-          <span
-            style={{
-              minWidth: 32,
-              fontSize: 11,
-              fontFamily: "monospace",
-              color: textSecondary(dark),
-              textAlign: "right",
-              flexShrink: 0,
-            }}
-          >
-            {renderValue ? renderValue(item) : item.value}
-          </span>
-          {onClickItem && (
-            <span style={{ fontSize: 10, color: textMuted(dark) }}>{">"}</span>
-          )}
         </div>
-      ))}
+        {right}
+      </div>
+      {open && children}
     </div>
   );
 }
 
-/* ── Tab Button ── */
+/* ── Reusable: Horizontal Bar with label + percentage ── */
 
-function TabButton({
-  label,
-  active,
-  dark,
-  onClick,
+function HBar({
+  label, percentage, barWidth, dark, labelWidth = 38, opacity,
 }: {
-  label: string;
-  active: boolean;
-  dark: boolean;
-  onClick: () => void;
+  label: string; percentage: string; barWidth: number; dark: boolean; labelWidth?: number; opacity?: number;
 }) {
+  const colors = t(dark);
+  const fill = opacity ? `${colors.barFull}${Math.round(opacity * 255).toString(16).padStart(2, "0")}` : colors.barFull;
   return (
-    <button
-      onClick={onClick}
-      style={{
-        flex: 1,
-        padding: "6px 0",
-        fontSize: 11,
-        fontFamily: "monospace",
-        fontWeight: active ? 700 : 400,
-        letterSpacing: 0.5,
-        color: active ? textPrimary(dark) : textSecondary(dark),
-        background: active
-          ? (dark ? "rgba(100,170,255,0.15)" : "rgba(100,170,255,0.12)")
-          : "transparent",
-        border: `1px solid ${active ? (dark ? "rgba(100,170,255,0.4)" : "rgba(100,170,255,0.3)") : "transparent"}`,
-        borderRadius: 4,
-        cursor: "pointer",
-      }}
-    >
-      {label}
-    </button>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
+      <span style={{ width: labelWidth, fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font, flexShrink: 0 }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: 8, background: colors.cardBg, position: "relative" }}>
+        <div style={{ width: `${barWidth}%`, height: "100%", background: fill }} />
+      </div>
+      <span style={{ width: 30, fontSize: 10, fontWeight: 500, color: colors.textDim, fontFamily: font, textAlign: "right", flexShrink: 0 }}>
+        {percentage}
+      </span>
+    </div>
   );
 }
 
-/* ── Airport Tab Content ── */
+/* ── Airport Tab ── */
 
-function AirportTabContent({
-  flights,
-  icao,
-  dark,
-  drillDown,
-  setDrillDown,
-  onSelectFlight,
+function AirportTab({
+  flights, icao, dark, drillDown, setDrillDown, onSelectFlight,
 }: {
-  flights: Flight[];
-  icao: string;
-  dark: boolean;
-  drillDown: StatsDrillDown | null;
-  setDrillDown: (d: StatsDrillDown | null) => void;
+  flights: Flight[]; icao: string; dark: boolean;
+  drillDown: StatsDrillDown | null; setDrillDown: (d: StatsDrillDown | null) => void;
   onSelectFlight: (id: string) => void;
 }) {
-  const daily = useMemo(() => computeDailyStats(flights, icao), [flights, icao]);
+  const colors = t(dark);
+  const info = AIRPORT_INFO[icao];
+  const depArr = useMemo(() => getDepArrCount(flights, icao), [flights, icao]);
+  const totalFlights = depArr.departures + depArr.arrivals;
+  const days = useMemo(() => getUniqueDays(flights, icao), [flights, icao]);
   const hourly = useMemo(() => computeHourlyStats(flights, icao), [flights, icao]);
+  const airlines = useMemo(() => getAirlineStats(flights, icao), [flights, icao]);
+  const topRoutes = useMemo(() => computeTopRoutes(flights, icao), [flights, icao]);
   const destStats = useMemo(() => computeDestinationStats(flights, icao), [flights, icao]);
   const countries = useMemo(() => groupByCountry(destStats), [destStats]);
   const aircraft = useMemo(() => getAircraftTypeStats(flights, icao), [flights, icao]);
-  const airlines = useMemo(() => getAirlineStats(flights, icao), [flights, icao]);
+  const fleetMix = useMemo(() => getFleetMix(flights, icao), [flights, icao]);
   const duration = useMemo(() => getFlightDurationDistribution(flights, icao), [flights, icao]);
-  const days = useMemo(() => getUniqueDays(flights, icao), [flights, icao]);
-  const totalFlights = useMemo(
-    () => flights.filter((f) => f.origin_icao === icao || f.dest_icao === icao).length,
-    [flights, icao],
-  );
 
-  const info = AIRPORT_INFO[icao];
+  const maxHourly = Math.max(...hourly.map((h) => h.count), 1);
+  const peakHour = hourly.reduce((a, b) => (b.count > a.count ? b : a), hourly[0]!);
+  const peakEnd = Math.min(peakHour.hour + 2, 23);
+  const totalAirlines = airlines.reduce((s, a) => s + a.count, 0) || 1;
+  const totalAircraft = aircraft.reduce((s, a) => s + a.count, 0) || 1;
+  const totalDuration = duration.reduce((s, b) => s + b.count, 0) || 1;
 
-  // Drill-down: show route flights
+  // Drill-down: route flights
   if (drillDown?.type === "route") {
     const [originIcao, destIcao] = drillDown.key.split("|") as [string, string];
     const routeFlights = getRouteFlights(flights, originIcao, destIcao);
     return (
-      <div>
-        <button
-          onClick={() => setDrillDown(null)}
-          style={{
-            background: "none",
-            border: "none",
-            color: accentColor,
-            fontSize: 11,
-            fontFamily: "monospace",
-            cursor: "pointer",
-            padding: 0,
-            marginBottom: 8,
-          }}
-        >
+      <div style={{ padding: "10px 20px" }}>
+        <button onClick={() => setDrillDown(null)} style={{
+          background: "none", border: "none", color: colors.textGray, fontSize: 11,
+          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
+        }}>
           {"< Back"}
         </button>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: textPrimary(dark),
-            fontFamily: "monospace",
-          }}
-        >
-          {drillDown.label}
-        </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: textSecondary(dark),
-            fontFamily: "monospace",
-            marginBottom: 12,
-          }}
-        >
+        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{drillDown.label}</div>
+        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {routeFlights.length} flights
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {routeFlights.map((f) => (
-            <div
-              key={f.fr24_id}
-              onClick={() => onSelectFlight(f.fr24_id)}
-              style={{
-                display: "flex",
-                gap: 8,
-                padding: "5px 8px",
-                borderRadius: 4,
-                cursor: "pointer",
-                fontFamily: "monospace",
-                fontSize: 11,
-                background: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
-              }}
-            >
-              <span style={{ color: textPrimary(dark), fontWeight: 600, minWidth: 55 }}>
-                {f.callsign}
+            <div key={f.fr24_id} onClick={() => onSelectFlight(f.fr24_id)} style={{
+              display: "flex", gap: 8, padding: "5px 8px", borderRadius: 4,
+              cursor: "pointer", fontFamily: font, fontSize: 11, background: colors.cardBg,
+            }}>
+              <span style={{ color: colors.textWhite, fontWeight: 600, minWidth: 55 }}>{f.callsign}</span>
+              <span style={{ color: colors.textDim }}>
+                {f.dep_time > 0 ? new Date(f.dep_time * 1000).toLocaleString("zh-TW", {
+                  timeZone: "Asia/Taipei", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,
+                }) : "--"}
               </span>
-              <span style={{ color: textSecondary(dark) }}>
-                {f.dep_time > 0
-                  ? new Date(f.dep_time * 1000).toLocaleString("zh-TW", {
-                      timeZone: "Asia/Taipei",
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    })
-                  : "--"}
-              </span>
-              <span style={{ color: textMuted(dark) }}>{f.aircraft_type}</span>
+              <span style={{ color: colors.textMuted }}>{f.aircraft_type}</span>
             </div>
           ))}
         </div>
@@ -309,559 +195,363 @@ function AirportTabContent({
     );
   }
 
-  // Drill-down: show country airports
+  // Drill-down: country airports
   if (drillDown?.type === "country") {
     const group = countries.find((c) => c.country === drillDown.key);
     if (!group) return null;
     return (
-      <div>
-        <button
-          onClick={() => setDrillDown(null)}
-          style={{
-            background: "none",
-            border: "none",
-            color: accentColor,
-            fontSize: 11,
-            fontFamily: "monospace",
-            cursor: "pointer",
-            padding: 0,
-            marginBottom: 8,
-          }}
-        >
+      <div style={{ padding: "10px 20px" }}>
+        <button onClick={() => setDrillDown(null)} style={{
+          background: "none", border: "none", color: colors.textGray, fontSize: 11,
+          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
+        }}>
           {"< Back"}
         </button>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: textPrimary(dark),
-            fontFamily: "monospace",
-          }}
-        >
+        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>
           {info?.iata ?? icao} → {group.country}
         </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: textSecondary(dark),
-            fontFamily: "monospace",
-            marginBottom: 12,
-          }}
-        >
+        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {group.totalFlights} flights · {group.airports.length} airports
         </div>
-        <BarChart
-          items={group.airports.map((a) => ({
-            key: a.icao,
-            label: a.iata,
-            value: a.count,
-          }))}
-          maxValue={group.airports[0]?.count ?? 1}
-          dark={dark}
-          onClickItem={(key) =>
-            setDrillDown({
-              type: "route",
-              key: `${icao}|${key}`,
-              label: `${info?.iata ?? icao} → ${ICAO_TO_IATA[key] ?? key}`,
-            })
-          }
-        />
+        {group.airports.map((a) => (
+          <div key={a.icao} onClick={() => setDrillDown({
+            type: "route", key: `${icao}|${a.icao}`,
+            label: `${info?.iata ?? icao} → ${ICAO_TO_IATA[a.icao] ?? a.icao}`,
+          })} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "6px 8px", background: colors.cardBg, marginBottom: 4,
+            cursor: "pointer", fontFamily: font,
+          }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite }}>{a.iata}</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim }}>{a.count}</span>
+          </div>
+        ))}
       </div>
     );
   }
 
-  const maxDaily = Math.max(...daily.map((d) => d.total), 1);
-  const maxHourly = Math.max(...hourly.map((h) => h.count), 1);
-
   return (
-    <div>
-      {/* Header */}
-      <div style={{ marginBottom: 12 }}>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: textPrimary(dark),
-            fontFamily: "monospace",
-            letterSpacing: 1,
-          }}
-        >
-          {icao} {info?.name ?? ""} ({info?.iata ?? ""})
+    <>
+      {/* Summary */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px" }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>
+            {icao} {info?.name ?? ""}
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 500, color: colors.textDim, fontFamily: font, marginTop: 2 }}>
+            {totalFlights} flights · {days > 0 ? `${Math.round(totalFlights / days)}/day` : ""}
+          </div>
         </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: textSecondary(dark),
-            fontFamily: "monospace",
-            marginTop: 2,
-          }}
-        >
-          {totalFlights} flights · {days} days
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textGray} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 22h20" /><path d="M6.36 17.4 4 17l-2-4 1.1-.55a2 2 0 0 1 1.8 0l.17.1a2 2 0 0 0 1.8 0L8 12 5 6l3-1 4 4.5 5-2.5a2.5 2.5 0 0 1 3.12 3.37L17 14.5 8 18" />
+            </svg>
+            <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{depArr.departures}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 22h20" /><path d="m3 9 2.5-.5a2.5 2.5 0 0 1 3.12 1.37L12 16l6-4-4-4.5 5-2.5a2.5 2.5 0 0 1 3.12 3.37l-9.74 6.5L7 18" />
+            </svg>
+            <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{depArr.arrivals}</span>
+          </div>
         </div>
       </div>
 
-      {/* Daily Totals */}
-      <div style={sectionTitle(dark)}>DAILY TOTALS</div>
-      {daily.map((d) => (
-        <div
-          key={d.date}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 3,
-          }}
-        >
-          <span
-            style={{
-              minWidth: 50,
-              fontSize: 11,
-              fontFamily: "monospace",
-              color: textSecondary(dark),
-            }}
-          >
-            {d.date.slice(5)}
-          </span>
-          <div
-            style={{
-              flex: 1,
-              height: 14,
-              background: barBg(dark),
-              borderRadius: 2,
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                width: `${(d.total / maxDaily) * 100}%`,
-                height: "100%",
-                background: barColor(dark),
-                borderRadius: 2,
-                transition: "width 0.3s",
-              }}
-            />
-          </div>
-          <span
-            style={{
-              fontSize: 10,
-              fontFamily: "monospace",
-              color: textMuted(dark),
-              minWidth: 80,
-              textAlign: "right",
-            }}
-          >
-            {d.departures}↑ {d.arrivals}↓
-          </span>
-        </div>
-      ))}
+      <Divider dark={dark} />
 
-      {/* Hourly Pattern */}
-      <div style={sectionTitle(dark)}>HOURLY PATTERN</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {hourly.map((h) => (
-          <div
-            key={h.hour}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <span
-              style={{
-                minWidth: 20,
-                fontSize: 10,
-                fontFamily: "monospace",
-                color: textMuted(dark),
-                textAlign: "right",
-              }}
-            >
-              {String(h.hour).padStart(2, "0")}
+      {/* Hourly Pattern — vertical bar chart */}
+      <Section title="HOURLY PATTERN" dark={dark}
+        right={<span style={{ fontSize: 9, fontWeight: 500, color: colors.textGray, fontFamily: font }}>
+          Peak {String(peakHour.hour).padStart(2, "0")}-{String(peakEnd).padStart(2, "0")}
+        </span>}
+      >
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 1, height: 48, width: "100%" }}>
+          {hourly.map((h) => {
+            const ratio = maxHourly > 0 ? h.count / maxHourly : 0;
+            const barH = Math.max(ratio * 48, 2);
+            let fill: string;
+            if (ratio > 0.75) fill = colors.barFull;
+            else if (ratio > 0.5) fill = colors.bar80;
+            else if (ratio > 0.25) fill = colors.bar60;
+            else if (ratio > 0) fill = colors.bar40;
+            else fill = colors.divider;
+            return <div key={h.hour} style={{ flex: 1, height: barH, background: fill }} />;
+          })}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+          {[0, 6, 12, 18, 23].map((h) => (
+            <span key={h} style={{ fontSize: 8, fontWeight: 500, color: colors.textMuted, fontFamily: font }}>
+              {String(h).padStart(2, "0")}
             </span>
-            <div
-              style={{
-                flex: 1,
-                height: 10,
-                background: barBg(dark),
-                borderRadius: 1,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${maxHourly > 0 ? (h.count / maxHourly) * 100 : 0}%`,
-                  height: "100%",
-                  background: barColor(dark),
-                  borderRadius: 1,
-                }}
-              />
+          ))}
+        </div>
+      </Section>
+
+      <Divider dark={dark} />
+
+      {/* Airlines Share — stacked horizontal bar */}
+      <Section title="AIRLINES SHARE" dark={dark}>
+        <div style={{ display: "flex", gap: 2, height: 24, width: "100%" }}>
+          {airlines.slice(0, 4).map((a, i) => {
+            const pct = Math.round((a.count / totalAirlines) * 100);
+            const widthPx = Math.max((a.count / totalAirlines) * 100, 8);
+            const fills = [colors.barFull, colors.bar80, colors.bar60, colors.bar40];
+            const textColors = [C.bg, C.bg, C.bg, colors.textWhite];
+            return (
+              <div key={a.code} style={{
+                width: `${widthPx}%`, height: "100%", background: fills[i],
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: textColors[i], fontFamily: font, whiteSpace: "nowrap", overflow: "hidden" }}>
+                  {widthPx > 12 ? `${a.code} ${pct}%` : a.code}
+                </span>
+              </div>
+            );
+          })}
+          {airlines.length > 4 && (
+            <div style={{
+              flex: 1, height: "100%", background: colors.cardBg,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <span style={{ fontSize: 9, fontWeight: 500, color: colors.textDim, fontFamily: font }}>Others</span>
             </div>
-            <span
-              style={{
-                minWidth: 24,
-                fontSize: 10,
-                fontFamily: "monospace",
-                color: textMuted(dark),
-                textAlign: "right",
-              }}
-            >
-              {h.count || ""}
-            </span>
+          )}
+        </div>
+      </Section>
+
+      <Divider dark={dark} />
+
+      {/* Top Routes — card style */}
+      <Section title="TOP ROUTES" dark={dark}
+        right={<span style={{ fontSize: 9, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
+          {topRoutes.length}
+        </span>}
+      >
+        {topRoutes.map((r) => (
+          <div key={r.destIcao} onClick={() => setDrillDown({
+            type: "route", key: `${r.originIcao}|${r.destIcao}`,
+            label: `${r.originIata} → ${r.destIata}`,
+          })} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "6px 8px", background: colors.cardBg, cursor: "pointer",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: colors.textGray, fontFamily: font }}>{r.originIata}</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+              </svg>
+              <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.destIata}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{r.airlines.join("/")}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
+            </div>
           </div>
         ))}
-      </div>
+      </Section>
 
-      {/* Top Destinations */}
-      <div style={sectionTitle(dark)}>TOP DESTINATIONS</div>
-      <BarChart
-        items={countries.slice(0, 10).map((c) => ({
-          key: c.country,
-          label: c.country,
-          value: c.totalFlights,
-        }))}
-        maxValue={countries[0]?.totalFlights ?? 1}
-        dark={dark}
-        labelWidth={75}
-        onClickItem={(key) =>
-          setDrillDown({ type: "country", key, label: key })
-        }
-      />
+      <Divider dark={dark} />
 
-      {/* Aircraft Types */}
-      <div style={sectionTitle(dark)}>AIRCRAFT TYPES</div>
-      <BarChart
-        items={aircraft.slice(0, 8).map((a) => ({
-          key: a.type,
-          label: a.type,
-          value: a.count,
-        }))}
-        maxValue={aircraft[0]?.count ?? 1}
-        dark={dark}
-      />
+      {/* Top Destinations — country list */}
+      <Section title="TOP DESTINATIONS" dark={dark}>
+        {countries.slice(0, 5).map((g) => (
+          <div key={g.country} onClick={() => setDrillDown({ type: "country", key: g.country, label: g.country })}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
+                {getCountryCode(g.country)}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: colors.textWhite, fontFamily: font }}>{g.country}</span>
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
+          </div>
+        ))}
+      </Section>
 
-      {/* Airline Breakdown */}
-      <div style={sectionTitle(dark)}>AIRLINE BREAKDOWN</div>
-      <BarChart
-        items={airlines.slice(0, 10).map((a) => ({
-          key: a.code,
-          label: a.code,
-          value: a.count,
-        }))}
-        maxValue={airlines[0]?.count ?? 1}
-        dark={dark}
-      />
+      <Divider dark={dark} />
+
+      {/* Aircraft Types — horizontal bars */}
+      <Section title="AIRCRAFT TYPES" dark={dark}>
+        {aircraft.slice(0, 4).map((a, i) => {
+          const pct = Math.round((a.count / totalAircraft) * 100);
+          const opacities = [1, 0.5, 0.37, 0.25];
+          return <HBar key={a.type} label={a.type} percentage={`${pct}%`}
+            barWidth={(a.count / aircraft[0]!.count) * 100} dark={dark} opacity={opacities[i]} />;
+        })}
+      </Section>
+
+      <Divider dark={dark} />
+
+      {/* Fleet Mix */}
+      <Section title="FLEET MIX" dark={dark}>
+        {fleetMix.map((fm, i) => {
+          const opacities = [1, 0.5, 0.25];
+          return <HBar key={fm.category} label={fm.category} percentage={`${fm.percentage}%`}
+            barWidth={fm.count > 0 ? (fm.count / fleetMix[0]!.count) * 100 : 0}
+            dark={dark} labelWidth={80} opacity={opacities[i]} />;
+        })}
+      </Section>
+
+      <Divider dark={dark} />
 
       {/* Flight Duration */}
-      <div style={sectionTitle(dark)}>FLIGHT DURATION</div>
-      <BarChart
-        items={duration.map((b) => ({
-          key: b.label,
-          label: b.label,
-          value: b.count,
-        }))}
-        maxValue={Math.max(...duration.map((b) => b.count), 1)}
-        dark={dark}
-        renderValue={(item) => {
-          const bucket = duration.find((b) => b.label === item.key);
-          return (
-            <span>
-              {item.value}{" "}
-              <span style={{ fontSize: 9, color: textMuted(dark) }}>
-                {bucket?.tag}
-              </span>
-            </span>
-          );
-        }}
-      />
-    </div>
+      <Section title="FLIGHT DURATION" dark={dark}>
+        {duration.map((b) => {
+          const pct = Math.round((b.count / totalDuration) * 100);
+          const maxCount = Math.max(...duration.map((d) => d.count), 1);
+          const ratio = b.count / maxCount;
+          const opacity = ratio > 0.7 ? 1 : ratio > 0.4 ? 0.5 : 0.25;
+          return <HBar key={b.label} label={b.label} percentage={`${pct}%`}
+            barWidth={(b.count / maxCount) * 100} dark={dark} labelWidth={36} opacity={opacity} />;
+        })}
+      </Section>
+    </>
   );
 }
 
-/* ── All Taiwan Tab Content ── */
+/* ── All Taiwan Tab ── */
 
-function AllTaiwanTabContent({
-  flights,
-  dark,
-  onSelectAirport,
+function AllTaiwanTab({
+  flights, dark, onSelectAirport,
 }: {
-  flights: Flight[];
-  dark: boolean;
-  onSelectAirport: (icao: string) => void;
+  flights: Flight[]; dark: boolean; onSelectAirport: (icao: string) => void;
 }) {
+  const colors = t(dark);
   const comparison = useMemo(() => computeAirportComparison(flights), [flights]);
   const reachable = useMemo(() => computeReachableDestinations(flights), [flights]);
   const domestic = useMemo(() => computeDomesticRoutes(flights), [flights]);
 
   return (
-    <div>
+    <>
       {/* Airport Comparison */}
-      <div style={sectionTitle(dark)}>AIRPORT COMPARISON</div>
-      <BarChart
-        items={comparison.map((a) => ({
-          key: a.icao,
-          label: a.iata,
-          value: a.count,
-        }))}
-        maxValue={comparison[0]?.count ?? 1}
-        dark={dark}
-        onClickItem={onSelectAirport}
-      />
+      <Section title="AIRPORT COMPARISON" dark={dark}>
+        {comparison.map((a) => {
+          const barW = (a.count / (comparison[0]?.count ?? 1)) * 100;
+          return (
+            <div key={a.icao} onClick={() => onSelectAirport(a.icao)} style={{
+              display: "flex", alignItems: "center", gap: 8, cursor: "pointer", width: "100%",
+            }}>
+              <span style={{ width: 32, fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font, flexShrink: 0 }}>
+                {a.iata}
+              </span>
+              <div style={{ flex: 1, height: 8, background: colors.cardBg }}>
+                <div style={{ width: `${barW}%`, height: "100%", background: colors.barFull }} />
+              </div>
+              <span style={{ width: 32, fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font, textAlign: "right", flexShrink: 0 }}>
+                {a.count}
+              </span>
+            </div>
+          );
+        })}
+      </Section>
+
+      <Divider dark={dark} />
 
       {/* Reachable Destinations */}
-      <div style={sectionTitle(dark)}>REACHABLE DESTINATIONS</div>
-      {reachable.slice(0, 10).map((g) => (
-        <div
-          key={g.country}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 4,
-            fontFamily: "monospace",
-          }}
-        >
-          <span
-            style={{
-              minWidth: 70,
-              fontSize: 11,
-              color: textSecondary(dark),
-            }}
-          >
-            {g.country}
-          </span>
-          <span
-            style={{
-              fontSize: 10,
-              color: textMuted(dark),
-              minWidth: 60,
-            }}
-          >
-            {g.airports.length} airports
-          </span>
-          <div
-            style={{
-              flex: 1,
-              height: 12,
-              background: barBg(dark),
-              borderRadius: 2,
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                width: `${(g.totalFlights / (reachable[0]?.totalFlights ?? 1)) * 100}%`,
-                height: "100%",
-                background: barColor(dark),
-                borderRadius: 2,
-              }}
-            />
+      <Section title="REACHABLE DESTINATIONS" dark={dark}>
+        {reachable.slice(0, 8).map((g) => (
+          <div key={g.country} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
+                {getCountryCode(g.country)}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: colors.textWhite, fontFamily: font }}>{g.country}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 10, color: colors.textMuted, fontFamily: font }}>{g.airports.length} apt</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
+            </div>
           </div>
-          <span
-            style={{
-              minWidth: 32,
-              fontSize: 11,
-              fontFamily: "monospace",
-              color: textSecondary(dark),
-              textAlign: "right",
-            }}
-          >
-            {g.totalFlights}
-          </span>
-        </div>
-      ))}
+        ))}
+      </Section>
+
+      <Divider dark={dark} />
 
       {/* Domestic Routes */}
-      <div style={sectionTitle(dark)}>DOMESTIC ROUTES</div>
-      {domestic.length === 0 ? (
-        <div
-          style={{
-            fontSize: 11,
-            color: textMuted(dark),
-            fontFamily: "monospace",
-          }}
-        >
-          No domestic routes found
-        </div>
-      ) : (
-        domestic.slice(0, 10).map((r) => (
-          <div
-            key={`${r.from}-${r.to}`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 3,
-              fontFamily: "monospace",
-              fontSize: 11,
-            }}
-          >
-            <span style={{ color: textPrimary(dark), minWidth: 80 }}>
-              {r.fromIata}↔{r.toIata}
-            </span>
-            <div
-              style={{
-                flex: 1,
-                height: 12,
-                background: barBg(dark),
-                borderRadius: 2,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${(r.count / (domestic[0]?.count ?? 1)) * 100}%`,
-                  height: "100%",
-                  background: barColor(dark),
-                  borderRadius: 2,
-                }}
-              />
+      <Section title="DOMESTIC ROUTES" dark={dark}>
+        {domestic.length === 0 ? (
+          <span style={{ fontSize: 11, color: colors.textMuted, fontFamily: font }}>No domestic routes</span>
+        ) : domestic.slice(0, 8).map((r) => (
+          <div key={`${r.from}-${r.to}`} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "6px 8px", background: colors.cardBg,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: colors.textGray, fontFamily: font }}>{r.fromIata}</span>
+              <span style={{ fontSize: 10, color: colors.textMuted }}>↔</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.toIata}</span>
             </div>
-            <span style={{ color: textSecondary(dark), minWidth: 32, textAlign: "right" }}>
-              {r.count}
-            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
           </div>
-        ))
-      )}
-    </div>
+        ))}
+      </Section>
+    </>
   );
 }
 
 /* ── Main Panel ── */
 
 export function FlightStatsPanel({
-  allFlights,
-  selectedAirport,
-  isDarkTheme: dark,
-  onClose,
-  onSelectAirport,
-  onSelectFlight,
+  allFlights, selectedAirport, isDarkTheme: dark, onClose, onSelectAirport, onSelectFlight,
 }: Props) {
+  const colors = t(dark);
   const [tab, setTab] = useState<StatsTab>("airport");
   const [drillDown, setDrillDown] = useState<StatsDrillDown | null>(null);
   const [visible, setVisible] = useState(true);
 
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 300);
-  };
-
-  const handleSelectAirport = (icao: string) => {
-    onSelectAirport(icao);
-    setTab("airport");
-    setDrillDown(null);
-  };
+  const handleClose = () => { setVisible(false); setTimeout(onClose, 300); };
+  const handleSelectAirport = (icao: string) => { onSelectAirport(icao); setTab("airport"); setDrillDown(null); };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: 380,
-        zIndex: 50,
-        ...glass(dark),
-        borderLeft: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
-        display: "flex",
-        flexDirection: "column",
-        fontFamily: "monospace",
-        transform: visible ? "translateX(0)" : "translateX(100%)",
-        transition: "transform 0.3s ease",
-      }}
-    >
+    <div style={{
+      position: "fixed", top: 0, right: 0, bottom: 0, width: 340, zIndex: 50,
+      background: colors.bg, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+      borderLeft: `1px solid ${colors.divider}`,
+      display: "flex", flexDirection: "column", fontFamily: font,
+      transform: visible ? "translateX(0)" : "translateX(100%)",
+      transition: "transform 0.3s ease",
+    }}>
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "14px 16px 10px",
-          borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 700,
-            color: textPrimary(dark),
-            letterSpacing: 1,
-          }}
-        >
-          Flight Statistics
-        </span>
-        <button
-          onClick={handleClose}
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-            border: "none",
-            color: textSecondary(dark),
-            fontSize: 14,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          ✕
-        </button>
+      <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 16, fontWeight: 600, color: colors.textWhite }}>{`Flight Statistics`}</span>
+          <button onClick={handleClose} style={{
+            width: 28, height: 28, borderRadius: "50%", background: "transparent",
+            border: "none", color: colors.textGray, fontSize: 16, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            ✕
+          </button>
+        </div>
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 0, width: "100%" }}>
+          {(["airport", "all-taiwan"] as const).map((id) => {
+            const active = tab === id;
+            const label = id === "airport" ? "AIRPORT" : "ALL TAIWAN";
+            return (
+              <button key={id} onClick={() => { setTab(id); setDrillDown(null); }} style={{
+                padding: "4px 10px", fontSize: 11, fontWeight: active ? 700 : 500,
+                letterSpacing: 0.5, fontFamily: font, cursor: "pointer", border: "none",
+                color: active ? colors.textGray : colors.textMuted,
+                background: active ? colors.tabActiveBg : "transparent",
+              }}>
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          padding: "10px 16px 8px",
-          flexShrink: 0,
-        }}
-      >
-        <TabButton
-          label="Airport"
-          active={tab === "airport"}
-          dark={dark}
-          onClick={() => {
-            setTab("airport");
-            setDrillDown(null);
-          }}
-        />
-        <TabButton
-          label="All Taiwan"
-          active={tab === "all-taiwan"}
-          dark={dark}
-          onClick={() => {
-            setTab("all-taiwan");
-            setDrillDown(null);
-          }}
-        />
-      </div>
+      <Divider dark={dark} />
 
-      {/* Content */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "4px 16px 20px",
-        }}
-      >
+      {/* Scrollable Content */}
+      <div style={{ flex: 1, overflowY: "auto" }}>
         {tab === "airport" ? (
-          <AirportTabContent
-            flights={allFlights}
-            icao={selectedAirport}
-            dark={dark}
-            drillDown={drillDown}
-            setDrillDown={setDrillDown}
-            onSelectFlight={onSelectFlight}
-          />
+          <AirportTab flights={allFlights} icao={selectedAirport} dark={dark}
+            drillDown={drillDown} setDrillDown={setDrillDown} onSelectFlight={onSelectFlight} />
         ) : (
-          <AllTaiwanTabContent
-            flights={allFlights}
-            dark={dark}
-            onSelectAirport={handleSelectAirport}
-          />
+          <AllTaiwanTab flights={allFlights} dark={dark} onSelectAirport={handleSelectAirport} />
         )}
       </div>
     </div>

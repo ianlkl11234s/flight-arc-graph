@@ -365,3 +365,116 @@ export function getUniqueDays(flights: Flight[], icao: string): number {
   }
   return dates.size;
 }
+
+/** 國家 → 2 字母代碼 */
+const COUNTRY_CODE: Record<string, string> = {
+  Taiwan: "TW", Japan: "JP", "Okinawa/Japan": "JP", Korea: "KR",
+  "Hong Kong": "HK", Macau: "MO", China: "CN", Singapore: "SG",
+  Malaysia: "MY", Indonesia: "ID", Thailand: "TH", Philippines: "PH",
+  Vietnam: "VN", Cambodia: "KH", Laos: "LA", Myanmar: "MM", India: "IN",
+  "New Zealand": "NZ", Australia: "AU", UAE: "AE", Qatar: "QA",
+  Bahrain: "BH", "Saudi Arabia": "SA", USA: "US", Canada: "CA",
+  UK: "GB", Netherlands: "NL", France: "FR", Germany: "DE", Italy: "IT",
+  "Czech Republic": "CZ", Austria: "AT", Turkey: "TR", "Pacific Islands": "PW",
+};
+
+export function getCountryCode(country: string): string {
+  return COUNTRY_CODE[country] ?? country.slice(0, 2).toUpperCase();
+}
+
+/** Top Routes：特定機場出發的前 N 條航線 + 主要航空公司 */
+export interface TopRoute {
+  originIata: string;
+  destIata: string;
+  originIcao: string;
+  destIcao: string;
+  count: number;
+  airlines: string[]; // top 2 airline codes
+}
+
+export function computeTopRoutes(
+  flights: Flight[],
+  icao: string,
+  limit = 5,
+): TopRoute[] {
+  const departures = flights.filter((f) => f.origin_icao === icao);
+  const routeMap = new Map<string, { count: number; airlines: Map<string, number> }>();
+
+  for (const f of departures) {
+    const key = f.dest_icao;
+    if (!routeMap.has(key)) routeMap.set(key, { count: 0, airlines: new Map() });
+    const entry = routeMap.get(key)!;
+    entry.count++;
+    const match = f.callsign.match(/^([A-Z]{2,3})/);
+    const code = match ? match[1] : "??";
+    entry.airlines.set(code, (entry.airlines.get(code) ?? 0) + 1);
+  }
+
+  return [...routeMap.entries()]
+    .map(([destIcao, data]) => ({
+      originIata: resolveIata(icao),
+      destIata: resolveIata(destIcao),
+      originIcao: icao,
+      destIcao,
+      count: data.count,
+      airlines: [...data.airlines.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 2)
+        .map(([code]) => code),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+/** Fleet Mix：機型分類為 Narrowbody / Widebody / Regional */
+export interface FleetMixStat {
+  category: string;
+  count: number;
+  percentage: number;
+}
+
+const WIDEBODY_TYPES = new Set([
+  "A332", "A333", "A338", "A339", "A342", "A343", "A345", "A346",
+  "A35K", "A359", "A380",
+  "B744", "B748", "B763", "B764", "B772", "B773", "B77L", "B77W", "B788", "B789", "B78X",
+]);
+
+const REGIONAL_TYPES = new Set([
+  "AT72", "AT76", "AT75", "DH8A", "DH8B", "DH8C", "DH8D",
+  "E170", "E175", "E190", "E195", "CRJ2", "CRJ7", "CRJ9", "CRJX",
+]);
+
+export function getFleetMix(
+  flights: Flight[],
+  icao: string,
+): FleetMixStat[] {
+  const af = airportFlights(flights, icao);
+  let narrowbody = 0, widebody = 0, regional = 0;
+
+  for (const f of af) {
+    const t = f.aircraft_type;
+    if (WIDEBODY_TYPES.has(t)) widebody++;
+    else if (REGIONAL_TYPES.has(t)) regional++;
+    else narrowbody++;
+  }
+
+  const total = narrowbody + widebody + regional || 1;
+  return [
+    { category: "Narrowbody", count: narrowbody, percentage: Math.round((narrowbody / total) * 100) },
+    { category: "Widebody", count: widebody, percentage: Math.round((widebody / total) * 100) },
+    { category: "Regional", count: regional, percentage: Math.round((regional / total) * 100) },
+  ];
+}
+
+/** 取得出發/到達分別的航班數 */
+export function getDepArrCount(
+  flights: Flight[],
+  icao: string,
+): { departures: number; arrivals: number } {
+  let departures = 0, arrivals = 0;
+  for (const f of flights) {
+    if (f.origin_icao === icao) departures++;
+    if (f.dest_icao === icao) arrivals++;
+  }
+  return { departures, arrivals };
+}
