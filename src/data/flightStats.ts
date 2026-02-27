@@ -88,11 +88,6 @@ function toTaipeiDate(ts: number): string {
   });
 }
 
-function toTaipeiHour(ts: number): number {
-  return new Date(ts * 1000).getHours();
-  // Note: getHours uses local time; for server usage should use timezone-aware
-}
-
 /** 取得台北時區的小時 */
 function getTaipeiHour(ts: number): number {
   const d = new Date(ts * 1000);
@@ -146,7 +141,7 @@ export function computeHourlyStats(
   for (const f of af) {
     const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
     if (ts === 0) continue;
-    hours[getTaipeiHour(ts)]++;
+    hours[getTaipeiHour(ts)]!++;
   }
 
   return hours.map((count, hour) => ({ hour, count }));
@@ -247,7 +242,7 @@ export function getAirlineStats(
   for (const f of af) {
     // Extract airline code: first 2-3 letters from callsign
     const match = f.callsign.match(/^([A-Z]{2,3})/);
-    const code = match ? match[1] : f.callsign.slice(0, 3) || "???";
+    const code = match?.[1] ?? (f.callsign.slice(0, 3) || "???");
     map.set(code, (map.get(code) ?? 0) + 1);
   }
 
@@ -406,7 +401,7 @@ export function computeTopRoutes(
     const entry = routeMap.get(key)!;
     entry.count++;
     const match = f.callsign.match(/^([A-Z]{2,3})/);
-    const code = match ? match[1] : "??";
+    const code = match?.[1] ?? "??";
     entry.airlines.set(code, (entry.airlines.get(code) ?? 0) + 1);
   }
 
