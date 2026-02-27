@@ -1,0 +1,367 @@
+import type {
+  Flight,
+  DailyStat,
+  HourlyStat,
+  DestinationStat,
+  CountryGroup,
+  AirportComparison,
+  AircraftTypeStat,
+  AirlineStat,
+  DurationBucket,
+  DomesticRoute,
+} from "../types";
+import { ICAO_TO_IATA } from "./flightLoader";
+import { AIRPORT_INFO } from "../map/cameraPresets";
+
+/** ICAO prefix → 國家/地區名稱 */
+const ICAO_PREFIX_COUNTRY: Record<string, string> = {
+  RC: "Taiwan",
+  RJ: "Japan",
+  RO: "Okinawa/Japan",
+  RK: "Korea",
+  VH: "Hong Kong",
+  VM: "Macau",
+  ZB: "China",
+  ZG: "China",
+  ZH: "China",
+  ZS: "China",
+  ZU: "China",
+  ZP: "China",
+  ZW: "China",
+  ZL: "China",
+  ZJ: "China",
+  WS: "Singapore",
+  WM: "Malaysia",
+  WB: "Malaysia",
+  WA: "Indonesia",
+  WI: "Indonesia",
+  VT: "Thailand",
+  RP: "Philippines",
+  VV: "Vietnam",
+  VD: "Cambodia",
+  VL: "Laos",
+  VY: "Myanmar",
+  VI: "India",
+  NZ: "New Zealand",
+  YB: "Australia",
+  YM: "Australia",
+  OM: "UAE",
+  OT: "Qatar",
+  OB: "Bahrain",
+  OE: "Saudi Arabia",
+  KJ: "USA",
+  KL: "USA",
+  KS: "USA",
+  KO: "USA",
+  KD: "USA",
+  KI: "USA",
+  KP: "USA",
+  PA: "USA",
+  PH: "USA",
+  PG: "USA",
+  CY: "Canada",
+  EG: "UK",
+  EH: "Netherlands",
+  LF: "France",
+  ED: "Germany",
+  LI: "Italy",
+  LK: "Czech Republic",
+  LO: "Austria",
+  LT: "Turkey",
+  PT: "Pacific Islands",
+};
+
+function getCountry(icao: string): string {
+  // Try 2-char prefix first (most ICAO codes)
+  const p2 = icao.slice(0, 2);
+  if (ICAO_PREFIX_COUNTRY[p2]) return ICAO_PREFIX_COUNTRY[p2];
+  return "Other";
+}
+
+function resolveIata(icao: string): string {
+  return ICAO_TO_IATA[icao] ?? icao;
+}
+
+function toTaipeiDate(ts: number): string {
+  return new Date(ts * 1000).toLocaleDateString("en-CA", {
+    timeZone: "Asia/Taipei",
+  });
+}
+
+function toTaipeiHour(ts: number): number {
+  return new Date(ts * 1000).getHours();
+  // Note: getHours uses local time; for server usage should use timezone-aware
+}
+
+/** 取得台北時區的小時 */
+function getTaipeiHour(ts: number): number {
+  const d = new Date(ts * 1000);
+  const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+  const taipei = new Date(utc + 8 * 3600000);
+  return taipei.getHours();
+}
+
+/** 篩選與特定機場相關的航班 */
+function airportFlights(flights: Flight[], icao: string): Flight[] {
+  return flights.filter(
+    (f) => f.origin_icao === icao || f.dest_icao === icao,
+  );
+}
+
+/** 每日統計：出發 / 到達數 */
+export function computeDailyStats(
+  flights: Flight[],
+  icao: string,
+): DailyStat[] {
+  const af = airportFlights(flights, icao);
+  const map = new Map<
+    string,
+    { departures: number; arrivals: number; total: number }
+  >();
+
+  for (const f of af) {
+    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    if (ts === 0) continue;
+    const date = toTaipeiDate(ts);
+    const entry = map.get(date) ?? { departures: 0, arrivals: 0, total: 0 };
+    if (f.origin_icao === icao) entry.departures++;
+    if (f.dest_icao === icao) entry.arrivals++;
+    entry.total++;
+    map.set(date, entry);
+  }
+
+  return [...map.entries()]
+    .map(([date, s]) => ({ date, ...s }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** 24 小時分佈 */
+export function computeHourlyStats(
+  flights: Flight[],
+  icao: string,
+): HourlyStat[] {
+  const af = airportFlights(flights, icao);
+  const hours = new Array(24).fill(0) as number[];
+
+  for (const f of af) {
+    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    if (ts === 0) continue;
+    hours[getTaipeiHour(ts)]++;
+  }
+
+  return hours.map((count, hour) => ({ hour, count }));
+}
+
+/** 目的地統計（從指定機場出發到哪裡） */
+export function computeDestinationStats(
+  flights: Flight[],
+  icao: string,
+): DestinationStat[] {
+  const departures = flights.filter((f) => f.origin_icao === icao);
+  const map = new Map<string, number>();
+
+  for (const f of departures) {
+    map.set(f.dest_icao, (map.get(f.dest_icao) ?? 0) + 1);
+  }
+
+  return [...map.entries()]
+    .map(([destIcao, count]) => ({
+      icao: destIcao,
+      iata: resolveIata(destIcao),
+      count,
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/** 按國家分組 */
+export function groupByCountry(stats: DestinationStat[]): CountryGroup[] {
+  const map = new Map<string, DestinationStat[]>();
+
+  for (const s of stats) {
+    const country = getCountry(s.icao);
+    const arr = map.get(country) ?? [];
+    arr.push(s);
+    map.set(country, arr);
+  }
+
+  return [...map.entries()]
+    .map(([country, airports]) => ({
+      country,
+      airports: airports.sort((a, b) => b.count - a.count),
+      totalFlights: airports.reduce((sum, a) => sum + a.count, 0),
+    }))
+    .sort((a, b) => b.totalFlights - a.totalFlights);
+}
+
+/** 台灣機場比較 */
+export function computeAirportComparison(
+  flights: Flight[],
+): AirportComparison[] {
+  const map = new Map<string, number>();
+
+  for (const f of flights) {
+    if (f.origin_icao.startsWith("RC")) {
+      map.set(f.origin_icao, (map.get(f.origin_icao) ?? 0) + 1);
+    }
+    if (f.dest_icao.startsWith("RC")) {
+      map.set(f.dest_icao, (map.get(f.dest_icao) ?? 0) + 1);
+    }
+  }
+
+  return [...map.entries()]
+    .map(([icao, count]) => ({
+      icao,
+      iata: resolveIata(icao),
+      name: AIRPORT_INFO[icao]?.name ?? icao,
+      count,
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/** 機型統計 */
+export function getAircraftTypeStats(
+  flights: Flight[],
+  icao: string,
+): AircraftTypeStat[] {
+  const af = airportFlights(flights, icao);
+  const map = new Map<string, number>();
+
+  for (const f of af) {
+    const t = f.aircraft_type || "Unknown";
+    map.set(t, (map.get(t) ?? 0) + 1);
+  }
+
+  return [...map.entries()]
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/** 航空公司統計（callsign 前 2-3 碼） */
+export function getAirlineStats(
+  flights: Flight[],
+  icao: string,
+): AirlineStat[] {
+  const af = airportFlights(flights, icao);
+  const map = new Map<string, number>();
+
+  for (const f of af) {
+    // Extract airline code: first 2-3 letters from callsign
+    const match = f.callsign.match(/^([A-Z]{2,3})/);
+    const code = match ? match[1] : f.callsign.slice(0, 3) || "???";
+    map.set(code, (map.get(code) ?? 0) + 1);
+  }
+
+  return [...map.entries()]
+    .map(([code, count]) => ({ code, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/** 飛行時間分佈 */
+export function getFlightDurationDistribution(
+  flights: Flight[],
+  icao: string,
+): DurationBucket[] {
+  const af = airportFlights(flights, icao);
+  const buckets: DurationBucket[] = [
+    { label: "< 1h", tag: "domestic", min: 0, max: 60, count: 0 },
+    { label: "1-3h", tag: "regional", min: 60, max: 180, count: 0 },
+    { label: "3-6h", tag: "medium", min: 180, max: 360, count: 0 },
+    { label: "6h+", tag: "long-haul", min: 360, max: Infinity, count: 0 },
+  ];
+
+  for (const f of af) {
+    const dep = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    const arr = f.arr_time > 0 ? f.arr_time : f.path[f.path.length - 1]?.[3] ?? 0;
+    if (dep === 0 || arr === 0) continue;
+    const mins = (arr - dep) / 60;
+    if (mins <= 0) continue;
+    for (const b of buckets) {
+      if (mins >= b.min && mins < b.max) {
+        b.count++;
+        break;
+      }
+    }
+  }
+
+  return buckets;
+}
+
+/** 特定航線的航班清單 */
+export function getRouteFlights(
+  flights: Flight[],
+  originIcao: string,
+  destIcao: string,
+): Flight[] {
+  return flights
+    .filter((f) => f.origin_icao === originIcao && f.dest_icao === destIcao)
+    .sort((a, b) => a.dep_time - b.dep_time);
+}
+
+/** 可達目的地（按國家分組 — All Taiwan view） */
+export function computeReachableDestinations(
+  flights: Flight[],
+): CountryGroup[] {
+  // Only departures from Taiwan
+  const twDepartures = flights.filter((f) =>
+    f.origin_icao.startsWith("RC") && !f.dest_icao.startsWith("RC"),
+  );
+  const map = new Map<string, Map<string, number>>();
+
+  for (const f of twDepartures) {
+    const country = getCountry(f.dest_icao);
+    if (!map.has(country)) map.set(country, new Map());
+    const airports = map.get(country)!;
+    airports.set(f.dest_icao, (airports.get(f.dest_icao) ?? 0) + 1);
+  }
+
+  return [...map.entries()]
+    .map(([country, airports]) => ({
+      country,
+      airports: [...airports.entries()]
+        .map(([icao, count]) => ({ icao, iata: resolveIata(icao), count }))
+        .sort((a, b) => b.count - a.count),
+      totalFlights: [...airports.values()].reduce((s, c) => s + c, 0),
+    }))
+    .sort((a, b) => b.totalFlights - a.totalFlights);
+}
+
+/** 國內航線統計 */
+export function computeDomesticRoutes(flights: Flight[]): DomesticRoute[] {
+  const domestic = flights.filter(
+    (f) => f.origin_icao.startsWith("RC") && f.dest_icao.startsWith("RC"),
+  );
+  const map = new Map<string, number>();
+
+  for (const f of domestic) {
+    // Normalize route key (sort ICAO to avoid A→B / B→A duplicates)
+    const pair =
+      f.origin_icao < f.dest_icao
+        ? `${f.origin_icao}|${f.dest_icao}`
+        : `${f.dest_icao}|${f.origin_icao}`;
+    map.set(pair, (map.get(pair) ?? 0) + 1);
+  }
+
+  return [...map.entries()]
+    .map(([key, count]) => {
+      const [from, to] = key.split("|") as [string, string];
+      return {
+        from,
+        to,
+        fromIata: resolveIata(from),
+        toIata: resolveIata(to),
+        count,
+      };
+    })
+    .sort((a, b) => b.count - a.count);
+}
+
+/** 計算資料涵蓋天數 */
+export function getUniqueDays(flights: Flight[], icao: string): number {
+  const af = airportFlights(flights, icao);
+  const dates = new Set<string>();
+  for (const f of af) {
+    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    if (ts > 0) dates.add(toTaipeiDate(ts));
+  }
+  return dates.size;
+}

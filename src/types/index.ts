@@ -52,3 +52,80 @@ export interface MapStyle {
   name: string;
   url: string;
 }
+
+/** 統計面板 Tab */
+export type StatsTab = "airport" | "all-taiwan";
+
+/** Drill-down 狀態 */
+export interface StatsDrillDown {
+  type: "country" | "airport" | "route";
+  /** 國家/地區名稱 or ICAO */
+  key: string;
+  label: string;
+}
+
+/** 每日統計 */
+export interface DailyStat {
+  date: string;
+  departures: number;
+  arrivals: number;
+  total: number;
+}
+
+/** 每小時統計 */
+export interface HourlyStat {
+  hour: number;
+  count: number;
+}
+
+/** 目的地統計 */
+export interface DestinationStat {
+  icao: string;
+  iata: string;
+  count: number;
+}
+
+/** 國家分組 */
+export interface CountryGroup {
+  country: string;
+  airports: DestinationStat[];
+  totalFlights: number;
+}
+
+/** 機場比較 */
+export interface AirportComparison {
+  icao: string;
+  iata: string;
+  name: string;
+  count: number;
+}
+
+/** 機型統計 */
+export interface AircraftTypeStat {
+  type: string;
+  count: number;
+}
+
+/** 航空公司統計 */
+export interface AirlineStat {
+  code: string;
+  count: number;
+}
+
+/** 飛行時間分佈 */
+export interface DurationBucket {
+  label: string;
+  tag: string;
+  min: number;
+  max: number;
+  count: number;
+}
+
+/** 國內航線 */
+export interface DomesticRoute {
+  from: string;
+  to: string;
+  fromIata: string;
+  toIata: string;
+  count: number;
+}

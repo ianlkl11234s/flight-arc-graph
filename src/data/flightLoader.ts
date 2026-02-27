@@ -2,7 +2,7 @@ import type { Flight, TrailPoint } from "../types";
 import { AIRPORT_INFO } from "../map/cameraPresets";
 
 /** ICAO → IATA 對照表：台灣機場 + 常見國際航點 */
-const ICAO_TO_IATA: Record<string, string> = {
+export const ICAO_TO_IATA: Record<string, string> = {
   // 台灣機場（從 AIRPORT_INFO 展開）
   ...Object.fromEntries(
     Object.entries(AIRPORT_INFO).map(([icao, info]) => [icao, info.iata]),

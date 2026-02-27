@@ -14,6 +14,7 @@ import { FlightPicker } from "./components/FlightPicker";
 import { TimelineControls } from "./components/TimelineControls";
 import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
+import { FlightStatsPanel } from "./components/FlightStatsPanel";
 
 const getSliderLabelStyle = (dark: boolean): React.CSSProperties => ({
   color: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)",
@@ -54,6 +55,7 @@ export default function App() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
   const [captureMode, setCaptureMode] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
   const { isMobile, isLandscape } = useIsMobile();
@@ -696,6 +698,27 @@ export default function App() {
             }}
           >
             <button
+              onClick={() => setShowStats((s) => !s)}
+              style={{
+                padding: "6px 14px",
+                background: showStats
+                  ? (isDarkTheme ? "rgba(100,170,255,0.25)" : "rgba(100,170,255,0.15)")
+                  : (isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)"),
+                border: `1px solid ${showStats
+                  ? (isDarkTheme ? "rgba(100,170,255,0.5)" : "rgba(100,170,255,0.4)")
+                  : (isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)")}`,
+                borderRadius: 6,
+                color: isDarkTheme ? "#fff" : "#333",
+                fontSize: 12,
+                fontFamily: "monospace",
+                cursor: "pointer",
+                backdropFilter: "blur(8px)",
+                letterSpacing: 1,
+              }}
+            >
+              Stats
+            </button>
+            <button
               onClick={() => setShowInfo(true)}
               style={{
                 padding: "6px 14px",
@@ -1096,6 +1119,24 @@ export default function App() {
             double-click to track
           </div>
         </div>
+      )}
+
+      {/* ── Stats 面板 ── */}
+      {showStats && !isMobile && (
+        <FlightStatsPanel
+          allFlights={allFlights}
+          selectedAirport={selectedAirport}
+          isDarkTheme={isDarkTheme}
+          onClose={() => setShowStats(false)}
+          onSelectAirport={(icao) => {
+            setSelectedAirport(icao);
+          }}
+          onSelectFlight={(id) => {
+            setViewMode("single");
+            setSelectedFlightId(id);
+            setShowStats(false);
+          }}
+        />
       )}
 
       {/* ── Info 面板 ── */}
