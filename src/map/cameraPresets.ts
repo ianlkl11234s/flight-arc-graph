@@ -16,6 +16,8 @@ export const AIRPORT_INFO: Record<string, { name: string; iata: string }> = {
   RCCM: { name: "七美機場", iata: "CMJ" },
   RCGI: { name: "綠島機場", iata: "GNI" },
   RCMT: { name: "馬祖北竿機場", iata: "MFK" },
+  RCLY: { name: "蘭嶼機場", iata: "KYD" },
+  RCDC: { name: "屏東南機場", iata: "PIF" },
 };
 
 export function getAirportInfo(icao: string): { name: string; iata: string } | undefined {
@@ -134,6 +136,22 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     zoom: 12.8,
     pitch: 33,
     bearing: 91,
+  },
+  {
+    name: "蘭嶼機場",
+    icao: "RCLY",
+    center: [121.5337, 22.0281],
+    zoom: 12.4,
+    pitch: 38,
+    bearing: 0,
+  },
+  {
+    name: "屏東南機場",
+    icao: "RCDC",
+    center: [120.4619, 22.6723],
+    zoom: 12,
+    pitch: 45,
+    bearing: -20,
   },
 ];
 

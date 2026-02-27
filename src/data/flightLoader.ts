@@ -26,7 +26,7 @@ export const ICAO_TO_IATA: Record<string, string> = {
   ZHHH: "WUH", ZSAM: "XMN", ZSFZ: "FOC", ZSHC: "HGH",
   ZSNB: "NGB", ZUTF: "TFU",
   // 台灣離島 / 軍用
-  RCCM: "CMJ", RCGI: "GNI", RCMT: "MFK",
+  RCCM: "CMJ", RCGI: "GNI", RCMT: "MFK", RCLY: "KYD", RCDC: "PIF",
   // 東南亞
   WSSS: "SIN", WMKK: "KUL", WMKP: "PEN", VTBS: "BKK",
   VTBD: "DMK", VTSP: "HKT", VTCC: "CNX",
