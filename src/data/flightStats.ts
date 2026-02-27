@@ -478,3 +478,103 @@ export function getDepArrCount(
   }
   return { departures, arrivals };
 }
+
+/** 每小時起降分離統計（可篩選日期） */
+export function computeHourlyDepArr(
+  flights: Flight[],
+  icao: string,
+  date?: string,
+): { hour: number; departures: number; arrivals: number }[] {
+  const hours = Array.from({ length: 24 }, (_, i) => ({ hour: i, departures: 0, arrivals: 0 }));
+
+  for (const f of flights) {
+    if (f.origin_icao === icao) {
+      const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+      if (ts > 0 && (!date || toTaipeiDate(ts) === date)) {
+        hours[getTaipeiHour(ts)]!.departures++;
+      }
+    }
+    if (f.dest_icao === icao) {
+      const ts = f.arr_time > 0 ? f.arr_time : f.path[f.path.length - 1]?.[3] ?? 0;
+      if (ts > 0 && (!date || toTaipeiDate(ts) === date)) {
+        hours[getTaipeiHour(ts)]!.arrivals++;
+      }
+    }
+  }
+
+  return hours;
+}
+
+/** 取得資料中出現的所有日期（台北時區） */
+export function getAvailableDates(flights: Flight[], icao: string): string[] {
+  const af = airportFlights(flights, icao);
+  const dates = new Set<string>();
+  for (const f of af) {
+    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    if (ts > 0) dates.add(toTaipeiDate(ts));
+  }
+  return [...dates].sort();
+}
+
+/** 按日期篩選航班 */
+export function filterFlightsByDate(flights: Flight[], date: string): Flight[] {
+  return flights.filter((f) => {
+    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    return ts > 0 && toTaipeiDate(ts) === date;
+  });
+}
+
+/** 按多日期篩選航班 */
+export function filterFlightsByDates(flights: Flight[], dates: string[]): Flight[] {
+  const dateSet = new Set(dates);
+  return flights.filter((f) => {
+    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    return ts > 0 && dateSet.has(toTaipeiDate(ts));
+  });
+}
+
+/** 時間軸每小時一個 slot */
+export interface TimelineSlot {
+  date: string;
+  hour: number;
+  departures: number;
+  arrivals: number;
+}
+
+/** 計算時間軸起降統計（跨日，每小時一筆） */
+export function computeTimelineDepArr(
+  flights: Flight[],
+  icao: string,
+  dates?: string[],
+): TimelineSlot[] {
+  const allDates = getAvailableDates(flights, icao);
+  const targetDates = dates && dates.length > 0 ? [...dates].sort() : allDates;
+
+  const slotMap = new Map<string, TimelineSlot>();
+  for (const date of targetDates) {
+    for (let h = 0; h < 24; h++) {
+      slotMap.set(`${date}-${h}`, { date, hour: h, departures: 0, arrivals: 0 });
+    }
+  }
+
+  for (const f of flights) {
+    if (f.origin_icao === icao) {
+      const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+      if (ts > 0) {
+        const slot = slotMap.get(`${toTaipeiDate(ts)}-${getTaipeiHour(ts)}`);
+        if (slot) slot.departures++;
+      }
+    }
+    if (f.dest_icao === icao) {
+      const ts = f.arr_time > 0 ? f.arr_time : f.path[f.path.length - 1]?.[3] ?? 0;
+      if (ts > 0) {
+        const slot = slotMap.get(`${toTaipeiDate(ts)}-${getTaipeiHour(ts)}`);
+        if (slot) slot.arrivals++;
+      }
+    }
+  }
+
+  return targetDates.flatMap((date) =>
+    Array.from({ length: 24 }, (_, h) => slotMap.get(`${date}-${h}`)!)
+  );
+}

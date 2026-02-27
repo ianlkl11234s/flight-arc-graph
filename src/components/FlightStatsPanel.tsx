@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Flight, StatsTab, StatsDrillDown } from "../types";
 import { AIRPORT_INFO } from "../map/cameraPresets";
 import { ICAO_TO_IATA } from "../data/flightLoader";
@@ -18,7 +18,11 @@ import {
   computeTopRoutes,
   getFleetMix,
   getDepArrCount,
+  getAvailableDates,
+  filterFlightsByDates,
+  computeTimelineDepArr,
 } from "../data/flightStats";
+import type { TimelineSlot } from "../data/flightStats";
 
 interface Props {
   allFlights: Flight[];
@@ -44,6 +48,8 @@ const C = {
   bar60: "#88888860",
   bar40: "#88888840",
   tabActiveBg: "#88888820",
+  depLine: "#aaaaaa",
+  arrLine: "#666666",
 };
 
 /* ── Light theme overrides ── */
@@ -61,6 +67,8 @@ const CL = {
   bar60: "#88888860",
   bar40: "#88888840",
   tabActiveBg: "rgba(0,0,0,0.08)",
+  depLine: "#555555",
+  arrLine: "#999999",
 };
 
 function t(dark: boolean) { return dark ? C : CL; }
@@ -105,6 +113,144 @@ function Section({
   );
 }
 
+/* ── Reusable: Dep/Arr Line Chart (supports single-day & multi-day timeline) ── */
+
+function DepArrLineChart({
+  data, dark,
+}: {
+  data: TimelineSlot[];
+  dark: boolean;
+}) {
+  const colors = t(dark);
+  const [hover, setHover] = useState<number | null>(null);
+
+  const N = data.length;
+  if (N === 0) return null;
+
+  const multiDay = (() => {
+    const firstDate = data[0]!.date;
+    return data.some((d) => d.date !== firstDate);
+  })();
+
+  const W = 300, H = multiDay ? 110 : 100;
+  const padL = 24, padR = 4, padT = 8, padB = multiDay ? 24 : 16;
+  const cW = W - padL - padR;
+  const cH = H - padT - padB;
+  const maxVal = Math.max(...data.map((d) => Math.max(d.departures, d.arrivals)), 1);
+  const x = (i: number) => padL + (i / Math.max(N - 1, 1)) * cW;
+  const y = (v: number) => padT + cH - (v / maxVal) * cH;
+
+  const line = (key: "departures" | "arrivals") =>
+    data.map((d, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(d[key]).toFixed(1)}`).join(" ");
+
+  // Day boundaries for multi-day x-axis
+  const dayBounds: { idx: number; label: string }[] = [];
+  if (multiDay) {
+    let prev = "";
+    data.forEach((d, i) => {
+      if (d.date !== prev) {
+        dayBounds.push({ idx: i, label: d.date.slice(5).replace("-", "/") });
+        prev = d.date;
+      }
+    });
+  }
+
+  const hd = hover !== null ? data[hover] : null;
+  const flipTooltip = hover !== null && hover > N * 0.7;
+
+  return (
+    <div style={{ position: "relative" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%" }}>
+        {/* Grid */}
+        {[0, 0.5, 1].map((r) => (
+          <line key={r} x1={padL} x2={W - padR}
+            y1={padT + cH * (1 - r)} y2={padT + cH * (1 - r)}
+            stroke={colors.divider} strokeWidth={0.5} />
+        ))}
+        {/* Y labels */}
+        <text x={padL - 3} y={padT + 4} textAnchor="end" fill={colors.textMuted} fontSize={7} fontFamily={font}>{maxVal}</text>
+        <text x={padL - 3} y={padT + cH + 3} textAnchor="end" fill={colors.textMuted} fontSize={7} fontFamily={font}>0</text>
+
+        {/* Day boundary separators (multi-day) */}
+        {dayBounds.map(({ idx, label }, bi) => (
+          <g key={idx}>
+            {idx > 0 && (
+              <line x1={x(idx)} x2={x(idx)} y1={padT} y2={padT + cH}
+                stroke={colors.textMuted} strokeWidth={0.3} strokeDasharray="3,3" />
+            )}
+            <text x={x(idx + 12)} y={H - 4} textAnchor="middle"
+              fill={bi === 0 ? colors.textGray : colors.textMuted} fontSize={7} fontFamily={font} fontWeight={bi === 0 ? 600 : 400}>
+              {label}
+            </text>
+          </g>
+        ))}
+
+        {/* Single-day x labels */}
+        {!multiDay && [0, 6, 12, 18, 23].map((h) => (
+          <text key={h} x={x(h)} y={H - 2} textAnchor="middle" fill={colors.textMuted} fontSize={7} fontFamily={font}>
+            {String(h).padStart(2, "0")}
+          </text>
+        ))}
+
+        {/* Dep line (solid) */}
+        <path d={line("departures")} fill="none" stroke={colors.depLine} strokeWidth={1.5} />
+        {/* Arr line (dashed) */}
+        <path d={line("arrivals")} fill="none" stroke={colors.arrLine} strokeWidth={1.5} strokeDasharray="4,3" />
+
+        {/* Hover hitboxes */}
+        {data.map((_, i) => (
+          <rect key={i} x={x(i) - cW / (N * 2)} y={padT} width={cW / N} height={cH}
+            fill="transparent" style={{ cursor: "crosshair" }}
+            onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} />
+        ))}
+
+        {/* Hover indicator */}
+        {hover !== null && hd && (
+          <>
+            <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + cH}
+              stroke={colors.textMuted} strokeWidth={0.5} strokeDasharray="2,2" />
+            <circle cx={x(hover)} cy={y(hd.departures)} r={multiDay ? 2.5 : 3} fill={colors.depLine} />
+            <circle cx={x(hover)} cy={y(hd.arrivals)} r={multiDay ? 2.5 : 3} fill={colors.arrLine} />
+          </>
+        )}
+      </svg>
+
+      {/* Legend */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center", marginTop: 2 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ width: 14, height: 1.5, background: colors.depLine }} />
+          <span style={{ fontSize: 8, color: colors.textDim, fontFamily: font }}>Dep</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <svg width={14} height={3}><line x1={0} y1={1.5} x2={14} y2={1.5} stroke={colors.arrLine} strokeWidth={1.5} strokeDasharray="3,2" /></svg>
+          <span style={{ fontSize: 8, color: colors.textDim, fontFamily: font }}>Arr</span>
+        </div>
+      </div>
+
+      {/* Tooltip */}
+      {hover !== null && hd && (
+        <div style={{
+          position: "absolute", top: 0,
+          ...(flipTooltip
+            ? { right: `${((W - x(hover)) / W * 100 + 3)}%` }
+            : { left: `${(x(hover) / W * 100 + 3)}%` }),
+          background: colors.bg, border: `1px solid ${colors.divider}`, borderRadius: 4,
+          padding: "3px 8px", fontSize: 9, fontFamily: font, pointerEvents: "none", zIndex: 10,
+          whiteSpace: "nowrap",
+        }}>
+          <div style={{ color: colors.textWhite, fontWeight: 600 }}>
+            {multiDay ? `${hd.date.slice(5).replace("-", "/")} ` : ""}{String(hd.hour).padStart(2, "0")}:00
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ color: colors.depLine }}>↑ {hd.departures}</span>
+            <span style={{ color: colors.arrLine }}>↓ {hd.arrivals}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Reusable: Horizontal Bar with label + percentage ── */
 
 function HBar({
@@ -140,17 +286,33 @@ function AirportTab({
 }) {
   const colors = t(dark);
   const info = AIRPORT_INFO[icao];
-  const depArr = useMemo(() => getDepArrCount(flights, icao), [flights, icao]);
+
+  // Date filter (multi-select: empty = ALL)
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  useEffect(() => { setSelectedDates([]); }, [icao]);
+  const availableDates = useMemo(() => getAvailableDates(flights, icao), [flights, icao]);
+  const activeFlights = useMemo(
+    () => selectedDates.length > 0 ? filterFlightsByDates(flights, selectedDates) : flights,
+    [flights, selectedDates],
+  );
+
+  // Timeline chart data (passes selected dates, or all if empty)
+  const depArrTimeline = useMemo(
+    () => computeTimelineDepArr(flights, icao, selectedDates.length > 0 ? selectedDates : undefined),
+    [flights, icao, selectedDates],
+  );
+
+  const depArr = useMemo(() => getDepArrCount(activeFlights, icao), [activeFlights, icao]);
   const totalFlights = depArr.departures + depArr.arrivals;
-  const days = useMemo(() => getUniqueDays(flights, icao), [flights, icao]);
-  const hourly = useMemo(() => computeHourlyStats(flights, icao), [flights, icao]);
-  const airlines = useMemo(() => getAirlineStats(flights, icao), [flights, icao]);
-  const topRoutes = useMemo(() => computeTopRoutes(flights, icao), [flights, icao]);
-  const destStats = useMemo(() => computeDestinationStats(flights, icao), [flights, icao]);
+  const days = useMemo(() => getUniqueDays(activeFlights, icao), [activeFlights, icao]);
+  const hourly = useMemo(() => computeHourlyStats(activeFlights, icao), [activeFlights, icao]);
+  const airlines = useMemo(() => getAirlineStats(activeFlights, icao), [activeFlights, icao]);
+  const topRoutes = useMemo(() => computeTopRoutes(activeFlights, icao), [activeFlights, icao]);
+  const destStats = useMemo(() => computeDestinationStats(activeFlights, icao), [activeFlights, icao]);
   const countries = useMemo(() => groupByCountry(destStats), [destStats]);
-  const aircraft = useMemo(() => getAircraftTypeStats(flights, icao), [flights, icao]);
-  const fleetMix = useMemo(() => getFleetMix(flights, icao), [flights, icao]);
-  const duration = useMemo(() => getFlightDurationDistribution(flights, icao), [flights, icao]);
+  const aircraft = useMemo(() => getAircraftTypeStats(activeFlights, icao), [activeFlights, icao]);
+  const fleetMix = useMemo(() => getFleetMix(activeFlights, icao), [activeFlights, icao]);
+  const duration = useMemo(() => getFlightDurationDistribution(activeFlights, icao), [activeFlights, icao]);
 
   const maxHourly = Math.max(...hourly.map((h) => h.count), 1);
   const peakHour = hourly.reduce((a, b) => (b.count > a.count ? b : a), hourly[0]!);
@@ -177,7 +339,7 @@ function AirportTab({
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {routeFlights.map((f) => (
-            <div key={f.fr24_id} onClick={() => onSelectFlight(f.fr24_id)} style={{
+            <div key={f.fr24_id} className="fp-card" onClick={() => onSelectFlight(f.fr24_id)} style={{
               display: "flex", gap: 8, padding: "5px 8px", borderRadius: 4,
               cursor: "pointer", fontFamily: font, fontSize: 11, background: colors.cardBg,
             }}>
@@ -214,7 +376,7 @@ function AirportTab({
           {group.totalFlights} flights · {group.airports.length} airports
         </div>
         {group.airports.map((a) => (
-          <div key={a.icao} onClick={() => setDrillDown({
+          <div key={a.icao} className="fp-card" onClick={() => setDrillDown({
             type: "route", key: `${icao}|${a.icao}`,
             label: `${info?.iata ?? icao} → ${ICAO_TO_IATA[a.icao] ?? a.icao}`,
           })} style={{
@@ -258,6 +420,44 @@ function AirportTab({
         </div>
       </div>
 
+      {/* Date Selector */}
+      <div style={{ padding: "0 20px 6px", display: "flex", gap: 4, flexWrap: "wrap" }}>
+        <button onClick={() => setSelectedDates([])} style={{
+          padding: "3px 10px", fontSize: 10, fontWeight: selectedDates.length === 0 ? 700 : 500,
+          fontFamily: font, cursor: "pointer", border: "none", borderRadius: 2,
+          color: selectedDates.length === 0 ? colors.textWhite : colors.textMuted,
+          background: selectedDates.length === 0 ? colors.tabActiveBg : "transparent",
+          transition: "all 0.15s ease",
+        }}>ALL</button>
+        {availableDates.map((d) => {
+          const active = selectedDates.includes(d);
+          return (
+            <button key={d} onClick={() => {
+              setSelectedDates((prev) =>
+                prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()
+              );
+            }} style={{
+              padding: "3px 8px", fontSize: 10, fontWeight: active ? 700 : 500,
+              fontFamily: font, cursor: "pointer", border: "none", borderRadius: 2,
+              color: active ? colors.textWhite : colors.textMuted,
+              background: active ? colors.tabActiveBg : "transparent",
+              transition: "all 0.15s ease",
+            }}>{d.slice(5).replace("-", "/")}</button>
+          );
+        })}
+      </div>
+
+      <Divider dark={dark} />
+
+      {/* Dep/Arr Timeline Chart */}
+      <Section title="DEPARTURES & ARRIVALS" dark={dark}
+        right={<span style={{ fontSize: 9, fontWeight: 500, color: colors.textDim, fontFamily: font }}>
+          {depArr.departures}↑ {depArr.arrivals}↓
+        </span>}
+      >
+        <DepArrLineChart data={depArrTimeline} dark={dark} />
+      </Section>
+
       <Divider dark={dark} />
 
       {/* Hourly Pattern — vertical bar chart */}
@@ -276,7 +476,7 @@ function AirportTab({
             else if (ratio > 0.25) fill = colors.bar60;
             else if (ratio > 0) fill = colors.bar40;
             else fill = colors.divider;
-            return <div key={h.hour} style={{ flex: 1, height: barH, background: fill }} />;
+            return <div key={h.hour} className="fp-bar" style={{ flex: 1, height: barH, background: fill }} />;
           })}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
@@ -329,7 +529,7 @@ function AirportTab({
         </span>}
       >
         {topRoutes.map((r) => (
-          <div key={r.destIcao} onClick={() => setDrillDown({
+          <div key={r.destIcao} className="fp-card" onClick={() => setDrillDown({
             type: "route", key: `${r.originIcao}|${r.destIcao}`,
             label: `${r.originIata} → ${r.destIata}`,
           })} style={{
@@ -356,8 +556,8 @@ function AirportTab({
       {/* Top Destinations — country list */}
       <Section title="TOP DESTINATIONS" dark={dark}>
         {countries.slice(0, 5).map((g) => (
-          <div key={g.country} onClick={() => setDrillDown({ type: "country", key: g.country, label: g.country })}
-            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%" }}>
+          <div key={g.country} className="fp-row" onClick={() => setDrillDown({ type: "country", key: g.country, label: g.country })}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%", padding: "4px 4px", borderRadius: 2 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
                 {getCountryCode(g.country)}
@@ -429,8 +629,9 @@ function AllTaiwanTab({
         {comparison.map((a) => {
           const barW = (a.count / (comparison[0]?.count ?? 1)) * 100;
           return (
-            <div key={a.icao} onClick={() => onSelectAirport(a.icao)} style={{
+            <div key={a.icao} className="fp-row" onClick={() => onSelectAirport(a.icao)} style={{
               display: "flex", alignItems: "center", gap: 8, cursor: "pointer", width: "100%",
+              padding: "4px 4px", borderRadius: 2,
             }}>
               <span style={{ width: 32, fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font, flexShrink: 0 }}>
                 {a.iata}
@@ -512,6 +713,16 @@ export function FlightStatsPanel({
       transform: visible ? "translateX(0)" : "translateX(100%)",
       transition: "transform 0.3s ease",
     }}>
+      {/* Hover styles */}
+      <style>{`
+        .fp-row { transition: background 0.12s ease; }
+        .fp-row:hover { background: ${dark ? "rgba(136,136,136,0.08)" : "rgba(0,0,0,0.04)"} !important; }
+        .fp-card { transition: filter 0.12s ease; }
+        .fp-card:hover { filter: brightness(${dark ? 1.4 : 0.95}); }
+        .fp-bar { transition: filter 0.12s ease; }
+        .fp-bar:hover { filter: brightness(1.5); }
+      `}</style>
+
       {/* Header */}
       <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
