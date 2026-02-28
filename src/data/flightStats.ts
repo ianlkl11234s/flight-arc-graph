@@ -390,7 +390,7 @@ export interface TopRoute {
 export function computeTopRoutes(
   flights: Flight[],
   icao: string,
-  limit = 5,
+  limit?: number,
 ): TopRoute[] {
   const departures = flights.filter((f) => f.origin_icao === icao);
   const routeMap = new Map<string, { count: number; airlines: Map<string, number> }>();
@@ -418,7 +418,7 @@ export function computeTopRoutes(
         .map(([code]) => code),
     }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, limit);
+    .slice(0, limit ?? Infinity);
 }
 
 /** Fleet Mix：機型分類為 Narrowbody / Widebody / Regional */

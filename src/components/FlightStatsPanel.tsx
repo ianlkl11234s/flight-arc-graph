@@ -251,6 +251,54 @@ function DepArrLineChart({
   );
 }
 
+/* ── Reusable: Show More / Show All button ── */
+
+type ExpandLevel = "initial" | "more" | "all";
+
+function ShowMoreButton({
+  total, currentLimit, level, dark, onExpand,
+}: {
+  total: number; currentLimit: number; level: ExpandLevel; dark: boolean;
+  onExpand: (next: ExpandLevel) => void;
+}) {
+  const colors = t(dark);
+  if (total <= 5) return null; // 5 以下不需要展開
+
+  if (level === "all") {
+    return (
+      <button onClick={() => onExpand("initial")} style={{
+        background: "none", border: "none", cursor: "pointer", fontFamily: font,
+        fontSize: 10, fontWeight: 500, color: colors.textMuted, padding: "4px 0",
+        width: "100%", textAlign: "center",
+      }}>
+        ▲ Show less
+      </button>
+    );
+  }
+
+  const nextLevel: ExpandLevel = level === "initial" ? "more" : "all";
+  const remaining = total - currentLimit;
+  const label = level === "initial"
+    ? `Show more (+${Math.min(remaining, 10)})`
+    : `Show all (${total})`;
+
+  return (
+    <button onClick={() => onExpand(nextLevel)} style={{
+      background: "none", border: "none", cursor: "pointer", fontFamily: font,
+      fontSize: 10, fontWeight: 500, color: colors.textMuted, padding: "4px 0",
+      width: "100%", textAlign: "center",
+    }}>
+      ▼ {label}
+    </button>
+  );
+}
+
+function getExpandLimit(level: ExpandLevel, total: number): number {
+  if (level === "initial") return 5;
+  if (level === "more") return 15;
+  return total;
+}
+
 /* ── Reusable: Horizontal Bar with label + percentage ── */
 
 function HBar({
@@ -301,6 +349,18 @@ function AirportTab({
     () => computeTimelineDepArr(flights, icao, selectedDates.length > 0 ? selectedDates : undefined),
     [flights, icao, selectedDates],
   );
+
+  // Expansion states for list sections
+  const [routesExpand, setRoutesExpand] = useState<ExpandLevel>("initial");
+  const [destExpand, setDestExpand] = useState<ExpandLevel>("initial");
+  const [aircraftExpand, setAircraftExpand] = useState<ExpandLevel>("initial");
+
+  // Reset expansion when airport changes
+  useEffect(() => {
+    setRoutesExpand("initial");
+    setDestExpand("initial");
+    setAircraftExpand("initial");
+  }, [icao]);
 
   const depArr = useMemo(() => getDepArrCount(activeFlights, icao), [activeFlights, icao]);
   const totalFlights = depArr.departures + depArr.arrivals;
@@ -528,7 +588,7 @@ function AirportTab({
           {topRoutes.length}
         </span>}
       >
-        {topRoutes.map((r) => (
+        {topRoutes.slice(0, getExpandLimit(routesExpand, topRoutes.length)).map((r) => (
           <div key={r.destIcao} className="fp-card" onClick={() => setDrillDown({
             type: "route", key: `${r.originIcao}|${r.destIcao}`,
             label: `${r.originIata} → ${r.destIata}`,
@@ -549,13 +609,19 @@ function AirportTab({
             </div>
           </div>
         ))}
+        <ShowMoreButton total={topRoutes.length} currentLimit={getExpandLimit(routesExpand, topRoutes.length)}
+          level={routesExpand} dark={dark} onExpand={setRoutesExpand} />
       </Section>
 
       <Divider dark={dark} />
 
       {/* Top Destinations — country list */}
-      <Section title="TOP DESTINATIONS" dark={dark}>
-        {countries.slice(0, 5).map((g) => (
+      <Section title="TOP DESTINATIONS" dark={dark}
+        right={<span style={{ fontSize: 9, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
+          {countries.length}
+        </span>}
+      >
+        {countries.slice(0, getExpandLimit(destExpand, countries.length)).map((g) => (
           <div key={g.country} className="fp-row" onClick={() => setDrillDown({ type: "country", key: g.country, label: g.country })}
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%", padding: "4px 4px", borderRadius: 2 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -567,18 +633,26 @@ function AirportTab({
             <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
           </div>
         ))}
+        <ShowMoreButton total={countries.length} currentLimit={getExpandLimit(destExpand, countries.length)}
+          level={destExpand} dark={dark} onExpand={setDestExpand} />
       </Section>
 
       <Divider dark={dark} />
 
       {/* Aircraft Types — horizontal bars */}
-      <Section title="AIRCRAFT TYPES" dark={dark}>
-        {aircraft.slice(0, 4).map((a, i) => {
+      <Section title="AIRCRAFT TYPES" dark={dark}
+        right={<span style={{ fontSize: 9, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
+          {aircraft.length}
+        </span>}
+      >
+        {aircraft.slice(0, getExpandLimit(aircraftExpand, aircraft.length)).map((a, i) => {
           const pct = Math.round((a.count / totalAircraft) * 100);
-          const opacities = [1, 0.5, 0.37, 0.25];
+          const opacity = i < 4 ? [1, 0.5, 0.37, 0.25][i] : 0.2;
           return <HBar key={a.type} label={a.type} percentage={`${pct}%`}
-            barWidth={(a.count / aircraft[0]!.count) * 100} dark={dark} opacity={opacities[i]} />;
+            barWidth={(a.count / aircraft[0]!.count) * 100} dark={dark} opacity={opacity} />;
         })}
+        <ShowMoreButton total={aircraft.length} currentLimit={getExpandLimit(aircraftExpand, aircraft.length)}
+          level={aircraftExpand} dark={dark} onExpand={setAircraftExpand} />
       </Section>
 
       <Divider dark={dark} />
