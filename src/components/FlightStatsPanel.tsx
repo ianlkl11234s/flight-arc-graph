@@ -251,52 +251,44 @@ function DepArrLineChart({
   );
 }
 
-/* ── Reusable: Show More / Show All button ── */
-
-type ExpandLevel = "initial" | "more" | "all";
+/* ── Reusable: Show More / Show All buttons ── */
 
 function ShowMoreButton({
-  total, currentLimit, level, dark, onExpand,
+  total, dark, expanded, onShowMore, onShowAll,
 }: {
-  total: number; currentLimit: number; level: ExpandLevel; dark: boolean;
-  onExpand: (next: ExpandLevel) => void;
+  total: number; dark: boolean; expanded: boolean;
+  onShowMore: () => void; onShowAll: () => void;
 }) {
   const colors = t(dark);
-  if (total <= 5) return null; // 5 以下不需要展開
+  if (total <= 5) return null;
 
-  if (level === "all") {
-    return (
-      <button onClick={() => onExpand("initial")} style={{
-        background: "none", border: "none", cursor: "pointer", fontFamily: font,
-        fontSize: 10, fontWeight: 500, color: colors.textMuted, padding: "4px 0",
-        width: "100%", textAlign: "center",
-      }}>
-        ▲ Show less
-      </button>
-    );
+  if (expanded) {
+    // Already showing 15 — offer "Show all" as drill-down
+    if (total > 15) {
+      return (
+        <button onClick={onShowAll} style={{
+          background: "none", border: "none", cursor: "pointer", fontFamily: font,
+          fontSize: 10, fontWeight: 500, color: colors.textMuted, padding: "4px 0",
+          width: "100%", textAlign: "center",
+        }}>
+          Show all ({total}) →
+        </button>
+      );
+    }
+    return null;
   }
 
-  const nextLevel: ExpandLevel = level === "initial" ? "more" : "all";
-  const remaining = total - currentLimit;
-  const label = level === "initial"
-    ? `Show more (+${Math.min(remaining, 10)})`
-    : `Show all (${total})`;
-
+  // Showing initial 5 — offer "Show more"
+  const remaining = Math.min(total - 5, 10);
   return (
-    <button onClick={() => onExpand(nextLevel)} style={{
+    <button onClick={onShowMore} style={{
       background: "none", border: "none", cursor: "pointer", fontFamily: font,
       fontSize: 10, fontWeight: 500, color: colors.textMuted, padding: "4px 0",
       width: "100%", textAlign: "center",
     }}>
-      ▼ {label}
+      ▼ Show more (+{remaining})
     </button>
   );
-}
-
-function getExpandLimit(level: ExpandLevel, total: number): number {
-  if (level === "initial") return 5;
-  if (level === "more") return 15;
-  return total;
 }
 
 /* ── Reusable: Horizontal Bar with label + percentage ── */
@@ -350,16 +342,16 @@ function AirportTab({
     [flights, icao, selectedDates],
   );
 
-  // Expansion states for list sections
-  const [routesExpand, setRoutesExpand] = useState<ExpandLevel>("initial");
-  const [destExpand, setDestExpand] = useState<ExpandLevel>("initial");
-  const [aircraftExpand, setAircraftExpand] = useState<ExpandLevel>("initial");
+  // Expansion states for list sections (false = 5 items, true = 15 items)
+  const [routesMore, setRoutesMore] = useState(false);
+  const [destMore, setDestMore] = useState(false);
+  const [aircraftMore, setAircraftMore] = useState(false);
 
   // Reset expansion when airport changes
   useEffect(() => {
-    setRoutesExpand("initial");
-    setDestExpand("initial");
-    setAircraftExpand("initial");
+    setRoutesMore(false);
+    setDestMore(false);
+    setAircraftMore(false);
   }, [icao]);
 
   const depArr = useMemo(() => getDepArrCount(activeFlights, icao), [activeFlights, icao]);
@@ -448,6 +440,106 @@ function AirportTab({
             <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim }}>{a.count}</span>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  // Drill-down: all routes
+  if (drillDown?.type === "all-routes") {
+    return (
+      <div style={{ padding: "10px 20px" }}>
+        <button onClick={() => setDrillDown(null)} style={{
+          background: "none", border: "none", color: colors.textGray, fontSize: 11,
+          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
+        }}>
+          {"< Back"}
+        </button>
+        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Routes</div>
+        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
+          {topRoutes.length} routes from {info?.iata ?? icao}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {topRoutes.map((r) => (
+            <div key={r.destIcao} className="fp-card" onClick={() => setDrillDown({
+              type: "route", key: `${r.originIcao}|${r.destIcao}`,
+              label: `${r.originIata} → ${r.destIata}`,
+            })} style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "6px 8px", background: colors.cardBg, cursor: "pointer",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: colors.textGray, fontFamily: font }}>{r.originIata}</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+                </svg>
+                <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.destIata}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{r.airlines.join("/")}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Drill-down: all destinations
+  if (drillDown?.type === "all-destinations") {
+    return (
+      <div style={{ padding: "10px 20px" }}>
+        <button onClick={() => setDrillDown(null)} style={{
+          background: "none", border: "none", color: colors.textGray, fontSize: 11,
+          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
+        }}>
+          {"< Back"}
+        </button>
+        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Destinations</div>
+        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
+          {countries.length} regions from {info?.iata ?? icao}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {countries.map((g) => (
+            <div key={g.country} className="fp-row" onClick={() => setDrillDown({ type: "country", key: g.country, label: g.country })}
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%", padding: "6px 8px", borderRadius: 2, background: colors.cardBg }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
+                  {getCountryCode(g.country)}
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: colors.textWhite, fontFamily: font }}>{g.country}</span>
+                <span style={{ fontSize: 10, color: colors.textMuted, fontFamily: font }}>{g.airports.length} apt</span>
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Drill-down: all aircraft types
+  if (drillDown?.type === "all-aircraft") {
+    return (
+      <div style={{ padding: "10px 20px" }}>
+        <button onClick={() => setDrillDown(null)} style={{
+          background: "none", border: "none", color: colors.textGray, fontSize: 11,
+          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
+        }}>
+          {"< Back"}
+        </button>
+        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Aircraft Types</div>
+        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
+          {aircraft.length} types at {info?.iata ?? icao}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {aircraft.map((a) => {
+            const pct = Math.round((a.count / totalAircraft) * 100);
+            return <HBar key={a.type} label={a.type} percentage={`${pct}%`}
+              barWidth={(a.count / aircraft[0]!.count) * 100} dark={dark}
+              opacity={Math.max(a.count / aircraft[0]!.count, 0.15)} />;
+          })}
+        </div>
       </div>
     );
   }
@@ -588,7 +680,7 @@ function AirportTab({
           {topRoutes.length}
         </span>}
       >
-        {topRoutes.slice(0, getExpandLimit(routesExpand, topRoutes.length)).map((r) => (
+        {topRoutes.slice(0, routesMore ? 15 : 5).map((r) => (
           <div key={r.destIcao} className="fp-card" onClick={() => setDrillDown({
             type: "route", key: `${r.originIcao}|${r.destIcao}`,
             label: `${r.originIata} → ${r.destIata}`,
@@ -609,8 +701,9 @@ function AirportTab({
             </div>
           </div>
         ))}
-        <ShowMoreButton total={topRoutes.length} currentLimit={getExpandLimit(routesExpand, topRoutes.length)}
-          level={routesExpand} dark={dark} onExpand={setRoutesExpand} />
+        <ShowMoreButton total={topRoutes.length} dark={dark} expanded={routesMore}
+          onShowMore={() => setRoutesMore(true)}
+          onShowAll={() => setDrillDown({ type: "all-routes", key: icao, label: "All Routes" })} />
       </Section>
 
       <Divider dark={dark} />
@@ -621,7 +714,7 @@ function AirportTab({
           {countries.length}
         </span>}
       >
-        {countries.slice(0, getExpandLimit(destExpand, countries.length)).map((g) => (
+        {countries.slice(0, destMore ? 15 : 5).map((g) => (
           <div key={g.country} className="fp-row" onClick={() => setDrillDown({ type: "country", key: g.country, label: g.country })}
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%", padding: "4px 4px", borderRadius: 2 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -633,8 +726,9 @@ function AirportTab({
             <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
           </div>
         ))}
-        <ShowMoreButton total={countries.length} currentLimit={getExpandLimit(destExpand, countries.length)}
-          level={destExpand} dark={dark} onExpand={setDestExpand} />
+        <ShowMoreButton total={countries.length} dark={dark} expanded={destMore}
+          onShowMore={() => setDestMore(true)}
+          onShowAll={() => setDrillDown({ type: "all-destinations", key: icao, label: "All Destinations" })} />
       </Section>
 
       <Divider dark={dark} />
@@ -645,14 +739,15 @@ function AirportTab({
           {aircraft.length}
         </span>}
       >
-        {aircraft.slice(0, getExpandLimit(aircraftExpand, aircraft.length)).map((a, i) => {
+        {aircraft.slice(0, aircraftMore ? 15 : 5).map((a, i) => {
           const pct = Math.round((a.count / totalAircraft) * 100);
-          const opacity = i < 4 ? [1, 0.5, 0.37, 0.25][i] : 0.2;
+          const opacity = i < 4 ? [1, 0.5, 0.37, 0.25][i]! : 0.2;
           return <HBar key={a.type} label={a.type} percentage={`${pct}%`}
             barWidth={(a.count / aircraft[0]!.count) * 100} dark={dark} opacity={opacity} />;
         })}
-        <ShowMoreButton total={aircraft.length} currentLimit={getExpandLimit(aircraftExpand, aircraft.length)}
-          level={aircraftExpand} dark={dark} onExpand={setAircraftExpand} />
+        <ShowMoreButton total={aircraft.length} dark={dark} expanded={aircraftMore}
+          onShowMore={() => setAircraftMore(true)}
+          onShowAll={() => setDrillDown({ type: "all-aircraft", key: icao, label: "All Aircraft Types" })} />
       </Section>
 
       <Divider dark={dark} />

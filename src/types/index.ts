@@ -58,7 +58,7 @@ export type StatsTab = "airport" | "all-taiwan";
 
 /** Drill-down 狀態 */
 export interface StatsDrillDown {
-  type: "country" | "airport" | "route";
+  type: "country" | "airport" | "route" | "all-routes" | "all-destinations" | "all-aircraft";
   /** 國家/地區名稱 or ICAO */
   key: string;
   label: string;
