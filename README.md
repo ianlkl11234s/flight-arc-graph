@@ -50,7 +50,7 @@
 ### 其他
 
 - 6 種 Mapbox 底圖樣式（Dark / Light / Satellite / Navigation Night 等），切換底圖自動重建所有圖層
-- 14 座台灣機場預設視角，選單顯示中文名稱與 IATA 代碼
+- 16 座台灣機場預設視角，選單顯示中文名稱與 IATA 代碼
 - 時間軸播放控制（30x~600x 加速），配色隨底圖明暗自適應（暗色灰調 / 亮色白調）
 - Capture 拍攝模式（暗角 vignette + 機場名稱 + 時間標記，ESC 或觸控 ✕ 退出）
 - Info 面板：網站使用說明、參數介紹、資料來源、DIY 指引
@@ -66,14 +66,19 @@
 | Departures & Arrivals | SVG 折線圖，實線=起飛、虛線=降落。ALL 模式顯示跨日時間軸（含日期分隔線），單日模式顯示 24h |
 | Hourly Pattern | 垂直長條圖，24 小時分佈 |
 | Airlines Share | 堆疊水平長條，前 4 大航空公司市佔比例 |
-| Top Routes | 卡片式航線清單，含航空公司代碼，可 drill-down 查看航班明細 |
-| Top Destinations | 按國家分組的目的地統計，可 drill-down 至各機場 |
-| Aircraft Types | 前 4 大機型水平長條 |
+| Top Routes | 卡片式航線清單，含航空公司代碼。預設 5 條 → Show more 15 條 → Show all 跳至完整列表頁，可 drill-down 查看航班明細 |
+| Top Destinations | 按國家分組的目的地統計。預設 5 個 → Show more 15 個 → Show all 完整列表頁，可 drill-down 至各機場再至航班清單 |
+| Aircraft Types | 機型水平長條。預設 5 種 → Show more 15 種 → Show all 完整列表頁 |
 | Fleet Mix | Narrowbody / Widebody / Regional 分類統計 |
 | Flight Duration | 短程 / 區域 / 中程 / 長程分佈 |
-| All Taiwan Tab | 14 座機場比較、可達目的地（按國家）、國內航線統計 |
+| All Taiwan Tab | 16 座機場比較、可達目的地（按國家）、國內航線統計 |
 
-互動功能：所有 section 可收合（chevron toggle）、hover 回饋（亮度/背景變化）、drill-down 導航、點擊航班追蹤至地圖。
+互動功能：
+- **Section 收合**：所有區塊可收合（chevron toggle）
+- **Hover 回饋**：列表行亮度/背景變化
+- **漸進展開**：Top Routes / Destinations / Aircraft Types 支援三段展開（5 → 15 → 全部 drill-down 頁面）
+- **多層 Drill-down**：航線 → 航班清單 → 點擊追蹤至地圖；國家 → 機場列表 → 航線 → 航班清單
+- **可拖拉寬度**：左側邊緣拖拉調整面板寬度（280~720px）
 
 ### 手機版適配（Responsive）
 
@@ -217,6 +222,8 @@ npm run fetch:tracks
 | RCCM | 七美機場 |
 | RCGI | 綠島機場 |
 | RCMT | 馬祖北竿機場 |
+| RCLY | 蘭嶼機場 |
+| RCDC | 屏東南機場 |
 
 ### 資料格式
 
