@@ -31,6 +31,13 @@ export function useFlightData(): UseFlightDataReturn {
       setAirports(getTaiwanAirports(flights));
       setLoading(false);
 
+      // 若載入的是融合資料，跳過 S3 合併（避免混入其他日期）
+      const hasFusedData = flights.some((f) => f.fr24_id.startsWith("snap_"));
+      if (hasFusedData) {
+        console.log("[Hook] Fused data detected, skipping S3 merge");
+        return;
+      }
+
       // 背景檢查 S3 是否有新資料
       mergeS3Updates(flights).then((merged) => {
         if (merged !== flights) {

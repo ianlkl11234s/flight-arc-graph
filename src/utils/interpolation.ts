@@ -35,27 +35,43 @@ export function interpolatePosition(
 
 /**
  * 取得到指定時間為止的軌跡段
- * 用於繪製「已經過的光軌」
+ * 頭尾皆做插值，確保軌跡長度隨時間平滑變化
  */
 export function getTrailUpToTime(
   path: TrailPoint[],
   time: number,
-  maxTrailDuration: number = 300, // 預設保留最近 300 秒的軌跡
+  maxTrailDuration: number = 300,
 ): TrailPoint[] {
   const cutoffTime = time - maxTrailDuration;
   const result: TrailPoint[] = [];
 
-  for (const pt of path) {
-    if (pt[3] > time) break;
-    if (pt[3] >= cutoffTime) {
-      result.push(pt);
+  // 找出 cutoff 之後的第一個點的索引
+  let startIdx = 0;
+  while (startIdx < path.length && path[startIdx]![3] < cutoffTime) {
+    startIdx++;
+  }
+
+  // 尾端插值：如果 cutoff 落在兩點之間，插入精確的 cutoff 位置
+  if (startIdx > 0 && startIdx < path.length) {
+    const tailPos = interpolatePosition(path, cutoffTime);
+    if (tailPos) {
+      result.push([tailPos[0], tailPos[1], tailPos[2], cutoffTime]);
     }
   }
 
-  // 加入插值的當前位置
-  const currentPos = interpolatePosition(path, time);
-  if (currentPos && result.length > 0) {
-    result.push([currentPos[0], currentPos[1], currentPos[2], time]);
+  // 收集 cutoff 之後、time 之前的所有原始點
+  for (let i = startIdx; i < path.length; i++) {
+    if (path[i]![3] > time) break;
+    result.push(path[i]!);
+  }
+
+  // 頭端插值：加入當前時間的精確位置
+  const headPos = interpolatePosition(path, time);
+  if (headPos && result.length > 0) {
+    const lastTime = result[result.length - 1]![3];
+    if (time > lastTime) {
+      result.push([headPos[0], headPos[1], headPos[2], time]);
+    }
   }
 
   return result;

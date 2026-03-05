@@ -182,19 +182,39 @@ async function loadFromS3(): Promise<Flight[]> {
   return results.flat();
 }
 
-/** 載入航班資料：優先本地 aviation_data.json，失敗則從 S3 載入 */
+/** 嘗試載入本地 JSON 檔案 */
+async function tryLoadLocal(filename: string): Promise<Flight[] | null> {
+  try {
+    const res = await fetch(`/${filename}`);
+    const text = await res.text();
+    if (text.trimStart().startsWith("<")) return null;
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+/** 載入航班資料：優先融合資料 → 原始資料 → S3 */
 export async function loadFlights(): Promise<Flight[]> {
   if (cachedFlights) return cachedFlights;
 
-  let data: Flight[];
-  try {
-    const res = await fetch("/aviation_data.json");
-    const text = await res.text();
-    // SPA fallback 會回傳 HTML，檢查是否為合法 JSON
-    if (text.trimStart().startsWith("<")) throw new Error("Got HTML, not JSON");
-    data = JSON.parse(text);
-  } catch {
-    console.log("[Loader] Local file unavailable, loading from S3...");
+  let data: Flight[] | null = null;
+
+  // 優先載入融合資料（含快照拼接軌跡）
+  data = await tryLoadLocal("aviation_data_fused.json");
+  if (data) {
+    console.log(`[Loader] Loaded fused data: ${data.length} flights`);
+  }
+
+  // 回退到原始資料
+  if (!data) {
+    data = await tryLoadLocal("aviation_data.json");
+    if (data) console.log(`[Loader] Loaded original data: ${data.length} flights`);
+  }
+
+  // 最後從 S3
+  if (!data) {
+    console.log("[Loader] Local files unavailable, loading from S3...");
     data = await loadFromS3();
   }
 

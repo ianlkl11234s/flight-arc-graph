@@ -57,12 +57,17 @@ export class LightTrail {
     const posAttr = this.geometry.getAttribute("position") as THREE.BufferAttribute;
     const progAttr = this.geometry.getAttribute("progress") as THREE.BufferAttribute;
 
+    // 用時間比例計算 progress：尾端插值點 = 0，頭端插值點 = 1
+    // 中間點依實際時間平滑分佈，不因點數變動而跳動
+    const tStart = trail[0]![3];
+    const tEnd = trail[count - 1]![3];
+    const tRange = tEnd - tStart;
+
     for (let i = 0; i < count; i++) {
       const pt = trail[i]!;
       const mc = toMercator(pt[0], pt[1], pt[2]);
       posAttr.setXYZ(i, mc.x, mc.y, mc.z);
-      // progress: 0（最舊） → 1（最新）
-      progAttr.setX(i, count > 1 ? i / (count - 1) : 1);
+      progAttr.setX(i, tRange > 0 ? (pt[3] - tStart) / tRange : 1);
     }
 
     posAttr.needsUpdate = true;
