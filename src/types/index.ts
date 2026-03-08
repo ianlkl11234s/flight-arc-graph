@@ -37,6 +37,9 @@ export interface TimelineState {
   speed: number;
 }
 
+/** 資料來源 */
+export type DataSource = "api" | "fused";
+
 /** 顯示模式 */
 export type ViewMode = "airport" | "all-taiwan" | "time-window" | "single";
 

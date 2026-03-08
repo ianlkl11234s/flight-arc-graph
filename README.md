@@ -47,6 +47,15 @@
 | APT | 機場填充不透明度 |
 | Glow | 機場光暈強度 |
 
+### 資料來源切換
+
+| 模式 | 資料檔案 | 說明 |
+|------|---------|------|
+| API Tracks | `aviation_data.json` | FR24 API 完整軌跡（台灣機場起降） |
+| Fused Snapshot | `aviation_data_fused.json` | 融合快照資料（空域觀測 + 軌跡拼接） |
+
+兩個檔案啟動時平行載入，切換即時生效不需重新 fetch。若融合資料不存在，Fused Snapshot 按鈕自動 disabled。
+
 ### 其他
 
 - 6 種 Mapbox 底圖樣式（Dark / Light / Satellite / Navigation Night 等），切換底圖自動重建所有圖層
@@ -124,7 +133,8 @@ Mapbox GL JS（底圖 + 3D terrain + 相機控制）
 ```
 Taiwan Flight Arc/
 ├── public/
-│   ├── aviation_data.json        # FR24 航班軌跡（gitignored，由腳本產生）
+│   ├── aviation_data.json        # FR24 API 完整軌跡（gitignored，由腳本產生）
+│   ├── aviation_data_fused.json  # 融合快照資料（gitignored，由 fuse 腳本產生）
 │   └── airports.geojson          # OSM 台灣機場邊界（13 座）
 ├── docs/
 │   └── data-inventory.md         # 資料欄位清單 + 可衍生統計 + 視覺化方向
@@ -157,6 +167,7 @@ Taiwan Flight Arc/
 │   │   ├── AirportSelector.tsx
 │   │   ├── FlightPicker.tsx       # 支援 isMobile（2×2 grid）
 │   │   ├── FlightStatsPanel.tsx   # 右側統計面板（可拖拉寬度）
+│   │   ├── DataSourceToggle.tsx   # API Tracks / Fused Snapshot 切換
 │   │   ├── TimelineControls.tsx   # 支援 isMobile（加大觸控區）
 │   │   ├── StyleSelector.tsx
 │   │   └── MobileBottomSheet.tsx  # 手機版三段式底部面板

@@ -161,6 +161,8 @@ export function preprocessFlights(flights: Flight[]): Flight[] {
 }
 
 let cachedFlights: Flight[] | null = null;
+let cachedApiFlights: Flight[] | null = null;
+let cachedFusedFlights: Flight[] | null = null;
 
 const S3_BASE =
   "https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc";
@@ -225,6 +227,33 @@ export async function loadFlights(): Promise<Flight[]> {
 /** 更新快取（S3 合併後使用） */
 export function updateCachedFlights(flights: Flight[]): void {
   cachedFlights = flights;
+}
+
+/** 載入 API 軌跡資料（aviation_data.json） */
+export async function loadApiFlights(): Promise<Flight[]> {
+  if (cachedApiFlights) return cachedApiFlights;
+  const data = await tryLoadLocal("aviation_data.json");
+  if (data) {
+    cachedApiFlights = preprocessFlights(data);
+    console.log(`[Loader] API data: ${cachedApiFlights.length} flights`);
+    return cachedApiFlights;
+  }
+  // fallback: S3
+  const s3Data = await loadFromS3();
+  cachedApiFlights = preprocessFlights(s3Data);
+  return cachedApiFlights;
+}
+
+/** 載入融合快照資料（aviation_data_fused.json） */
+export async function loadFusedFlights(): Promise<Flight[] | null> {
+  if (cachedFusedFlights) return cachedFusedFlights;
+  const data = await tryLoadLocal("aviation_data_fused.json");
+  if (data) {
+    cachedFusedFlights = preprocessFlights(data);
+    console.log(`[Loader] Fused data: ${cachedFusedFlights.length} flights`);
+    return cachedFusedFlights;
+  }
+  return null;
 }
 
 /** 依目的地機場 ICAO 篩選（降落航班） */

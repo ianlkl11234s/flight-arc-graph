@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
-import type { ViewMode, RenderMode, DisplayMode, Flight } from "./types";
+import type { ViewMode, RenderMode, DisplayMode, DataSource, Flight } from "./types";
 import type { FlightScene } from "./three/FlightScene";
 import { MapView } from "./map/MapView";
 import { useFlightData } from "./hooks/useFlightData";
@@ -15,6 +15,7 @@ import { TimelineControls } from "./components/TimelineControls";
 import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
+import { DataSourceToggle } from "./components/DataSourceToggle";
 
 const getSliderLabelStyle = (dark: boolean): React.CSSProperties => ({
   color: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)",
@@ -32,6 +33,7 @@ const getSliderStyle = (dark: boolean): React.CSSProperties => ({
 });
 
 export default function App() {
+  const [dataSource, setDataSource] = useState<DataSource>("api");
   const {
     allFlights,
     filteredFlights,
@@ -40,7 +42,8 @@ export default function App() {
     setSelectedAirport,
     timeRange,
     loading,
-  } = useFlightData();
+    hasFused,
+  } = useFlightData(dataSource);
 
   const [viewMode, setViewMode] = useState<ViewMode>("airport");
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
@@ -552,6 +555,13 @@ export default function App() {
                 {mode === "trails" ? "Flight Trails" : "Live Status"}
               </button>
             ))}
+            <span style={{ color: isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)", margin: "0 2px" }}>|</span>
+            <DataSourceToggle
+              dataSource={dataSource}
+              hasFused={hasFused}
+              isDarkTheme={isDarkTheme}
+              onChange={setDataSource}
+            />
           </div>
 
           {/* 第三列：模式選擇 */}
@@ -997,7 +1007,7 @@ export default function App() {
                 {/* half: FlightPicker + Stats */}
                 {(level === "half" || level === "full") && (
                   <div style={{ marginTop: 12 }}>
-                    <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
                       {(["trails", "status"] as const).map((mode) => (
                         <button
                           key={mode}
@@ -1019,6 +1029,13 @@ export default function App() {
                           {mode === "trails" ? "Flight Trails" : "Live Status"}
                         </button>
                       ))}
+                      <span style={{ color: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center" }}>|</span>
+                      <DataSourceToggle
+                        dataSource={dataSource}
+                        hasFused={hasFused}
+                        isDarkTheme={true}
+                        onChange={setDataSource}
+                      />
                     </div>
                     <FlightPicker
                       flights={pickableFlights}
