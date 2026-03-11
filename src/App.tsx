@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
-import type { ViewMode, RenderMode, DisplayMode, DataSource, Flight } from "./types";
+import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight } from "./types";
 import type { FlightScene } from "./three/FlightScene";
 import { MapView } from "./map/MapView";
 import { useFlightData } from "./hooks/useFlightData";
@@ -34,7 +34,9 @@ export default function App() {
     hasFused,
   } = useFlightData(dataSource);
 
-  const [viewMode, setViewMode] = useState<ViewMode>("airport");
+  const [scope, setScope] = useState<Scope>("airport");
+  const [trackMode, setTrackMode] = useState<TrackMode>("stack");
+  const [timeWindow, setTimeWindow] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [mapStyleId, setMapStyleId] = useState("dark");
   const [renderMode, setRenderMode] = useState<RenderMode>("3d");
@@ -59,29 +61,30 @@ export default function App() {
     endTime: timeRange.end,
   });
 
-  // 根據 viewMode 決定要顯示的航班
+  // 根據 scope + trackMode + timeWindow 決定要顯示的航班
   const displayedFlights = useMemo(() => {
-    switch (viewMode) {
-      case "single":
-        return selectedFlightId
-          ? filteredFlights.filter((f) => f.fr24_id === selectedFlightId)
-          : filteredFlights;
-      case "all-taiwan":
-        return allFlights;
-      case "time-window":
-        return filterByTimeWindow(
-          allFlights,
-          selectedAirport,
-          timeline.currentTime,
-        );
-      case "airport":
-      default:
-        return filteredFlights;
+    // 1. 地理範圍
+    let base = scope === "all-taiwan" ? allFlights : filteredFlights;
+
+    // 2. 時間窗口（僅 Flight Trails 模式下生效）
+    if (timeWindow && displayMode === "trails") {
+      const icao = scope === "airport" ? selectedAirport : null;
+      base = filterByTimeWindow(base, icao, timeline.currentTime);
     }
+
+    // 3. 軌跡模式
+    if (trackMode === "single" && selectedFlightId) {
+      return base.filter((f) => f.fr24_id === selectedFlightId);
+    }
+
+    return base;
   }, [
     allFlights,
     filteredFlights,
-    viewMode,
+    scope,
+    trackMode,
+    timeWindow,
+    displayMode,
     selectedFlightId,
     selectedAirport,
     timeline.currentTime,
@@ -234,7 +237,7 @@ export default function App() {
         );
         if (flightId) {
           e.preventDefault();
-          setViewMode("single");
+          setTrackMode("single");
           setSelectedFlightId(flightId);
           setTooltipInfo(null);
         }
@@ -250,11 +253,11 @@ export default function App() {
     if (!map || !map.isStyleLoaded()) return;
     addFlightLayer(map);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAirport, viewMode, selectedFlightId]);
+  }, [selectedAirport, scope, trackMode, selectedFlightId]);
 
   // Track Single 模式：相機鎖定飛機，飛機固定在畫面中央
   useEffect(() => {
-    if (viewMode !== "single" || !selectedFlightId) return;
+    if (trackMode !== "single" || !selectedFlightId) return;
     const map = mapRef.current;
     if (!map) return;
 
@@ -289,7 +292,7 @@ export default function App() {
     };
     animId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animId);
-  }, [viewMode, selectedFlightId]);
+  }, [trackMode, selectedFlightId]);
 
   // ESC 退出拍攝模式
   useEffect(() => {
@@ -520,10 +523,14 @@ export default function App() {
             onOrbScaleChange={setOrbScale}
             onAirportOpacityChange={setAirportOpacity}
             onAirportGlowChange={setAirportGlow}
-            viewMode={viewMode}
+            scope={scope}
+            trackMode={trackMode}
+            timeWindow={timeWindow}
             pickableFlights={pickableFlights}
             selectedFlightId={selectedFlightId}
-            onViewModeChange={setViewMode}
+            onScopeChange={setScope}
+            onTrackModeChange={setTrackMode}
+            onTimeWindowChange={setTimeWindow}
             onFlightSelect={setSelectedFlightId}
             airports={airports}
             selectedAirport={selectedAirport}
@@ -694,8 +701,8 @@ export default function App() {
           >
             <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: "monospace" }}>
               {finalFlights.length} flights
-              {viewMode === "time-window" && " (±12h)"}
-              {viewMode === "all-taiwan" && " (all Taiwan)"}
+              {timeWindow && displayMode === "trails" && " (±12h)"}
+              {scope === "all-taiwan" && " (all Taiwan)"}
               {selectedDate && ` · ${selectedDate}`}
             </div>
             <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)", fontSize: 11, fontFamily: "monospace" }}>
@@ -875,11 +882,13 @@ export default function App() {
                     </div>
                     <FlightPicker
                       flights={pickableFlights}
-                      viewMode={viewMode}
+                      scope={scope}
+                      trackMode={trackMode}
                       selectedFlightId={selectedFlightId}
                       isDarkTheme={true}
                       isMobile={true}
-                      onViewModeChange={setViewMode}
+                      onScopeChange={setScope}
+                      onTrackModeChange={setTrackMode}
                       onFlightSelect={setSelectedFlightId}
                     />
                     <div
@@ -891,8 +900,8 @@ export default function App() {
                       }}
                     >
                       {finalFlights.length} flights
-                      {viewMode === "time-window" && " (±12h)"}
-                      {viewMode === "all-taiwan" && " (all Taiwan)"}
+                      {timeWindow && displayMode === "trails" && " (±12h)"}
+                      {scope === "all-taiwan" && " (all Taiwan)"}
                     </div>
                   </div>
                 )}
@@ -985,7 +994,7 @@ export default function App() {
             setSelectedAirport(icao);
           }}
           onSelectFlight={(id) => {
-            setViewMode("single");
+            setTrackMode("single");
             setSelectedFlightId(id);
             setShowStats(false);
           }}

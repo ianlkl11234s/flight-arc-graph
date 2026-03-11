@@ -22,12 +22,25 @@
 
 ### 檢視模式
 
+設定面板將檢視控制拆為正交的三個維度，可自由組合：
+
+**Scope（地理範圍）**
+
 | 模式 | 說明 |
 |------|------|
 | This Airport | 選定機場相關航班 |
-| All Taiwan | 全台 1,500+ 航班 |
-| ±12h Window | 當前時間前後 12 小時 |
-| Track Single | 追蹤單一航班 |
+| All Taiwan | 全台所有航班 |
+
+**Track Mode（軌跡模式）**
+
+| 模式 | 說明 |
+|------|------|
+| Stack All | 顯示所有航班軌跡 |
+| Track Single | 追蹤單一航班（相機鎖定） |
+
+**±12h Window**
+
+Flight Trails 模式下的子選項（checkbox），開啟後僅顯示當前播放時間前後 12 小時內的航班。支援 This Airport（限機場相關）與 All Taiwan（全台灣時間過濾）。
 
 ### 渲染模式
 
@@ -165,7 +178,7 @@ Taiwan Flight Arc/
 │   │   └── useIsMobile.ts        # 響應式斷點偵測（768px）+ 橫向模式
 │   ├── components/
 │   │   ├── AirportSelector.tsx
-│   │   ├── FlightPicker.tsx       # 支援 isMobile（2×2 grid）
+│   │   ├── FlightPicker.tsx       # Scope + TrackMode 選擇（支援 isMobile 2×2 grid）
 │   │   ├── FlightStatsPanel.tsx   # 右側統計面板（可拖拉寬度）
 │   │   ├── DataSourceToggle.tsx   # API Tracks / Fused Snapshot 切換
 │   │   ├── TimelineControls.tsx   # 支援 isMobile（加大觸控區）

@@ -293,7 +293,7 @@ export function getTaiwanAirports(flights: Flight[]): string[] {
 /** 依時間窗口篩選：當前時間 ±12h 內與指定機場相關的航班 */
 export function filterByTimeWindow(
   flights: Flight[],
-  icao: string,
+  icao: string | null,
   currentTime: number,
   windowHours: number = 12,
 ): Flight[] {
@@ -302,8 +302,8 @@ export function filterByTimeWindow(
   const tMax = currentTime + windowSec;
 
   return flights.filter((f) => {
-    // 必須與指定機場相關
-    if (f.dest_icao !== icao && f.origin_icao !== icao) return false;
+    // 若指定機場，必須與該機場相關
+    if (icao && f.dest_icao !== icao && f.origin_icao !== icao) return false;
     // 軌跡時間範圍必須與窗口重疊
     if (f.path.length === 0) return false;
     const pathStart = f.path[0]![3];

@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import type { DisplayMode, RenderMode, ViewMode, Flight } from "../types";
+import type { DisplayMode, RenderMode, Scope, TrackMode, Flight } from "../types";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
 
@@ -39,11 +39,15 @@ export interface IconRailSidebarProps {
   onOrbScaleChange: (v: number) => void;
   onAirportOpacityChange: (v: number) => void;
   onAirportGlowChange: (v: number) => void;
-  // View mode (FlightPicker)
-  viewMode: ViewMode;
+  // Scope & Track mode
+  scope: Scope;
+  trackMode: TrackMode;
+  timeWindow: boolean;
   pickableFlights: Flight[];
   selectedFlightId: string | null;
-  onViewModeChange: (mode: ViewMode) => void;
+  onScopeChange: (scope: Scope) => void;
+  onTrackModeChange: (mode: TrackMode) => void;
+  onTimeWindowChange: (v: boolean) => void;
   onFlightSelect: (id: string | null) => void;
   // Locations
   airports: string[];
@@ -313,38 +317,27 @@ function IconInfo() {
 function SettingsPanel(props: IconRailSidebarProps) {
   return (
     <>
-      <SectionHeader>View</SectionHeader>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginBottom: 8 }}>
-        {(["airport", "all-taiwan", "time-window", "single"] as ViewMode[]).map((mode) => {
-          const labels: Record<ViewMode, string> = {
-            airport: "This Airport",
-            "all-taiwan": "All Taiwan",
-            "time-window": "±12h Window",
-            single: "Track Single",
-          };
-          const isActive = props.viewMode === mode;
-          return (
-            <button
-              key={mode}
-              onClick={() => props.onViewModeChange(mode)}
-              style={{
-                padding: "5px 0",
-                fontSize: 11,
-                fontFamily: "monospace",
-                border: `1px solid ${isActive ? "#64aaff" : BORDER}`,
-                borderRadius: 4,
-                background: isActive ? "rgba(100,170,255,0.2)" : "transparent",
-                color: isActive ? "#fff" : ACCENT,
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
-            >
-              {labels[mode]}
-            </button>
-          );
-        })}
-      </div>
-      {props.viewMode === "single" && props.pickableFlights.length > 0 && (
+      <SectionHeader>Scope</SectionHeader>
+      <ToggleButtons<Scope>
+        options={[
+          { value: "airport", label: "This Airport" },
+          { value: "all-taiwan", label: "All Taiwan" },
+        ]}
+        value={props.scope}
+        onChange={props.onScopeChange}
+      />
+      <ToggleButtons<TrackMode>
+        options={[
+          { value: "stack", label: "Stack All" },
+          { value: "single", label: "Track Single" },
+        ]}
+        value={props.trackMode}
+        onChange={(m) => {
+          props.onTrackModeChange(m);
+          if (m !== "single") props.onFlightSelect(null);
+        }}
+      />
+      {props.trackMode === "single" && props.pickableFlights.length > 0 && (
         <select
           value={props.selectedFlightId ?? ""}
           onChange={(e) => props.onFlightSelect(e.target.value || null)}
@@ -379,6 +372,30 @@ function SettingsPanel(props: IconRailSidebarProps) {
         value={props.displayMode}
         onChange={props.onDisplayModeChange}
       />
+      {/* ±12h Window：僅在 Flight Trails 模式下顯示 */}
+      {props.displayMode === "trails" && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 11,
+            fontFamily: "monospace",
+            color: props.timeWindow ? "#fff" : ACCENT,
+            cursor: "pointer",
+            marginBottom: 8,
+            marginLeft: 4,
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={props.timeWindow}
+            onChange={(e) => props.onTimeWindowChange(e.target.checked)}
+            style={{ accentColor: "#64aaff", width: 14, height: 14, cursor: "pointer" }}
+          />
+          ±12h Window
+        </label>
+      )}
       <ToggleButtons<RenderMode>
         options={[
           { value: "3d", label: "3D Altitude" },

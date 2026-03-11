@@ -40,8 +40,11 @@ export interface TimelineState {
 /** 資料來源 */
 export type DataSource = "api" | "fused";
 
-/** 顯示模式 */
-export type ViewMode = "airport" | "all-taiwan" | "time-window" | "single";
+/** 地理範圍 */
+export type Scope = "airport" | "all-taiwan";
+
+/** 軌跡模式：stack 顯示全部航班、single 追蹤單一航班 */
+export type TrackMode = "stack" | "single";
 
 /** 渲染模式：3D（Three.js 含高度）或 2D（Mapbox 原生平面） */
 export type RenderMode = "3d" | "2d";

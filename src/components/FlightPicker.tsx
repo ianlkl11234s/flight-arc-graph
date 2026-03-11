@@ -1,12 +1,14 @@
-import type { Flight, ViewMode } from "../types";
+import type { Flight, Scope, TrackMode } from "../types";
 
 interface Props {
   flights: Flight[];
-  viewMode: ViewMode;
+  scope: Scope;
+  trackMode: TrackMode;
   selectedFlightId: string | null;
   isDarkTheme?: boolean;
   isMobile?: boolean;
-  onViewModeChange: (mode: ViewMode) => void;
+  onScopeChange: (scope: Scope) => void;
+  onTrackModeChange: (mode: TrackMode) => void;
   onFlightSelect: (id: string | null) => void;
 }
 
@@ -37,20 +39,25 @@ const getSelectStyle = (dark: boolean): React.CSSProperties => ({
   backdropFilter: "blur(8px)",
 });
 
-const MODE_LABELS: Record<ViewMode, string> = {
+const SCOPE_LABELS: Record<Scope, string> = {
   airport: "This Airport",
   "all-taiwan": "All Taiwan",
-  "time-window": "±12h Window",
+};
+
+const TRACK_LABELS: Record<TrackMode, string> = {
+  stack: "Stack All",
   single: "Track Single",
 };
 
 export function FlightPicker({
   flights,
-  viewMode,
+  scope,
+  trackMode,
   selectedFlightId,
   isDarkTheme = true,
   isMobile = false,
-  onViewModeChange,
+  onScopeChange,
+  onTrackModeChange,
   onFlightSelect,
 }: Props) {
   return (
@@ -58,23 +65,36 @@ export function FlightPicker({
       ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }
       : { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }
     }>
-      {(Object.keys(MODE_LABELS) as ViewMode[]).map((mode) => (
+      {(Object.keys(SCOPE_LABELS) as Scope[]).map((s) => (
         <button
-          key={mode}
+          key={s}
           style={{
-            ...btnStyle(viewMode === mode, isDarkTheme),
+            ...btnStyle(scope === s, isDarkTheme),
             ...(isMobile ? { padding: "10px 12px", fontSize: 12 } : {}),
           }}
-          onClick={() => {
-            onViewModeChange(mode);
-            if (mode !== "single") onFlightSelect(null);
-          }}
+          onClick={() => onScopeChange(s)}
         >
-          {MODE_LABELS[mode]}
+          {SCOPE_LABELS[s]}
         </button>
       ))}
 
-      {viewMode === "single" && (
+      {(Object.keys(TRACK_LABELS) as TrackMode[]).map((m) => (
+        <button
+          key={m}
+          style={{
+            ...btnStyle(trackMode === m, isDarkTheme),
+            ...(isMobile ? { padding: "10px 12px", fontSize: 12 } : {}),
+          }}
+          onClick={() => {
+            onTrackModeChange(m);
+            if (m !== "single") onFlightSelect(null);
+          }}
+        >
+          {TRACK_LABELS[m]}
+        </button>
+      ))}
+
+      {trackMode === "single" && (
         <select
           value={selectedFlightId ?? ""}
           onChange={(e) => onFlightSelect(e.target.value || null)}
