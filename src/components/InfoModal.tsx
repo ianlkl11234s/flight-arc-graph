@@ -161,8 +161,8 @@ function GettingStartedPage({ lang }: { lang: Lang }) {
         </Card>
         <Card title="Data Source">
           {L
-            ? <><b>API Tracks</b>：FR24 完整軌跡資料，含歷史航跡點。<b>Fused Snapshot</b>：空域快照融合，多源即時位置。</>
-            : <><b>API Tracks</b>: FR24 full trajectory data with historical track points. <b>Fused Snapshot</b>: Airspace snapshot fusion from multiple real-time sources.</>
+            ? <><b>Route Tracks</b>：FR24 API 精細航線軌跡，以台灣機場起降為主，細節豐富。<b>Airspace Scan</b>：OpenSky 空域掃描，涵蓋台灣附近所有飛機，覆蓋完整但軌跡較粗。</>
+            : <><b>Route Tracks</b>: FR24 API detailed route trajectories centered on Taiwan airport departures/arrivals. <b>Airspace Scan</b>: OpenSky airspace scan covering all aircraft near Taiwan with broader coverage but coarser trails.</>
           }
         </Card>
         <Card title="Aircraft Filter">
@@ -170,10 +170,16 @@ function GettingStartedPage({ lang }: { lang: Lang }) {
             ? "依機型分類篩選：Military / Business Jet / Helicopter / Turboprop / Narrowbody / Widebody 等類別。"
             : "Filter by aircraft category: Military / Business Jet / Helicopter / Turboprop / Narrowbody / Widebody, etc."}
         </Card>
+        <Card title="Scope">
+          {L
+            ? <><b>This Airport</b>：僅顯示選定機場的起降航班。<b>All Taiwan</b>：顯示全台所有航班。<b>Stack All</b>：同時顯示所有航班。<b>Track Single</b>：追蹤單一航班，鏡頭鎖定跟隨。</>
+            : <><b>This Airport</b>: Only flights for the selected airport. <b>All Taiwan</b>: All flights across Taiwan. <b>Stack All</b>: Display all flights at once. <b>Track Single</b>: Follow a single flight with camera lock.</>
+          }
+        </Card>
         <Card title="Display Mode">
           {L
-            ? <><b>Flight Trails</b>：完整軌跡線 + 光球動畫。<b>Live Status</b>：僅顯示即時位置光球，無軌跡線。</>
-            : <><b>Flight Trails</b>: Full trajectory lines + orb animation. <b>Live Status</b>: Only real-time position orbs, no trail lines.</>
+            ? <><b>Flight Trails</b>：完整軌跡線 + 光球動畫。<b>Live Status</b>：僅顯示即時位置光球，無軌跡線。勾選 <b>±12h Window</b> 可僅顯示當前播放時間前後 12 小時的航班，減少畫面雜訊。</>
+            : <><b>Flight Trails</b>: Full trajectory lines + orb animation. <b>Live Status</b>: Only real-time position orbs, no trail lines. Enable <b>±12h Window</b> to show only flights within 12 hours of the current playback time, reducing visual clutter.</>
           }
         </Card>
       </div>
@@ -233,15 +239,15 @@ function DataSourcesPage({ lang }: { lang: Lang }) {
   const L = lang === "zh";
   const sources = [
     {
-      name: { zh: "FlightRadar24 API", en: "FlightRadar24 API" },
+      name: { zh: "Route Tracks — FlightRadar24 API", en: "Route Tracks — FlightRadar24 API" },
       source: "FR24 Explorer API",
-      desc: { zh: "台灣 22 座機場起降完整軌跡資料。透過 flight-summary/light 端點取得航班清單，再逐航班擷取詳細軌跡點（經緯度、高度、速度、時間戳）。每日約 2,600+ 航班。", en: "Complete trajectory data for all 22 Taiwan airports. Flight lists retrieved via flight-summary/light endpoint, then detailed track points (lat/lon, altitude, speed, timestamp) fetched per flight. ~2,600+ flights daily." },
+      desc: { zh: "以台灣 22 座機場起降為主的精細軌跡資料。透過 flight-summary/light 端點取得航班清單，再逐航班擷取詳細軌跡點（經緯度、高度、速度、時間戳）。軌跡細緻清晰，每日約 2,600+ 航班。", en: "Detailed trajectory data centered on departures/arrivals at all 22 Taiwan airports. Flight lists retrieved via flight-summary/light endpoint, then per-flight track points (lat/lon, altitude, speed, timestamp) fetched. High-fidelity trails, ~2,600+ flights daily." },
       color: "#64aaff",
     },
     {
-      name: { zh: "ADS-B 空域快照", en: "ADS-B Snapshot" },
-      source: "ADS-B / OpenSky",
-      desc: { zh: "空域快照融合 — 結合 ADS-B 接收器與 OpenSky Network 資料，提供台灣空域的即時飛機位置快照。與 FR24 軌跡資料互補。", en: "Airspace snapshot fusion — combines ADS-B receiver and OpenSky Network data to provide real-time aircraft position snapshots over Taiwan's airspace. Complements FR24 trajectory data." },
+      name: { zh: "Airspace Scan — OpenSky Network", en: "Airspace Scan — OpenSky Network" },
+      source: "OpenSky / ADS-B",
+      desc: { zh: "台灣附近空域的全覆蓋掃描 — 以 OpenSky Network 為主要資料來源，持續更新台灣周邊所有飛機位置。涵蓋範圍完整（包含過境、軍機等），但軌跡由點連線構成，降落過程細節較粗。與 Route Tracks 互補使用。", en: "Full-coverage airspace scan around Taiwan — primarily sourced from OpenSky Network, continuously tracking all aircraft near Taiwan. Broader coverage (including overflights, military, etc.) but trails are point-connected and less detailed during descent. Complementary to Route Tracks." },
       color: "#1ad9e5",
     },
     {

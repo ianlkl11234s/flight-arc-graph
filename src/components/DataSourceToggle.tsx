@@ -8,8 +8,8 @@ interface DataSourceToggleProps {
 }
 
 const options: { value: DataSource; label: string }[] = [
-  { value: "api", label: "API Tracks" },
-  { value: "fused", label: "Fused Snapshot" },
+  { value: "api", label: "Route Tracks" },
+  { value: "fused", label: "Airspace Scan" },
 ];
 
 export function DataSourceToggle({

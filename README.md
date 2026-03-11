@@ -64,8 +64,8 @@ Flight Trails 模式下的子選項（checkbox），開啟後僅顯示當前播�
 
 | 模式 | 資料檔案 | 說明 |
 |------|---------|------|
-| API Tracks | `aviation_data.json` | FR24 API 完整軌跡（台灣機場起降） |
-| Fused Snapshot | `aviation_data_fused.json` | 融合快照資料（空域觀測 + 軌跡拼接） |
+| Route Tracks | `aviation_data.json` | FR24 API 精細軌跡（台灣機場起降航線） |
+| Airspace Scan | `aviation_data_fused.json` | OpenSky 空域掃描（台灣附近所有飛機，涵蓋完整但軌跡較粗） |
 
 兩個檔案啟動時平行載入，切換即時生效不需重新 fetch。若融合資料不存在，Fused Snapshot 按鈕自動 disabled。
 
@@ -180,7 +180,7 @@ Taiwan Flight Arc/
 │   │   ├── AirportSelector.tsx
 │   │   ├── FlightPicker.tsx       # Scope + TrackMode 選擇（支援 isMobile 2×2 grid）
 │   │   ├── FlightStatsPanel.tsx   # 右側統計面板（可拖拉寬度）
-│   │   ├── DataSourceToggle.tsx   # API Tracks / Fused Snapshot 切換
+│   │   ├── DataSourceToggle.tsx   # Route Tracks / Airspace Scan 切換
 │   │   ├── TimelineControls.tsx   # 支援 isMobile（加大觸控區）
 │   │   ├── StyleSelector.tsx
 │   │   └── MobileBottomSheet.tsx  # 手機版三段式底部面板
