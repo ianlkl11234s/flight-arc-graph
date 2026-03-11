@@ -1,7 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import type { DisplayMode, RenderMode, DataSource } from "../types";
-import type { AircraftFilterKey, AircraftCategory } from "../data/aircraftCategories";
-import { AIRCRAFT_CATEGORIES } from "../data/aircraftCategories";
+import type { DisplayMode, RenderMode, ViewMode, Flight } from "../types";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
 
@@ -15,18 +13,6 @@ const BG_PANEL = "rgba(0, 0, 0, 0.45)";
 const BORDER = "#2A2D32";
 const DIM = "#6B7280";
 
-const CATEGORY_ORDER: AircraftCategory[] = [
-  "military",
-  "business-jet",
-  "helicopter",
-  "training",
-  "china-domestic",
-];
-
-const ALL_SPECIAL = new Set(
-  Object.values(AIRCRAFT_CATEGORIES).flatMap((c) => c.types),
-);
-
 /* ── Types ───────────────────────────────────────────────── */
 
 type PanelId = "settings" | "locations" | "calendar";
@@ -35,10 +21,6 @@ export interface IconRailSidebarProps {
   // Settings panel controls
   displayMode: DisplayMode;
   renderMode: RenderMode;
-  dataSource: DataSource;
-  aircraftFilter: AircraftFilterKey;
-  hasFused: boolean;
-  availableTypes: string[];
   mapStyleId: string;
   // Slider values
   altExaggeration: number;
@@ -50,8 +32,6 @@ export interface IconRailSidebarProps {
   // Callbacks
   onDisplayModeChange: (mode: DisplayMode) => void;
   onRenderModeChange: (mode: RenderMode) => void;
-  onDataSourceChange: (source: DataSource) => void;
-  onAircraftFilterChange: (filter: AircraftFilterKey) => void;
   onMapStyleChange: (id: string) => void;
   onAltExaggerationChange: (v: number) => void;
   onAltOffsetChange: (v: number) => void;
@@ -59,6 +39,12 @@ export interface IconRailSidebarProps {
   onOrbScaleChange: (v: number) => void;
   onAirportOpacityChange: (v: number) => void;
   onAirportGlowChange: (v: number) => void;
+  // View mode (FlightPicker)
+  viewMode: ViewMode;
+  pickableFlights: Flight[];
+  selectedFlightId: string | null;
+  onViewModeChange: (mode: ViewMode) => void;
+  onFlightSelect: (id: string | null) => void;
   // Locations
   airports: string[];
   selectedAirport: string;
@@ -325,17 +311,65 @@ function IconInfo() {
 /* ── Panel contents ──────────────────────────────────────── */
 
 function SettingsPanel(props: IconRailSidebarProps) {
-  const specialInData = props.availableTypes.filter((t) => ALL_SPECIAL.has(t));
-  const categoriesInData = CATEGORY_ORDER.filter((cat) =>
-    AIRCRAFT_CATEGORIES[cat].types.some((t) => props.availableTypes.includes(t)),
-  );
-  const hasSpecial = specialInData.length > 0;
-
-  const disabledSources = new Set<DataSource>();
-  if (!props.hasFused) disabledSources.add("fused");
-
   return (
     <>
+      <SectionHeader>View</SectionHeader>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, marginBottom: 8 }}>
+        {(["airport", "all-taiwan", "time-window", "single"] as ViewMode[]).map((mode) => {
+          const labels: Record<ViewMode, string> = {
+            airport: "This Airport",
+            "all-taiwan": "All Taiwan",
+            "time-window": "±12h Window",
+            single: "Track Single",
+          };
+          const isActive = props.viewMode === mode;
+          return (
+            <button
+              key={mode}
+              onClick={() => props.onViewModeChange(mode)}
+              style={{
+                padding: "5px 0",
+                fontSize: 11,
+                fontFamily: "monospace",
+                border: `1px solid ${isActive ? "#64aaff" : BORDER}`,
+                borderRadius: 4,
+                background: isActive ? "rgba(100,170,255,0.2)" : "transparent",
+                color: isActive ? "#fff" : ACCENT,
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              {labels[mode]}
+            </button>
+          );
+        })}
+      </div>
+      {props.viewMode === "single" && props.pickableFlights.length > 0 && (
+        <select
+          value={props.selectedFlightId ?? ""}
+          onChange={(e) => props.onFlightSelect(e.target.value || null)}
+          style={{
+            width: "100%",
+            background: "rgba(0,0,0,0.4)",
+            color: "#fff",
+            border: `1px solid ${BORDER}`,
+            borderRadius: 4,
+            padding: "5px 6px",
+            fontSize: 11,
+            fontFamily: "monospace",
+            cursor: "pointer",
+            marginBottom: 8,
+          }}
+        >
+          <option value="">Select flight...</option>
+          {props.pickableFlights.map((f) => (
+            <option key={f.fr24_id} value={f.fr24_id}>
+              {f.callsign} ({f.origin_iata}→{f.dest_iata})
+            </option>
+          ))}
+        </select>
+      )}
+
       <SectionHeader>Display</SectionHeader>
       <ToggleButtons<DisplayMode>
         options={[
@@ -353,56 +387,6 @@ function SettingsPanel(props: IconRailSidebarProps) {
         value={props.renderMode}
         onChange={props.onRenderModeChange}
       />
-
-      <SectionHeader>Data</SectionHeader>
-      <ToggleButtons<DataSource>
-        options={[
-          { value: "api", label: "API Tracks" },
-          { value: "fused", label: "Fused Snapshot" },
-        ]}
-        value={props.dataSource}
-        onChange={props.onDataSourceChange}
-        disabledValues={disabledSources}
-      />
-      <select
-        value={props.aircraftFilter}
-        onChange={(e) => props.onAircraftFilterChange(e.target.value as AircraftFilterKey)}
-        style={{
-          width: "100%",
-          background: props.aircraftFilter !== "all" ? "rgba(100,170,255,0.2)" : "rgba(0,0,0,0.4)",
-          color: "#fff",
-          border: `1px solid ${props.aircraftFilter !== "all" ? "rgba(100,170,255,0.5)" : BORDER}`,
-          borderRadius: 4,
-          padding: "5px 6px",
-          fontSize: 11,
-          fontFamily: "monospace",
-          cursor: "pointer",
-          marginBottom: 8,
-        }}
-      >
-        <option value="all">All Types</option>
-        {hasSpecial && (
-          <>
-            <option disabled>──────────</option>
-            <option value="all-special">All Special</option>
-            {categoriesInData.map((cat) => (
-              <option key={cat} value={`cat:${cat}`}>
-                {AIRCRAFT_CATEGORIES[cat].label}
-              </option>
-            ))}
-          </>
-        )}
-        {specialInData.length > 0 && (
-          <>
-            <option disabled>──────────</option>
-            {specialInData.sort().map((t) => (
-              <option key={t} value={`type:${t}`}>
-                {t}
-              </option>
-            ))}
-          </>
-        )}
-      </select>
 
       <SectionHeader>Map</SectionHeader>
       <div style={{ marginBottom: 8 }}>
@@ -714,13 +698,12 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
     <>
       <style>{FADE_KEYFRAMES}</style>
 
-      {/* Icon Rail */}
+      {/* Icon Rail (top icons) */}
       <div
         style={{
           position: "absolute",
           left: 0,
           top: 0,
-          bottom: 0,
           width: RAIL_WIDTH,
           zIndex: 20,
           background: BG_RAIL,
@@ -728,8 +711,10 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           flexDirection: "column",
           alignItems: "center",
           paddingTop: 12,
-          paddingBottom: 12,
+          paddingBottom: 8,
           borderRight: `1px solid ${BORDER}`,
+          borderBottom: `1px solid ${BORDER}`,
+          borderRadius: "0 0 8px 0",
         }}
       >
         {/* Logo */}
@@ -781,18 +766,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           title="Calendar"
         >
           <IconCalendar />
-        </RailIcon>
-
-        {/* Spacer */}
-        <div style={{ flex: 1 }} />
-
-        {/* Info */}
-        <RailIcon
-          active={false}
-          onClick={props.onInfoClick}
-          title="Info"
-        >
-          <IconInfo />
         </RailIcon>
       </div>
 

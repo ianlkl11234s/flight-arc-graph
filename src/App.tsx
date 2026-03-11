@@ -504,10 +504,6 @@ export default function App() {
           <IconRailSidebar
             displayMode={displayMode}
             renderMode={renderMode}
-            dataSource={dataSource}
-            aircraftFilter={aircraftFilter}
-            hasFused={hasFused}
-            availableTypes={availableTypes}
             mapStyleId={mapStyleId}
             altExaggeration={altExaggeration}
             altOffset={altOffset}
@@ -517,8 +513,6 @@ export default function App() {
             airportGlow={airportGlow}
             onDisplayModeChange={(m) => { setDisplayMode(m); setTooltipInfo(null); }}
             onRenderModeChange={setRenderMode}
-            onDataSourceChange={setDataSource}
-            onAircraftFilterChange={setAircraftFilter}
             onMapStyleChange={setMapStyleId}
             onAltExaggerationChange={setAltExaggeration}
             onAltOffsetChange={setAltOffset}
@@ -526,6 +520,11 @@ export default function App() {
             onOrbScaleChange={setOrbScale}
             onAirportOpacityChange={setAirportOpacity}
             onAirportGlowChange={setAirportGlow}
+            viewMode={viewMode}
+            pickableFlights={pickableFlights}
+            selectedFlightId={selectedFlightId}
+            onViewModeChange={setViewMode}
+            onFlightSelect={setSelectedFlightId}
             airports={airports}
             selectedAirport={selectedAirport}
             onAirportChange={setSelectedAirport}
@@ -570,13 +569,17 @@ export default function App() {
             >
               Taiwan Flight Arc
             </h1>
-            <FlightPicker
-              flights={pickableFlights}
-              viewMode={viewMode}
-              selectedFlightId={selectedFlightId}
+            <DataSourceToggle
+              dataSource={dataSource}
+              hasFused={hasFused}
               isDarkTheme={isDarkTheme}
-              onViewModeChange={setViewMode}
-              onFlightSelect={setSelectedFlightId}
+              onChange={setDataSource}
+            />
+            <AircraftTypeFilter
+              filter={aircraftFilter}
+              isDarkTheme={isDarkTheme}
+              availableTypes={availableTypes}
+              onChange={setAircraftFilter}
             />
           </div>
 
@@ -602,11 +605,53 @@ export default function App() {
               right: 16,
               zIndex: 10,
               display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
               gap: 8,
             }}
           >
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => setCaptureMode(true)}
+                style={{
+                  padding: "6px 14px",
+                  background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
+                  border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
+                  borderRadius: 6,
+                  color: isDarkTheme ? "#fff" : "#333",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  cursor: "pointer",
+                  backdropFilter: "blur(8px)",
+                  letterSpacing: 1,
+                }}
+              >
+                Capture
+              </button>
+              <button
+                onClick={() => setRenderMode((m) => (m === "3d" ? "2d" : "3d"))}
+                style={{
+                  padding: "6px 14px",
+                  background: renderMode === "3d"
+                    ? (isDarkTheme ? "rgba(80,140,255,0.2)" : "rgba(80,140,255,0.1)")
+                    : (isDarkTheme ? "rgba(255,170,68,0.2)" : "rgba(255,170,68,0.1)"),
+                  border: `1px solid ${renderMode === "3d"
+                    ? (isDarkTheme ? "rgba(80,140,255,0.5)" : "rgba(80,140,255,0.4)")
+                    : (isDarkTheme ? "rgba(255,170,68,0.5)" : "rgba(255,170,68,0.4)")}`,
+                  borderRadius: 6,
+                  color: isDarkTheme ? "#fff" : "#333",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  cursor: "pointer",
+                  backdropFilter: "blur(8px)",
+                  letterSpacing: 1,
+                }}
+              >
+                {renderMode === "3d" ? "3D Altitude" : "2D Flat"}
+              </button>
+            </div>
             <button
-              onClick={() => setCaptureMode(true)}
+              onClick={() => setShowInfo(true)}
               style={{
                 padding: "6px 14px",
                 background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
@@ -620,29 +665,18 @@ export default function App() {
                 letterSpacing: 1,
               }}
             >
-              Capture
+              Info
             </button>
-            <button
-              onClick={() => setShowStats((s) => !s)}
+            <div
               style={{
-                padding: "6px 14px",
-                background: showStats
-                  ? (isDarkTheme ? "rgba(100,170,255,0.25)" : "rgba(100,170,255,0.15)")
-                  : (isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)"),
-                border: `1px solid ${showStats
-                  ? (isDarkTheme ? "rgba(100,170,255,0.5)" : "rgba(100,170,255,0.4)")
-                  : (isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)")}`,
-                borderRadius: 6,
-                color: isDarkTheme ? "#fff" : "#333",
-                fontSize: 12,
+                fontSize: 10,
                 fontFamily: "monospace",
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-                letterSpacing: 1,
+                color: isDarkTheme ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)",
+                letterSpacing: 0.5,
               }}
             >
-              Stats
-            </button>
+              Right-drag to rotate · Scroll to zoom
+            </div>
           </div>
 
           {/* 航班數 + 相機資訊 */}
