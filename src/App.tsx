@@ -16,6 +16,8 @@ import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
 import { DataSourceToggle } from "./components/DataSourceToggle";
+import { AircraftTypeFilter } from "./components/AircraftTypeFilter";
+import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCategories";
 
 const getSliderLabelStyle = (dark: boolean): React.CSSProperties => ({
   color: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)",
@@ -56,6 +58,7 @@ export default function App() {
   const [airportOpacity, setAirportOpacity] = useState(0.12);
   const [airportGlow, setAirportGlow] = useState(0.8);
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
+  const [aircraftFilter, setAircraftFilter] = useState<AircraftFilterKey>("all");
   const [captureMode, setCaptureMode] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -96,6 +99,16 @@ export default function App() {
     timeline.currentTime,
   ]);
 
+  // Aircraft type filter
+  const finalFlights = useMemo(
+    () => filterByAircraftType(displayedFlights, aircraftFilter),
+    [displayedFlights, aircraftFilter],
+  );
+  const availableTypes = useMemo(
+    () => [...new Set(displayedFlights.map((f) => f.aircraft_type))].filter(Boolean).sort(),
+    [displayedFlights],
+  );
+
   // 用於 FlightPicker 的航班列表（always based on airport filter）
   const pickableFlights = useMemo(
     () => filterByAirport(allFlights, selectedAirport),
@@ -105,7 +118,7 @@ export default function App() {
   const isDarkTheme = !["light", "streets"].includes(mapStyleId);
 
   const mapRef = useRef<MapboxMap | null>(null);
-  const flightsRef = useRef(displayedFlights);
+  const flightsRef = useRef(finalFlights);
   const timeRef = useRef(timeline.currentTime);
   const renderModeRef = useRef(renderMode);
   const altExagRef = useRef(altExaggeration);
@@ -117,7 +130,7 @@ export default function App() {
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
 
-  flightsRef.current = displayedFlights;
+  flightsRef.current = finalFlights;
   timeRef.current = timeline.currentTime;
   renderModeRef.current = renderMode;
   altExagRef.current = altExaggeration;
@@ -334,7 +347,7 @@ export default function App() {
       <MapView
         preset={preset}
         styleUrl={styleUrl}
-        flights={displayedFlights}
+        flights={finalFlights}
         renderMode={renderMode}
         airportOpacity={airportOpacity}
         airportGlow={airportGlow}
@@ -561,6 +574,13 @@ export default function App() {
               hasFused={hasFused}
               isDarkTheme={isDarkTheme}
               onChange={setDataSource}
+            />
+            <span style={{ color: isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)", margin: "0 2px" }}>|</span>
+            <AircraftTypeFilter
+              filter={aircraftFilter}
+              isDarkTheme={isDarkTheme}
+              availableTypes={availableTypes}
+              onChange={setAircraftFilter}
             />
           </div>
 
@@ -858,7 +878,7 @@ export default function App() {
                 fontFamily: "monospace",
               }}
             >
-              {displayedFlights.length} flights
+              {finalFlights.length} flights
               {viewMode === "time-window" && " (±12h)"}
               {viewMode === "all-taiwan" && " (all Taiwan)"}
             </div>
@@ -1036,6 +1056,12 @@ export default function App() {
                         isDarkTheme={true}
                         onChange={setDataSource}
                       />
+                      <AircraftTypeFilter
+                        filter={aircraftFilter}
+                        isDarkTheme={true}
+                        availableTypes={availableTypes}
+                        onChange={setAircraftFilter}
+                      />
                     </div>
                     <FlightPicker
                       flights={pickableFlights}
@@ -1054,7 +1080,7 @@ export default function App() {
                         fontFamily: "monospace",
                       }}
                     >
-                      {displayedFlights.length} flights
+                      {finalFlights.length} flights
                       {viewMode === "time-window" && " (±12h)"}
                       {viewMode === "all-taiwan" && " (all Taiwan)"}
                     </div>
