@@ -18,21 +18,8 @@ import { FlightStatsPanel } from "./components/FlightStatsPanel";
 import { DataSourceToggle } from "./components/DataSourceToggle";
 import { AircraftTypeFilter } from "./components/AircraftTypeFilter";
 import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCategories";
-
-const getSliderLabelStyle = (dark: boolean): React.CSSProperties => ({
-  color: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)",
-  fontSize: 11,
-  fontFamily: "monospace",
-  display: "flex",
-  alignItems: "center",
-  gap: 4,
-});
-const getSliderStyle = (dark: boolean): React.CSSProperties => ({
-  width: 60,
-  height: 4,
-  accentColor: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)",
-  cursor: "pointer",
-});
+import { IconRailSidebar } from "./components/IconRailSidebar";
+import { InfoModal } from "./components/InfoModal";
 
 export default function App() {
   const [dataSource, setDataSource] = useState<DataSource>("api");
@@ -62,6 +49,7 @@ export default function App() {
   const [captureMode, setCaptureMode] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
   const { isMobile, isLandscape } = useIsMobile();
@@ -99,14 +87,40 @@ export default function App() {
     timeline.currentTime,
   ]);
 
+  // 本地資料可用日期（台灣時區）
+  const availableDates = useMemo(() => {
+    const dates = new Set<string>();
+    for (const f of allFlights) {
+      const t = f.dep_time || f.path[0]?.[3];
+      if (t && t > 0) {
+        const d = new Date(t * 1000);
+        const tw = new Date(d.getTime() + 8 * 3600_000); // UTC+8
+        dates.add(tw.toISOString().slice(0, 10));
+      }
+    }
+    return [...dates].sort();
+  }, [allFlights]);
+
+  // 日期過濾
+  const dateFilteredFlights = useMemo(() => {
+    if (!selectedDate) return displayedFlights;
+    return displayedFlights.filter((f) => {
+      const t = f.dep_time || f.path[0]?.[3];
+      if (!t || t <= 0) return false;
+      const d = new Date(t * 1000);
+      const tw = new Date(d.getTime() + 8 * 3600_000);
+      return tw.toISOString().slice(0, 10) === selectedDate;
+    });
+  }, [displayedFlights, selectedDate]);
+
   // Aircraft type filter
   const finalFlights = useMemo(
-    () => filterByAircraftType(displayedFlights, aircraftFilter),
-    [displayedFlights, aircraftFilter],
+    () => filterByAircraftType(dateFilteredFlights, aircraftFilter),
+    [dateFilteredFlights, aircraftFilter],
   );
   const availableTypes = useMemo(
-    () => [...new Set(displayedFlights.map((f) => f.aircraft_type))].filter(Boolean).sort(),
-    [displayedFlights],
+    () => [...new Set(dateFilteredFlights.map((f) => f.aircraft_type))].filter(Boolean).sort(),
+    [dateFilteredFlights],
   );
 
   // 用於 FlightPicker 的航班列表（always based on airport filter）
@@ -486,18 +500,63 @@ export default function App() {
       {/* ── 一般模式 UI ── */}
       {!captureMode && !isMobile && (
         <>
-          {/* 頂部控制列 */}
+          {/* Icon Rail Sidebar */}
+          <IconRailSidebar
+            displayMode={displayMode}
+            renderMode={renderMode}
+            dataSource={dataSource}
+            aircraftFilter={aircraftFilter}
+            hasFused={hasFused}
+            availableTypes={availableTypes}
+            mapStyleId={mapStyleId}
+            altExaggeration={altExaggeration}
+            altOffset={altOffset}
+            staticOpacity={staticOpacity}
+            orbScale={orbScale}
+            airportOpacity={airportOpacity}
+            airportGlow={airportGlow}
+            onDisplayModeChange={(m) => { setDisplayMode(m); setTooltipInfo(null); }}
+            onRenderModeChange={setRenderMode}
+            onDataSourceChange={setDataSource}
+            onAircraftFilterChange={setAircraftFilter}
+            onMapStyleChange={setMapStyleId}
+            onAltExaggerationChange={setAltExaggeration}
+            onAltOffsetChange={setAltOffset}
+            onStaticOpacityChange={setStaticOpacity}
+            onOrbScaleChange={setOrbScale}
+            onAirportOpacityChange={setAirportOpacity}
+            onAirportGlowChange={setAirportGlow}
+            airports={airports}
+            selectedAirport={selectedAirport}
+            onAirportChange={setSelectedAirport}
+            onLocationJump={(icao) => {
+              const p = getPresetByIcao(icao);
+              if (p && mapRef.current) {
+                mapRef.current.flyTo({
+                  center: p.center,
+                  zoom: p.zoom,
+                  pitch: p.pitch,
+                  bearing: p.bearing,
+                  duration: 2000,
+                });
+              }
+            }}
+            availableDates={availableDates}
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            onInfoClick={() => setShowInfo(true)}
+          />
+
+          {/* 頂部控制列（sidebar 右邊） */}
           <div
             style={{
               position: "absolute",
               top: 16,
-              left: 16,
-              right: 16,
+              left: 72,
               zIndex: 10,
               display: "flex",
-              gap: 10,
+              gap: 8,
               alignItems: "center",
-              flexWrap: "wrap",
             }}
           >
             <h1
@@ -511,92 +570,6 @@ export default function App() {
             >
               Taiwan Flight Arc
             </h1>
-
-            <AirportSelector
-              airports={airports}
-              selected={selectedAirport}
-              isDarkTheme={isDarkTheme}
-              onChange={setSelectedAirport}
-            />
-
-            <StyleSelector
-              selected={mapStyleId}
-              isDarkTheme={isDarkTheme}
-              onChange={setMapStyleId}
-            />
-
-            {loading && (
-              <span style={{ color: isDarkTheme ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)", fontSize: 13 }}>
-                Loading...
-              </span>
-            )}
-          </div>
-
-          {/* 第二列：Display Mode 切換 */}
-          <div
-            style={{
-              position: "absolute",
-              top: 52,
-              left: 16,
-              zIndex: 10,
-              display: "flex",
-              gap: 6,
-              alignItems: "center",
-            }}
-          >
-            {(["trails", "status"] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => { setDisplayMode(mode); setTooltipInfo(null); }}
-                style={{
-                  background: displayMode === mode
-                    ? (isDarkTheme ? "rgba(100,170,255,0.3)" : "rgba(100,170,255,0.2)")
-                    : (isDarkTheme ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.85)"),
-                  color: isDarkTheme ? "#fff" : "#333",
-                  border: `1px solid ${displayMode === mode
-                    ? (isDarkTheme ? "rgba(100,170,255,0.6)" : "rgba(100,170,255,0.5)")
-                    : (isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)")}`,
-                  borderRadius: 4,
-                  padding: "4px 10px",
-                  fontSize: 11,
-                  cursor: "pointer",
-                  fontFamily: "monospace",
-                  backdropFilter: "blur(8px)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {mode === "trails" ? "Flight Trails" : "Live Status"}
-              </button>
-            ))}
-            <span style={{ color: isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)", margin: "0 2px" }}>|</span>
-            <DataSourceToggle
-              dataSource={dataSource}
-              hasFused={hasFused}
-              isDarkTheme={isDarkTheme}
-              onChange={setDataSource}
-            />
-            <span style={{ color: isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)", margin: "0 2px" }}>|</span>
-            <AircraftTypeFilter
-              filter={aircraftFilter}
-              isDarkTheme={isDarkTheme}
-              availableTypes={availableTypes}
-              onChange={setAircraftFilter}
-            />
-          </div>
-
-          {/* 第三列：模式選擇 */}
-          <div
-            style={{
-              position: "absolute",
-              top: 84,
-              left: 16,
-              right: 16,
-              zIndex: 10,
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-            }}
-          >
             <FlightPicker
               flights={pickableFlights}
               viewMode={viewMode}
@@ -605,51 +578,6 @@ export default function App() {
               onViewModeChange={setViewMode}
               onFlightSelect={setSelectedFlightId}
             />
-          </div>
-
-          {/* 第四列：視覺參數調整 */}
-          <div
-            style={{
-              position: "absolute",
-              top: 116,
-              left: 16,
-              zIndex: 10,
-              display: "flex",
-              gap: 14,
-              alignItems: "center",
-            }}
-          >
-            <label style={getSliderLabelStyle(isDarkTheme)}>
-              Alt ×{altExaggeration.toFixed(1)}
-              <input type="range" min={1} max={5} step={0.5} value={altExaggeration}
-                onChange={(e) => setAltExaggeration(Number(e.target.value))} style={getSliderStyle(isDarkTheme)} />
-            </label>
-            <label style={getSliderLabelStyle(isDarkTheme)}>
-              Z +{altOffset}m
-              <input type="range" min={0} max={200} step={50} value={altOffset}
-                onChange={(e) => setAltOffset(Number(e.target.value))} style={getSliderStyle(isDarkTheme)} />
-            </label>
-            <label style={getSliderLabelStyle(isDarkTheme)}>
-              Opacity {staticOpacity.toFixed(2)}
-              <input type="range" min={0.02} max={0.5} step={0.02} value={staticOpacity}
-                onChange={(e) => setStaticOpacity(Number(e.target.value))} style={getSliderStyle(isDarkTheme)} />
-            </label>
-            <label style={getSliderLabelStyle(isDarkTheme)}>
-              Orb {(orbScale * 100000).toFixed(1)}
-              <input type="range" min={0.000001} max={0.00001} step={0.000001} value={orbScale}
-                onChange={(e) => setOrbScale(Number(e.target.value))} style={getSliderStyle(isDarkTheme)} />
-            </label>
-            <span style={{ color: isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)", margin: "0 2px" }}>|</span>
-            <label style={getSliderLabelStyle(isDarkTheme)}>
-              APT {airportOpacity.toFixed(2)}
-              <input type="range" min={0} max={0.3} step={0.01} value={airportOpacity}
-                onChange={(e) => setAirportOpacity(Number(e.target.value))} style={getSliderStyle(isDarkTheme)} />
-            </label>
-            <label style={getSliderLabelStyle(isDarkTheme)}>
-              Glow {airportGlow.toFixed(1)}
-              <input type="range" min={0} max={2} step={0.1} value={airportGlow}
-                onChange={(e) => setAirportGlow(Number(e.target.value))} style={getSliderStyle(isDarkTheme)} />
-            </label>
           </div>
 
           {/* 時間軸 */}
@@ -695,39 +623,6 @@ export default function App() {
               Capture
             </button>
             <button
-              onClick={() => setRenderMode((m) => (m === "3d" ? "2d" : "3d"))}
-              style={{
-                padding: "6px 14px",
-                background: renderMode === "3d"
-                  ? (isDarkTheme ? "rgba(80,140,255,0.25)" : "rgba(80,140,255,0.15)")
-                  : (isDarkTheme ? "rgba(255,170,68,0.25)" : "rgba(255,170,68,0.15)"),
-                border: `1px solid ${renderMode === "3d" ? "rgba(80,140,255,0.5)" : "rgba(255,170,68,0.5)"}`,
-                borderRadius: 6,
-                color: isDarkTheme ? "#fff" : "#333",
-                fontSize: 12,
-                fontFamily: "monospace",
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-                letterSpacing: 1,
-              }}
-            >
-              {renderMode === "3d" ? "3D Altitude" : "2D Flat"}
-            </button>
-          </div>
-
-          {/* 右上角第二排：Info / Github / Threads / Mini Taiwan */}
-          <div
-            style={{
-              position: "absolute",
-              top: 52,
-              right: 16,
-              zIndex: 10,
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-            }}
-          >
-            <button
               onClick={() => setShowStats((s) => !s)}
               style={{
                 padding: "6px 14px",
@@ -748,122 +643,14 @@ export default function App() {
             >
               Stats
             </button>
-            <button
-              onClick={() => setShowInfo(true)}
-              style={{
-                padding: "6px 14px",
-                background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-                border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-                borderRadius: 6,
-                color: isDarkTheme ? "#fff" : "#333",
-                fontSize: 12,
-                fontFamily: "monospace",
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-                letterSpacing: 1,
-              }}
-            >
-              Info
-            </button>
-            <a
-              href="https://github.com/ianlkl11234s/flight-arc-graph"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-                border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-                color: isDarkTheme ? "#fff" : "#333",
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                textDecoration: "none",
-              }}
-              title="GitHub"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-              </svg>
-            </a>
-            <a
-              href="https://www.threads.com/@ianlkl1314"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-                border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-                color: isDarkTheme ? "#fff" : "#333",
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                textDecoration: "none",
-              }}
-              title="Threads"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.59 12c.025 3.086.718 5.496 2.057 7.164 1.432 1.784 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.346-.789-.96-1.42-1.744-1.838.164 3.1-1.063 5.453-3.693 5.453-1.602 0-2.97-.767-3.652-2.048-.585-1.098-.63-2.545.013-3.878.926-1.916 3.083-2.878 5.29-2.472.1-.612.133-1.266.08-1.952l2.036-.244c.083.87.06 1.693-.06 2.455 1.038.497 1.892 1.2 2.494 2.1.864 1.29 1.196 2.86.96 4.539-.32 2.28-1.462 4.1-3.298 5.272C15.692 23.347 13.718 24 12.186 24zm.512-7.17c.828 0 1.474-.31 1.858-.892.532-.806.56-2.04-.02-2.834-.328-.21-.702-.382-1.126-.506-.078 1.072-.29 2.089-.648 2.983-.137.343-.5 1.25.064 1.25h-.128z"/>
-              </svg>
-            </a>
-            <a
-              href="https://mini-taiwan-learning-project.zeabur.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-                border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-                color: isDarkTheme ? "#fff" : "#333",
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                textDecoration: "none",
-                fontSize: 9,
-                fontFamily: "monospace",
-                fontWeight: 700,
-                letterSpacing: -0.5,
-              }}
-              title="Mini Taiwan"
-            >
-              TW
-            </a>
           </div>
 
-          {/* 操作提示 */}
+          {/* 航班數 + 相機資訊 */}
           <div
             style={{
               position: "absolute",
-              top: 84,
-              right: 16,
-              zIndex: 10,
-              color: isDarkTheme ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.2)",
-              fontSize: 10,
-              fontFamily: "monospace",
-              letterSpacing: 0.5,
-              textAlign: "right",
-            }}
-          >
-            Right-drag to rotate · Scroll to zoom
-          </div>
-
-          {/* 航班數統計 + 相機角度 */}
-          <div
-            style={{
-              position: "absolute",
-              top: 144,
-              left: 16,
+              top: 52,
+              left: 72,
               zIndex: 10,
               background: isDarkTheme ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)",
               backdropFilter: "blur(8px)",
@@ -871,24 +658,13 @@ export default function App() {
               padding: "4px 10px",
             }}
           >
-            <div
-              style={{
-                color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)",
-                fontSize: 11,
-                fontFamily: "monospace",
-              }}
-            >
+            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: "monospace" }}>
               {finalFlights.length} flights
               {viewMode === "time-window" && " (±12h)"}
               {viewMode === "all-taiwan" && " (all Taiwan)"}
+              {selectedDate && ` · ${selectedDate}`}
             </div>
-            <div
-              style={{
-                color: isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)",
-                fontSize: 11,
-                fontFamily: "monospace",
-              }}
-            >
+            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)", fontSize: 11, fontFamily: "monospace" }}>
               {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
             </div>
           </div>
@@ -1182,144 +958,8 @@ export default function App() {
         />
       )}
 
-      {/* ── Info 面板 ── */}
-      {showInfo && (
-        <div
-          onClick={() => setShowInfo(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 100,
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "relative",
-              width: "100%",
-              maxWidth: 520,
-              maxHeight: "80vh",
-              overflowY: "auto",
-              background: "rgba(20,20,30,0.95)",
-              backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 16,
-              padding: isMobile ? "24px 20px" : "32px 36px",
-              color: "#fff",
-              fontFamily: "monospace",
-            }}
-          >
-            <button
-              onClick={() => setShowInfo(false)}
-              style={{
-                position: "absolute",
-                top: 12,
-                right: 12,
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.1)",
-                border: "none",
-                color: "#fff",
-                fontSize: 18,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              ✕
-            </button>
-
-            <h2 style={{ margin: "0 0 16px", fontSize: 20, letterSpacing: 2 }}>
-              Taiwan Flight Arc
-            </h2>
-
-            <section style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", letterSpacing: 1 }}>ABOUT</h3>
-              <p style={{ fontSize: 13, lineHeight: 1.7, color: "rgba(255,255,255,0.8)", margin: 0 }}>
-                台灣航班弧線視覺化 — 以 3D 弧線呈現台灣各機場的航班軌跡，
-                資料來源為 Flightradar24 API，透過 Mapbox GL 繪製於互動地圖上。
-              </p>
-            </section>
-
-            <section style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", letterSpacing: 1 }}>PARAMETERS</h3>
-              <ul style={{ fontSize: 12, lineHeight: 1.8, color: "rgba(255,255,255,0.75)", margin: 0, paddingLeft: 18 }}>
-                <li><b>Alt ×</b> — 高度誇張倍率，數值越大弧線越高聳</li>
-                <li><b>Z offset</b> — 基礎海拔偏移（公尺），避免弧線貼地</li>
-                <li><b>Opacity</b> — 靜態航線透明度</li>
-                <li><b>Orb</b> — 飛行光球大小</li>
-                <li><b>APT</b> — 機場區域底色透明度</li>
-                <li><b>Glow</b> — 機場光暈強度</li>
-              </ul>
-              <h3 style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "12px 0 6px", letterSpacing: 1 }}>CAMERA</h3>
-              <ul style={{ fontSize: 12, lineHeight: 1.8, color: "rgba(255,255,255,0.75)", margin: 0, paddingLeft: 18 }}>
-                <li><b>Pitch</b> — 相機俯仰角（0° 正俯視，90° 水平視角）</li>
-                <li><b>Bearing</b> — 相機方位角（0° 朝北，正值順時針旋轉）</li>
-                <li><b>Zoom</b> — 地圖縮放層級</li>
-              </ul>
-            </section>
-
-            <section style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", letterSpacing: 1 }}>DISPLAY MODES</h3>
-              <ul style={{ fontSize: 12, lineHeight: 1.8, color: "rgba(255,255,255,0.75)", margin: 0, paddingLeft: 18 }}>
-                <li><b>Flight Trails</b> — 顯示完整航線軌跡 + 動態光球（預設）</li>
-                <li><b>Live Status</b> — 隱藏完整航線，只保留飛機動態尾跡與光球</li>
-              </ul>
-            </section>
-
-            <section style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", letterSpacing: 1 }}>VIEW MODES</h3>
-              <ul style={{ fontSize: 12, lineHeight: 1.8, color: "rgba(255,255,255,0.75)", margin: 0, paddingLeft: 18 }}>
-                <li><b>This Airport</b> — 顯示選定機場的所有航班</li>
-                <li><b>All Taiwan</b> — 顯示全台灣所有航班</li>
-                <li><b>±12h Window</b> — 以當前時間為中心的 24 小時窗口</li>
-                <li><b>Track Single</b> — 追蹤單一航班，相機鎖定飛機在畫面中央跟隨移動</li>
-              </ul>
-            </section>
-
-            <section style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", letterSpacing: 1 }}>INTERACTION</h3>
-              <ul style={{ fontSize: 12, lineHeight: 1.8, color: "rgba(255,255,255,0.75)", margin: 0, paddingLeft: 18 }}>
-                <li><b>Click</b> — 點擊飛機光球顯示航班資訊（航班號、路線、機型、高度）</li>
-                <li><b>Double-click</b> — 雙擊飛機光球直接進入 Track Single 跟隨模式</li>
-              </ul>
-            </section>
-
-            <section style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", letterSpacing: 1 }}>DIY</h3>
-              <p style={{ fontSize: 12, lineHeight: 1.7, color: "rgba(255,255,255,0.75)", margin: 0 }}>
-                想自己做？Clone GitHub repo，準備 Mapbox token，
-                放入 FR24 航班 JSON 資料即可。詳見 README。
-              </p>
-            </section>
-
-            <section>
-              <h3 style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 8px", letterSpacing: 1 }}>LINKS</h3>
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                <a href="https://github.com/ianlkl11234s/flight-arc-graph" target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 12, color: "#66aaff", textDecoration: "none" }}>
-                  GitHub
-                </a>
-                <a href="https://www.threads.com/@ianlkl1314" target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 12, color: "#66aaff", textDecoration: "none" }}>
-                  Threads
-                </a>
-                <a href="https://mini-taiwan-learning-project.zeabur.app/" target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 12, color: "#66aaff", textDecoration: "none" }}>
-                  Mini Taiwan
-                </a>
-              </div>
-            </section>
-          </div>
-        </div>
-      )}
+      {/* ── Info Modal ── */}
+      <InfoModal open={showInfo} onClose={() => setShowInfo(false)} isMobile={isMobile} />
     </div>
   );
 }
