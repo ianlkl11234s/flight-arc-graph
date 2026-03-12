@@ -4,7 +4,7 @@ dist
 .env.local
 *.local
 *.tsbuildinfo
-public/aviation_data.json
-public/aviation_data_fused.json
+public/tracks/aviation_data.json
+public/airspace/aviation_data.json
 scripts/flight-list.json
 scripts/track-progress.json

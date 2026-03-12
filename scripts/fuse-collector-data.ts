@@ -11,7 +11,10 @@
  *   - 快照資料 → 用 icao24 合併同一架飛機的觀測點 → 生成軌跡
  *   - 超過 30 分鐘無觀測 → 切成不同航段
  *
- * 用法：tsx scripts/fuse-collector-data.ts [日期 YYYY-MM-DD]
+ * 用法：
+ *   tsx scripts/fuse-collector-data.ts              # 自動下載所有可用日期
+ *   tsx scripts/fuse-collector-data.ts 2026-03-10   # 指定單一日期
+ *   tsx scripts/fuse-collector-data.ts 2026-03-05 2026-03-10  # 指定日期範圍
  */
 
 import "dotenv/config";
@@ -429,76 +432,138 @@ function fuseData(
   return allFlights;
 }
 
+// ---------- Helpers ----------
+
+/** 取得三個資料源都有的日期，排序後回傳 */
+async function getAvailableDates(): Promise<{
+  fr24Dates: Set<string>;
+  zoneDates: Set<string>;
+  openskyDates: Set<string>;
+  allDates: string[];
+}> {
+  const [fr24, zone, opensky] = await Promise.all([
+    apiGet<{ dates: string[] }>(`/api/data/flight_fr24/dates`).catch(() => ({ dates: [] as string[] })),
+    apiGet<{ dates: string[] }>(`/api/data/flight_fr24_zone/dates`).catch(() => ({ dates: [] as string[] })),
+    apiGet<{ dates: string[] }>(`/api/data/flight_opensky/dates`).catch(() => ({ dates: [] as string[] })),
+  ]);
+
+  const fr24Set = new Set(fr24.dates);
+  const zoneSet = new Set(zone.dates);
+  const openskySet = new Set(opensky.dates);
+
+  // 取 zone 和 opensky 的聯集（至少有一個快照源就值得處理）
+  const allDatesSet = new Set<string>();
+  for (const d of [...zone.dates, ...opensky.dates]) allDatesSet.add(d);
+  // 也加入只有 fr24 的日期
+  for (const d of fr24.dates) allDatesSet.add(d);
+
+  const allDates = [...allDatesSet].sort();
+  return { fr24Dates: fr24Set, zoneDates: zoneSet, openskyDates: openskySet, allDates };
+}
+
+/** 解析 CLI 參數，決定要處理哪些日期 */
+function parseDateArgs(args: string[], available: string[]): string[] {
+  if (args.length === 0) return available; // 全部
+  if (args.length === 1) {
+    // 單一日期
+    if (!available.includes(args[0]!)) {
+      console.warn(`Warning: ${args[0]} not available, skipping`);
+      return [];
+    }
+    return [args[0]!];
+  }
+  // 兩個參數 = 範圍
+  const [from, to] = args;
+  return available.filter((d) => d >= from! && d <= to!);
+}
+
+/** 下載單一日期的三個資料源 */
+async function downloadDateData(
+  date: string,
+  fr24Dates: Set<string>,
+  zoneDates: Set<string>,
+  openskyDates: Set<string>,
+) {
+  const fr24Snapshots: { data: Fr24Flight[]; fetch_time: string }[] = [];
+  const zoneSnapshots: { data: Fr24ZoneAircraft[]; fetch_time: string }[] = [];
+  const openskySnapshots: { data: OpenSkyAircraft[]; fetch_time: string }[] = [];
+
+  if (fr24Dates.has(date)) {
+    try {
+      const snaps = await downloadLastFr24Snapshot(date);
+      fr24Snapshots.push(...snaps);
+    } catch (e) {
+      console.log(`  flight_fr24: error - ${e}`);
+    }
+  }
+
+  if (zoneDates.has(date)) {
+    try {
+      const snaps = await downloadAllSnapshots<{
+        data: Fr24ZoneAircraft[];
+        fetch_time: string;
+      }>("flight_fr24_zone", date);
+      zoneSnapshots.push(...snaps);
+    } catch (e) {
+      console.log(`  flight_fr24_zone: error - ${e}`);
+    }
+  }
+
+  if (openskyDates.has(date)) {
+    try {
+      const snaps = await downloadAllSnapshots<{
+        data: OpenSkyAircraft[];
+        fetch_time: string;
+      }>("flight_opensky", date);
+      openskySnapshots.push(...snaps);
+    } catch (e) {
+      console.log(`  flight_opensky: error - ${e}`);
+    }
+  }
+
+  return { fr24Snapshots, zoneSnapshots, openskySnapshots };
+}
+
 // ---------- Main ----------
 
 async function main() {
-  const targetDate = process.argv[2] || "2026-03-04";
-  console.log(`\nFusing flight data for ${targetDate}\n`);
+  console.log("\n=== Fuse Collector Data (Multi-Day) ===\n");
 
-  // Check available dates
-  const dates = await apiGet<{ dates: string[] }>(
-    `/api/data/flight_fr24/dates`,
-  );
-  console.log(`Available fr24 dates: ${dates.dates.join(", ")}`);
+  // 1. 查詢所有可用日期
+  const { fr24Dates, zoneDates, openskyDates, allDates } = await getAvailableDates();
+  console.log(`Available dates:`);
+  console.log(`  flight_fr24:      ${[...fr24Dates].sort().join(", ")}`);
+  console.log(`  flight_fr24_zone: ${[...zoneDates].sort().join(", ")}`);
+  console.log(`  flight_opensky:   ${[...openskyDates].sort().join(", ")}`);
 
-  // Download data from all three sources
-  console.log(`\nDownloading snapshots for ${targetDate}...`);
+  // 2. 決定要處理的日期
+  const targetDates = parseDateArgs(process.argv.slice(2), allDates);
+  if (targetDates.length === 0) {
+    console.log("\nNo dates to process.");
+    return;
+  }
+  console.log(`\nWill process ${targetDates.length} dates: ${targetDates.join(", ")}\n`);
 
-  let fr24Snapshots: { data: Fr24Flight[]; fetch_time: string }[] = [];
-  let zoneSnapshots: { data: Fr24ZoneAircraft[]; fetch_time: string }[] = [];
-  let openskySnapshots: { data: OpenSkyAircraft[]; fetch_time: string }[] = [];
+  // 3. 逐天下載，累積所有快照
+  const allFr24: { data: Fr24Flight[]; fetch_time: string }[] = [];
+  const allZone: { data: Fr24ZoneAircraft[]; fetch_time: string }[] = [];
+  const allOpensky: { data: OpenSkyAircraft[]; fetch_time: string }[] = [];
 
-  // Check which sources have data for this date
-  try {
-    const fr24Dates = await apiGet<{ dates: string[] }>(
-      `/api/data/flight_fr24/dates`,
-    );
-    if (fr24Dates.dates.includes(targetDate)) {
-      fr24Snapshots = await downloadLastFr24Snapshot(targetDate);
-    } else {
-      console.log("  flight_fr24: no data for this date");
-    }
-  } catch (e) {
-    console.log(`  flight_fr24: error - ${e}`);
+  for (const date of targetDates) {
+    console.log(`── ${date} ──`);
+    const { fr24Snapshots, zoneSnapshots, openskySnapshots } =
+      await downloadDateData(date, fr24Dates, zoneDates, openskyDates);
+    allFr24.push(...fr24Snapshots);
+    allZone.push(...zoneSnapshots);
+    allOpensky.push(...openskySnapshots);
+    console.log();
   }
 
-  try {
-    const zoneDates = await apiGet<{ dates: string[] }>(
-      `/api/data/flight_fr24_zone/dates`,
-    );
-    if (zoneDates.dates.includes(targetDate)) {
-      zoneSnapshots = await downloadAllSnapshots<{
-        data: Fr24ZoneAircraft[];
-        fetch_time: string;
-      }>("flight_fr24_zone", targetDate);
-    } else {
-      console.log("  flight_fr24_zone: no data for this date");
-    }
-  } catch (e) {
-    console.log(`  flight_fr24_zone: error - ${e}`);
-  }
+  // 4. 一次性融合所有日期的資料
+  const fused = fuseData(allFr24, allZone, allOpensky);
 
-  try {
-    const openskyDates = await apiGet<{ dates: string[] }>(
-      `/api/data/flight_opensky/dates`,
-    );
-    if (openskyDates.dates.includes(targetDate)) {
-      openskySnapshots = await downloadAllSnapshots<{
-        data: OpenSkyAircraft[];
-        fetch_time: string;
-      }>("flight_opensky", targetDate);
-    } else {
-      console.log("  flight_opensky: no data for this date");
-    }
-  } catch (e) {
-    console.log(`  flight_opensky: error - ${e}`);
-  }
-
-  // Fuse
-  const fused = fuseData(fr24Snapshots, zoneSnapshots, openskySnapshots);
-
-  // Write output
-  const outputPath = "public/aviation_data_fused.json";
+  // 5. 寫入
+  const outputPath = "public/airspace/aviation_data.json";
   const { writeFileSync } = await import("fs");
   writeFileSync(outputPath, JSON.stringify(fused, null, 0));
   console.log(`\nOutput written to ${outputPath}`);
@@ -516,13 +581,18 @@ async function main() {
           fused.reduce((sum, f) => sum + f.path.length, 0) / fused.length,
         )
       : 0;
+  const dates = targetDates;
   console.log(`\nStats:`);
+  console.log(`  Dates processed: ${dates.length} (${dates[0]} ~ ${dates[dates.length - 1]})`);
   console.log(`  Complete trails: ${completeCount}`);
   console.log(`  Snapshot-based:  ${snapshotCount}`);
+  console.log(`  Total flights:   ${fused.length}`);
   console.log(`  Avg trail points: ${avgPoints}`);
-  console.log(
-    `  Time range: ${new Date(Math.min(...fused.map((f) => f.dep_time)) * 1000).toISOString()} ~ ${new Date(Math.max(...fused.map((f) => f.arr_time)) * 1000).toISOString()}`,
-  );
+  if (fused.length > 0) {
+    console.log(
+      `  Time range: ${new Date(Math.min(...fused.map((f) => f.dep_time)) * 1000).toISOString()} ~ ${new Date(Math.max(...fused.map((f) => f.arr_time)) * 1000).toISOString()}`,
+    );
+  }
 }
 
 main().catch(console.error);

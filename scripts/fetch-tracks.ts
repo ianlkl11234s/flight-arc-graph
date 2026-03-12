@@ -27,7 +27,7 @@ const MAX_RETRIES = 5;
 
 const INPUT_FILE = "scripts/flight-list.json";
 const PROGRESS_FILE = "scripts/track-progress.json";
-const OUTPUT_FILE = "public/aviation_data.json";
+const OUTPUT_FILE = "public/tracks/aviation_data.json";
 
 // ── 型別 ──────────────────────────────────────────────
 
@@ -240,12 +240,18 @@ async function main() {
 
   // 載入進度
   const progress = loadProgress();
-  const doneCount = Object.keys(progress.completed).length;
+  const totalDoneCount = Object.keys(progress.completed).length;
   const failSet = new Set(progress.failed);
 
-  if (doneCount > 0) {
+  // 計算篩選範圍內已完成的數量（用於正確的進度顯示）
+  const targetIds = new Set(targets.map((f) => f.fr24_id));
+  const doneInTargets = Object.keys(progress.completed).filter((id) =>
+    targetIds.has(id),
+  ).length;
+
+  if (totalDoneCount > 0) {
     console.log(
-      `📂 載入進度: ${doneCount} 筆已完成, ${failSet.size} 筆失敗\n`,
+      `📂 載入進度: ${totalDoneCount} 筆已完成 (本次篩選範圍: ${doneInTargets}), ${failSet.size} 筆失敗\n`,
     );
   }
 
@@ -255,7 +261,7 @@ async function main() {
   );
   console.log(`待處理: ${todo.length} 筆\n`);
 
-  if (todo.length === 0 && doneCount > 0) {
+  if (todo.length === 0 && doneInTargets > 0) {
     console.log("✅ 所有航班已處理完成！");
     writeOutput(progress);
     return;
@@ -264,13 +270,13 @@ async function main() {
   let successCount = 0;
   let failCount = 0;
   let emptyCount = 0;
-  let firstLogged = doneCount === 0;
+  let firstLogged = totalDoneCount === 0;
 
   for (let i = 0; i < todo.length; i++) {
     const flight = todo[i]!;
-    const pct = ((doneCount + i + 1) / targets.length * 100).toFixed(1);
+    const pct = ((doneInTargets + i + 1) / targets.length * 100).toFixed(1);
     process.stdout.write(
-      `[${doneCount + i + 1}/${targets.length}] ${pct}% ${flight.callsign || flight.flight} (${flight.fr24_id}) ... `,
+      `[${doneInTargets + i + 1}/${targets.length}] ${pct}% ${flight.callsign || flight.flight} (${flight.fr24_id}) ... `,
     );
 
     try {

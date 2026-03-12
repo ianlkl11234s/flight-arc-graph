@@ -160,34 +160,18 @@ export function preprocessFlights(flights: Flight[]): Flight[] {
   return flights.filter((f) => f.path.length > 0).map(preprocessFlight);
 }
 
-let cachedFlights: Flight[] | null = null;
-let cachedApiFlights: Flight[] | null = null;
-let cachedFusedFlights: Flight[] | null = null;
+// ── 快取 ──
+
+let cachedTracks: Flight[] | null = null;
+let cachedAirspace: Flight[] | null = null;
 
 const S3_BASE =
   "https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc";
 
-/** 從 S3 manifest 載入全部航班（本地檔案不存在時的 fallback） */
-async function loadFromS3(): Promise<Flight[]> {
-  const manifestRes = await fetch(`${S3_BASE}/manifest.json`);
-  if (!manifestRes.ok) throw new Error("S3 manifest not available");
-  const manifest: { dates: { date: string }[] } = await manifestRes.json();
-
-  const fetches = manifest.dates.map(async (d) => {
-    const [y, m, dd] = d.date.split("-");
-    const res = await fetch(`${S3_BASE}/${y}/${m}/${dd}/data.json`);
-    if (!res.ok) return [];
-    return (await res.json()) as Flight[];
-  });
-
-  const results = await Promise.all(fetches);
-  return results.flat();
-}
-
 /** 嘗試載入本地 JSON 檔案 */
-async function tryLoadLocal(filename: string): Promise<Flight[] | null> {
+async function tryLoadLocal(path: string): Promise<Flight[] | null> {
   try {
-    const res = await fetch(`/${filename}`);
+    const res = await fetch(`/${path}`);
     const text = await res.text();
     if (text.trimStart().startsWith("<")) return null;
     return JSON.parse(text);
@@ -196,65 +180,89 @@ async function tryLoadLocal(filename: string): Promise<Flight[] | null> {
   }
 }
 
-/** 載入航班資料：優先融合資料 → 原始資料 → S3 */
-export async function loadFlights(): Promise<Flight[]> {
-  if (cachedFlights) return cachedFlights;
+/** 從 S3 manifest 載入指定來源的航班 */
+async function loadFromS3(source: "tracks" | "airspace"): Promise<Flight[]> {
+  const manifestRes = await fetch(`${S3_BASE}/${source}/manifest.json`);
+  if (!manifestRes.ok) throw new Error(`S3 ${source} manifest not available`);
+  const manifest: { dates: { date: string }[] } = await manifestRes.json();
 
-  let data: Flight[] | null = null;
+  const fetches = manifest.dates.map(async (d) => {
+    const [y, m, dd] = d.date.split("-");
+    const res = await fetch(`${S3_BASE}/${source}/${y}/${m}/${dd}/data.json`);
+    if (!res.ok) return [];
+    return (await res.json()) as Flight[];
+  });
 
-  // 優先載入融合資料（含快照拼接軌跡）
-  data = await tryLoadLocal("aviation_data_fused.json");
+  const results = await Promise.all(fetches);
+  return results.flat();
+}
+
+/** 載入 FR24 完整軌跡 */
+export async function loadTracks(): Promise<Flight[]> {
+  if (cachedTracks) return cachedTracks;
+
+  let data = await tryLoadLocal("tracks/aviation_data.json");
   if (data) {
-    console.log(`[Loader] Loaded fused data: ${data.length} flights`);
+    console.log(`[Loader] Tracks: ${data.length} flights (local)`);
   }
 
-  // 回退到原始資料
   if (!data) {
-    data = await tryLoadLocal("aviation_data.json");
-    if (data) console.log(`[Loader] Loaded original data: ${data.length} flights`);
+    console.log("[Loader] Tracks: loading from S3...");
+    try {
+      data = await loadFromS3("tracks");
+    } catch {
+      data = [];
+    }
   }
 
-  // 最後從 S3
-  if (!data) {
-    console.log("[Loader] Local files unavailable, loading from S3...");
-    data = await loadFromS3();
-  }
-
-  cachedFlights = preprocessFlights(data);
-  return cachedFlights;
+  cachedTracks = preprocessFlights(data);
+  return cachedTracks;
 }
 
-/** 更新快取（S3 合併後使用） */
-export function updateCachedFlights(flights: Flight[]): void {
-  cachedFlights = flights;
-}
+/** 載入 AirSpace Scan 資料 */
+export async function loadAirspace(): Promise<Flight[] | null> {
+  if (cachedAirspace) return cachedAirspace;
 
-/** 載入 API 軌跡資料（aviation_data.json） */
-export async function loadApiFlights(): Promise<Flight[]> {
-  if (cachedApiFlights) return cachedApiFlights;
-  const data = await tryLoadLocal("aviation_data.json");
+  let data = await tryLoadLocal("airspace/aviation_data.json");
   if (data) {
-    cachedApiFlights = preprocessFlights(data);
-    console.log(`[Loader] API data: ${cachedApiFlights.length} flights`);
-    return cachedApiFlights;
+    console.log(`[Loader] Airspace: ${data.length} flights (local)`);
+    cachedAirspace = preprocessFlights(data);
+    return cachedAirspace;
   }
-  // fallback: S3
-  const s3Data = await loadFromS3();
-  cachedApiFlights = preprocessFlights(s3Data);
-  return cachedApiFlights;
-}
 
-/** 載入融合快照資料（aviation_data_fused.json） */
-export async function loadFusedFlights(): Promise<Flight[] | null> {
-  if (cachedFusedFlights) return cachedFusedFlights;
-  const data = await tryLoadLocal("aviation_data_fused.json");
-  if (data) {
-    cachedFusedFlights = preprocessFlights(data);
-    console.log(`[Loader] Fused data: ${cachedFusedFlights.length} flights`);
-    return cachedFusedFlights;
+  // S3 fallback
+  try {
+    data = await loadFromS3("airspace");
+    if (data.length > 0) {
+      console.log(`[Loader] Airspace: ${data.length} flights (S3)`);
+      cachedAirspace = preprocessFlights(data);
+      return cachedAirspace;
+    }
+  } catch {
+    // no airspace data available
   }
+
   return null;
 }
+
+/** 更新 tracks 快取 */
+export function updateCachedTracks(flights: Flight[]): void {
+  cachedTracks = flights;
+}
+
+/** 更新 airspace 快取 */
+export function updateCachedAirspace(flights: Flight[]): void {
+  cachedAirspace = flights;
+}
+
+// ── 向下相容：保留舊函數名稱供其他模組使用 ──
+
+/** @deprecated 改用 loadTracks() */
+export const loadApiFlights = loadTracks;
+/** @deprecated 改用 loadAirspace() */
+export const loadFusedFlights = loadAirspace;
+/** @deprecated 改用 updateCachedTracks() */
+export const updateCachedFlights = updateCachedTracks;
 
 /** 依目的地機場 ICAO 篩選（降落航班） */
 export function filterByArrivalAirport(
