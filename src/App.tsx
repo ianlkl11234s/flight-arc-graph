@@ -9,6 +9,7 @@ import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo } from "./map/cameraPresets";
 import { createFlightLayer } from "./map/customLayer";
 import { filterByAirport } from "./data/flightLoader";
+import { LoadingScreen } from "./components/LoadingScreen";
 import { AirportSelector } from "./components/AirportSelector";
 import { FlightPicker } from "./components/FlightPicker";
 import { TimelineControls } from "./components/TimelineControls";
@@ -314,50 +315,7 @@ export default function App() {
   }, [loading, availableDates.length]);
 
   if (loading) {
-    return (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "#0a0a14",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 16,
-          fontFamily: "monospace",
-          color: "#fff",
-        }}
-      >
-        <div style={{ fontSize: 22, letterSpacing: 4, fontWeight: 700 }}>
-          Taiwan Flight Arc
-        </div>
-        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", letterSpacing: 1 }}>
-          Loading flight data...
-        </div>
-        <div
-          style={{
-            width: 120,
-            height: 2,
-            background: "rgba(255,255,255,0.1)",
-            borderRadius: 1,
-            overflow: "hidden",
-            marginTop: 8,
-          }}
-        >
-          <div
-            style={{
-              width: "40%",
-              height: "100%",
-              background: "rgba(100,170,255,0.8)",
-              borderRadius: 1,
-              animation: "loadbar 1.2s ease-in-out infinite alternate",
-            }}
-          />
-        </div>
-        <style>{`@keyframes loadbar { from { margin-left: 0 } to { margin-left: 60% } }`}</style>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
