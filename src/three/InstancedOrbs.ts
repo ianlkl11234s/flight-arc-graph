@@ -30,7 +30,6 @@ export class InstancedOrbs {
   private flightIds: string[] = [];
 
   private orbScale = 0.000005;
-  private isDark = true;
 
   constructor(scene: THREE.Scene, color: THREE.Color, blending: THREE.Blending) {
     this.geo = new THREE.IcosahedronGeometry(1, 2);

@@ -34,7 +34,6 @@ export class BatchedTrails {
   private slotMap = new Map<string, number>();
   /** 下一個可用 slot 的搜尋起點 */
   private nextFreeSlot = 0;
-  private totalActiveVerts = 0;
   /** slot 排序：活躍的排前面，用於 drawRange 連續 */
   private slotOrder: number[] = [];
   /** 反向映射：sorted position → actual slot */

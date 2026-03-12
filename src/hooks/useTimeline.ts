@@ -19,7 +19,7 @@ interface UseTimelineReturn {
   setSpeed: (s: number) => void;
   seek: (time: number) => void;
   seekByProgress: (p: number) => void;
-  setSelectedDate: (d: string) => void;
+  setSelectedDate: (d: string | null) => void;
   shiftDate: (delta: number) => void;
   setRangeDays: (n: number) => void;
 }
@@ -123,8 +123,8 @@ export function useTimeline({
   );
 
   const setSelectedDate = useCallback(
-    (d: string) => {
-      setSelectedDateRaw(d);
+    (d: string | null) => {
+      if (d !== null) setSelectedDateRaw(d);
     },
     [],
   );
