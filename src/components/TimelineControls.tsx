@@ -3,13 +3,17 @@ interface Props {
   speed: number;
   progress: number;
   currentTime: number;
-  startTime: number;
-  endTime: number;
+  windowStart: number;
+  windowEnd: number;
+  selectedDate: string;
+  rangeDays: number;
   isDarkTheme?: boolean;
   isMobile?: boolean;
   onToggle: () => void;
   onSpeedChange: (speed: number) => void;
   onSeekByProgress: (p: number) => void;
+  onDateShift: (delta: number) => void;
+  onRangeDaysChange: (n: number) => void;
 }
 
 const getBtnStyle = (dark: boolean): React.CSSProperties => ({
@@ -35,13 +39,33 @@ const getSelectStyle = (dark: boolean): React.CSSProperties => ({
   backdropFilter: "blur(8px)",
 });
 
+const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+
+function formatDateLabel(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y!, m! - 1, d!);
+  const weekday = WEEKDAYS[date.getDay()];
+  return `${m}/${d} (${weekday})`;
+}
+
+function formatTime(t: number): string {
+  if (t <= 0) return "--:--";
+  const d = new Date(t * 1000);
+  // 顯示台灣時區
+  const tw = new Date(d.getTime() + 8 * 3600_000);
+  const hh = String(tw.getUTCHours()).padStart(2, "0");
+  const mi = String(tw.getUTCMinutes()).padStart(2, "0");
+  return `${hh}:${mi}`;
+}
+
 function formatDateTime(t: number): string {
   if (t <= 0) return "--/-- --:--";
   const d = new Date(t * 1000);
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mi = String(d.getMinutes()).padStart(2, "0");
+  const tw = new Date(d.getTime() + 8 * 3600_000);
+  const mm = String(tw.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(tw.getUTCDate()).padStart(2, "0");
+  const hh = String(tw.getUTCHours()).padStart(2, "0");
+  const mi = String(tw.getUTCMinutes()).padStart(2, "0");
   return `${mm}/${dd} ${hh}:${mi}`;
 }
 
@@ -50,13 +74,17 @@ export function TimelineControls({
   speed,
   progress,
   currentTime,
-  startTime,
-  endTime,
+  windowStart,
+  windowEnd,
+  selectedDate,
+  rangeDays,
   isDarkTheme = true,
   isMobile = false,
   onToggle,
   onSpeedChange,
   onSeekByProgress,
+  onDateShift,
+  onRangeDaysChange,
 }: Props) {
   return (
     <div
@@ -68,6 +96,59 @@ export function TimelineControls({
         zIndex: 10,
       }}
     >
+      {/* 日期導航列 */}
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          alignItems: "center",
+          marginBottom: 6,
+        }}
+      >
+        <button
+          onClick={() => onDateShift(-1)}
+          style={{
+            ...getBtnStyle(isDarkTheme),
+            padding: isMobile ? "6px 10px" : "4px 8px",
+            fontSize: isMobile ? 16 : 14,
+          }}
+        >
+          ◀
+        </button>
+        <span
+          style={{
+            color: isDarkTheme ? "#fff" : "#333",
+            fontSize: isMobile ? 14 : 13,
+            fontFamily: "monospace",
+            fontWeight: 600,
+            letterSpacing: 0.5,
+            minWidth: isMobile ? 90 : 80,
+            textAlign: "center",
+          }}
+        >
+          {formatDateLabel(selectedDate)}
+        </span>
+        <button
+          onClick={() => onDateShift(1)}
+          style={{
+            ...getBtnStyle(isDarkTheme),
+            padding: isMobile ? "6px 10px" : "4px 8px",
+            fontSize: isMobile ? 16 : 14,
+          }}
+        >
+          ▶
+        </button>
+        <select
+          value={rangeDays}
+          onChange={(e) => onRangeDaysChange(Number(e.target.value))}
+          style={getSelectStyle(isDarkTheme)}
+        >
+          <option value={1}>1d</option>
+          <option value={3}>3d</option>
+          <option value={7}>7d</option>
+        </select>
+      </div>
+
       {/* 控制按鈕列 */}
       <div
         style={{
@@ -127,8 +208,8 @@ export function TimelineControls({
           marginTop: 2,
         }}
       >
-        <span>{formatDateTime(startTime)}</span>
-        <span>{formatDateTime(endTime)}</span>
+        <span>{formatTime(windowStart)}</span>
+        <span>{formatTime(windowEnd)}</span>
       </div>
     </div>
   );

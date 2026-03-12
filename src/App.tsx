@@ -8,7 +8,7 @@ import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo } from "./map/cameraPresets";
 import { createFlightLayer } from "./map/customLayer";
-import { filterByAirport, filterByTimeWindow } from "./data/flightLoader";
+import { filterByAirport } from "./data/flightLoader";
 import { AirportSelector } from "./components/AirportSelector";
 import { FlightPicker } from "./components/FlightPicker";
 import { TimelineControls } from "./components/TimelineControls";
@@ -29,14 +29,12 @@ export default function App() {
     airports,
     selectedAirport,
     setSelectedAirport,
-    timeRange,
     loading,
     hasFused,
   } = useFlightData(dataSource);
 
   const [scope, setScope] = useState<Scope>("airport");
   const [trackMode, setTrackMode] = useState<TrackMode>("stack");
-  const [timeWindow, setTimeWindow] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [mapStyleId, setMapStyleId] = useState("dark");
   const [renderMode, setRenderMode] = useState<RenderMode>("3d");
@@ -51,44 +49,9 @@ export default function App() {
   const [captureMode, setCaptureMode] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showStats, setShowStats] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
   const { isMobile, isLandscape } = useIsMobile();
-
-  const timeline = useTimeline({
-    startTime: timeRange.start,
-    endTime: timeRange.end,
-  });
-
-  // 根據 scope + trackMode + timeWindow 決定要顯示的航班
-  const displayedFlights = useMemo(() => {
-    // 1. 地理範圍
-    let base = scope === "all-taiwan" ? allFlights : filteredFlights;
-
-    // 2. 時間窗口（僅 Flight Trails 模式下生效）
-    if (timeWindow && displayMode === "trails") {
-      const icao = scope === "airport" ? selectedAirport : null;
-      base = filterByTimeWindow(base, icao, timeline.currentTime);
-    }
-
-    // 3. 軌跡模式
-    if (trackMode === "single" && selectedFlightId) {
-      return base.filter((f) => f.fr24_id === selectedFlightId);
-    }
-
-    return base;
-  }, [
-    allFlights,
-    filteredFlights,
-    scope,
-    trackMode,
-    timeWindow,
-    displayMode,
-    selectedFlightId,
-    selectedAirport,
-    timeline.currentTime,
-  ]);
 
   // 本地資料可用日期（台灣時區）
   const availableDates = useMemo(() => {
@@ -104,26 +67,31 @@ export default function App() {
     return [...dates].sort();
   }, [allFlights]);
 
-  // 日期過濾
-  const dateFilteredFlights = useMemo(() => {
-    if (!selectedDate) return displayedFlights;
-    return displayedFlights.filter((f) => {
+  const timeline = useTimeline({ availableDates });
+
+  // 根據 scope + trackMode + 日期範圍決定要顯示的航班
+  const displayedFlights = useMemo(() => {
+    let base = scope === "all-taiwan" ? allFlights : filteredFlights;
+    // 日期範圍篩選（離散，只在使用者操作時改變）
+    base = base.filter((f) => {
       const t = f.dep_time || f.path[0]?.[3];
-      if (!t || t <= 0) return false;
-      const d = new Date(t * 1000);
-      const tw = new Date(d.getTime() + 8 * 3600_000);
-      return tw.toISOString().slice(0, 10) === selectedDate;
+      return t && t >= timeline.windowStart && t <= timeline.windowEnd;
     });
-  }, [displayedFlights, selectedDate]);
+    if (trackMode === "single" && selectedFlightId) {
+      return base.filter((f) => f.fr24_id === selectedFlightId);
+    }
+    return base;
+  }, [allFlights, filteredFlights, scope, trackMode, selectedFlightId,
+      timeline.windowStart, timeline.windowEnd]);
 
   // Aircraft type filter
   const finalFlights = useMemo(
-    () => filterByAircraftType(dateFilteredFlights, aircraftFilter),
-    [dateFilteredFlights, aircraftFilter],
+    () => filterByAircraftType(displayedFlights, aircraftFilter),
+    [displayedFlights, aircraftFilter],
   );
   const availableTypes = useMemo(
-    () => [...new Set(dateFilteredFlights.map((f) => f.aircraft_type))].filter(Boolean).sort(),
-    [dateFilteredFlights],
+    () => [...new Set(displayedFlights.map((f) => f.aircraft_type))].filter(Boolean).sort(),
+    [displayedFlights],
   );
 
   // 用於 FlightPicker 的航班列表（always based on airport filter）
@@ -306,11 +274,11 @@ export default function App() {
 
   // 資料載入完成後自動播放
   useEffect(() => {
-    if (!loading && timeRange.start > 0) {
+    if (!loading && availableDates.length > 0) {
       timeline.play();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, timeRange.start]);
+  }, [loading, availableDates.length]);
 
   if (loading) {
     return (
@@ -525,12 +493,10 @@ export default function App() {
             onAirportGlowChange={setAirportGlow}
             scope={scope}
             trackMode={trackMode}
-            timeWindow={timeWindow}
             pickableFlights={pickableFlights}
             selectedFlightId={selectedFlightId}
             onScopeChange={setScope}
             onTrackModeChange={setTrackMode}
-            onTimeWindowChange={setTimeWindow}
             onFlightSelect={setSelectedFlightId}
             airports={airports}
             selectedAirport={selectedAirport}
@@ -548,8 +514,9 @@ export default function App() {
               }
             }}
             availableDates={availableDates}
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
+            selectedDate={timeline.selectedDate}
+            onDateSelect={timeline.setSelectedDate}
+            onStatsClick={() => setShowStats(true)}
             onInfoClick={() => setShowInfo(true)}
           />
 
@@ -596,12 +563,16 @@ export default function App() {
             speed={timeline.speed}
             progress={timeline.progress}
             currentTime={timeline.currentTime}
-            startTime={timeRange.start}
-            endTime={timeRange.end}
+            windowStart={timeline.windowStart}
+            windowEnd={timeline.windowEnd}
+            selectedDate={timeline.selectedDate}
+            rangeDays={timeline.rangeDays}
             isDarkTheme={isDarkTheme}
             onToggle={timeline.toggle}
             onSpeedChange={timeline.setSpeed}
             onSeekByProgress={timeline.seekByProgress}
+            onDateShift={timeline.shiftDate}
+            onRangeDaysChange={timeline.setRangeDays}
           />
 
           {/* 右上角按鈕群 */}
@@ -701,9 +672,9 @@ export default function App() {
           >
             <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: "monospace" }}>
               {finalFlights.length} flights
-              {timeWindow && displayMode === "trails" && " (±12h)"}
               {scope === "all-taiwan" && " (all Taiwan)"}
-              {selectedDate && ` · ${selectedDate}`}
+              {` · ${timeline.selectedDate}`}
+              {timeline.rangeDays > 1 && ` +${timeline.rangeDays - 1}d`}
             </div>
             <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)", fontSize: 11, fontFamily: "monospace" }}>
               {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
@@ -827,13 +798,17 @@ export default function App() {
               speed={timeline.speed}
               progress={timeline.progress}
               currentTime={timeline.currentTime}
-              startTime={timeRange.start}
-              endTime={timeRange.end}
+              windowStart={timeline.windowStart}
+              windowEnd={timeline.windowEnd}
+              selectedDate={timeline.selectedDate}
+              rangeDays={timeline.rangeDays}
               isDarkTheme={true}
               isMobile={true}
               onToggle={timeline.toggle}
               onSpeedChange={timeline.setSpeed}
               onSeekByProgress={timeline.seekByProgress}
+              onDateShift={timeline.shiftDate}
+              onRangeDaysChange={timeline.setRangeDays}
             />
           </div>
 
@@ -900,7 +875,6 @@ export default function App() {
                       }}
                     >
                       {finalFlights.length} flights
-                      {timeWindow && displayMode === "trails" && " (±12h)"}
                       {scope === "all-taiwan" && " (all Taiwan)"}
                     </div>
                   </div>

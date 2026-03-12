@@ -42,12 +42,10 @@ export interface IconRailSidebarProps {
   // Scope & Track mode
   scope: Scope;
   trackMode: TrackMode;
-  timeWindow: boolean;
   pickableFlights: Flight[];
   selectedFlightId: string | null;
   onScopeChange: (scope: Scope) => void;
   onTrackModeChange: (mode: TrackMode) => void;
-  onTimeWindowChange: (v: boolean) => void;
   onFlightSelect: (id: string | null) => void;
   // Locations
   airports: string[];
@@ -58,6 +56,8 @@ export interface IconRailSidebarProps {
   availableDates: string[];
   selectedDate: string | null;
   onDateSelect: (date: string | null) => void;
+  // Stats
+  onStatsClick: () => void;
   // Info
   onInfoClick: () => void;
 }
@@ -302,6 +302,16 @@ function IconCalendar() {
   );
 }
 
+function IconBarChart() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  );
+}
+
 function IconInfo() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -372,30 +382,6 @@ function SettingsPanel(props: IconRailSidebarProps) {
         value={props.displayMode}
         onChange={props.onDisplayModeChange}
       />
-      {/* ±12h Window：僅在 Flight Trails 模式下顯示 */}
-      {props.displayMode === "trails" && (
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 11,
-            fontFamily: "monospace",
-            color: props.timeWindow ? "#fff" : ACCENT,
-            cursor: "pointer",
-            marginBottom: 8,
-            marginLeft: 4,
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={props.timeWindow}
-            onChange={(e) => props.onTimeWindowChange(e.target.checked)}
-            style={{ accentColor: "#64aaff", width: 14, height: 14, cursor: "pointer" }}
-          />
-          ±12h Window
-        </label>
-      )}
       <ToggleButtons<RenderMode>
         options={[
           { value: "3d", label: "3D Altitude" },
@@ -783,6 +769,15 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           title="Calendar"
         >
           <IconCalendar />
+        </RailIcon>
+
+        {/* Stats */}
+        <RailIcon
+          active={false}
+          onClick={props.onStatsClick}
+          title="Statistics"
+        >
+          <IconBarChart />
         </RailIcon>
       </div>
 
