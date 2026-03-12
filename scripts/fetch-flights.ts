@@ -11,7 +11,8 @@
  * 支援中斷續接：已完成的機場會自動跳過
  *
  * 使用方式：
- *   npx tsx scripts/fetch-flights.ts
+ *   npx tsx scripts/fetch-flights.ts                        # 預設抓最近 3 天
+ *   npx tsx scripts/fetch-flights.ts --from 2026-02-20 --to 2026-02-24
  */
 
 import dotenv from "dotenv";
@@ -21,17 +22,31 @@ dotenv.config();
 // ── 設定 ──────────────────────────────────────────────
 
 const TAIWAN_AIRPORTS = [
-  "RCTP", // 桃園國際機場
-  "RCSS", // 台北松山機場
+  // ── 民用機場 ──────────────────────────────────────────
+  "RCTP", // 台灣桃園國際機場
+  "RCSS", // 臺北松山機場
   "RCKH", // 高雄國際機場
-  "RCMQ", // 台中清泉崗機場
-  "RCYU", // 花蓮機場
-  "RCBS", // 金門尚義機場
+  "RCNN", // 臺東機場（豐年）
+  "RCBS", // 金門機場（尚義）
   "RCFG", // 馬祖南竿機場
-  "RCFN", // 台南機場
+  "RCMT", // 馬祖北竿機場
+  "RCQC", // 澎湖機場（馬公）
+  "RCWA", // 望安機場
+  "RCCM", // 七美機場
+  "RCGI", // 綠島機場
+  "RCLY", // 蘭嶼機場
+  "RCKW", // 恆春機場（2019 起停飛，保留備用）
+  // ── 軍民合用機場 ──────────────────────────────────────
+  "RCMQ", // 臺中國際機場（清泉崗）
+  "RCYU", // 花蓮機場
+  "RCFN", // 臺南機場
   "RCKU", // 嘉義機場
-  "RCNN", // 台東豐年機場
-  "RCQC", // 澎湖馬公機場
+  "RCDC", // 屏東南機場
+  // ── 軍用機場（有 ICAO，FR24 可能有資料）──────────────
+  "RCAY", // 岡山基地（空軍航技學校）
+  "RCPO", // 新竹基地（F-16）
+  "RCSQ", // 屏東北機場（屏東基地）
+  "RCQS", // 志航基地（臺東，訓練機）
 ];
 
 const DAYS_BACK = 3;
@@ -40,6 +55,36 @@ const PAGE_SIZE = 20;          // Explorer 方案上限
 const DELAY_MS = 7000;         // 7s → 安全低於 10 次/分鐘
 const MAX_RETRIES = 5;
 const OUTPUT_FILE = "scripts/flight-list.json";
+
+// ── CLI 參數解析 ───────────────────────────────────────
+
+function parseArgs(): { from: Date; to: Date; sessionKey: string; airports: string[] } {
+  const args = process.argv.slice(2);
+  const fromIdx = args.indexOf("--from");
+  const toIdx = args.indexOf("--to");
+  const airportsIdx = args.indexOf("--airports");
+
+  // --airports RCTP,RCSS,... → 覆蓋預設機場清單
+  const airports = airportsIdx !== -1
+    ? args[airportsIdx + 1]!.split(",").map((s) => s.trim().toUpperCase())
+    : TAIWAN_AIRPORTS;
+
+  if (fromIdx !== -1 && toIdx !== -1) {
+    const fromStr = args[fromIdx + 1]!;
+    const toStr = args[toIdx + 1]!;
+    const from = new Date(`${fromStr}T00:00:00Z`);
+    const to = new Date(`${toStr}T23:59:59Z`);
+    if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+      console.error("❌ --from / --to 格式錯誤，請使用 YYYY-MM-DD");
+      process.exit(1);
+    }
+    return { from, to, sessionKey: `${fromStr}:${toStr}`, airports };
+  }
+
+  const now = new Date();
+  const from = new Date(now.getTime() - DAYS_BACK * 24 * 60 * 60 * 1000);
+  return { from, to: now, sessionKey: "default", airports };
+}
 
 // ── 工具 ──────────────────────────────────────────────
 
@@ -153,6 +198,10 @@ async function fetchAirportFlights(
       break;
     }
     cursor = lastTime;
+
+    // cursor 已到達或超過結束時間，不需要再查
+    if (cursor >= endStr) break;
+
     page++;
 
     await sleep(DELAY_MS);
@@ -164,14 +213,15 @@ async function fetchAirportFlights(
 // ── 進度管理 ──────────────────────────────────────────
 
 interface ProgressData {
+  // completed 格式：`${airport}:${sessionKey}` → 支援多日期範圍各自追蹤
   completed: string[];
   flights: FR24FlightSummary[];
   updated_at: string;
 }
 
-function loadProgress(): {
+function loadProgress(sessionKey: string): {
   flights: Map<string, FR24FlightSummary>;
-  completed: Set<string>;
+  completed: Set<string>;  // 存放 `${airport}:${sessionKey}`
 } {
   const flights = new Map<string, FR24FlightSummary>();
   const completed = new Set<string>();
@@ -179,9 +229,14 @@ function loadProgress(): {
   if (existsSync(OUTPUT_FILE)) {
     try {
       const prev = JSON.parse(readFileSync(OUTPUT_FILE, "utf-8")) as ProgressData;
-      if (prev.flights && prev.completed) {
+      if (prev.flights) {
         for (const f of prev.flights) flights.set(f.fr24_id, f);
-        for (const a of prev.completed) completed.add(a);
+      }
+      if (prev.completed) {
+        // 只載入與本次 sessionKey 相符的進度
+        for (const key of prev.completed) {
+          if (key.endsWith(`:${sessionKey}`)) completed.add(key);
+        }
       }
     } catch {
       // ignore
@@ -194,9 +249,22 @@ function loadProgress(): {
 function saveProgress(
   flights: Map<string, FR24FlightSummary>,
   completed: Set<string>,
+  sessionKey: string,
 ) {
+  // 讀取既有 completed（其他 session 的進度要保留）
+  let existingCompleted: string[] = [];
+  if (existsSync(OUTPUT_FILE)) {
+    try {
+      const prev = JSON.parse(readFileSync(OUTPUT_FILE, "utf-8")) as ProgressData;
+      // 保留非本 session 的 completed 記錄
+      existingCompleted = (prev.completed ?? []).filter(
+        (k) => !k.endsWith(`:${sessionKey}`),
+      );
+    } catch { /* ignore */ }
+  }
+
   const data: ProgressData = {
-    completed: Array.from(completed),
+    completed: [...existingCompleted, ...Array.from(completed)],
     flights: Array.from(flights.values()),
     updated_at: new Date().toISOString(),
   };
@@ -209,23 +277,24 @@ async function main() {
   console.log("=== FR24 Flight Summary - Step 1 ===");
   console.log("Explorer 方案：20 筆/次, 10 次/分鐘\n");
 
-  const now = new Date();
-  const from = new Date(now.getTime() - DAYS_BACK * 24 * 60 * 60 * 1000);
-  console.log(`時間範圍: ${toISO(from)} → ${toISO(now)}`);
-  console.log(`機場: ${TAIWAN_AIRPORTS.join(", ")}\n`);
+  const { from, to, sessionKey, airports } = parseArgs();
+  console.log(`時間範圍: ${toISO(from)} → ${toISO(to)}`);
+  if (sessionKey !== "default") console.log(`Session: ${sessionKey}`);
+  console.log(`機場: ${airports.join(", ")}\n`);
 
-  const { flights: allFlights, completed: completedAirports } = loadProgress();
+  const { flights: allFlights, completed: completedAirports } = loadProgress(sessionKey);
 
   if (completedAirports.size > 0) {
     console.log(
-      `📂 載入進度: ${allFlights.size} 筆航班, ${completedAirports.size}/${TAIWAN_AIRPORTS.length} 座機場\n`,
+      `📂 載入進度: ${allFlights.size} 筆航班（累計）, ${completedAirports.size}/${airports.length} 座機場（本次）\n`,
     );
   }
 
   const stats: { airport: string; total: number; new: number }[] = [];
 
-  for (const airport of TAIWAN_AIRPORTS) {
-    if (completedAirports.has(airport)) {
+  for (const airport of airports) {
+    const sessionAirportKey = `${airport}:${sessionKey}`;
+    if (completedAirports.has(sessionAirportKey)) {
       console.log(`${airport} ✅ 已完成，跳過`);
       continue;
     }
@@ -233,7 +302,7 @@ async function main() {
     process.stdout.write(`${airport} `);
 
     try {
-      const flights = await fetchAirportFlights(airport, from, now);
+      const flights = await fetchAirportFlights(airport, from, to);
       let newCount = 0;
 
       for (const f of flights) {
@@ -245,8 +314,8 @@ async function main() {
 
       console.log(`→ ${flights.length} 筆（新增 ${newCount}）`);
       stats.push({ airport, total: flights.length, new: newCount });
-      completedAirports.add(airport);
-      saveProgress(allFlights, completedAirports);
+      completedAirports.add(sessionAirportKey);
+      saveProgress(allFlights, completedAirports, sessionKey);
     } catch (err) {
       console.log(`→ ❌ ${(err as Error).message}`);
       stats.push({ airport, total: -1, new: 0 });
@@ -268,21 +337,14 @@ async function main() {
   }
 
   const done = completedAirports.size;
-  console.log(`\n進度: ${done}/${TAIWAN_AIRPORTS.length} 座機場`);
-  console.log(`不重複航班: ${allFlights.size} 筆`);
+  console.log(`\n進度: ${done}/${airports.length} 座機場（本次）`);
+  console.log(`不重複航班（累計）: ${allFlights.size} 筆`);
   console.log(`API 請求次數: ${totalRequests}`);
 
-  if (done < TAIWAN_AIRPORTS.length) {
+  if (done < airports.length) {
     console.log("\n⚠️  尚未完成，等待 rate limit 冷卻後重新執行即可續接。");
   } else {
     console.log("\n✅ 所有機場查詢完成！");
-  }
-
-  // 範例
-  if (allFlights.size > 0) {
-    const sample = allFlights.values().next().value;
-    console.log("\n=== 範例（第一筆）===");
-    console.log(JSON.stringify(sample, null, 2));
   }
 }
 

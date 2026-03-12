@@ -46,7 +46,7 @@ export class LightTrail {
     this.mesh.frustumCulled = false;
   }
 
-  /** 更新軌跡點 */
+  /** 更新軌跡點（原始座標，每點呼叫 toMercator） */
   updateTrail(trail: TrailPoint[]) {
     const count = Math.min(trail.length, this.maxPoints);
     if (count < 2) {
@@ -57,8 +57,6 @@ export class LightTrail {
     const posAttr = this.geometry.getAttribute("position") as THREE.BufferAttribute;
     const progAttr = this.geometry.getAttribute("progress") as THREE.BufferAttribute;
 
-    // 用時間比例計算 progress：尾端插值點 = 0，頭端插值點 = 1
-    // 中間點依實際時間平滑分佈，不因點數變動而跳動
     const tStart = trail[0]![3];
     const tEnd = trail[count - 1]![3];
     const tRange = tEnd - tStart;
@@ -70,6 +68,41 @@ export class LightTrail {
       progAttr.setX(i, tRange > 0 ? (pt[3] - tStart) / tRange : 1);
     }
 
+    posAttr.needsUpdate = true;
+    progAttr.needsUpdate = true;
+    this.geometry.setDrawRange(0, count);
+  }
+
+  /**
+   * 更新軌跡點（預計算 Mercator 座標版本）
+   * 跳過逐點 toMercator，直接寫入快取的座標。
+   * @param points - [mx, my, mz, timestamp] 陣列
+   */
+  updateTrailMercator(points: [number, number, number, number][]) {
+    const count = Math.min(points.length, this.maxPoints);
+    if (count < 2) {
+      this.geometry.setDrawRange(0, 0);
+      return;
+    }
+
+    const posArr = (this.geometry.getAttribute("position") as THREE.BufferAttribute).array as Float32Array;
+    const progArr = (this.geometry.getAttribute("progress") as THREE.BufferAttribute).array as Float32Array;
+
+    const tStart = points[0]![3];
+    const tEnd = points[count - 1]![3];
+    const tRange = tEnd - tStart;
+
+    for (let i = 0; i < count; i++) {
+      const pt = points[i]!;
+      const i3 = i * 3;
+      posArr[i3] = pt[0];
+      posArr[i3 + 1] = pt[1];
+      posArr[i3 + 2] = pt[2];
+      progArr[i] = tRange > 0 ? (pt[3] - tStart) / tRange : 1;
+    }
+
+    const posAttr = this.geometry.getAttribute("position") as THREE.BufferAttribute;
+    const progAttr = this.geometry.getAttribute("progress") as THREE.BufferAttribute;
     posAttr.needsUpdate = true;
     progAttr.needsUpdate = true;
     this.geometry.setDrawRange(0, count);

@@ -415,6 +415,13 @@ function ProfilePage({ lang }: { lang: Lang }) {
       github: "https://github.com/ianlkl11234s/taiwan-weather-timelapse",
     },
     {
+      name: "Mini Taiwan Pulse",
+      desc: L ? "台灣交通與基礎設施多圖層即時視覺化 — 航班、船舶、鐵道、車站、燈塔、風場等" : "Multi-layer real-time visualization of Taiwan's transport & infrastructure — flights, ships, rail, stations, lighthouses, wind farms",
+      screenshot: "./screenshots/all-layers-facilities.png",
+      site: "https://mini-taiwan-pulse.zeabur.app/",
+      github: "https://github.com/ianlkl11234s/mini-taiwan-pulse",
+    },
+    {
       name: L ? "Ship GIS — 台灣海域船舶動態" : "Ship GIS — Taiwan Maritime Viz",
       desc: L ? "台灣海域船舶動態視覺化平台" : "Taiwan maritime vessel visualization platform",
       github: "https://github.com/ianlkl11234s/tw-ship-viz",

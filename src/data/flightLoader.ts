@@ -168,16 +168,20 @@ let cachedAirspace: Flight[] | null = null;
 const S3_BASE =
   "https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc";
 
-/** 嘗試載入本地 JSON 檔案 */
-async function tryLoadLocal(path: string): Promise<Flight[] | null> {
-  try {
-    const res = await fetch(`/${path}`);
-    const text = await res.text();
-    if (text.trimStart().startsWith("<")) return null;
-    return JSON.parse(text);
-  } catch {
-    return null;
+/** 嘗試載入 JSON 檔案（支援多路徑 fallback） */
+async function tryLoadLocal(...paths: string[]): Promise<Flight[] | null> {
+  for (const path of paths) {
+    try {
+      const res = await fetch(`/${path}`);
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text.trimStart().startsWith("<")) continue;
+      return JSON.parse(text);
+    } catch {
+      continue;
+    }
   }
+  return null;
 }
 
 /** 從 S3 manifest 載入指定來源的航班 */
@@ -201,7 +205,10 @@ async function loadFromS3(source: "tracks" | "airspace"): Promise<Flight[]> {
 export async function loadTracks(): Promise<Flight[]> {
   if (cachedTracks) return cachedTracks;
 
-  let data = await tryLoadLocal("tracks/aviation_data.json");
+  let data = await tryLoadLocal(
+    "data/tracks/latest.json",       // Zeabur /data volume
+    "tracks/aviation_data.json",     // 本地開發 / docker mount
+  );
   if (data) {
     console.log(`[Loader] Tracks: ${data.length} flights (local)`);
   }
@@ -223,7 +230,10 @@ export async function loadTracks(): Promise<Flight[]> {
 export async function loadAirspace(): Promise<Flight[] | null> {
   if (cachedAirspace) return cachedAirspace;
 
-  let data = await tryLoadLocal("airspace/aviation_data.json");
+  let data = await tryLoadLocal(
+    "data/airspace/latest.json",       // Zeabur /data volume
+    "airspace/aviation_data.json",     // 本地開發 / docker mount
+  );
   if (data) {
     console.log(`[Loader] Airspace: ${data.length} flights (local)`);
     cachedAirspace = preprocessFlights(data);
