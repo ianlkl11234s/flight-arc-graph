@@ -70,10 +70,10 @@ export function useTimeline({
     setCurrentTime(windowStart);
   }, [windowStart]);
 
-  // availableDates 改變時，若 selectedDate 不在列表中，選第一個
+  // availableDates 改變時，若 selectedDate 不在列表中，選第二個（2/19），fallback 第一個
   useEffect(() => {
     if (availableDates.length > 0 && !availableDates.includes(selectedDate)) {
-      setSelectedDateRaw(availableDates[0]!);
+      setSelectedDateRaw(availableDates.length > 1 ? availableDates[1]! : availableDates[0]!);
     }
   }, [availableDates, selectedDate]);
 
