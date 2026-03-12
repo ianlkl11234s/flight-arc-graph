@@ -35,10 +35,12 @@ function dateToUnixTW(dateStr: string): number {
 export function useTimeline({
   availableDates,
 }: UseTimelineOptions): UseTimelineReturn {
-  // 初始選最後一個 available date
-  const initialDate = availableDates.length > 0
-    ? availableDates[availableDates.length - 1]!
-    : new Date().toISOString().slice(0, 10);
+  // 初始選第二個 available date（2/19），fallback 到第一個或今天
+  const initialDate = availableDates.length > 1
+    ? availableDates[1]!
+    : availableDates.length > 0
+      ? availableDates[0]!
+      : new Date().toISOString().slice(0, 10);
 
   const [selectedDate, setSelectedDateRaw] = useState(initialDate);
   const [rangeDays, setRangeDaysRaw] = useState(1);
@@ -68,10 +70,10 @@ export function useTimeline({
     setCurrentTime(windowStart);
   }, [windowStart]);
 
-  // availableDates 改變時，若 selectedDate 不在列表中，選最後一個
+  // availableDates 改變時，若 selectedDate 不在列表中，選第一個
   useEffect(() => {
     if (availableDates.length > 0 && !availableDates.includes(selectedDate)) {
-      setSelectedDateRaw(availableDates[availableDates.length - 1]!);
+      setSelectedDateRaw(availableDates[0]!);
     }
   }, [availableDates, selectedDate]);
 

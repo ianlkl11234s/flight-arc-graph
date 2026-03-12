@@ -35,6 +35,7 @@ export default function App() {
 
   const [scope, setScope] = useState<Scope>("airport");
   const [trackMode, setTrackMode] = useState<TrackMode>("stack");
+  const [timeWindow, setTimeWindow] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [mapStyleId, setMapStyleId] = useState("dark");
   const [renderMode, setRenderMode] = useState<RenderMode>("3d");
@@ -68,6 +69,36 @@ export default function App() {
   }, [allFlights]);
 
   const timeline = useTimeline({ availableDates });
+  const mapRef = useRef<MapboxMap | null>(null);
+
+  // Airspace Scan 預設：切換時自動設定 All Taiwan、7d、拉遠視角、低 opacity
+  const prevDataSourceRef = useRef(dataSource);
+  useEffect(() => {
+    const prev = prevDataSourceRef.current;
+    prevDataSourceRef.current = dataSource;
+    if (prev === dataSource) return;
+
+    if (dataSource === "fused") {
+      // 切到 Airspace Scan
+      setScope("all-taiwan");
+      timeline.setRangeDays(7);
+      setStaticOpacity(0.04);
+      // 拉遠到全台視角
+      mapRef.current?.flyTo({
+        center: [120.9, 24.2],
+        zoom: 7.3,
+        pitch: 42,
+        bearing: 0,
+        duration: 2000,
+      });
+    } else {
+      // 切回 Route Tracks
+      setScope("airport");
+      timeline.setRangeDays(1);
+      setStaticOpacity(0.1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataSource]);
 
   // 根據 scope + trackMode + 日期範圍決定要顯示的航班
   const displayedFlights = useMemo(() => {
@@ -102,7 +133,6 @@ export default function App() {
 
   const isDarkTheme = !["light", "streets"].includes(mapStyleId);
 
-  const mapRef = useRef<MapboxMap | null>(null);
   const flightsRef = useRef(finalFlights);
   const timeRef = useRef(timeline.currentTime);
   const renderModeRef = useRef(renderMode);
@@ -112,6 +142,7 @@ export default function App() {
   const orbScaleRef = useRef(orbScale);
   const isDarkThemeRef = useRef(isDarkTheme);
   const showTrailsRef = useRef(displayMode === "trails");
+  const timeWindowRef = useRef(timeWindow);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
 
@@ -124,6 +155,7 @@ export default function App() {
   orbScaleRef.current = orbScale;
   isDarkThemeRef.current = isDarkTheme;
   showTrailsRef.current = displayMode === "trails";
+  timeWindowRef.current = timeWindow;
 
   const showTrails = displayMode === "trails";
 
@@ -148,6 +180,7 @@ export default function App() {
       getOrbScale: () => orbScaleRef.current,
       getIsDarkTheme: () => isDarkThemeRef.current,
       getShowTrails: () => showTrailsRef.current,
+      getTimeWindow: () => timeWindowRef.current,
       onSceneReady: (scene) => { flightSceneRef.current = scene; },
     });
     map.addLayer(layer);
@@ -493,10 +526,12 @@ export default function App() {
             onAirportGlowChange={setAirportGlow}
             scope={scope}
             trackMode={trackMode}
+            timeWindow={timeWindow}
             pickableFlights={pickableFlights}
             selectedFlightId={selectedFlightId}
             onScopeChange={setScope}
             onTrackModeChange={setTrackMode}
+            onTimeWindowChange={setTimeWindow}
             onFlightSelect={setSelectedFlightId}
             airports={airports}
             selectedAirport={selectedAirport}
