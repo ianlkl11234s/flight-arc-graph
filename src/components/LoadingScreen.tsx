@@ -22,7 +22,7 @@ export function LoadingScreen() {
   }, []);
 
   // Tips 輪播
-  const fadeTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
     const id = setInterval(() => {
       setTipFade(false); // 開始淡出
