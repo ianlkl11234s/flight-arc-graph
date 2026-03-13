@@ -19,6 +19,8 @@ interface UseTimelineReturn {
   setSpeed: (s: number) => void;
   seek: (time: number) => void;
   seekByProgress: (p: number) => void;
+  /** 設定一個 pending seek — 會在日期/rangeDays 更新後自動 seek */
+  seekDeferred: (time: number) => void;
   setSelectedDate: (d: string | null) => void;
   shiftDate: (delta: number) => void;
   setRangeDays: (n: number) => void;
@@ -61,14 +63,21 @@ export function useTimeline({
   );
 
   const [currentTime, setCurrentTime] = useState(windowStart);
+  const pendingSeekRef = useRef<number | null>(null);
 
   const duration = windowEnd - windowStart;
   const progress = duration > 0 ? (currentTime - windowStart) / duration : 0;
 
-  // 切日期或 rangeDays 時 reset currentTime
+  // 切日期或 rangeDays 時：若有 pending seek 就 seek 到那個時間，否則 reset
   useEffect(() => {
-    setCurrentTime(windowStart);
-  }, [windowStart]);
+    if (pendingSeekRef.current !== null) {
+      const t = pendingSeekRef.current;
+      pendingSeekRef.current = null;
+      setCurrentTime(Math.max(windowStart, Math.min(windowEnd, t)));
+    } else {
+      setCurrentTime(windowStart);
+    }
+  }, [windowStart, windowEnd]);
 
   // availableDates 改變時，若 selectedDate 不在列表中，選第二個（2/19），fallback 第一個
   useEffect(() => {
@@ -144,6 +153,10 @@ export function useTimeline({
     [availableDates, selectedDate],
   );
 
+  const seekDeferred = useCallback((time: number) => {
+    pendingSeekRef.current = time;
+  }, []);
+
   const setRangeDays = useCallback((n: number) => {
     setRangeDaysRaw(n);
   }, []);
@@ -163,6 +176,7 @@ export function useTimeline({
     setSpeed,
     seek,
     seekByProgress,
+    seekDeferred,
     setSelectedDate,
     shiftDate,
     setRangeDays,
