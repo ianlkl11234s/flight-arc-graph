@@ -1,38 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { FLAT_TIPS } from "../data/tips";
 
 const TOTAL_SECONDS = 30;
 const TIP_INTERVAL = 4000; // 4 秒切換
 
-const TIPS = [
-  // 資料來源
-  "「航線軌跡」提供各機場最精細的起降軌道，適合切換到特定機場仔細觀察",
-  "「空域快照」涵蓋所有經過台灣的航班（含過境），航班較多時建議將時間軸調整為 3d",
-  "「空域快照」旁的機型篩選，可以只看軍機、直升機、商務機等特定類別",
-  // 顯示模式
-  "開啟 ±12h Window 只顯示當前時間前後 12 小時的航班，大幅減少視覺雜訊",
-  "切換 Live Status 模式可隱藏軌跡線，更清楚觀察即時空域中的飛機分佈",
-  "右上角 3D / 2D 切換：2D 模式會將所有軌跡投影到地面，呈現不同的視覺效果",
-  // 拍攝與互動
-  "右上角的 Capture 可進入沈浸式拍攝模式，按 ESC 退出",
-  "點擊飛機光球可查看航班資訊，雙擊可鎖定追蹤該航班飛行",
-  "右鍵拖曳可旋轉視角，滾輪縮放地圖，找到最佳觀賞角度",
-  // 側邊控制面板
-  "點選左側 icon 開啟面板，再次點選或按 ✕ 即可收起",
-  "左側齒輪面板可調整軌跡透明度、光球大小等視覺參數",
-  "左側定位 icon 可快速跳轉到全台 22 座機場的預設視角",
-  "左側行事曆 icon 可查看與切換不同日期的航班資料",
-  // 統計與範圍
-  "航線軌跡模式下，左側統計 icon 可查看該機場的航班統計與排名",
-  "All Taiwan 模式搭配空域快照，可觀察不停降台灣的過境航班",
-  // 小知識
-  "軌跡顏色由高度決定 — 暖橘色為低空，冷藍色為高空巡航",
-  "每日約 2,600+ 筆航線軌跡、20,000+ 筆空域快照資料",
-  "資料來源：FlightRadar24 API（航線）+ OpenSky Network（空域）",
-];
-
 export function LoadingScreen() {
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [tipIdx, setTipIdx] = useState(() => Math.floor(Math.random() * TIPS.length));
+  const [tipIdx, setTipIdx] = useState(() => Math.floor(Math.random() * FLAT_TIPS.length));
   const [tipFade, setTipFade] = useState(true); // true = visible
 
   // 倒數計時
@@ -48,19 +22,23 @@ export function LoadingScreen() {
   }, []);
 
   // Tips 輪播
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
     const id = setInterval(() => {
       setTipFade(false); // 開始淡出
-      setTimeout(() => {
+      fadeTimerRef.current = setTimeout(() => {
         setTipIdx((prev) => {
           let next;
-          do { next = Math.floor(Math.random() * TIPS.length); } while (next === prev && TIPS.length > 1);
+          do { next = Math.floor(Math.random() * FLAT_TIPS.length); } while (next === prev && FLAT_TIPS.length > 1);
           return next;
         });
         setTipFade(true); // 淡入新 tip
       }, 400);
     }, TIP_INTERVAL);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      clearTimeout(fadeTimerRef.current);
+    };
   }, []);
 
   const remainingSec = Math.max(0, TOTAL_SECONDS - elapsedMs / 1000);
@@ -186,7 +164,7 @@ export function LoadingScreen() {
             transition: "opacity 0.4s ease",
           }}
         >
-          {TIPS[tipIdx]}
+          {FLAT_TIPS[tipIdx]}
         </div>
       </div>
 

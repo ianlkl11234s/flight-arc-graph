@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TIPS_BY_CATEGORY } from "../data/tips";
 
 type BottomTab = "guide" | "about" | "profile";
 type GuidePage = "getting-started" | "feature-legend" | "data-sources" | "tips";
@@ -468,40 +469,6 @@ function ProfilePage({ lang }: { lang: Lang }) {
 
 /* ── Tips Page ── */
 
-const ALL_TIPS = [
-  { cat: "資料來源", tips: [
-    "「航線軌跡」提供各機場最精細的起降軌道，適合切換到特定機場仔細觀察",
-    "「空域快照」涵蓋所有經過台灣的航班（含過境），航班較多時建議將時間軸調整為 3d",
-    "「空域快照」旁的機型篩選，可以只看軍機、直升機、商務機等特定類別",
-  ]},
-  { cat: "顯示模式", tips: [
-    "開啟 ±12h Window 只顯示當前時間前後 12 小時的航班，大幅減少視覺雜訊",
-    "切換 Live Status 模式可隱藏軌跡線，更清楚觀察即時空域中的飛機分佈",
-    "右上角 3D / 2D 切換：2D 模式會將所有軌跡投影到地面，呈現不同的視覺效果",
-  ]},
-  { cat: "拍攝與互動", tips: [
-    "右上角的 Capture 可進入沈浸式拍攝模式，按 ESC 退出",
-    "點擊飛機光球可查看航班資訊，雙擊可鎖定追蹤該航班飛行",
-    "右鍵拖曳可旋轉視角，滾輪縮放地圖，找到最佳觀賞角度",
-  ]},
-  { cat: "控制面板", tips: [
-    "點選左側 icon 開啟面板，再次點選或按 ✕ 即可收起",
-    "左側齒輪面板可調整軌跡透明度、光球大小等視覺參數",
-    "左側定位 icon 可快速跳轉到全台 22 座機場的預設視角",
-    "左側行事曆 icon 可查看與切換不同日期的航班資料",
-    "定位面板上方有「場景」預設，一鍵切換到推薦的觀賞角度與設定",
-  ]},
-  { cat: "統計與範圍", tips: [
-    "航線軌跡模式下，左側統計 icon 可查看該機場的航班統計與排名",
-    "All Taiwan 模式搭配空域快照，可觀察不停降台灣的過境航班",
-  ]},
-  { cat: "小知識", tips: [
-    "軌跡顏色由高度決定 — 暖橘色為低空，冷藍色為高空巡航",
-    "每日約 2,600+ 筆航線軌跡、20,000+ 筆空域快照資料",
-    "資料來源：FlightRadar24 API（航線）+ OpenSky Network（空域）",
-  ]},
-];
-
 function TipsPage({ lang }: { lang: Lang }) {
   const L = lang === "zh";
   return (
@@ -509,7 +476,7 @@ function TipsPage({ lang }: { lang: Lang }) {
       <p style={{ fontSize: 13, lineHeight: 1.8, color: S.text, margin: 0 }}>
         {L ? "以下是一些實用的操作技巧，幫助你更好地探索台灣的空中交通：" : "Here are some useful tips to help you explore Taiwan's air traffic:"}
       </p>
-      {ALL_TIPS.map((group) => (
+      {TIPS_BY_CATEGORY.map((group) => (
         <div key={group.cat}>
           <SectionTitle>{group.cat}</SectionTitle>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

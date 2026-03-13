@@ -9,6 +9,7 @@ import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo } from "./map/cameraPresets";
 import { createFlightLayer } from "./map/customLayer";
 import { filterByAirport } from "./data/flightLoader";
+import { timeToUnixTW } from "./utils/dateUtils";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { AirportSelector } from "./components/AirportSelector";
 import { FlightPicker } from "./components/FlightPicker";
@@ -515,11 +516,7 @@ export default function App() {
               if (scene.opacity != null) setStaticOpacity(scene.opacity);
               setAircraftFilter(scene.aircraftFilter ?? "all");
               // 時間軸：計算 seek 目標（台灣 UTC+8），先設 deferred 再改日期
-              const [h, m] = scene.time.split(":").map(Number);
-              const [y, mo, d] = scene.date.split("-").map(Number);
-              const seekUnix = Math.floor(
-                new Date(Date.UTC(y!, mo! - 1, d!, h! - 8, m!)).getTime() / 1000,
-              );
+              const seekUnix = timeToUnixTW(scene.date, scene.time);
               timeline.seekDeferred(seekUnix);
               timeline.setRangeDays(scene.rangeDays);
               timeline.setSelectedDate(scene.date);
