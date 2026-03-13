@@ -800,6 +800,29 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
       {/* Floating Panel */}
       {activePanel !== null && (
         <div style={panelStyle}>
+          {/* Close button */}
+          <button
+            onClick={() => setActivePanel(null)}
+            style={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: DIM,
+              fontSize: 12,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1,
+            }}
+          >
+            ✕
+          </button>
           {activePanel === "settings" && <SettingsPanel {...props} />}
           {activePanel === "locations" && (
             <LocationsPanel
