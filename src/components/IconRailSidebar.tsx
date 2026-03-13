@@ -72,6 +72,18 @@ export const SCENE_PRESETS: ScenePreset[] = [
     time: "11:16",
     opacity: 0.06,
   },
+  {
+    id: "p8-patrol",
+    name: "P-8 反潛機巡邏路徑",
+    desc: "空域快照 · All Taiwan · 1d",
+    camera: { center: [120.8183, 22.5421], zoom: 7, pitch: 28, bearing: -10 },
+    dataSource: "fused",
+    scope: "all-taiwan",
+    rangeDays: 1,
+    date: "2026-03-06",
+    time: "12:27",
+    opacity: 0.04,
+  },
 ];
 
 /* ── Style constants ─────────────────────────────────────── */
