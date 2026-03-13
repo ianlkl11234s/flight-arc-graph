@@ -507,10 +507,24 @@ export default function App() {
               }
             }}
             onSceneSelect={(scene: ScenePreset) => {
+              // 資料來源 & 範圍（跳過 dataSource useEffect 的自動設定）
+              prevDataSourceRef.current = scene.dataSource;
               setDataSource(scene.dataSource);
               setScope(scene.scope);
-              timeline.setRangeDays(scene.rangeDays);
+              if (scene.airport) setSelectedAirport(scene.airport);
               if (scene.opacity != null) setStaticOpacity(scene.opacity);
+              // 時間軸：日期 + rangeDays + seek
+              timeline.setSelectedDate(scene.date);
+              timeline.setRangeDays(scene.rangeDays);
+              // 計算 seek 目標時間（台灣 UTC+8）
+              const [h, m] = scene.time.split(":").map(Number);
+              const [y, mo, d] = scene.date.split("-").map(Number);
+              const seekUnix = Math.floor(
+                new Date(Date.UTC(y!, mo! - 1, d!, h! - 8, m!)).getTime() / 1000,
+              );
+              // 延遲 seek 確保 state 已更新
+              setTimeout(() => timeline.seek(seekUnix), 50);
+              // Camera
               mapRef.current?.flyTo({
                 center: scene.camera.center,
                 zoom: scene.camera.zoom,

@@ -13,7 +13,13 @@ export interface ScenePreset {
   dataSource: DataSource;
   scope: Scope;
   rangeDays: number;
+  /** 起始日期 YYYY-MM-DD */
+  date: string;
+  /** 該日期內的 seek 時間 "HH:MM" (台灣時間) */
+  time: string;
   opacity?: number;
+  /** 航線軌跡 airport scope 時要選的機場 */
+  airport?: string;
 }
 
 export const SCENE_PRESETS: ScenePreset[] = [
@@ -21,10 +27,12 @@ export const SCENE_PRESETS: ScenePreset[] = [
     id: "tw-air-corridor",
     name: "台灣空中走廊",
     desc: "空域快照 · All Taiwan · 1d",
-    camera: { center: [120.9, 24.2], zoom: 8.9, pitch: 71, bearing: 56 },
+    camera: { center: [121.0116, 24.5589], zoom: 9, pitch: 69, bearing: 69 },
     dataSource: "fused",
     scope: "all-taiwan",
     rangeDays: 1,
+    date: "2026-03-06",
+    time: "02:18",
     opacity: 0.04,
   },
   {
@@ -35,6 +43,8 @@ export const SCENE_PRESETS: ScenePreset[] = [
     dataSource: "fused",
     scope: "all-taiwan",
     rangeDays: 1,
+    date: "2026-03-06",
+    time: "08:17",
     opacity: 0.04,
   },
   {
@@ -45,27 +55,22 @@ export const SCENE_PRESETS: ScenePreset[] = [
     dataSource: "api",
     scope: "airport",
     rangeDays: 1,
+    date: "2026-02-19",
+    time: "07:52",
     opacity: 0.1,
+    airport: "RCTP",
   },
   {
     id: "all-taiwan-overview",
     name: "全台航線總覽",
-    desc: "航線軌跡 · All Taiwan · 3d",
-    camera: { center: [120.9, 23.6], zoom: 7.5, pitch: 50, bearing: 0 },
+    desc: "航線軌跡 · All Taiwan · 1d",
+    camera: { center: [120.6818, 23.4015], zoom: 7.5, pitch: 50, bearing: 0 },
     dataSource: "api",
     scope: "all-taiwan",
-    rangeDays: 3,
-    opacity: 0.06,
-  },
-  {
-    id: "strait-flights",
-    name: "台灣海峽航線",
-    desc: "空域快照 · All Taiwan · 1d",
-    camera: { center: [119.5, 24.0], zoom: 7.8, pitch: 55, bearing: -20 },
-    dataSource: "fused",
-    scope: "all-taiwan",
     rangeDays: 1,
-    opacity: 0.04,
+    date: "2026-02-19",
+    time: "11:16",
+    opacity: 0.06,
   },
 ];
 
