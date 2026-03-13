@@ -482,7 +482,7 @@ function TipsPage({ lang }: { lang: Lang }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {group.tips.map((tip, i) => (
               <Card key={i}>
-                <span style={{ color: S.text }}>{tip}</span>
+                <span style={{ color: S.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>{tip}</span>
               </Card>
             ))}
           </div>

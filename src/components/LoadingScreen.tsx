@@ -146,22 +146,26 @@ export function LoadingScreen() {
       {/* Tips 輪播 */}
       <div
         style={{
-          height: 40,
+          height: 24,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          maxWidth: 420,
+          maxWidth: "80vw",
+          width: "100%",
           padding: "0 20px",
-          textAlign: "center",
         }}
       >
         <div
           style={{
             fontSize: 12,
-            lineHeight: 1.6,
+            lineHeight: 1,
             color: "rgba(255,255,255,0.45)",
             opacity: tipFade ? 1 : 0,
             transition: "opacity 0.4s ease",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: "100%",
           }}
         >
           {FLAT_TIPS[tipIdx]}
