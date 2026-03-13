@@ -82,7 +82,7 @@ export default function App() {
     if (dataSource === "fused") {
       // 切到 Airspace Scan
       setScope("all-taiwan");
-      timeline.setRangeDays(7);
+      timeline.setRangeDays(1);
       setStaticOpacity(0.04);
       // 拉遠到全台視角
       mapRef.current?.flyTo({
