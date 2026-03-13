@@ -86,7 +86,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
     date: "2026-03-06",
     time: "12:27",
     opacity: 0.36,
-    aircraftFilter: "military",
+    aircraftFilter: "cat:military",
   },
 ];
 
