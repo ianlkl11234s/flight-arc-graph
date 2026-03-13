@@ -19,7 +19,7 @@ import { FlightStatsPanel } from "./components/FlightStatsPanel";
 import { DataSourceToggle } from "./components/DataSourceToggle";
 import { AircraftTypeFilter } from "./components/AircraftTypeFilter";
 import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCategories";
-import { IconRailSidebar } from "./components/IconRailSidebar";
+import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
 
 export default function App() {
@@ -505,6 +505,19 @@ export default function App() {
                   duration: 2000,
                 });
               }
+            }}
+            onSceneSelect={(scene: ScenePreset) => {
+              setDataSource(scene.dataSource);
+              setScope(scene.scope);
+              timeline.setRangeDays(scene.rangeDays);
+              if (scene.opacity != null) setStaticOpacity(scene.opacity);
+              mapRef.current?.flyTo({
+                center: scene.camera.center,
+                zoom: scene.camera.zoom,
+                pitch: scene.camera.pitch,
+                bearing: scene.camera.bearing,
+                duration: 2000,
+              });
             }}
             availableDates={availableDates}
             selectedDate={timeline.selectedDate}

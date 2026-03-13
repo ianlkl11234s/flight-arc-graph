@@ -1,7 +1,73 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import type { DisplayMode, RenderMode, Scope, TrackMode, Flight } from "../types";
+import type { DataSource, DisplayMode, RenderMode, Scope, TrackMode, Flight } from "../types";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
+
+/* ── Scene Presets ─────────────────────────────────────── */
+
+export interface ScenePreset {
+  id: string;
+  name: string;
+  desc: string;
+  camera: { center: [number, number]; zoom: number; pitch: number; bearing: number };
+  dataSource: DataSource;
+  scope: Scope;
+  rangeDays: number;
+  opacity?: number;
+}
+
+export const SCENE_PRESETS: ScenePreset[] = [
+  {
+    id: "tw-air-corridor",
+    name: "台灣空中走廊",
+    desc: "空域快照 · All Taiwan · 1d",
+    camera: { center: [120.9, 24.2], zoom: 8.9, pitch: 71, bearing: 56 },
+    dataSource: "fused",
+    scope: "all-taiwan",
+    rangeDays: 1,
+    opacity: 0.04,
+  },
+  {
+    id: "china-active",
+    name: "活躍中國境內班機",
+    desc: "空域快照 · All Taiwan · 1d",
+    camera: { center: [118.286, 25.68], zoom: 8.2, pitch: 56, bearing: 23 },
+    dataSource: "fused",
+    scope: "all-taiwan",
+    rangeDays: 1,
+    opacity: 0.04,
+  },
+  {
+    id: "taoyuan-closeup",
+    name: "桃園機場起降",
+    desc: "航線軌跡 · This Airport · 1d",
+    camera: { center: [121.23, 25.08], zoom: 10.8, pitch: 65, bearing: 30 },
+    dataSource: "api",
+    scope: "airport",
+    rangeDays: 1,
+    opacity: 0.1,
+  },
+  {
+    id: "all-taiwan-overview",
+    name: "全台航線總覽",
+    desc: "航線軌跡 · All Taiwan · 3d",
+    camera: { center: [120.9, 23.6], zoom: 7.5, pitch: 50, bearing: 0 },
+    dataSource: "api",
+    scope: "all-taiwan",
+    rangeDays: 3,
+    opacity: 0.06,
+  },
+  {
+    id: "strait-flights",
+    name: "台灣海峽航線",
+    desc: "空域快照 · All Taiwan · 1d",
+    camera: { center: [119.5, 24.0], zoom: 7.8, pitch: 55, bearing: -20 },
+    dataSource: "fused",
+    scope: "all-taiwan",
+    rangeDays: 1,
+    opacity: 0.04,
+  },
+];
 
 /* ── Style constants ─────────────────────────────────────── */
 
@@ -54,6 +120,7 @@ export interface IconRailSidebarProps {
   selectedAirport: string;
   onAirportChange: (icao: string) => void;
   onLocationJump: (icao: string) => void;
+  onSceneSelect: (scene: ScenePreset) => void;
   // Calendar
   availableDates: string[];
   selectedDate: string | null;
@@ -468,13 +535,52 @@ function LocationsPanel({
   selectedAirport,
   onAirportChange,
   onLocationJump,
-}: Pick<IconRailSidebarProps, "airports" | "selectedAirport" | "onAirportChange" | "onLocationJump">) {
+  onSceneSelect,
+}: Pick<IconRailSidebarProps, "airports" | "selectedAirport" | "onAirportChange" | "onLocationJump" | "onSceneSelect">) {
   // Use CAMERA_PRESETS order, filtered by available airports
   const available = new Set(airports);
   const ordered = CAMERA_PRESETS.filter((p) => available.has(p.icao));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* 場景預設 */}
+      <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "4px 8px 2px", marginTop: 2 }}>
+        場景 Scene
+      </div>
+      {SCENE_PRESETS.map((scene) => (
+        <button
+          key={scene.id}
+          onClick={() => onSceneSelect(scene)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "6px 8px",
+            background: "transparent",
+            border: "none",
+            borderRadius: 6,
+            cursor: "pointer",
+            textAlign: "left",
+            transition: "background 0.15s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+        >
+          <span style={{ width: 3, height: 24, borderRadius: 2, background: "#f59e0b", flexShrink: 0 }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 12, color: ACCENT, lineHeight: 1.3 }}>{scene.name}</div>
+            <div style={{ fontSize: 10, color: DIM, fontFamily: "monospace" }}>{scene.desc}</div>
+          </div>
+        </button>
+      ))}
+
+      {/* 分隔線 */}
+      <div style={{ height: 1, background: BORDER, margin: "6px 8px" }} />
+
+      {/* 機場列表 */}
+      <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 2px" }}>
+        機場 Airport
+      </div>
       {ordered.map((preset) => {
         const info = getAirportInfo(preset.icao);
         const isActive = preset.icao === selectedAirport;
@@ -830,6 +936,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               selectedAirport={props.selectedAirport}
               onAirportChange={props.onAirportChange}
               onLocationJump={props.onLocationJump}
+              onSceneSelect={props.onSceneSelect}
             />
           )}
           {activePanel === "calendar" && (
