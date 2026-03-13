@@ -161,7 +161,7 @@ function GettingStartedPage({ lang }: { lang: Lang }) {
         </Card>
         <Card title="Data Source">
           {L
-            ? <><b>Route Tracks</b>：FR24 API 精細航線軌跡，以台灣機場起降為主，細節豐富。<b>Airspace Scan</b>：OpenSky 空域掃描，涵蓋台灣附近所有飛機，覆蓋完整但軌跡較粗。</>
+            ? <><b>航線軌跡</b>：FR24 API 精細航線軌跡，以台灣機場起降為主，細節豐富。<b>空域快照</b>：OpenSky 空域掃描，涵蓋台灣附近所有飛機，覆蓋完整但軌跡較粗。</>
             : <><b>Route Tracks</b>: FR24 API detailed route trajectories centered on Taiwan airport departures/arrivals. <b>Airspace Scan</b>: OpenSky airspace scan covering all aircraft near Taiwan with broader coverage but coarser trails.</>
           }
         </Card>
@@ -239,15 +239,15 @@ function DataSourcesPage({ lang }: { lang: Lang }) {
   const L = lang === "zh";
   const sources = [
     {
-      name: { zh: "Route Tracks — FlightRadar24 API", en: "Route Tracks — FlightRadar24 API" },
+      name: { zh: "航線軌跡 — FlightRadar24 API", en: "Route Tracks — FlightRadar24 API" },
       source: "FR24 Explorer API",
       desc: { zh: "以台灣 22 座機場起降為主的精細軌跡資料。透過 flight-summary/light 端點取得航班清單，再逐航班擷取詳細軌跡點（經緯度、高度、速度、時間戳）。軌跡細緻清晰，每日約 2,600+ 航班。", en: "Detailed trajectory data centered on departures/arrivals at all 22 Taiwan airports. Flight lists retrieved via flight-summary/light endpoint, then per-flight track points (lat/lon, altitude, speed, timestamp) fetched. High-fidelity trails, ~2,600+ flights daily." },
       color: "#64aaff",
     },
     {
-      name: { zh: "Airspace Scan — OpenSky Network", en: "Airspace Scan — OpenSky Network" },
+      name: { zh: "空域快照 — OpenSky Network", en: "Airspace Scan — OpenSky Network" },
       source: "OpenSky / ADS-B",
-      desc: { zh: "台灣附近空域的全覆蓋掃描 — 以 OpenSky Network 為主要資料來源，持續更新台灣周邊所有飛機位置。涵蓋範圍完整（包含過境、軍機等），但軌跡由點連線構成，降落過程細節較粗。與 Route Tracks 互補使用。", en: "Full-coverage airspace scan around Taiwan — primarily sourced from OpenSky Network, continuously tracking all aircraft near Taiwan. Broader coverage (including overflights, military, etc.) but trails are point-connected and less detailed during descent. Complementary to Route Tracks." },
+      desc: { zh: "台灣附近空域的全覆蓋掃描 — 以 OpenSky Network 為主要資料來源，持續更新台灣周邊所有飛機位置。涵蓋範圍完整（包含過境、軍機等），但軌跡由點連線構成，降落過程細節較粗。與航線軌跡互補使用。", en: "Full-coverage airspace scan around Taiwan — primarily sourced from OpenSky Network, continuously tracking all aircraft near Taiwan. Broader coverage (including overflights, military, etc.) but trails are point-connected and less detailed during descent. Complementary to Route Tracks." },
       color: "#1ad9e5",
     },
     {
