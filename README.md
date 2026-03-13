@@ -4,9 +4,11 @@
 
 ## Screenshots
 
-![RCTP - 桃園國際機場（Capture 模式）](screenshots/RCTP-capture.png)
-![RCQC - 澎湖馬公機場（All Taiwan）](screenshots/RCQC-all-taiwan.png)
-![全台航班廣角全景](screenshots/all-flights-globe.png)
+![控制面板 — 航線軌跡模式，桃園機場視角](screenshots/settings-panel.png)
+![Capture 模式 — 全台航班俯瞰](screenshots/capture-all-taiwan.png)
+![Capture 模式 — 空域快照鳥瞰](screenshots/capture-airspace.png)
+![Flight Statistics — RCTP 桃園機場統計面板](screenshots/flight-statistics.png)
+![機場選擇 — 全台 22 座機場快速跳轉](screenshots/airport-locations.png)
 
 ## 視覺概念
 
@@ -64,8 +66,8 @@ Flight Trails 模式下的子選項（checkbox），開啟後僅顯示當前播�
 
 | 模式 | 資料檔案 | 說明 |
 |------|---------|------|
-| Route Tracks | `aviation_data.json` | FR24 API 精細軌跡（台灣機場起降航線） |
-| Airspace Scan | `aviation_data_fused.json` | OpenSky 空域掃描（台灣附近所有飛機，涵蓋完整但軌跡較粗） |
+| 航線軌跡 | `aviation_data.json` | FR24 API 精細軌跡（台灣機場起降航線） |
+| 空域快照 | `aviation_data_fused.json` | OpenSky 空域掃描（台灣附近所有飛機，涵蓋完整但軌跡較粗） |
 
 兩個檔案啟動時平行載入，切換即時生效不需重新 fetch。若融合資料不存在，Fused Snapshot 按鈕自動 disabled。
 
@@ -180,7 +182,7 @@ Taiwan Flight Arc/
 │   │   ├── AirportSelector.tsx
 │   │   ├── FlightPicker.tsx       # Scope + TrackMode 選擇（支援 isMobile 2×2 grid）
 │   │   ├── FlightStatsPanel.tsx   # 右側統計面板（可拖拉寬度）
-│   │   ├── DataSourceToggle.tsx   # Route Tracks / Airspace Scan 切換
+│   │   ├── DataSourceToggle.tsx   # 航線軌跡 / 空域快照 切換
 │   │   ├── TimelineControls.tsx   # 支援 isMobile（加大觸控區）
 │   │   ├── StyleSelector.tsx
 │   │   └── MobileBottomSheet.tsx  # 手機版三段式底部面板
