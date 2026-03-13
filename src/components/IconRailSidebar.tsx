@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import type { DataSource, DisplayMode, RenderMode, Scope, TrackMode, Flight } from "../types";
+import type { AircraftFilterKey } from "../data/aircraftCategories";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
 
@@ -20,6 +21,8 @@ export interface ScenePreset {
   opacity?: number;
   /** 航線軌跡 airport scope 時要選的機場 */
   airport?: string;
+  /** 機型篩選 */
+  aircraftFilter?: AircraftFilterKey;
 }
 
 export const SCENE_PRESETS: ScenePreset[] = [
@@ -75,14 +78,15 @@ export const SCENE_PRESETS: ScenePreset[] = [
   {
     id: "p8-patrol",
     name: "P-8 反潛機巡邏路徑",
-    desc: "空域快照 · All Taiwan · 1d",
+    desc: "空域快照 · Military · 1d",
     camera: { center: [120.8183, 22.5421], zoom: 7, pitch: 28, bearing: -10 },
     dataSource: "fused",
     scope: "all-taiwan",
     rangeDays: 1,
     date: "2026-03-06",
     time: "12:27",
-    opacity: 0.04,
+    opacity: 0.36,
+    aircraftFilter: "military",
   },
 ];
 

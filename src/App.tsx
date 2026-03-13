@@ -513,6 +513,7 @@ export default function App() {
               setScope(scene.scope);
               if (scene.airport) setSelectedAirport(scene.airport);
               if (scene.opacity != null) setStaticOpacity(scene.opacity);
+              setAircraftFilter(scene.aircraftFilter ?? "all");
               // 時間軸：計算 seek 目標（台灣 UTC+8），先設 deferred 再改日期
               const [h, m] = scene.time.split(":").map(Number);
               const [y, mo, d] = scene.date.split("-").map(Number);
