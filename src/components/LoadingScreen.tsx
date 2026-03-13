@@ -22,7 +22,7 @@ const TIPS = [
 
 export function LoadingScreen() {
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [tipIdx, setTipIdx] = useState(0);
+  const [tipIdx, setTipIdx] = useState(() => Math.floor(Math.random() * TIPS.length));
   const [tipFade, setTipFade] = useState(true); // true = visible
 
   // 倒數計時
@@ -42,7 +42,11 @@ export function LoadingScreen() {
     const id = setInterval(() => {
       setTipFade(false); // 開始淡出
       setTimeout(() => {
-        setTipIdx((prev) => (prev + 1) % TIPS.length);
+        setTipIdx((prev) => {
+          let next;
+          do { next = Math.floor(Math.random() * TIPS.length); } while (next === prev && TIPS.length > 1);
+          return next;
+        });
         setTipFade(true); // 淡入新 tip
       }, 400);
     }, TIP_INTERVAL);
