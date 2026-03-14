@@ -23,7 +23,7 @@ dotenv.config();
 // ── 設定 ──────────────────────────────────────────────
 
 const API_BASE = "https://fr24api.flightradar24.com/api";
-const DELAY_MS = 2200;         // 2.2s → 安全低於 30 次/分鐘
+const DELAY_MS = 2050;         // 2.05s → ~29 req/min，接近 Essential 30 req/min 上限
 const MAX_RETRIES = 5;
 
 const INPUT_FILE = "scripts/flight-list.json";
@@ -216,6 +216,12 @@ async function main() {
   const dateIdx = process.argv.indexOf("--date");
   const dateFilter = dateIdx !== -1 ? process.argv[dateIdx + 1] : null;
 
+  // 解析 --airports 參數（篩選 orig_icao 或 dest_icao）
+  const airportsIdx = process.argv.indexOf("--airports");
+  const airportsFilter = airportsIdx !== -1
+    ? new Set(process.argv[airportsIdx + 1]!.split(","))
+    : null;
+
   // 讀取 Step 1 航班清單
   if (!existsSync(INPUT_FILE)) {
     console.error(`❌ 找不到 ${INPUT_FILE}，請先執行 Step 1`);
@@ -236,6 +242,14 @@ async function main() {
   } else {
     targets = allSummaries;
     console.log("日期篩選: 全部");
+  }
+
+  // 篩選機場
+  if (airportsFilter) {
+    targets = targets.filter(
+      (f) => airportsFilter.has(f.orig_icao) || airportsFilter.has(f.dest_icao),
+    );
+    console.log(`機場篩選: ${[...airportsFilter].join(", ")}`);
   }
   console.log(`目標航班: ${targets.length} 筆\n`);
 

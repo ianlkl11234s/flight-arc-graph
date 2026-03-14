@@ -41,7 +41,7 @@ const getSelectStyle = (dark: boolean): React.CSSProperties => ({
 
 const SCOPE_LABELS: Record<Scope, string> = {
   airport: "This Airport",
-  "all-taiwan": "All Taiwan",
+  region: "Region",
 };
 
 const TRACK_LABELS: Record<TrackMode, string> = {

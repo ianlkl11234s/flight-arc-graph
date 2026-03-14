@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import type { DataSource, DisplayMode, RenderMode, Scope, TrackMode, Flight } from "../types";
+import type { DataSource, DisplayMode, RenderMode, Region, Scope, TrackMode, Flight } from "../types";
 import type { AircraftFilterKey } from "../data/aircraftCategories";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
@@ -32,7 +32,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
     desc: "空域快照 · All Taiwan · 1d",
     camera: { center: [121.0116, 24.5589], zoom: 9, pitch: 69, bearing: 69 },
     dataSource: "fused",
-    scope: "all-taiwan",
+    scope: "region",
     rangeDays: 1,
     date: "2026-03-06",
     time: "02:18",
@@ -44,7 +44,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
     desc: "空域快照 · All Taiwan · 1d",
     camera: { center: [118.286, 25.68], zoom: 8.2, pitch: 56, bearing: 23 },
     dataSource: "fused",
-    scope: "all-taiwan",
+    scope: "region",
     rangeDays: 1,
     date: "2026-03-06",
     time: "08:17",
@@ -69,7 +69,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
     desc: "航線軌跡 · All Taiwan · 1d",
     camera: { center: [120.6818, 23.4015], zoom: 7.5, pitch: 50, bearing: 0 },
     dataSource: "api",
-    scope: "all-taiwan",
+    scope: "region",
     rangeDays: 1,
     date: "2026-02-19",
     time: "11:16",
@@ -81,7 +81,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
     desc: "空域快照 · Military · 1d",
     camera: { center: [120.8183, 22.5421], zoom: 7, pitch: 28, bearing: -10 },
     dataSource: "fused",
-    scope: "all-taiwan",
+    scope: "region",
     rangeDays: 1,
     date: "2026-03-06",
     time: "12:27",
@@ -128,6 +128,7 @@ export interface IconRailSidebarProps {
   onAirportGlowChange: (v: number) => void;
   // Scope & Track mode
   scope: Scope;
+  region: Region;
   trackMode: TrackMode;
   timeWindow: boolean;
   pickableFlights: Flight[];
@@ -411,7 +412,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
       <ToggleButtons<Scope>
         options={[
           { value: "airport", label: "This Airport" },
-          { value: "all-taiwan", label: "All Taiwan" },
+          { value: "region", label: props.region === "all" ? "All Regions" : props.region === "world" ? "All World" : `All ${props.region === "TW" ? "Taiwan" : props.region === "JP" ? "Japan" : "Hong Kong"}` },
         ]}
         value={props.scope}
         onChange={props.onScopeChange}
@@ -551,16 +552,82 @@ function SettingsPanel(props: IconRailSidebarProps) {
   );
 }
 
+function AirportButton({ preset, isActive, onAirportChange, onLocationJump }: {
+  preset: { icao: string; name: string };
+  isActive: boolean;
+  onAirportChange: (icao: string) => void;
+  onLocationJump: (icao: string) => void;
+}) {
+  const info = getAirportInfo(preset.icao);
+  return (
+    <button
+      onClick={() => { onAirportChange(preset.icao); onLocationJump(preset.icao); }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 8px",
+        background: isActive ? "rgba(100,170,255,0.15)" : "transparent",
+        border: "none",
+        borderRadius: 6,
+        cursor: "pointer",
+        textAlign: "left",
+        transition: "background 0.15s",
+        width: "100%",
+      }}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+    >
+      <span style={{ width: 3, height: 24, borderRadius: 2, background: isActive ? "#64aaff" : BORDER, flexShrink: 0 }} />
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 12, color: isActive ? "#fff" : ACCENT, lineHeight: 1.3 }}>
+          {info?.name ?? preset.name}
+        </div>
+        <div style={{ fontSize: 10, color: DIM, fontFamily: "monospace" }}>
+          {info?.iata ?? preset.icao} / {preset.icao}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+const KNOWN_PREFIXES = ["RC", "RJ", "RO", "VH"];
+const REGION_ICAO_MATCH: Record<string, (icao: string) => boolean> = {
+  TW: (icao) => icao.startsWith("RC"),
+  JP: (icao) => icao.startsWith("RJ") || icao.startsWith("RO"),
+  HK: (icao) => icao.startsWith("VH"),
+  world: (icao) => !KNOWN_PREFIXES.some((p) => icao.startsWith(p)),
+  all: () => true,
+};
+
+const REGION_LABELS: Record<string, string> = {
+  TW: "台灣 Taiwan",
+  JP: "日本 Japan",
+  HK: "香港 Hong Kong",
+  world: "World",
+};
+
 function LocationsPanel({
   airports,
   selectedAirport,
   onAirportChange,
   onLocationJump,
   onSceneSelect,
-}: Pick<IconRailSidebarProps, "airports" | "selectedAirport" | "onAirportChange" | "onLocationJump" | "onSceneSelect">) {
-  // Use CAMERA_PRESETS order, filtered by available airports
+  region,
+}: Pick<IconRailSidebarProps, "airports" | "selectedAirport" | "onAirportChange" | "onLocationJump" | "onSceneSelect" | "region">) {
+  // Use CAMERA_PRESETS order, filtered by available airports + region
   const available = new Set(airports);
-  const ordered = CAMERA_PRESETS.filter((p) => available.has(p.icao));
+  const matchRegion = REGION_ICAO_MATCH[region] || (() => true);
+  const ordered = CAMERA_PRESETS.filter((p) => available.has(p.icao) && matchRegion(p.icao));
+
+  // Group by region when "all"
+  const groupedByRegion = region === "all"
+    ? (["TW", "JP", "HK", "world"] as const).map((r) => ({
+        key: r,
+        label: REGION_LABELS[r],
+        presets: CAMERA_PRESETS.filter((p) => available.has(p.icao) && REGION_ICAO_MATCH[r]!(p.icao)),
+      })).filter((g) => g.presets.length > 0)
+    : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -599,58 +666,29 @@ function LocationsPanel({
       <div style={{ height: 1, background: BORDER, margin: "6px 8px" }} />
 
       {/* 機場列表 */}
-      <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 2px" }}>
-        機場 Airport
-      </div>
-      {ordered.map((preset) => {
-        const info = getAirportInfo(preset.icao);
-        const isActive = preset.icao === selectedAirport;
-        return (
-          <button
-            key={preset.icao}
-            onClick={() => {
-              onAirportChange(preset.icao);
-              onLocationJump(preset.icao);
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 8px",
-              background: isActive ? "rgba(100,170,255,0.15)" : "transparent",
-              border: "none",
-              borderRadius: 6,
-              cursor: "pointer",
-              textAlign: "left",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <span
-              style={{
-                width: 3,
-                height: 24,
-                borderRadius: 2,
-                background: isActive ? "#64aaff" : BORDER,
-                flexShrink: 0,
-              }}
-            />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, color: isActive ? "#fff" : ACCENT, lineHeight: 1.3 }}>
-                {info?.name ?? preset.name}
-              </div>
-              <div style={{ fontSize: 10, color: DIM, fontFamily: "monospace" }}>
-                {info?.iata ?? preset.icao} / {preset.icao}
-              </div>
+      {groupedByRegion ? (
+        /* All regions: grouped */
+        groupedByRegion.map((group) => (
+          <div key={group.key}>
+            <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "6px 8px 2px" }}>
+              {group.label} ({group.presets.length})
             </div>
-          </button>
-        );
-      })}
+            {group.presets.map((preset) => (
+              <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} />
+            ))}
+          </div>
+        ))
+      ) : (
+        /* Single region */
+        <>
+          <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 2px" }}>
+            機場 Airport ({ordered.length})
+          </div>
+          {ordered.map((preset) => (
+            <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} />
+          ))}
+        </>
+      )}
     </div>
   );
 }
@@ -825,7 +863,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
   const panelStyle: CSSProperties = {
     position: "absolute",
     left: RAIL_WIDTH + 8,
-    top: 92,
+    top: 116,
     zIndex: 20,
     width: PANEL_WIDTH,
     maxHeight: "70vh",
@@ -856,7 +894,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          paddingTop: 12,
+          paddingTop: 36,
           paddingBottom: 8,
           borderRight: `1px solid ${BORDER}`,
           borderBottom: `1px solid ${BORDER}`,
@@ -958,6 +996,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onAirportChange={props.onAirportChange}
               onLocationJump={props.onLocationJump}
               onSceneSelect={props.onSceneSelect}
+              region={props.region}
             />
           )}
           {activePanel === "calendar" && (

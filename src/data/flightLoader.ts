@@ -297,13 +297,11 @@ export function filterByAirport(flights: Flight[], icao: string): Flight[] {
   );
 }
 
-/** 取得資料中所有出現的台灣機場 ICAO */
+/** 取得資料中所有出現的機場 ICAO（origin） */
 export function getTaiwanAirports(flights: Flight[]): string[] {
-  const twIcaoPrefix = "RC";
   const airports = new Set<string>();
   for (const f of flights) {
-    if (f.origin_icao.startsWith(twIcaoPrefix)) airports.add(f.origin_icao);
-    if (f.dest_icao.startsWith(twIcaoPrefix)) airports.add(f.dest_icao);
+    if (f.origin_icao) airports.add(f.origin_icao);
   }
   return [...airports].sort();
 }

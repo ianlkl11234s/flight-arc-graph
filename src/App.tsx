@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
-import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight } from "./types";
+import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region } from "./types";
 import type { FlightScene } from "./three/FlightScene";
 import { MapView } from "./map/MapView";
 import { useFlightData } from "./hooks/useFlightData";
@@ -36,6 +36,7 @@ export default function App() {
   } = useFlightData(dataSource);
 
   const [scope, setScope] = useState<Scope>("airport");
+  const [region, setRegion] = useState<Region>("TW");
   const [trackMode, setTrackMode] = useState<TrackMode>("stack");
   const [timeWindow, setTimeWindow] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
@@ -55,6 +56,57 @@ export default function App() {
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
   const { isMobile, isLandscape } = useIsMobile();
+
+  // Region 相關 helper
+  const KNOWN_REGIONS = ["RC", "RJ", "RO", "VH"];
+  const isKnownRegion = (icao: string) => KNOWN_REGIONS.some((p) => icao.startsWith(p));
+
+  const REGION_CONFIG: Record<Region, { title: string; label: string; icaoMatch: (icao: string) => boolean; camera: { center: [number, number]; zoom: number; pitch: number; bearing: number }; defaultAirport?: string }> = {
+    TW: {
+      title: "Taiwan Flight Arc",
+      label: "TW",
+      icaoMatch: (icao) => icao.startsWith("RC"),
+      camera: { center: [120.9, 24.2], zoom: 7.3, pitch: 42, bearing: 0 },
+      defaultAirport: "RCTP",
+    },
+    JP: {
+      title: "Japan Flight Arc",
+      label: "JP",
+      icaoMatch: (icao) => icao.startsWith("RJ") || icao.startsWith("RO"),
+      camera: { center: [139.7816, 35.5895], zoom: 10.2, pitch: 54, bearing: 109 },
+      defaultAirport: "RJTT",
+    },
+    HK: {
+      title: "Hong Kong Flight Arc",
+      label: "HK",
+      icaoMatch: (icao) => icao.startsWith("VH"),
+      camera: { center: [113.9184, 22.3094], zoom: 10.5, pitch: 62, bearing: 106 },
+      defaultAirport: "VHHH",
+    },
+    world: {
+      title: "World Flight Arc",
+      label: "World",
+      icaoMatch: (icao) => !isKnownRegion(icao),
+      camera: { center: [-16.7745, 32.6942], zoom: 12, pitch: 55, bearing: 0 },
+      defaultAirport: "LPMA",
+    },
+    all: {
+      title: "Flight Arc",
+      label: "All",
+      icaoMatch: () => true,
+      camera: { center: [127.0, 30.0], zoom: 4.5, pitch: 35, bearing: 0 },
+      defaultAirport: "RCTP",
+    },
+  };
+
+  const regionTitle = REGION_CONFIG[region].title;
+
+  // 依 region 篩選航班（出發或抵達屬於該 region）
+  const regionFlights = useMemo(() => {
+    if (region === "all") return allFlights;
+    const match = REGION_CONFIG[region].icaoMatch;
+    return allFlights.filter((f) => match(f.origin_icao) || match(f.dest_icao));
+  }, [allFlights, region]);
 
   // 本地資料可用日期（台灣時區）
   const availableDates = useMemo(() => {
@@ -82,17 +134,12 @@ export default function App() {
 
     if (dataSource === "fused") {
       // 切到 Airspace Scan
-      setScope("all-taiwan");
+      setScope("region");
       timeline.setRangeDays(1);
       setStaticOpacity(0.04);
-      // 拉遠到全台視角
-      mapRef.current?.flyTo({
-        center: [120.9, 24.2],
-        zoom: 7.3,
-        pitch: 42,
-        bearing: 0,
-        duration: 2000,
-      });
+      // 拉遠到 region 視角
+      const cam = REGION_CONFIG[region].camera;
+      mapRef.current?.flyTo({ ...cam, duration: 2000 });
     } else {
       // 切回 Route Tracks
       setScope("airport");
@@ -102,9 +149,9 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataSource]);
 
-  // 根據 scope + trackMode + 日期範圍決定要顯示的航班
+  // 根據 scope + region + trackMode + 日期範圍決定要顯示的航班
   const displayedFlights = useMemo(() => {
-    let base = scope === "all-taiwan" ? allFlights : filteredFlights;
+    let base = scope === "region" ? regionFlights : filteredFlights;
     // 日期範圍篩選（離散，只在使用者操作時改變）
     base = base.filter((f) => {
       const t = f.dep_time || f.path[0]?.[3];
@@ -114,7 +161,7 @@ export default function App() {
       return base.filter((f) => f.fr24_id === selectedFlightId);
     }
     return base;
-  }, [allFlights, filteredFlights, scope, trackMode, selectedFlightId,
+  }, [regionFlights, filteredFlights, scope, trackMode, selectedFlightId,
       timeline.windowStart, timeline.windowEnd]);
 
   // Aircraft type filter
@@ -367,7 +414,7 @@ export default function App() {
                 textShadow: "0 2px 12px rgba(0,0,0,0.6)",
               }}
             >
-              Taiwan Flight Arc
+              {regionTitle}
             </div>
             <div
               style={{
@@ -484,6 +531,7 @@ export default function App() {
             onAirportOpacityChange={setAirportOpacity}
             onAirportGlowChange={setAirportGlow}
             scope={scope}
+            region={region}
             trackMode={trackMode}
             timeWindow={timeWindow}
             pickableFlights={pickableFlights}
@@ -544,33 +592,70 @@ export default function App() {
               left: 72,
               zIndex: 10,
               display: "flex",
-              gap: 8,
-              alignItems: "center",
+              flexDirection: "column",
+              gap: 6,
             }}
           >
-            <h1
-              style={{
-                margin: 0,
-                fontSize: 18,
-                color: isDarkTheme ? "#fff" : "#333",
-                fontFamily: "monospace",
-                letterSpacing: 2,
-              }}
-            >
-              Taiwan Flight Arc
-            </h1>
-            <DataSourceToggle
-              dataSource={dataSource}
-              hasFused={hasFused}
-              isDarkTheme={isDarkTheme}
-              onChange={setDataSource}
-            />
-            <AircraftTypeFilter
-              filter={aircraftFilter}
-              isDarkTheme={isDarkTheme}
-              availableTypes={availableTypes}
-              onChange={setAircraftFilter}
-            />
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: 18,
+                  color: isDarkTheme ? "#fff" : "#333",
+                  fontFamily: "monospace",
+                  letterSpacing: 2,
+                }}
+              >
+                {regionTitle}
+              </h1>
+              <DataSourceToggle
+                dataSource={dataSource}
+                hasFused={hasFused}
+                isDarkTheme={isDarkTheme}
+                onChange={setDataSource}
+              />
+              <AircraftTypeFilter
+                filter={aircraftFilter}
+                isDarkTheme={isDarkTheme}
+                availableTypes={availableTypes}
+                onChange={setAircraftFilter}
+              />
+            </div>
+            {/* Region Pills */}
+            <div style={{ display: "flex", gap: 4 }}>
+              {(["TW", "JP", "HK", "world", "all"] as Region[]).map((r) => {
+                const isActive = region === r;
+                return (
+                  <button
+                    key={r}
+                    onClick={() => {
+                      setRegion(r);
+                      setScope("region");
+                      // 切換預設機場
+                      const cfg = REGION_CONFIG[r];
+                      if (cfg.defaultAirport) setSelectedAirport(cfg.defaultAirport);
+                      // 飛到該 region 的預設視角
+                      mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
+                    }}
+                    style={{
+                      padding: "3px 10px",
+                      fontSize: 11,
+                      fontFamily: "monospace",
+                      fontWeight: isActive ? 600 : 400,
+                      letterSpacing: 1,
+                      border: `1px solid ${isActive ? "#64aaff" : isDarkTheme ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"}`,
+                      borderRadius: 4,
+                      background: isActive ? "rgba(100,170,255,0.2)" : "transparent",
+                      color: isActive ? "#fff" : isDarkTheme ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {REGION_CONFIG[r].label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* 時間軸 */}
@@ -677,7 +762,7 @@ export default function App() {
           <div
             style={{
               position: "absolute",
-              top: 52,
+              top: 76,
               left: 72,
               zIndex: 10,
               background: isDarkTheme ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)",
@@ -688,7 +773,7 @@ export default function App() {
           >
             <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: "monospace" }}>
               {finalFlights.length} flights
-              {scope === "all-taiwan" && " (all Taiwan)"}
+              {scope === "region" && ` (${REGION_CONFIG[region].label})`}
               {` · ${timeline.selectedDate}`}
               {timeline.rangeDays > 1 && ` +${timeline.rangeDays - 1}d`}
             </div>
@@ -891,7 +976,7 @@ export default function App() {
                       }}
                     >
                       {finalFlights.length} flights
-                      {scope === "all-taiwan" && " (all Taiwan)"}
+                      {scope === "region" && ` (${REGION_CONFIG[region].label})`}
                     </div>
                   </div>
                 )}
