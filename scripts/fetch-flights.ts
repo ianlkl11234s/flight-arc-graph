@@ -72,8 +72,8 @@ function parseArgs(): { from: Date; to: Date; sessionKey: string; airports: stri
   if (fromIdx !== -1 && toIdx !== -1) {
     const fromStr = args[fromIdx + 1]!;
     const toStr = args[toIdx + 1]!;
-    const from = new Date(`${fromStr}T00:00:00Z`);
-    const to = new Date(`${toStr}T23:59:59Z`);
+    const from = new Date(fromStr.includes("T") ? fromStr : `${fromStr}T00:00:00Z`);
+    const to = new Date(toStr.includes("T") ? toStr : `${toStr}T23:59:59Z`);
     if (isNaN(from.getTime()) || isNaN(to.getTime())) {
       console.error("❌ --from / --to 格式錯誤，請使用 YYYY-MM-DD");
       process.exit(1);
