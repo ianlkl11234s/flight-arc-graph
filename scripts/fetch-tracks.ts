@@ -8,9 +8,10 @@
  *   --date YYYY-MM-DD  只處理該日期的航班（依 datetime_takeoff）
  *   不帶 --date 則處理全部航班
  *
- * Explorer 方案限制：
- *   - Response limit: 20 筆/次
- *   - Rate limit: 10 次/分鐘
+ * Essential 方案限制：
+ *   - Response limit: 300 筆/次
+ *   - Rate limit: 30 次/分鐘
+ *   - Monthly credits: 666,000
  *
  * 支援中斷續接：已取得軌跡的航班會自動跳過
  */
@@ -22,7 +23,7 @@ dotenv.config();
 // ── 設定 ──────────────────────────────────────────────
 
 const API_BASE = "https://fr24api.flightradar24.com/api";
-const DELAY_MS = 7000;
+const DELAY_MS = 2200;         // 2.2s → 安全低於 30 次/分鐘
 const MAX_RETRIES = 5;
 
 const INPUT_FILE = "scripts/flight-list.json";

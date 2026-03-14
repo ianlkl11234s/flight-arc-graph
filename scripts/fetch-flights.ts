@@ -1,11 +1,11 @@
 /**
  * Step 1: 查詢台灣機場過去 N 天的航班清單（Flight Summary Light）
  *
- * Explorer 方案限制：
- *   - Response limit: 20 筆/次
- *   - Rate limit: 10 次/分鐘
- *   - Historic: 30 天
- *   - Monthly credits: 60,000
+ * Essential 方案限制：
+ *   - Response limit: 300 筆/次
+ *   - Rate limit: 30 次/分鐘
+ *   - Historic: 2 年
+ *   - Monthly credits: 666,000
  *
  * 分頁策略：sort=asc → 用最後一筆 datetime 作為下次查詢起點
  * 支援中斷續接：已完成的機場會自動跳過
@@ -51,8 +51,8 @@ const TAIWAN_AIRPORTS = [
 
 const DAYS_BACK = 3;
 const API_BASE = "https://fr24api.flightradar24.com/api";
-const PAGE_SIZE = 20;          // Explorer 方案上限
-const DELAY_MS = 7000;         // 7s → 安全低於 10 次/分鐘
+const PAGE_SIZE = 300;         // Essential 方案上限
+const DELAY_MS = 2200;         // 2.2s → 安全低於 30 次/分鐘
 const MAX_RETRIES = 5;
 const OUTPUT_FILE = "scripts/flight-list.json";
 
@@ -275,7 +275,7 @@ function saveProgress(
 
 async function main() {
   console.log("=== FR24 Flight Summary - Step 1 ===");
-  console.log("Explorer 方案：20 筆/次, 10 次/分鐘\n");
+  console.log("Essential 方案：300 筆/次, 30 次/分鐘\n");
 
   const { from, to, sessionKey, airports } = parseArgs();
   console.log(`時間範圍: ${toISO(from)} → ${toISO(to)}`);
