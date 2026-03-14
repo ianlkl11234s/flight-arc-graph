@@ -57,6 +57,7 @@ export function useTimeline({
 
   const [currentTime, setCurrentTime] = useState(windowStart);
   const pendingSeekRef = useRef<number | null>(null);
+  const manualSeekRef = useRef<number>(0); // 手動 seek 後短暫保護，不被 reset
 
   const duration = windowEnd - windowStart;
   const progress = duration > 0 ? (currentTime - windowStart) / duration : 0;
@@ -67,7 +68,8 @@ export function useTimeline({
       const t = pendingSeekRef.current;
       pendingSeekRef.current = null;
       setCurrentTime(Math.max(windowStart, Math.min(windowEnd, t)));
-    } else {
+    } else if (Date.now() - manualSeekRef.current > 500) {
+      // 若剛手動 seek 過（500ms 內），不要被 reset
       setCurrentTime(windowStart);
     }
   }, [windowStart, windowEnd]);
@@ -112,6 +114,7 @@ export function useTimeline({
 
   const seek = useCallback(
     (time: number) => {
+      manualSeekRef.current = Date.now();
       setCurrentTime(Math.max(windowStart, Math.min(windowEnd, time)));
     },
     [windowStart, windowEnd],

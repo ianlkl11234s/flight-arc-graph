@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import type { DataSource, DisplayMode, RenderMode, Region, Scope, TrackMode, Flight } from "../types";
+import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight } from "../types";
 import type { AircraftFilterKey } from "../data/aircraftCategories";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
@@ -23,9 +23,12 @@ export interface ScenePreset {
   airport?: string;
   /** 機型篩選 */
   aircraftFilter?: AircraftFilterKey;
+  /** 場景所屬 region（用於篩選顯示） */
+  region?: Region;
 }
 
 export const SCENE_PRESETS: ScenePreset[] = [
+  // Taiwan
   {
     id: "tw-air-corridor",
     name: "台灣空中走廊",
@@ -37,6 +40,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
     date: "2026-03-06",
     time: "02:18",
     opacity: 0.04,
+    region: "TW",
   },
   {
     id: "china-active",
@@ -49,6 +53,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
     date: "2026-03-06",
     time: "08:17",
     opacity: 0.04,
+    region: "TW",
   },
   {
     id: "taoyuan-closeup",
@@ -62,6 +67,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
     time: "07:52",
     opacity: 0.1,
     airport: "RCTP",
+    region: "TW",
   },
   {
     id: "all-taiwan-overview",
@@ -74,6 +80,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
     date: "2026-02-19",
     time: "11:16",
     opacity: 0.06,
+    region: "TW",
   },
   {
     id: "p8-patrol",
@@ -87,6 +94,22 @@ export const SCENE_PRESETS: ScenePreset[] = [
     time: "12:27",
     opacity: 0.36,
     aircraftFilter: "cat:military",
+    region: "TW",
+  },
+  // Japan
+  {
+    id: "komaki-c130",
+    name: "小牧基地 C-130",
+    desc: "航線軌跡 · This Airport · 1d",
+    camera: { center: [137.1058, 35.0844], zoom: 10, pitch: 55, bearing: 0 },
+    dataSource: "api",
+    scope: "airport",
+    rangeDays: 1,
+    date: "2026-02-18",
+    time: "08:10",
+    opacity: 0.1,
+    airport: "RJNA",
+    region: "JP",
   },
 ];
 
@@ -629,41 +652,60 @@ function LocationsPanel({
       })).filter((g) => g.presets.length > 0)
     : null;
 
+  // 場景依 region 篩選
+  const filteredScenes = SCENE_PRESETS.filter(
+    (s) => !s.region || s.region === region || region === "all",
+  );
+
+  // JP 機場分組（依起降次數排名）
+  const JP_MAJOR: Set<string> = new Set([
+    "RJTT", "RJAA", "RJBB", "ROAH", "RJFF", "RJCC", "RJOO", "RJGG", "RJFK", "RJSS",
+  ]);
+  const JP_MEDIUM: Set<string> = new Set([
+    "RJFT", "RJFM", "RJBE", "RJFU", "RJOM", "ROIG", "RJOT", "RJOA", "ROMY",
+    "RJFO", "RJCH", "RJFR", "RJOB", "RJCB", "RJOK",
+  ]);
+  const JP_SPECIAL: Set<string> = new Set(["RJNA"]);
+
+  const isJPGrouped = region === "JP";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* 場景預設 */}
-      <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "4px 8px 2px", marginTop: 2 }}>
-        場景 Scene
-      </div>
-      {SCENE_PRESETS.map((scene) => (
-        <button
-          key={scene.id}
-          onClick={() => onSceneSelect(scene)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "6px 8px",
-            background: "transparent",
-            border: "none",
-            borderRadius: 6,
-            cursor: "pointer",
-            textAlign: "left",
-            transition: "background 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-        >
-          <span style={{ width: 3, height: 24, borderRadius: 2, background: "#f59e0b", flexShrink: 0 }} />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 12, color: ACCENT, lineHeight: 1.3 }}>{scene.name}</div>
-            <div style={{ fontSize: 10, color: DIM, fontFamily: "monospace" }}>{scene.desc}</div>
+      {filteredScenes.length > 0 && (
+        <>
+          <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "4px 8px 2px", marginTop: 2 }}>
+            場景 Scene
           </div>
-        </button>
-      ))}
-
-      {/* 分隔線 */}
-      <div style={{ height: 1, background: BORDER, margin: "6px 8px" }} />
+          {filteredScenes.map((scene) => (
+            <button
+              key={scene.id}
+              onClick={() => onSceneSelect(scene)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 8px",
+                background: "transparent",
+                border: "none",
+                borderRadius: 6,
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <span style={{ width: 3, height: 24, borderRadius: 2, background: "#f59e0b", flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 12, color: ACCENT, lineHeight: 1.3 }}>{scene.name}</div>
+                <div style={{ fontSize: 10, color: DIM, fontFamily: "monospace" }}>{scene.desc}</div>
+              </div>
+            </button>
+          ))}
+          <div style={{ height: 1, background: BORDER, margin: "6px 8px" }} />
+        </>
+      )}
 
       {/* 機場列表 */}
       {groupedByRegion ? (
@@ -678,8 +720,31 @@ function LocationsPanel({
             ))}
           </div>
         ))
+      ) : isJPGrouped ? (
+        /* Japan: tiered by flight volume */
+        <>
+          {([
+            { label: "主要空港 Major", filter: (icao: string) => JP_MAJOR.has(icao) },
+            { label: "中型空港 Regional", filter: (icao: string) => JP_MEDIUM.has(icao) },
+            { label: "小型空港 Local", filter: (icao: string) => !JP_MAJOR.has(icao) && !JP_MEDIUM.has(icao) && !JP_SPECIAL.has(icao) },
+            { label: "特別 Special", filter: (icao: string) => JP_SPECIAL.has(icao) },
+          ] as const).map(({ label, filter }) => {
+            const group = ordered.filter((p) => filter(p.icao));
+            if (group.length === 0) return null;
+            return (
+              <div key={label}>
+                <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "6px 8px 2px" }}>
+                  {label} ({group.length})
+                </div>
+                {group.map((preset) => (
+                  <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} />
+                ))}
+              </div>
+            );
+          })}
+        </>
       ) : (
-        /* Single region */
+        /* Other single region */
         <>
           <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 2px" }}>
             機場 Airport ({ordered.length})
