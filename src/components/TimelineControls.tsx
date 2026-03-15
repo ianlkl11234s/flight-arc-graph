@@ -17,9 +17,9 @@ interface Props {
 }
 
 const getBtnStyle = (dark: boolean): React.CSSProperties => ({
-  background: dark ? "rgba(120,120,120,0.35)" : "rgba(255,255,255,0.9)",
-  color: dark ? "rgba(220,220,220,0.9)" : "#555",
-  border: `1px solid ${dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)"}`,
+  background: dark ? "rgba(120,120,120,0.35)" : "rgba(50,50,50,0.75)",
+  color: dark ? "rgba(220,220,220,0.9)" : "rgba(255,255,255,0.9)",
+  border: `1px solid ${dark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.15)"}`,
   borderRadius: 4,
   padding: "4px 10px",
   fontSize: 14,
@@ -29,9 +29,9 @@ const getBtnStyle = (dark: boolean): React.CSSProperties => ({
 });
 
 const getSelectStyle = (dark: boolean): React.CSSProperties => ({
-  background: dark ? "rgba(120,120,120,0.35)" : "rgba(255,255,255,0.9)",
-  color: dark ? "rgba(220,220,220,0.9)" : "#555",
-  border: `1px solid ${dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)"}`,
+  background: dark ? "rgba(120,120,120,0.35)" : "rgba(50,50,50,0.75)",
+  color: dark ? "rgba(220,220,220,0.9)" : "rgba(255,255,255,0.9)",
+  border: `1px solid ${dark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.15)"}`,
   borderRadius: 4,
   padding: "4px 8px",
   fontSize: 13,
@@ -117,7 +117,7 @@ export function TimelineControls({
         </button>
         <span
           style={{
-            color: isDarkTheme ? "#fff" : "#333",
+            color: isDarkTheme ? "#fff" : "rgba(50,50,50,0.9)",
             fontSize: isMobile ? 14 : 13,
             fontFamily: "monospace",
             fontWeight: 600,
@@ -179,7 +179,7 @@ export function TimelineControls({
 
         <span
           style={{
-            color: isDarkTheme ? "rgba(200,200,200,0.6)" : "rgba(0,0,0,0.4)",
+            color: isDarkTheme ? "rgba(200,200,200,0.6)" : "rgba(255,255,255,0.7)",
             fontSize: 13,
             fontFamily: "monospace",
           }}
@@ -196,7 +196,12 @@ export function TimelineControls({
         step={0.001}
         value={progress}
         onChange={(e) => onSeekByProgress(Number(e.target.value))}
-        style={{ width: "100%", height: isMobile ? 8 : undefined, accentColor: isDarkTheme ? "#aaa" : "#bbb" }}
+        style={{
+          width: "100%",
+          height: isMobile ? 8 : undefined,
+          accentColor: isDarkTheme ? "#aaa" : "#3B82F6",
+          colorScheme: isDarkTheme ? "dark" : "light",
+        }}
       />
       <div
         style={{

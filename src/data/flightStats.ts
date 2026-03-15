@@ -292,7 +292,7 @@ export function getRouteFlights(
     .sort((a, b) => a.dep_time - b.dep_time);
 }
 
-/** 可達目的地（按國家分組 — All Taiwan view） */
+/** 可達目的地（按國家分組 — All Region view） */
 export function computeReachableDestinations(
   flights: Flight[],
 ): CountryGroup[] {

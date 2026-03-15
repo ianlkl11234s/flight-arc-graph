@@ -41,7 +41,10 @@ export interface TimelineState {
 export type DataSource = "api" | "fused";
 
 /** 地理範圍 */
-export type Scope = "airport" | "all-taiwan";
+export type Scope = "airport" | "region";
+
+/** 區域 */
+export type Region = "TW" | "JP" | "HK" | "world" | "all";
 
 /** 軌跡模式：stack 顯示全部航班、single 追蹤單一航班 */
 export type TrackMode = "stack" | "single";
@@ -60,7 +63,7 @@ export interface MapStyle {
 }
 
 /** 統計面板 Tab */
-export type StatsTab = "airport" | "all-taiwan";
+export type StatsTab = "airport" | "region";
 
 /** Drill-down 狀態 */
 export interface StatsDrillDown {

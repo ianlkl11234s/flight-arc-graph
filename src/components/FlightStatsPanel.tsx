@@ -779,7 +779,7 @@ function AirportTab({
   );
 }
 
-/* ── All Taiwan Tab ── */
+/* ── All Region Tab ── */
 
 function AllTaiwanTab({
   flights, dark, onSelectAirport,
@@ -936,9 +936,9 @@ export function FlightStatsPanel({
         </div>
         {/* Tabs */}
         <div style={{ display: "flex", gap: 0, width: "100%" }}>
-          {(["airport", "all-taiwan"] as const).map((id) => {
+          {(["airport", "region"] as const).map((id) => {
             const active = tab === id;
-            const label = id === "airport" ? "AIRPORT" : "ALL TAIWAN";
+            const label = id === "airport" ? "AIRPORT" : "ALL REGION";
             return (
               <button key={id} onClick={() => { setTab(id); setDrillDown(null); }} style={{
                 padding: "4px 10px", fontSize: 11, fontWeight: active ? 700 : 500,

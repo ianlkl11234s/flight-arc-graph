@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import type { DataSource, DisplayMode, RenderMode, Scope, TrackMode, Flight } from "../types";
+import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight } from "../types";
 import type { AircraftFilterKey } from "../data/aircraftCategories";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
@@ -23,32 +23,37 @@ export interface ScenePreset {
   airport?: string;
   /** 機型篩選 */
   aircraftFilter?: AircraftFilterKey;
+  /** 場景所屬 region（用於篩選顯示） */
+  region?: Region;
 }
 
 export const SCENE_PRESETS: ScenePreset[] = [
+  // Taiwan
   {
     id: "tw-air-corridor",
     name: "台灣空中走廊",
-    desc: "空域快照 · All Taiwan · 1d",
+    desc: "空域快照 · All TW · 1d",
     camera: { center: [121.0116, 24.5589], zoom: 9, pitch: 69, bearing: 69 },
     dataSource: "fused",
-    scope: "all-taiwan",
+    scope: "region",
     rangeDays: 1,
     date: "2026-03-06",
     time: "02:18",
     opacity: 0.04,
+    region: "TW",
   },
   {
     id: "china-active",
     name: "活躍中國境內班機",
-    desc: "空域快照 · All Taiwan · 1d",
+    desc: "空域快照 · All TW · 1d",
     camera: { center: [118.286, 25.68], zoom: 8.2, pitch: 56, bearing: 23 },
     dataSource: "fused",
-    scope: "all-taiwan",
+    scope: "region",
     rangeDays: 1,
     date: "2026-03-06",
     time: "08:17",
     opacity: 0.04,
+    region: "TW",
   },
   {
     id: "taoyuan-closeup",
@@ -62,18 +67,20 @@ export const SCENE_PRESETS: ScenePreset[] = [
     time: "07:52",
     opacity: 0.1,
     airport: "RCTP",
+    region: "TW",
   },
   {
     id: "all-taiwan-overview",
     name: "全台航線總覽",
-    desc: "航線軌跡 · All Taiwan · 1d",
+    desc: "航線軌跡 · All TW · 1d",
     camera: { center: [120.6818, 23.4015], zoom: 7.5, pitch: 50, bearing: 0 },
     dataSource: "api",
-    scope: "all-taiwan",
+    scope: "region",
     rangeDays: 1,
     date: "2026-02-19",
     time: "11:16",
     opacity: 0.06,
+    region: "TW",
   },
   {
     id: "p8-patrol",
@@ -81,12 +88,42 @@ export const SCENE_PRESETS: ScenePreset[] = [
     desc: "空域快照 · Military · 1d",
     camera: { center: [120.8183, 22.5421], zoom: 7, pitch: 28, bearing: -10 },
     dataSource: "fused",
-    scope: "all-taiwan",
+    scope: "region",
     rangeDays: 1,
     date: "2026-03-06",
     time: "12:27",
     opacity: 0.36,
     aircraftFilter: "cat:military",
+    region: "TW",
+  },
+  // Japan
+  {
+    id: "komaki-c130",
+    name: "小牧基地 C-130",
+    desc: "航線軌跡 · This Airport · 1d",
+    camera: { center: [137.1058, 35.0844], zoom: 10, pitch: 55, bearing: 0 },
+    dataSource: "api",
+    scope: "airport",
+    rangeDays: 1,
+    date: "2026-02-18",
+    time: "08:10",
+    opacity: 0.1,
+    airport: "RJNA",
+    region: "JP",
+  },
+  {
+    id: "tokyo-heli",
+    name: "東京觀光直升機",
+    desc: "航線軌跡 · This Airport · 1d",
+    camera: { center: [139.7432, 35.632], zoom: 12.3, pitch: 38, bearing: 128 },
+    dataSource: "api",
+    scope: "airport",
+    rangeDays: 1,
+    date: "2026-02-18",
+    time: "08:34",
+    opacity: 0.1,
+    airport: "RJTT",
+    region: "JP",
   },
 ];
 
@@ -94,17 +131,80 @@ export const SCENE_PRESETS: ScenePreset[] = [
 
 const RAIL_WIDTH = 56;
 const PANEL_WIDTH = 240;
-const ACCENT = "#E5E7EB";
-const BG_RAIL = "#0D0E10";
-const BG_PANEL = "rgba(0, 0, 0, 0.45)";
-const BORDER = "#2A2D32";
-const DIM = "#6B7280";
+
+interface ThemeColors {
+  ACCENT: string;
+  BG_RAIL: string;
+  BG_PANEL: string;
+  BORDER: string;
+  DIM: string;
+  ACTIVE_TEXT: string;
+  ACTIVE_BG: string;
+  ACTIVE_BORDER: string;
+  ACTIVE_BTN_BG: string;
+  HOVER_BG: string;
+  SLIDER_TRACK: string;
+  ACCENT_BLUE: string;
+  SCENE_BAR: string;
+  CLOSE_BG: string;
+  CLOSE_BORDER: string;
+  DISABLED_TEXT: string;
+  NO_DATA_TEXT: string;
+  SELECT_BG: string;
+}
+
+function getThemeColors(isDark: boolean): ThemeColors {
+  if (isDark) {
+    return {
+      ACCENT: "#E5E7EB",
+      BG_RAIL: "#0D0E10",
+      BG_PANEL: "rgba(0, 0, 0, 0.45)",
+      BORDER: "#2A2D32",
+      DIM: "#6B7280",
+      ACTIVE_TEXT: "#fff",
+      ACTIVE_BG: "rgba(100,170,255,0.2)",
+      ACTIVE_BORDER: "#64aaff",
+      ACTIVE_BTN_BG: "rgba(100,170,255,0.15)",
+      HOVER_BG: "rgba(255,255,255,0.05)",
+      SLIDER_TRACK: "#333",
+      ACCENT_BLUE: "#64aaff",
+      SCENE_BAR: "#f59e0b",
+      CLOSE_BG: "rgba(255,255,255,0.06)",
+      CLOSE_BORDER: "rgba(255,255,255,0.1)",
+      DISABLED_TEXT: "#444",
+      NO_DATA_TEXT: "#444",
+      SELECT_BG: "rgba(0,0,0,0.4)",
+    };
+  }
+  return {
+    ACCENT: "#333333",
+    BG_RAIL: "#F8F9FA",
+    BG_PANEL: "rgba(255, 255, 255, 0.85)",
+    BORDER: "#E0E0E0",
+    DIM: "#888888",
+    ACTIVE_TEXT: "#1a1a1a",
+    ACTIVE_BG: "rgba(59, 130, 246, 0.15)",
+    ACTIVE_BORDER: "#3B82F6",
+    ACTIVE_BTN_BG: "rgba(59, 130, 246, 0.1)",
+    HOVER_BG: "rgba(0,0,0,0.04)",
+    SLIDER_TRACK: "#d1d5db",
+    ACCENT_BLUE: "#3B82F6",
+    SCENE_BAR: "#E8A308",
+    CLOSE_BG: "rgba(0,0,0,0.06)",
+    CLOSE_BORDER: "rgba(0,0,0,0.1)",
+    DISABLED_TEXT: "#bbb",
+    NO_DATA_TEXT: "#ccc",
+    SELECT_BG: "rgba(0,0,0,0.06)",
+  };
+}
 
 /* ── Types ───────────────────────────────────────────────── */
 
 type PanelId = "settings" | "locations" | "calendar";
 
 export interface IconRailSidebarProps {
+  // Theme
+  isDarkTheme: boolean;
   // Settings panel controls
   displayMode: DisplayMode;
   renderMode: RenderMode;
@@ -128,6 +228,7 @@ export interface IconRailSidebarProps {
   onAirportGlowChange: (v: number) => void;
   // Scope & Track mode
   scope: Scope;
+  region: Region;
   trackMode: TrackMode;
   timeWindow: boolean;
   pickableFlights: Flight[];
@@ -144,6 +245,8 @@ export interface IconRailSidebarProps {
   onSceneSelect: (scene: ScenePreset) => void;
   // Calendar
   availableDates: string[];
+  /** 完整資料的日期（實心標記） */
+  fullDates: string[];
   selectedDate: string | null;
   onDateSelect: (date: string | null) => void;
   // Stats
@@ -187,11 +290,13 @@ function RailIcon({
   onClick,
   children,
   title,
+  theme,
 }: {
   active: boolean;
   onClick: () => void;
   children: ReactNode;
   title?: string;
+  theme: ThemeColors;
 }) {
   return (
     <button
@@ -208,7 +313,7 @@ function RailIcon({
         border: "none",
         borderRadius: 8,
         cursor: "pointer",
-        color: active ? "#fff" : DIM,
+        color: active ? theme.ACTIVE_TEXT : theme.DIM,
         filter: active ? "none" : "brightness(0.85)",
         transition: "color 0.15s, filter 0.15s",
       }}
@@ -228,7 +333,7 @@ function RailIcon({
             bottom: 10,
             width: 3,
             borderRadius: 2,
-            background: "#64aaff",
+            background: theme.ACCENT_BLUE,
           }}
         />
       )}
@@ -237,7 +342,7 @@ function RailIcon({
   );
 }
 
-function SectionHeader({ children }: { children: string }) {
+function SectionHeader({ children, theme }: { children: string; theme: ThemeColors }) {
   return (
     <div
       style={{
@@ -245,7 +350,7 @@ function SectionHeader({ children }: { children: string }) {
         fontWeight: 600,
         letterSpacing: "0.05em",
         textTransform: "uppercase",
-        color: DIM,
+        color: theme.DIM,
         marginTop: 12,
         marginBottom: 6,
       }}
@@ -260,11 +365,13 @@ function ToggleButtons<T extends string>({
   value,
   onChange,
   disabledValues,
+  theme,
 }: {
   options: { value: T; label: string }[];
   value: T;
   onChange: (v: T) => void;
   disabledValues?: Set<T>;
+  theme: ThemeColors;
 }) {
   return (
     <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
@@ -281,10 +388,10 @@ function ToggleButtons<T extends string>({
               padding: "5px 0",
               fontSize: 11,
               fontFamily: "monospace",
-              border: `1px solid ${isActive ? "#64aaff" : BORDER}`,
+              border: `1px solid ${isActive ? theme.ACTIVE_BORDER : theme.BORDER}`,
               borderRadius: 4,
-              background: isActive ? "rgba(100,170,255,0.2)" : "transparent",
-              color: isDisabled ? "#444" : isActive ? "#fff" : ACCENT,
+              background: isActive ? theme.ACTIVE_BG : "transparent",
+              color: isDisabled ? theme.DISABLED_TEXT : isActive ? theme.ACTIVE_TEXT : theme.ACCENT,
               cursor: isDisabled ? "not-allowed" : "pointer",
               transition: "all 0.15s",
             }}
@@ -305,6 +412,7 @@ function SliderRow({
   step,
   format,
   onChange,
+  theme,
 }: {
   label: string;
   value: number;
@@ -313,6 +421,7 @@ function SliderRow({
   step: number;
   format?: (v: number) => string;
   onChange: (v: number) => void;
+  theme: ThemeColors;
 }) {
   const display = format ? format(value) : String(value);
   return (
@@ -323,12 +432,12 @@ function SliderRow({
           justifyContent: "space-between",
           fontSize: 11,
           fontFamily: "monospace",
-          color: ACCENT,
+          color: theme.ACCENT,
           marginBottom: 2,
         }}
       >
         <span>{label}</span>
-        <span style={{ color: DIM }}>{display}</span>
+        <span style={{ color: theme.DIM }}>{display}</span>
       </div>
       <input
         type="range"
@@ -342,11 +451,11 @@ function SliderRow({
           height: 4,
           appearance: "none",
           WebkitAppearance: "none",
-          background: "#333",
+          background: theme.SLIDER_TRACK,
           borderRadius: 2,
           outline: "none",
           cursor: "pointer",
-          accentColor: "#64aaff",
+          accentColor: theme.ACCENT_BLUE,
         }}
       />
     </div>
@@ -404,17 +513,19 @@ function IconBarChart() {
 
 /* ── Panel contents ──────────────────────────────────────── */
 
-function SettingsPanel(props: IconRailSidebarProps) {
+function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
+  const { theme } = props;
   return (
     <>
-      <SectionHeader>Scope</SectionHeader>
+      <SectionHeader theme={theme}>Scope</SectionHeader>
       <ToggleButtons<Scope>
         options={[
           { value: "airport", label: "This Airport" },
-          { value: "all-taiwan", label: "All Taiwan" },
+          { value: "region", label: props.region === "all" ? "All Regions" : props.region === "world" ? "All World" : `All ${props.region === "TW" ? "Taiwan" : props.region === "JP" ? "Japan" : "Hong Kong"}` },
         ]}
         value={props.scope}
         onChange={props.onScopeChange}
+        theme={theme}
       />
       <ToggleButtons<TrackMode>
         options={[
@@ -426,6 +537,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
           props.onTrackModeChange(m);
           if (m !== "single") props.onFlightSelect(null);
         }}
+        theme={theme}
       />
       {props.trackMode === "single" && props.pickableFlights.length > 0 && (
         <select
@@ -433,9 +545,9 @@ function SettingsPanel(props: IconRailSidebarProps) {
           onChange={(e) => props.onFlightSelect(e.target.value || null)}
           style={{
             width: "100%",
-            background: "rgba(0,0,0,0.4)",
-            color: "#fff",
-            border: `1px solid ${BORDER}`,
+            background: theme.SELECT_BG,
+            color: theme.ACTIVE_TEXT,
+            border: `1px solid ${theme.BORDER}`,
             borderRadius: 4,
             padding: "5px 6px",
             fontSize: 11,
@@ -453,7 +565,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
         </select>
       )}
 
-      <SectionHeader>Display</SectionHeader>
+      <SectionHeader theme={theme}>Display</SectionHeader>
       <ToggleButtons<DisplayMode>
         options={[
           { value: "trails", label: "Flight Trails" },
@@ -461,6 +573,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
         ]}
         value={props.displayMode}
         onChange={props.onDisplayModeChange}
+        theme={theme}
       />
       {/* ±12h Window：僅在 Flight Trails 模式下顯示 */}
       {props.displayMode === "trails" && (
@@ -471,7 +584,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
             gap: 8,
             fontSize: 11,
             fontFamily: "monospace",
-            color: props.timeWindow ? "#fff" : ACCENT,
+            color: props.timeWindow ? theme.ACTIVE_TEXT : theme.ACCENT,
             cursor: "pointer",
             marginBottom: 8,
             marginLeft: 4,
@@ -481,7 +594,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
             type="checkbox"
             checked={props.timeWindow}
             onChange={(e) => props.onTimeWindowChange(e.target.checked)}
-            style={{ accentColor: "#64aaff", width: 14, height: 14, cursor: "pointer" }}
+            style={{ accentColor: theme.ACCENT_BLUE, width: 14, height: 14, cursor: "pointer" }}
           />
           ±12h Window
         </label>
@@ -493,24 +606,26 @@ function SettingsPanel(props: IconRailSidebarProps) {
         ]}
         value={props.renderMode}
         onChange={props.onRenderModeChange}
+        theme={theme}
       />
 
-      <SectionHeader>Map</SectionHeader>
+      <SectionHeader theme={theme}>Map</SectionHeader>
       <div style={{ marginBottom: 8 }}>
         <StyleSelector
           selected={props.mapStyleId}
-          isDarkTheme
+          isDarkTheme={props.isDarkTheme}
           onChange={props.onMapStyleChange}
         />
       </div>
 
-      <SectionHeader>Visual</SectionHeader>
+      <SectionHeader theme={theme}>Visual</SectionHeader>
       <SliderRow
         label="Alt"
         value={props.altExaggeration}
         min={1} max={5} step={0.5}
         format={(v) => `\u00d7${v}`}
         onChange={props.onAltExaggerationChange}
+        theme={theme}
       />
       <SliderRow
         label="Z"
@@ -518,6 +633,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
         min={0} max={200} step={50}
         format={(v) => `+${v}m`}
         onChange={props.onAltOffsetChange}
+        theme={theme}
       />
       <SliderRow
         label="Opacity"
@@ -525,6 +641,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
         min={0.02} max={0.5} step={0.02}
         format={(v) => v.toFixed(2)}
         onChange={props.onStaticOpacityChange}
+        theme={theme}
       />
       <SliderRow
         label="Orb"
@@ -532,6 +649,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
         min={0.000001} max={0.00001} step={0.000001}
         format={(v) => v.toFixed(6)}
         onChange={props.onOrbScaleChange}
+        theme={theme}
       />
       <SliderRow
         label="APT"
@@ -539,6 +657,7 @@ function SettingsPanel(props: IconRailSidebarProps) {
         min={0} max={0.3} step={0.01}
         format={(v) => v.toFixed(2)}
         onChange={props.onAirportOpacityChange}
+        theme={theme}
       />
       <SliderRow
         label="Glow"
@@ -546,10 +665,67 @@ function SettingsPanel(props: IconRailSidebarProps) {
         min={0} max={2} step={0.1}
         format={(v) => v.toFixed(1)}
         onChange={props.onAirportGlowChange}
+        theme={theme}
       />
     </>
   );
 }
+
+function AirportButton({ preset, isActive, onAirportChange, onLocationJump, theme }: {
+  preset: { icao: string; name: string };
+  isActive: boolean;
+  onAirportChange: (icao: string) => void;
+  onLocationJump: (icao: string) => void;
+  theme: ThemeColors;
+}) {
+  const info = getAirportInfo(preset.icao);
+  return (
+    <button
+      onClick={() => { onAirportChange(preset.icao); onLocationJump(preset.icao); }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 8px",
+        background: isActive ? theme.ACTIVE_BTN_BG : "transparent",
+        border: "none",
+        borderRadius: 6,
+        cursor: "pointer",
+        textAlign: "left",
+        transition: "background 0.15s",
+        width: "100%",
+      }}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = theme.HOVER_BG; }}
+      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+    >
+      <span style={{ width: 3, height: 24, borderRadius: 2, background: isActive ? theme.ACCENT_BLUE : theme.BORDER, flexShrink: 0 }} />
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 12, color: isActive ? theme.ACTIVE_TEXT : theme.ACCENT, lineHeight: 1.3 }}>
+          {info?.name ?? preset.name}
+        </div>
+        <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+          {info?.iata ?? preset.icao} / {preset.icao}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+const KNOWN_PREFIXES = ["RC", "RJ", "RO", "VH"];
+const REGION_ICAO_MATCH: Record<string, (icao: string) => boolean> = {
+  TW: (icao) => icao.startsWith("RC"),
+  JP: (icao) => icao.startsWith("RJ") || icao.startsWith("RO"),
+  HK: (icao) => icao.startsWith("VH"),
+  world: (icao) => !KNOWN_PREFIXES.some((p) => icao.startsWith(p)),
+  all: () => true,
+};
+
+const REGION_LABELS: Record<string, string> = {
+  TW: "台灣 Taiwan",
+  JP: "日本 Japan",
+  HK: "香港 Hong Kong",
+  world: "World",
+};
 
 function LocationsPanel({
   airports,
@@ -557,110 +733,138 @@ function LocationsPanel({
   onAirportChange,
   onLocationJump,
   onSceneSelect,
-}: Pick<IconRailSidebarProps, "airports" | "selectedAirport" | "onAirportChange" | "onLocationJump" | "onSceneSelect">) {
-  // Use CAMERA_PRESETS order, filtered by available airports
+  region,
+  theme,
+}: Pick<IconRailSidebarProps, "airports" | "selectedAirport" | "onAirportChange" | "onLocationJump" | "onSceneSelect" | "region"> & { theme: ThemeColors }) {
+  // Use CAMERA_PRESETS order, filtered by available airports + region
   const available = new Set(airports);
-  const ordered = CAMERA_PRESETS.filter((p) => available.has(p.icao));
+  const matchRegion = REGION_ICAO_MATCH[region] || (() => true);
+  const ordered = CAMERA_PRESETS.filter((p) => available.has(p.icao) && matchRegion(p.icao));
+
+  // Group by region when "all"
+  const groupedByRegion = region === "all"
+    ? (["TW", "JP", "HK", "world"] as const).map((r) => ({
+        key: r,
+        label: REGION_LABELS[r],
+        presets: CAMERA_PRESETS.filter((p) => available.has(p.icao) && REGION_ICAO_MATCH[r]!(p.icao)),
+      })).filter((g) => g.presets.length > 0)
+    : null;
+
+  // 場景依 region 篩選
+  const filteredScenes = SCENE_PRESETS.filter(
+    (s) => !s.region || s.region === region || region === "all",
+  );
+
+  // JP 機場分組（依起降次數排名）
+  const JP_MAJOR: Set<string> = new Set([
+    "RJTT", "RJAA", "RJBB", "ROAH", "RJFF", "RJCC", "RJOO", "RJGG", "RJFK", "RJSS",
+  ]);
+  const JP_MEDIUM: Set<string> = new Set([
+    "RJFT", "RJFM", "RJBE", "RJFU", "RJOM", "ROIG", "RJOT", "RJOA", "ROMY",
+    "RJFO", "RJCH", "RJFR", "RJOB", "RJCB", "RJOK",
+  ]);
+  const JP_SPECIAL: Set<string> = new Set(["RJNA"]);
+
+  const isJPGrouped = region === "JP";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* 場景預設 */}
-      <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "4px 8px 2px", marginTop: 2 }}>
-        場景 Scene
-      </div>
-      {SCENE_PRESETS.map((scene) => (
-        <button
-          key={scene.id}
-          onClick={() => onSceneSelect(scene)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "6px 8px",
-            background: "transparent",
-            border: "none",
-            borderRadius: 6,
-            cursor: "pointer",
-            textAlign: "left",
-            transition: "background 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-        >
-          <span style={{ width: 3, height: 24, borderRadius: 2, background: "#f59e0b", flexShrink: 0 }} />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 12, color: ACCENT, lineHeight: 1.3 }}>{scene.name}</div>
-            <div style={{ fontSize: 10, color: DIM, fontFamily: "monospace" }}>{scene.desc}</div>
+      {filteredScenes.length > 0 && (
+        <>
+          <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "4px 8px 2px", marginTop: 2 }}>
+            場景 Scene
           </div>
-        </button>
-      ))}
-
-      {/* 分隔線 */}
-      <div style={{ height: 1, background: BORDER, margin: "6px 8px" }} />
+          {filteredScenes.map((scene) => (
+            <button
+              key={scene.id}
+              onClick={() => onSceneSelect(scene)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 8px",
+                background: "transparent",
+                border: "none",
+                borderRadius: 6,
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = theme.HOVER_BG; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <span style={{ width: 3, height: 24, borderRadius: 2, background: theme.SCENE_BAR, flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 12, color: theme.ACCENT, lineHeight: 1.3 }}>{scene.name}</div>
+                <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>{scene.desc}</div>
+              </div>
+            </button>
+          ))}
+          <div style={{ height: 1, background: theme.BORDER, margin: "6px 8px" }} />
+        </>
+      )}
 
       {/* 機場列表 */}
-      <div style={{ fontSize: 10, color: DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 2px" }}>
-        機場 Airport
-      </div>
-      {ordered.map((preset) => {
-        const info = getAirportInfo(preset.icao);
-        const isActive = preset.icao === selectedAirport;
-        return (
-          <button
-            key={preset.icao}
-            onClick={() => {
-              onAirportChange(preset.icao);
-              onLocationJump(preset.icao);
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 8px",
-              background: isActive ? "rgba(100,170,255,0.15)" : "transparent",
-              border: "none",
-              borderRadius: 6,
-              cursor: "pointer",
-              textAlign: "left",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <span
-              style={{
-                width: 3,
-                height: 24,
-                borderRadius: 2,
-                background: isActive ? "#64aaff" : BORDER,
-                flexShrink: 0,
-              }}
-            />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, color: isActive ? "#fff" : ACCENT, lineHeight: 1.3 }}>
-                {info?.name ?? preset.name}
-              </div>
-              <div style={{ fontSize: 10, color: DIM, fontFamily: "monospace" }}>
-                {info?.iata ?? preset.icao} / {preset.icao}
-              </div>
+      {groupedByRegion ? (
+        /* All regions: grouped */
+        groupedByRegion.map((group) => (
+          <div key={group.key}>
+            <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "6px 8px 2px" }}>
+              {group.label} ({group.presets.length})
             </div>
-          </button>
-        );
-      })}
+            {group.presets.map((preset) => (
+              <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} />
+            ))}
+          </div>
+        ))
+      ) : isJPGrouped ? (
+        /* Japan: tiered by flight volume */
+        <>
+          {([
+            { label: "主要空港 Major", filter: (icao: string) => JP_MAJOR.has(icao) },
+            { label: "中型空港 Regional", filter: (icao: string) => JP_MEDIUM.has(icao) },
+            { label: "小型空港 Local", filter: (icao: string) => !JP_MAJOR.has(icao) && !JP_MEDIUM.has(icao) && !JP_SPECIAL.has(icao) },
+            { label: "特別 Special", filter: (icao: string) => JP_SPECIAL.has(icao) },
+          ] as const).map(({ label, filter }) => {
+            const group = ordered.filter((p) => filter(p.icao));
+            if (group.length === 0) return null;
+            return (
+              <div key={label}>
+                <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "6px 8px 2px" }}>
+                  {label} ({group.length})
+                </div>
+                {group.map((preset) => (
+                  <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} />
+                ))}
+              </div>
+            );
+          })}
+        </>
+      ) : (
+        /* Other single region */
+        <>
+          <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 2px" }}>
+            機場 Airport ({ordered.length})
+          </div>
+          {ordered.map((preset) => (
+            <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} />
+          ))}
+        </>
+      )}
     </div>
   );
 }
 
 function CalendarPanel({
   availableDates,
+  fullDates,
   selectedDate,
   onDateSelect,
-}: Pick<IconRailSidebarProps, "availableDates" | "selectedDate" | "onDateSelect">) {
+  theme,
+}: Pick<IconRailSidebarProps, "availableDates" | "fullDates" | "selectedDate" | "onDateSelect"> & { theme: ThemeColors }) {
   const availableSet = new Set(availableDates);
+  const fullSet = new Set(fullDates);
 
   // Determine initial month from selectedDate or first available date or current month
   const initDate = selectedDate
@@ -697,7 +901,7 @@ function CalendarPanel({
     borderRadius: 6,
     cursor: "pointer",
     background: "transparent",
-    color: ACCENT,
+    color: theme.ACCENT,
     position: "relative",
   };
 
@@ -712,10 +916,10 @@ function CalendarPanel({
           marginBottom: 8,
           fontSize: 11,
           fontFamily: "monospace",
-          border: `1px solid ${selectedDate === null ? "#64aaff" : BORDER}`,
+          border: `1px solid ${selectedDate === null ? theme.ACTIVE_BORDER : theme.BORDER}`,
           borderRadius: 4,
-          background: selectedDate === null ? "rgba(100,170,255,0.2)" : "transparent",
-          color: selectedDate === null ? "#fff" : ACCENT,
+          background: selectedDate === null ? theme.ACTIVE_BG : "transparent",
+          color: selectedDate === null ? theme.ACTIVE_TEXT : theme.ACCENT,
           cursor: "pointer",
         }}
       >
@@ -733,16 +937,16 @@ function CalendarPanel({
       >
         <button
           onClick={prevMonth}
-          style={{ background: "none", border: "none", color: ACCENT, cursor: "pointer", fontSize: 14, padding: "2px 6px" }}
+          style={{ background: "none", border: "none", color: theme.ACCENT, cursor: "pointer", fontSize: 14, padding: "2px 6px" }}
         >
           &lt;
         </button>
-        <span style={{ fontSize: 12, color: "#fff", fontWeight: 500 }}>
+        <span style={{ fontSize: 12, color: theme.ACTIVE_TEXT, fontWeight: 500 }}>
           {MONTHS[viewMonth]} {viewYear}
         </span>
         <button
           onClick={nextMonth}
-          style={{ background: "none", border: "none", color: ACCENT, cursor: "pointer", fontSize: 14, padding: "2px 6px" }}
+          style={{ background: "none", border: "none", color: theme.ACCENT, cursor: "pointer", fontSize: 14, padding: "2px 6px" }}
         >
           &gt;
         </button>
@@ -757,7 +961,7 @@ function CalendarPanel({
               width: 30,
               textAlign: "center",
               fontSize: 10,
-              color: DIM,
+              color: theme.DIM,
               fontFamily: "monospace",
             }}
           >
@@ -776,6 +980,7 @@ function CalendarPanel({
           const day = i + 1;
           const dateStr = formatDate(viewYear, viewMonth, day);
           const hasData = availableSet.has(dateStr);
+          const isFull = fullSet.has(dateStr);
           const isSelected = selectedDate === dateStr;
           return (
             <button
@@ -786,8 +991,8 @@ function CalendarPanel({
               }}
               style={{
                 ...cellBase,
-                background: isSelected ? "rgba(100,170,255,0.35)" : "transparent",
-                color: hasData ? "#fff" : "#444",
+                background: isSelected ? theme.ACTIVE_BG : "transparent",
+                color: hasData ? theme.ACTIVE_TEXT : theme.NO_DATA_TEXT,
                 cursor: hasData ? "pointer" : "default",
                 fontWeight: isSelected ? 700 : 400,
               }}
@@ -798,10 +1003,11 @@ function CalendarPanel({
                   style={{
                     position: "absolute",
                     bottom: 2,
-                    width: 4,
-                    height: 4,
+                    width: isFull ? 4 : 4,
+                    height: isFull ? 4 : 4,
                     borderRadius: "50%",
-                    background: "#64aaff",
+                    background: isFull ? theme.ACCENT_BLUE : "transparent",
+                    border: isFull ? "none" : `1px solid ${theme.ACCENT_BLUE}80`,
                   }}
                 />
               )}
@@ -817,6 +1023,7 @@ function CalendarPanel({
 
 export function IconRailSidebar(props: IconRailSidebarProps) {
   const [activePanel, setActivePanel] = useState<PanelId | null>("settings");
+  const theme = getThemeColors(props.isDarkTheme);
 
   const togglePanel = (id: PanelId) => {
     setActivePanel((prev) => (prev === id ? null : id));
@@ -825,18 +1032,18 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
   const panelStyle: CSSProperties = {
     position: "absolute",
     left: RAIL_WIDTH + 8,
-    top: 92,
+    top: 116,
     zIndex: 20,
     width: PANEL_WIDTH,
     maxHeight: "70vh",
     overflowY: "auto",
-    background: BG_PANEL,
+    background: theme.BG_PANEL,
     backdropFilter: "blur(16px)",
     WebkitBackdropFilter: "blur(16px)",
-    border: `1px solid ${BORDER}`,
+    border: `1px solid ${theme.BORDER}`,
     borderRadius: 12,
     padding: "12px 14px",
-    color: ACCENT,
+    color: theme.ACCENT,
     animation: "iconRailFadeIn 0.25s ease-out",
   };
 
@@ -852,14 +1059,14 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           top: 0,
           width: RAIL_WIDTH,
           zIndex: 20,
-          background: BG_RAIL,
+          background: theme.BG_RAIL,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          paddingTop: 12,
+          paddingTop: 36,
           paddingBottom: 8,
-          borderRight: `1px solid ${BORDER}`,
-          borderBottom: `1px solid ${BORDER}`,
+          borderRight: `1px solid ${theme.BORDER}`,
+          borderBottom: `1px solid ${theme.BORDER}`,
           borderRadius: "0 0 8px 0",
         }}
       >
@@ -871,7 +1078,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#64aaff",
+            color: theme.ACCENT_BLUE,
           }}
         >
           <IconActivity />
@@ -882,7 +1089,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           style={{
             width: 28,
             height: 1,
-            background: BORDER,
+            background: theme.BORDER,
             margin: "8px 0",
           }}
         />
@@ -892,6 +1099,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           active={activePanel === "settings"}
           onClick={() => togglePanel("settings")}
           title="Settings"
+          theme={theme}
         >
           <IconSettings />
         </RailIcon>
@@ -901,6 +1109,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           active={activePanel === "locations"}
           onClick={() => togglePanel("locations")}
           title="Locations"
+          theme={theme}
         >
           <IconMapPin />
         </RailIcon>
@@ -910,6 +1119,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           active={activePanel === "calendar"}
           onClick={() => togglePanel("calendar")}
           title="Calendar"
+          theme={theme}
         >
           <IconCalendar />
         </RailIcon>
@@ -919,6 +1129,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           active={false}
           onClick={props.onStatsClick}
           title="Statistics"
+          theme={theme}
         >
           <IconBarChart />
         </RailIcon>
@@ -937,9 +1148,9 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               width: 22,
               height: 22,
               borderRadius: "50%",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              color: DIM,
+              background: theme.CLOSE_BG,
+              border: `1px solid ${theme.CLOSE_BORDER}`,
+              color: theme.DIM,
               fontSize: 12,
               cursor: "pointer",
               display: "flex",
@@ -950,7 +1161,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           >
             ✕
           </button>
-          {activePanel === "settings" && <SettingsPanel {...props} />}
+          {activePanel === "settings" && <SettingsPanel {...props} theme={theme} />}
           {activePanel === "locations" && (
             <LocationsPanel
               airports={props.airports}
@@ -958,13 +1169,17 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onAirportChange={props.onAirportChange}
               onLocationJump={props.onLocationJump}
               onSceneSelect={props.onSceneSelect}
+              region={props.region}
+              theme={theme}
             />
           )}
           {activePanel === "calendar" && (
             <CalendarPanel
               availableDates={props.availableDates}
+              fullDates={props.fullDates}
               selectedDate={props.selectedDate}
               onDateSelect={props.onDateSelect}
+              theme={theme}
             />
           )}
         </div>
