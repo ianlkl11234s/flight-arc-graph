@@ -18,6 +18,7 @@ export interface FlightLayerOptions {
   getIsDarkTheme: () => boolean;
   getShowTrails: () => boolean;
   getTimeWindow: () => boolean;
+  getTrailDisplay: () => string;
   onSceneReady?: (scene: FlightScene) => void;
 }
 
@@ -116,6 +117,13 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       if (showTrails !== lastShowTrails) {
         lastShowTrails = showTrails;
         flightScene.setShowTrails(showTrails);
+      }
+
+      // Progressive 軌跡模式
+      const trailDisplay = opts.getTrailDisplay();
+      flightScene.setProgressiveMode(trailDisplay === "progressive");
+      if (trailDisplay === "progressive") {
+        flightScene.updateProgressiveVisibility(time);
       }
 
       flightScene.setStaticOpacity(opts.getStaticOpacity());

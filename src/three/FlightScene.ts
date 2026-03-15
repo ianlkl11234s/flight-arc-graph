@@ -67,17 +67,24 @@ export class FlightScene {
   private lastVisibleIds = new Set<string>();
   private staticAlphaAttr: THREE.BufferAttribute | null = null;
 
+  // Progressive 軌跡模式
+  private staticTimestamps: Float32Array | null = null;
+  private progressiveMode = false;
+  private lastProgressiveTime = 0;
+
   // 漸進式靜態軌跡建構
   private staticBuildState: {
     flights: Flight[];
     positions: Float32Array;
     colors: Float32Array;
     alphas: Float32Array;
+    timestamps: Float32Array;
     flightIdx: number;
     pointIdx: number;
     offset: number;
     cOffset: number;
     aOffset: number;
+    tOffset: number;
     totalVerts: number;
     builtVerts: number;
   } | null = null;
@@ -168,6 +175,8 @@ export class FlightScene {
     const positions = new Float32Array(totalVerts * 3);
     const colors = new Float32Array(totalVerts * 3);
     const alphas = new Float32Array(totalVerts);
+    const timestamps = new Float32Array(totalVerts);
+    this.staticTimestamps = timestamps;
 
     const posAttr = new THREE.BufferAttribute(positions, 3);
     const colAttr = new THREE.BufferAttribute(colors, 3);
@@ -224,11 +233,13 @@ export class FlightScene {
       positions,
       colors,
       alphas,
+      timestamps,
       flightIdx: 0,
       pointIdx: 0,
       offset: 0,
       cOffset: 0,
       aOffset: 0,
+      tOffset: 0,
       totalVerts,
       builtVerts: 0,
     };
@@ -298,6 +309,9 @@ export class FlightScene {
 
         state.alphas[state.aOffset++] = 1.0;
         state.alphas[state.aOffset++] = 1.0;
+
+        state.timestamps[state.tOffset++] = a[3];
+        state.timestamps[state.tOffset++] = b[3];
 
         vertsThisFrame += 2;
         state.pointIdx = i + 1;
@@ -407,6 +421,42 @@ export class FlightScene {
     }
 
     this.lastVisibleIds = new Set(visibleIds);
+  }
+
+  setProgressiveMode(enabled: boolean) {
+    if (this.progressiveMode === enabled) return;
+    this.progressiveMode = enabled;
+    this.lastProgressiveTime = 0;
+    if (!enabled && this.staticAlphaAttr) {
+      // 關閉 progressive 時，恢復全部可見
+      const alphas = this.staticAlphaAttr.array as Float32Array;
+      for (let i = 0; i < alphas.length; i++) {
+        alphas[i] = 1.0;
+      }
+      this.staticAlphaAttr.needsUpdate = true;
+    }
+  }
+
+  updateProgressiveVisibility(currentTime: number) {
+    if (!this.progressiveMode || !this.staticAlphaAttr || !this.staticTimestamps) return;
+    if (Math.abs(currentTime - this.lastProgressiveTime) < 1) return;
+    this.lastProgressiveTime = currentTime;
+
+    const alphas = this.staticAlphaAttr.array as Float32Array;
+    const ts = this.staticTimestamps;
+    let changed = false;
+
+    for (let i = 0; i < alphas.length; i++) {
+      const shouldShow = ts[i]! <= currentTime ? 1.0 : 0.0;
+      if (alphas[i] !== shouldShow) {
+        alphas[i] = shouldShow;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      this.staticAlphaAttr.needsUpdate = true;
+    }
   }
 
   pickFlight(screenX: number, screenY: number, viewWidth: number, viewHeight: number): string | null {
@@ -536,6 +586,7 @@ export class FlightScene {
       (this.staticGlowMesh.material as THREE.Material).dispose();
       this.staticGlowMesh = null;
     }
+    this.staticTimestamps = null;
   }
 
   private clearScene() {
@@ -555,6 +606,7 @@ export class FlightScene {
     this.staticFlightRanges.clear();
     this.lastVisibleIds.clear();
     this.staticAlphaAttr = null;
+    this.staticTimestamps = null;
   }
 
   dispose() {

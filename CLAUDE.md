@@ -50,3 +50,23 @@ bash scripts/pull-from-s3.sh
 - `timeToUnixTW()` 接受台灣時間字串
 - 場景預設的 `time` 欄位為台灣時間
 - FR24 API 的 session key 為 UTC/ISO 格式
+
+## Cinema Mode 開發規劃
+
+### Phase 1（進行中）
+1. **速度選項**：TimelineControls 加入 1x、15x 選項
+2. **Orbit 鏡頭旋轉**：Capture 模式下的 Cinema Bar，支援環繞、方向、速度控制
+3. **漸進式軌跡**：靜態軌跡支援 `progressive` 模式（飛過才顯示）
+
+### Phase 2（待做）
+4. **Keyframe 系統**：擷取相機位置 → 排列 → 自動播放序列
+   - `useCinemaCamera` hook 管理 keyframe 陣列與插值播放
+   - Cinema Bar UI：Add KF / 列表 / Preview / Play
+   - Edit 模式 ↔ Play 模式切換
+   - Keyframe 支援 hold（到達後停留/旋轉）
+5. **Dolly/Drift 鏡頭動態**
+6. **匯出/載入 JSON sequence**
+
+### 新增檔案
+- `src/hooks/useCinemaCamera.ts` — 鏡頭運動 hook（Orbit + Keyframe 播放）
+- `src/components/CinemaBar.tsx` — Capture 模式下的鏡頭控制 UI

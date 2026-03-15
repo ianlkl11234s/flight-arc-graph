@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
-import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region } from "./types";
+import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay } from "./types";
 import type { FlightScene } from "./three/FlightScene";
 import { MapView } from "./map/MapView";
 import { useFlightData } from "./hooks/useFlightData";
@@ -22,6 +22,8 @@ import { AircraftTypeFilter } from "./components/AircraftTypeFilter";
 import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCategories";
 import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
+import { useCinemaCamera } from "./hooks/useCinemaCamera";
+import { CinemaBar } from "./components/CinemaBar";
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
   loadingProgress: { loaded: number; label: string } | null;
@@ -125,6 +127,7 @@ export default function App() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
   const [aircraftFilter, setAircraftFilter] = useState<AircraftFilterKey>("all");
   const [captureMode, setCaptureMode] = useState(false);
+  const [trailDisplay, setTrailDisplay] = useState<TrailDisplay>("full");
   const [showInfo, setShowInfo] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
@@ -223,6 +226,7 @@ export default function App() {
 
   const timeline = useTimeline({ availableDates });
   const mapRef = useRef<MapboxMap | null>(null);
+  const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode });
 
   // 同步 timeline 日期給 airspace 載入
   useEffect(() => {
@@ -300,6 +304,7 @@ export default function App() {
   const isDarkThemeRef = useRef(isDarkTheme);
   const showTrailsRef = useRef(displayMode === "trails");
   const timeWindowRef = useRef(timeWindow);
+  const trailDisplayRef = useRef(trailDisplay);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
 
@@ -313,6 +318,7 @@ export default function App() {
   isDarkThemeRef.current = isDarkTheme;
   showTrailsRef.current = displayMode === "trails";
   timeWindowRef.current = timeWindow;
+  trailDisplayRef.current = trailDisplay;
 
   const showTrails = displayMode === "trails";
 
@@ -338,6 +344,7 @@ export default function App() {
       getIsDarkTheme: () => isDarkThemeRef.current,
       getShowTrails: () => showTrailsRef.current,
       getTimeWindow: () => timeWindowRef.current,
+      getTrailDisplay: () => trailDisplayRef.current,
       onSceneReady: (scene) => { flightSceneRef.current = scene; },
     });
     map.addLayer(layer);
@@ -575,6 +582,37 @@ export default function App() {
               {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
             </div>
           </div>
+          {/* Trail 模式切換 */}
+          <button
+            onClick={() => setTrailDisplay(d => d === "full" ? "progressive" : "full")}
+            style={{
+              position: "absolute",
+              top: isMobile ? 120 : 140,
+              left: isMobile ? 16 : 32,
+              zIndex: 21,
+              padding: "5px 14px",
+              borderRadius: 16,
+              border: "1px solid rgba(255,255,255,0.2)",
+              background: trailDisplay === "progressive" ? "rgba(255,255,255,0.15)" : "rgba(60,60,60,0.4)",
+              color: trailDisplay === "progressive" ? "#fff" : "rgba(255,255,255,0.6)",
+              fontSize: 13,
+              fontFamily: "monospace",
+              cursor: "pointer",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            Trail: {trailDisplay === "full" ? "Full" : "Progressive"}
+          </button>
+          {/* 鏡頭控制列 */}
+          <CinemaBar
+            isDarkTheme={isDarkTheme}
+            cinemaMode={cinema.cinemaMode}
+            onCinemaModeChange={cinema.setCinemaMode}
+            orbitSpeed={cinema.orbitSpeed}
+            onOrbitSpeedChange={cinema.setOrbitSpeed}
+            orbitDirection={cinema.orbitDirection}
+            onOrbitDirectionChange={cinema.setOrbitDirection}
+          />
           {/* 退出按鈕 */}
           <button
             onClick={() => setCaptureMode(false)}

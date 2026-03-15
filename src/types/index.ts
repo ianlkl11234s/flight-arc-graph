@@ -55,6 +55,9 @@ export type RenderMode = "3d" | "2d";
 /** 顯示模式：trails 顯示完整軌跡、status 只顯示飛機位置 */
 export type DisplayMode = "trails" | "status";
 
+/** 軌跡顯示：full 全部顯示、progressive 飛過才顯示 */
+export type TrailDisplay = "full" | "progressive";
+
 /** Mapbox 底圖樣式 */
 export interface MapStyle {
   id: string;

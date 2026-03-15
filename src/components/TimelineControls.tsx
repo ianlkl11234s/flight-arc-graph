@@ -170,6 +170,8 @@ export function TimelineControls({
           onChange={(e) => onSpeedChange(Number(e.target.value))}
           style={getSelectStyle(isDarkTheme)}
         >
+          <option value={1}>1x</option>
+          <option value={15}>15x</option>
           <option value={30}>30x</option>
           <option value={60}>60x</option>
           <option value={120}>120x</option>
