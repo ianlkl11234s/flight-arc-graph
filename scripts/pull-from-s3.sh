@@ -31,20 +31,8 @@ echo "  ✓ manifest.json"
 # 2. 從 manifest 解析機場列表，逐一下載
 echo ""
 echo "[2/4] Tracks airports..."
-AIRPORTS=$(cat "${DATA_DIR}/tracks/manifest.json" | python3 -c "
-import json, sys
-m = json.load(sys.stdin)
-for k in sorted(m.get('airports', {}).keys()):
-    print(k)
-" 2>/dev/null || echo "")
-
-if [ -z "$AIRPORTS" ]; then
-  # fallback: 如果沒有 python3，用 node
-  AIRPORTS=$(node -e "
-    const m = require('${DATA_DIR}/tracks/manifest.json');
-    Object.keys(m.airports).sort().forEach(k => console.log(k));
-  " 2>/dev/null || echo "")
-fi
+# 用 grep 從 manifest.json 提取機場 ICAO（格式："RCTP": {）
+AIRPORTS=$(grep -o '"[A-Z][A-Z0-9]\{3\}": {' "${DATA_DIR}/tracks/manifest.json" | sed 's/": {//' | sed 's/"//' | sort)
 
 COUNT=0
 TOTAL=$(echo "$AIRPORTS" | wc -l | tr -d ' ')
@@ -70,16 +58,8 @@ echo ""
 echo "[4/4] Airspace..."
 curl -sL "${S3_BASE}/airspace/manifest.json" -o "${DATA_DIR}/airspace/manifest.json" 2>/dev/null || true
 
-# 從 airspace manifest 取得日期
-DATES=$(cat "${DATA_DIR}/airspace/manifest.json" 2>/dev/null | python3 -c "
-import json, sys
-m = json.load(sys.stdin)
-for d in m.get('dates', []):
-    print(d['date'])
-" 2>/dev/null || node -e "
-  const m = require('${DATA_DIR}/airspace/manifest.json');
-  m.dates.forEach(d => console.log(d.date));
-" 2>/dev/null || echo "")
+# 從 airspace manifest 取得日期（grep 提取 "date": "YYYY-MM-DD"）
+DATES=$(grep -o '"date": "[0-9-]*"' "${DATA_DIR}/airspace/manifest.json" 2>/dev/null | sed 's/"date": "//' | sed 's/"//' | sort)
 
 for DATE in $DATES; do
   curl -sL "${S3_BASE}/airspace/days/${DATE}.jsonl" -o "${DATA_DIR}/airspace/days/${DATE}.jsonl" 2>/dev/null || true
