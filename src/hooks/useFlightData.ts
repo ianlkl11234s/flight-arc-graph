@@ -79,15 +79,40 @@ export function useFlightData(
     setLoading(true);
     setLoadingProgress({ loaded: 0, label: "Loading..." });
 
+    // Throttle state updates：最多每 500ms 更新一次畫面，避免閃爍
+    let pendingFlights: Flight[] | null = null;
+    let pendingTotal = 0;
+    let throttleTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const flushProgress = () => {
+      if (pendingFlights && loadIdRef.current === loadId) {
+        setTrackFlights(pendingFlights);
+        setLoadingProgress({ loaded: pendingTotal, label: `${pendingTotal} flights` });
+        if (pendingTotal > 0) setLoading(false);
+        pendingFlights = null;
+      }
+      throttleTimer = null;
+    };
+
     const onProgress = (flights: Flight[], total: number) => {
       if (loadIdRef.current !== loadId) return;
-      setTrackFlights([...flights]);
-      setLoadingProgress({ loaded: total, label: `${total} flights` });
-      if (total > 0) setLoading(false);
+      pendingFlights = [...flights];
+      pendingTotal = total;
+      // 首批立即顯示，之後 throttle
+      if (total <= 30) {
+        flushProgress();
+      } else if (!throttleTimer) {
+        throttleTimer = setTimeout(flushProgress, 500);
+      }
+    };
+
+    const cleanup = () => {
+      if (throttleTimer) clearTimeout(throttleTimer);
     };
 
     if (scope === "airport") {
       loadAirportFlights(selectedAirport, onProgress).then((flights) => {
+        cleanup();
         if (loadIdRef.current !== loadId) return;
         setTrackFlights(flights);
         setLoadingProgress(null);
@@ -96,20 +121,18 @@ export function useFlightData(
     } else {
       loadRegionFullFlights(
         region,
-        (flights, total) => {
-          if (loadIdRef.current !== loadId) return;
-          setTrackFlights([...flights]);
-          setLoadingProgress({ loaded: total, label: `${total} flights` });
-          if (total > 0) setLoading(false);
-        },
+        onProgress,
         () => loadIdRef.current !== loadId,
       ).then((flights) => {
+        cleanup();
         if (loadIdRef.current !== loadId) return;
         setTrackFlights(flights);
         setLoadingProgress(null);
         setLoading(false);
       });
     }
+
+    return cleanup;
   }, [dataSource, scope, region, selectedAirport]);
 
   // 載入 airspace：依 selectedDate + rangeDays 按天載入
