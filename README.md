@@ -30,7 +30,7 @@ Region Pills UI 可切換 TW / JP / HK / World / All，每個區域有對應的�
 - **閃爍燈**：紅色雙閃警示燈，模擬真實防撞燈號
 - **靜態軌跡**：全部航班路徑同時顯示，3D 模式依高度著色（暖橘→冷藍），2D 模式每航班隨機配色
 - **機場邊界**：OSM 機場多邊形，暗色主題白色填充 + 光暈，亮色主題金黃色填充 + 光暈
-- **主題適應**：所有 UI 元件與視覺效果自動適應底圖明暗
+- **主題適應**：所有 UI 元件（sidebar、tooltip、timeline、calendar）自動適應底圖明暗（Dark / Light）
 - **拍攝模式**：一鍵隱藏 UI，暗角 vignette 效果，適合截圖輸出
 
 ## 功能
@@ -44,13 +44,13 @@ Region Pills UI 可切換 TW / JP / HK / World / All，每個區域有對應的�
 
 ### 區域選擇（Region Selector）
 
-Region Pills 切換地理區域：TW / JP / HK / World / All。切換時自動載入對應機場資料、更新機場選單與場景預設。日本機場依流量分為 Major / Regional 層級。
+Region Pills 切換地理區域：TW / JP / HK / World / All。切換時自動載入對應機場資料、更新機場選單與場景預設、跳至有資料的日期。日本機場依流量分為四層級：Major（10）/ Regional（15）/ Local / Special。
 
 ### 資料載入
 
 Per-airport lazy loading 架構：每座機場獨立 JSONL 檔案（`tracks/airports/{ICAO}.jsonl`），NDJSON streaming 逐行解析 + progressive rendering，選擇機場或區域時才載入，大幅減少初始載入量。
 
-區域總覽使用 `tracks/regions/{region}.jsonl` 預聚合資料。
+區域總覽（All Region）模式下，依序載入各機場 JSONL 完整軌跡並去重，大機場優先載入。
 
 ### 機型篩選（Aircraft Filter）
 
@@ -109,13 +109,15 @@ Flight Trails 模式下的子選項，開啟後僅顯示當前播放時間前後
 
 每個區域內建推薦場景，一鍵套用完整設定（資料來源、範圍、日期、時間、視角、透明度、機型篩選）：
 
-| 場景 | 資料來源 | 說明 |
-|------|---------|------|
-| 台灣空中走廊 | 空域快照 | 凌晨空中走廊全景 |
-| 活躍中國境內班機 | 空域快照 | 中國沿海航線 |
-| 桃園機場起降 | 航線軌跡 | RCTP 近距起降 |
-| 全台航線總覽 | 航線軌跡 | 全台航班鳥瞰 |
-| P-8 反潛機巡邏路徑 | 空域快照 | 軍機篩選 + 高透明度 |
+| 場景 | 區域 | 資料來源 | 說明 |
+|------|------|---------|------|
+| 台灣空中走廊 | TW | 空域快照 | 凌晨空中走廊全景 |
+| 活躍中國境內班機 | TW | 空域快照 | 中國沿海航線 |
+| 桃園機場起降 | TW | 航線軌跡 | RCTP 近距起降 |
+| 全台航線總覽 | TW | 航線軌跡 | 全台航班鳥瞰 |
+| P-8 反潛機巡邏路徑 | TW | 空域快照 | 軍機篩選 + 高透明度 |
+| 小牧基地 C-130 | JP | 航線軌跡 | 名古屋飛行場軍用運輸機 |
+| 東京觀光直升機 | JP | 航線軌跡 | 羽田附近觀光直升機路線 |
 
 ### Icon Rail Sidebar（桌面版）
 
@@ -345,7 +347,7 @@ docker run -p 3721:8080 flight-arc
 
 - **環境變數**：`VITE_MAPBOX_TOKEN`（Build Variables）
 - **/data Volume**：掛載持久化儲存，Nginx 會服務 `/data/` 路徑
-- **S3 同步**：容器啟動後執行 `scripts/sync-s3-to-data.sh` 下載最新資料到 `/data`
+- **S3 同步**：容器啟動後執行 `bash scripts/pull-from-s3.sh` 下載最新資料到 `/data`
 
 ## 航班資料（Flight API）
 
@@ -377,8 +379,14 @@ npx tsx scripts/split-tracks.ts
 # Step 4: 下載機場邊界多邊形
 npx tsx scripts/fetch-airport-boundaries.ts
 
-# Step 5: 備份到 S3
+# Step 5: 上傳分拆資料到 S3
+npx tsx scripts/upload-split-to-s3.ts
+
+# Step 6: 備份原始資料到 S3
 npx tsx scripts/backup-to-s3.ts
+
+# Zeabur: 從 S3 拉資料到 /data volume
+bash scripts/pull-from-s3.sh
 ```
 
 腳本支援**中斷續接**：如果因 rate limit 或網路中斷，重新執行即可自動接續。
@@ -433,7 +441,10 @@ cp .env.example .env
 | `npm run fetch:flights` | 抓航班清單（FR24 API） |
 | `npm run fetch:tracks` | 抓飛行軌跡（`--date` / `--airports`） |
 | `npm run fuse:data` | 合併多源資料（空域快照） |
-| `npm run s3:upload` | 上傳資料到 S3 |
+| `npm run s3:upload` | 上傳資料到 S3（按日期分檔） |
+| `npx tsx scripts/split-tracks.ts` | 拆分為 per-airport JSONL + regions |
+| `npx tsx scripts/upload-split-to-s3.ts` | 上傳分拆資料到 S3 |
+| `npx tsx scripts/fetch-airport-boundaries.ts` | 下載 OSM 機場邊界 |
 
 ### 4. 啟動
 
@@ -449,6 +460,19 @@ npm run build   # 正式建置
 ```bash
 open color-preview.html
 ```
+
+## 專案沿革
+
+| 時期 | 里程碑 | 說明 |
+|------|--------|------|
+| 2026/02 初 | **Taiwan Flight Arc** 誕生 | 以台灣 22 座機場為核心，FR24 API 抓取航班軌跡，Three.js + Mapbox 3D 弧線視覺化 |
+| 2026/02 中 | 空域快照 + 統計面板 | 整合 OpenSky ADS-B 空域掃描、Flight Statistics 側邊面板（drill-down 分析） |
+| 2026/02 下 | S3 增量更新 + Docker 部署 | AWS S3 資料架構、Docker multi-stage build、Zeabur 雲端部署 |
+| 2026/03 初 | 車站標記 + 場景預設 | OSM 車站多邊形/圓環、Icon Rail Sidebar、Scene Presets 一鍵套用 |
+| 2026/03 中 | **國際化擴展** | 新增日本 70+ 座機場、香港 VHHH、Madeira、Paro 等世界特色機場 |
+| | Region Selector | TW / JP / HK / World / All 區域切換，動態標題與場景 |
+| | Per-airport lazy loading | JSONL streaming + progressive rendering，初始載入從 70MB 降至 < 5MB |
+| | Light Theme | 所有 UI 元件支援明暗主題自動適應 |
 
 ## License
 
