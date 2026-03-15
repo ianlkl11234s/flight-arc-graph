@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # pull-from-s3.sh
 # 從 S3 拉取分拆後的 tracks/airspace 資料到 /data volume
 # 在 Zeabur 終端機上執行
