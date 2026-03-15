@@ -41,10 +41,14 @@ interface UseCinemaCameraReturn {
   updateKeyframe: (id: string, updates: Partial<CameraKeyframe>) => void;
   moveKeyframe: (id: string, direction: -1 | 1) => void;
   previewKeyframe: (id: string) => void;
+  recaptureKeyframe: (id: string) => void;
   playSequence: () => void;
   stopSequence: () => void;
   sequenceProgress: number;
   currentKfIndex: number;
+  loop: boolean;
+  setLoop: (loop: boolean) => void;
+  totalDuration: number;
 }
 
 // --- Pure helpers (module scope) ---
@@ -92,9 +96,14 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
   const [cinemaPhase, setCinemaPhase] = useState<CinemaPhase>("edit");
   const [sequenceProgress, setSequenceProgress] = useState(0);
   const [currentKfIndex, setCurrentKfIndex] = useState(0);
+  const [loop, setLoop] = useState(false);
+  const loopRef = useRef(false);
   const seqRafRef = useRef<number>(0);
   const seqStartRef = useRef<number>(0);
   const kfCounter = useRef(0);
+
+  // Sync loop ref
+  useEffect(() => { loopRef.current = loop; }, [loop]);
 
   // --- Orbit RAF ---
   useEffect(() => {
@@ -147,6 +156,17 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
   const updateKeyframe = useCallback((id: string, updates: Partial<CameraKeyframe>) => {
     setKeyframes(prev => prev.map(k => (k.id === id ? { ...k, ...updates } : k)));
   }, []);
+
+  const recaptureKeyframe = useCallback((id: string) => {
+    if (!map) return;
+    const c = map.getCenter();
+    updateKeyframe(id, {
+      center: [c.lng, c.lat],
+      zoom: map.getZoom(),
+      pitch: map.getPitch(),
+      bearing: map.getBearing(),
+    });
+  }, [map, updateKeyframe]);
 
   const moveKeyframe = useCallback((id: string, direction: -1 | 1) => {
     setKeyframes(prev => {
@@ -215,6 +235,15 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
       const elapsed = (now - seqStartRef.current) / 1000;
 
       if (elapsed >= totalDur) {
+        if (loopRef.current) {
+          // Loop: 重頭開始
+          seqStartRef.current = now;
+          setSequenceProgress(0);
+          setCurrentKfIndex(0);
+          seqRafRef.current = requestAnimationFrame(animate);
+          return;
+        }
+        // 不 loop: 停止
         setCinemaPhase("edit");
         setSequenceProgress(1);
         setCurrentKfIndex(keyframes.length - 1);
@@ -297,6 +326,8 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
     }
   }, [active]);
 
+  const totalDuration = keyframes.length >= 2 ? getTotalDuration(keyframes) : 0;
+
   return {
     cinemaMode,
     setCinemaMode,
@@ -312,9 +343,13 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
     updateKeyframe,
     moveKeyframe,
     previewKeyframe,
+    recaptureKeyframe,
     playSequence,
     stopSequence,
     sequenceProgress,
     currentKfIndex,
+    loop,
+    setLoop,
+    totalDuration,
   };
 }

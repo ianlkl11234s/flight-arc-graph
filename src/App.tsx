@@ -623,6 +623,10 @@ export default function App() {
             onStopSequence={cinema.stopSequence}
             sequenceProgress={cinema.sequenceProgress}
             currentKfIndex={cinema.currentKfIndex}
+            onRecaptureKeyframe={cinema.recaptureKeyframe}
+            loop={cinema.loop}
+            onLoopChange={cinema.setLoop}
+            totalDuration={cinema.totalDuration}
           />
           {/* 退出按鈕 */}
           <button

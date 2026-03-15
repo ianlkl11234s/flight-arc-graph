@@ -21,6 +21,10 @@ interface CinemaBarProps {
   onStopSequence: () => void;
   sequenceProgress: number;
   currentKfIndex: number;
+  onRecaptureKeyframe: (id: string) => void;
+  loop: boolean;
+  onLoopChange: (loop: boolean) => void;
+  totalDuration: number;
 }
 
 export function CinemaBar({
@@ -42,6 +46,10 @@ export function CinemaBar({
   onStopSequence,
   sequenceProgress,
   currentKfIndex,
+  onRecaptureKeyframe,
+  loop,
+  onLoopChange,
+  totalDuration,
 }: CinemaBarProps) {
   const dark = isDarkTheme;
 
@@ -118,7 +126,7 @@ export function CinemaBar({
         /* Playing mode - compact UI */
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ color: "#fff", fontSize: 13, fontFamily: "monospace" }}>
-            ▶ KF {currentKfIndex + 1}/{keyframes.length}
+            ▶ KF {currentKfIndex + 1}/{keyframes.length}{loop ? " ⟳" : ""}
           </span>
           {/* Progress bar */}
           <div style={{ flex: 1, height: 3, background: "rgba(255,255,255,0.15)", borderRadius: 2, minWidth: 100 }}>
@@ -139,7 +147,25 @@ export function CinemaBar({
                 <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.12)" }} />
                 <button onClick={onAddKeyframe} style={pillStyle(false)}>+ Add KF</button>
                 {keyframes.length >= 2 && (
-                  <button onClick={onPlaySequence} style={pillStyle(false)}>▶ Play</button>
+                  <>
+                    <button onClick={onPlaySequence} style={pillStyle(false)}>▶ Play</button>
+                    <button
+                      onClick={() => onLoopChange(!loop)}
+                      style={{
+                        ...pillStyle(loop),
+                        padding: "5px 10px",
+                      }}
+                    >
+                      ⟳
+                    </button>
+                    <span style={{
+                      color: "rgba(255,255,255,0.4)",
+                      fontSize: 11,
+                      fontFamily: "monospace",
+                    }}>
+                      {totalDuration.toFixed(1)}s
+                    </span>
+                  </>
                 )}
               </>
             )}
@@ -177,67 +203,182 @@ export function CinemaBar({
           {cinemaMode === "sequence" && keyframes.length > 0 && (
             <div style={{ marginTop: 0, display: "flex", flexDirection: "column", gap: 4, maxHeight: 200, overflowY: "auto" }}>
               {keyframes.map((kf, i) => (
-                <div key={kf.id} style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "4px 8px",
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.05)",
-                }}>
-                  {/* Index */}
-                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "monospace", minWidth: 20 }}>
-                    {i + 1}.
-                  </span>
-                  {/* Zoom info */}
-                  <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "monospace", minWidth: 45 }}>
-                    z{kf.zoom.toFixed(1)}
-                  </span>
-                  {/* Duration input */}
-                  <input
-                    type="number"
-                    min={0.5}
-                    max={30}
-                    step={0.5}
-                    value={kf.duration}
-                    onChange={(e) => onUpdateKeyframe(kf.id, { duration: Number(e.target.value) })}
-                    style={{
-                      width: 40,
-                      background: "rgba(255,255,255,0.1)",
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      borderRadius: 4,
-                      color: "#fff",
-                      fontSize: 11,
-                      fontFamily: "monospace",
-                      padding: "2px 4px",
-                      textAlign: "center" as const,
-                    }}
-                  />
-                  <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>s</span>
-                  {/* Easing select */}
-                  <select
-                    value={kf.easing}
-                    onChange={(e) => onUpdateKeyframe(kf.id, { easing: e.target.value as EasingType })}
-                    style={{
-                      background: "rgba(255,255,255,0.1)",
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      borderRadius: 4,
-                      color: "rgba(255,255,255,0.7)",
-                      fontSize: 10,
-                      fontFamily: "monospace",
-                      padding: "2px 4px",
-                    }}
-                  >
-                    <option value="ease-in-out" style={{ background: "#333" }}>ease</option>
-                    <option value="linear" style={{ background: "#333" }}>linear</option>
-                    <option value="ease-out" style={{ background: "#333" }}>ease-out</option>
-                  </select>
-                  {/* Action buttons */}
-                  <button onClick={() => onMoveKeyframe(kf.id, -1)} style={tinyBtnStyle} disabled={i === 0}>▲</button>
-                  <button onClick={() => onMoveKeyframe(kf.id, 1)} style={tinyBtnStyle} disabled={i === keyframes.length - 1}>▼</button>
-                  <button onClick={() => onPreviewKeyframe(kf.id)} style={tinyBtnStyle}>👁</button>
-                  <button onClick={() => onRemoveKeyframe(kf.id)} style={{ ...tinyBtnStyle, color: "rgba(255,100,100,0.7)" }}>✕</button>
-                </div>
+                <React.Fragment key={kf.id}>
+                  {/* Main keyframe row */}
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "4px 8px",
+                    borderRadius: 8,
+                    background: "rgba(255,255,255,0.05)",
+                  }}>
+                    {/* Index */}
+                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "monospace", minWidth: 20 }}>
+                      {i + 1}.
+                    </span>
+                    {/* Zoom info */}
+                    <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "monospace", minWidth: 45 }}>
+                      z{kf.zoom.toFixed(1)}
+                    </span>
+                    {/* Duration input */}
+                    <input
+                      type="number"
+                      min={0.5}
+                      max={30}
+                      step={0.5}
+                      value={kf.duration}
+                      onChange={(e) => onUpdateKeyframe(kf.id, { duration: Number(e.target.value) })}
+                      style={{
+                        width: 40,
+                        background: "rgba(255,255,255,0.1)",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                        borderRadius: 4,
+                        color: "#fff",
+                        fontSize: 11,
+                        fontFamily: "monospace",
+                        padding: "2px 4px",
+                        textAlign: "center" as const,
+                      }}
+                    />
+                    <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>s</span>
+                    {/* Easing select */}
+                    <select
+                      value={kf.easing}
+                      onChange={(e) => onUpdateKeyframe(kf.id, { easing: e.target.value as EasingType })}
+                      style={{
+                        background: "rgba(255,255,255,0.1)",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                        borderRadius: 4,
+                        color: "rgba(255,255,255,0.7)",
+                        fontSize: 10,
+                        fontFamily: "monospace",
+                        padding: "2px 4px",
+                      }}
+                    >
+                      <option value="ease-in-out" style={{ background: "#333" }}>ease</option>
+                      <option value="linear" style={{ background: "#333" }}>linear</option>
+                      <option value="ease-out" style={{ background: "#333" }}>ease-out</option>
+                    </select>
+                    {/* Action buttons */}
+                    <button onClick={() => onMoveKeyframe(kf.id, -1)} style={tinyBtnStyle} disabled={i === 0}>▲</button>
+                    <button onClick={() => onMoveKeyframe(kf.id, 1)} style={tinyBtnStyle} disabled={i === keyframes.length - 1}>▼</button>
+                    <button onClick={() => onRecaptureKeyframe(kf.id)} style={tinyBtnStyle} title="Recapture">⟳</button>
+                    <button onClick={() => onPreviewKeyframe(kf.id)} style={tinyBtnStyle}>👁</button>
+                    <button onClick={() => onRemoveKeyframe(kf.id)} style={{ ...tinyBtnStyle, color: "rgba(255,100,100,0.7)" }}>✕</button>
+                  </div>
+                  {/* Hold settings row */}
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    paddingLeft: 28,
+                    paddingBottom: 2,
+                  }}>
+                    <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: "monospace" }}>hold</span>
+                    <button
+                      onClick={() => {
+                        if (kf.hold) {
+                          onUpdateKeyframe(kf.id, { hold: undefined });
+                        } else {
+                          onUpdateKeyframe(kf.id, { hold: { type: "still", duration: 5 } });
+                        }
+                      }}
+                      style={{
+                        ...tinyBtnStyle,
+                        color: kf.hold ? "#fff" : "rgba(255,255,255,0.3)",
+                        fontSize: 10,
+                      }}
+                    >
+                      {kf.hold ? "ON" : "OFF"}
+                    </button>
+                    {kf.hold && (
+                      <>
+                        {/* Hold type */}
+                        <select
+                          value={kf.hold.type}
+                          onChange={(e) => onUpdateKeyframe(kf.id, {
+                            hold: {
+                              ...kf.hold!,
+                              type: e.target.value as "still" | "orbit",
+                              ...(e.target.value === "orbit" ? { speed: kf.hold!.speed ?? 2, direction: kf.hold!.direction ?? 1 } : {}),
+                            },
+                          })}
+                          style={{
+                            background: "rgba(255,255,255,0.1)",
+                            border: "1px solid rgba(255,255,255,0.15)",
+                            borderRadius: 4,
+                            color: "rgba(255,255,255,0.7)",
+                            fontSize: 10,
+                            fontFamily: "monospace",
+                            padding: "1px 4px",
+                          }}
+                        >
+                          <option value="still" style={{ background: "#333" }}>still</option>
+                          <option value="orbit" style={{ background: "#333" }}>orbit</option>
+                        </select>
+                        {/* Hold duration */}
+                        <input
+                          type="number"
+                          min={1}
+                          max={60}
+                          step={1}
+                          value={kf.hold.duration}
+                          onChange={(e) => onUpdateKeyframe(kf.id, {
+                            hold: { ...kf.hold!, duration: Number(e.target.value) },
+                          })}
+                          style={{
+                            width: 32,
+                            background: "rgba(255,255,255,0.1)",
+                            border: "1px solid rgba(255,255,255,0.15)",
+                            borderRadius: 4,
+                            color: "#fff",
+                            fontSize: 10,
+                            fontFamily: "monospace",
+                            padding: "1px 3px",
+                            textAlign: "center" as const,
+                          }}
+                        />
+                        <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>s</span>
+                        {/* Orbit-specific: speed + direction */}
+                        {kf.hold.type === "orbit" && (
+                          <>
+                            <input
+                              type="number"
+                              min={0.5}
+                              max={10}
+                              step={0.5}
+                              value={kf.hold.speed ?? 2}
+                              onChange={(e) => onUpdateKeyframe(kf.id, {
+                                hold: { ...kf.hold!, speed: Number(e.target.value) },
+                              })}
+                              style={{
+                                width: 32,
+                                background: "rgba(255,255,255,0.1)",
+                                border: "1px solid rgba(255,255,255,0.15)",
+                                borderRadius: 4,
+                                color: "#fff",
+                                fontSize: 10,
+                                fontFamily: "monospace",
+                                padding: "1px 3px",
+                                textAlign: "center" as const,
+                              }}
+                            />
+                            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>°/s</span>
+                            <button
+                              onClick={() => onUpdateKeyframe(kf.id, {
+                                hold: { ...kf.hold!, direction: (kf.hold!.direction ?? 1) === 1 ? -1 : 1 },
+                              })}
+                              style={{ ...tinyBtnStyle, fontSize: 10 }}
+                            >
+                              {(kf.hold.direction ?? 1) === 1 ? "CW" : "CCW"}
+                            </button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </React.Fragment>
               ))}
             </div>
           )}
