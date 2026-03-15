@@ -43,6 +43,7 @@ export default function App() {
     airspaceDates,
     regionDatesMap,
     regionFullDatesMap,
+    streamingFlightsRef,
   } = useFlightData(dataSource, scope, region, airspaceDate, airspaceRangeDays);
   const [trackMode, setTrackMode] = useState<TrackMode>("stack");
   const [timeWindow, setTimeWindow] = useState(false);
@@ -262,7 +263,7 @@ export default function App() {
     }
     const layer = createFlightLayer({
       getCurrentTime: () => timeRef.current,
-      getFlights: () => flightsRef.current,
+      getFlights: () => streamingFlightsRef.current.length > 0 ? streamingFlightsRef.current : flightsRef.current,
       getRenderMode: () => renderModeRef.current,
       getAltExaggeration: () => altExagRef.current,
       getAltOffset: () => altOffsetRef.current,

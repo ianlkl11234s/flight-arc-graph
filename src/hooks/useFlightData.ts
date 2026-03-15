@@ -15,7 +15,6 @@ import {
 
 interface UseFlightDataReturn {
   allFlights: Flight[];
-  filteredFlights: Flight[];
   airports: string[];
   selectedAirport: string;
   setSelectedAirport: (icao: string) => void;
@@ -23,12 +22,11 @@ interface UseFlightDataReturn {
   loading: boolean;
   loadingProgress: { loaded: number; label: string } | null;
   hasFused: boolean;
-  /** 空域快照可用日期 */
   airspaceDates: string[];
-  /** 各 region 的可用日期 */
   regionDatesMap: Record<string, string[]>;
-  /** 各 region 的完整資料日期 */
   regionFullDatesMap: Record<string, string[]>;
+  /** Streaming 中的航班 ref（Three.js 直接讀取，不觸發 re-render） */
+  streamingFlightsRef: React.MutableRefObject<Flight[]>;
 }
 
 export function useFlightData(
@@ -47,6 +45,7 @@ export function useFlightData(
   const [selectedAirport, setSelectedAirport] = useState("RCTP");
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; label: string } | null>(null);
+  const streamingFlightsRef = useRef<Flight[]>([]);
 
   const loadIdRef = useRef(0);
 
@@ -78,43 +77,30 @@ export function useFlightData(
 
     setLoading(true);
     setLoadingProgress({ loaded: 0, label: "Loading..." });
+    streamingFlightsRef.current = [];
 
-    // Throttle state updates：最多每 500ms 更新一次畫面，避免閃爍
-    let pendingFlights: Flight[] | null = null;
-    let pendingTotal = 0;
-    let throttleTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const flushProgress = () => {
-      if (pendingFlights && loadIdRef.current === loadId) {
-        setTrackFlights(pendingFlights);
-        setLoadingProgress({ loaded: pendingTotal, label: `${pendingTotal} flights` });
-        if (pendingTotal > 0) setLoading(false);
-        pendingFlights = null;
-      }
-      throttleTimer = null;
-    };
+    // Streaming 期間：只更新 ref（Three.js 直接讀取），不觸發 React re-render
+    // 僅更新 loadingProgress 顯示計數（輕量更新）
+    let lastProgressUpdate = 0;
 
     const onProgress = (flights: Flight[], total: number) => {
       if (loadIdRef.current !== loadId) return;
-      pendingFlights = [...flights];
-      pendingTotal = total;
-      // 首批立即顯示，之後 throttle
-      if (total <= 30) {
-        flushProgress();
-      } else if (!throttleTimer) {
-        throttleTimer = setTimeout(flushProgress, 500);
+      // 更新 ref — Three.js 下一幀就會讀到新航班（漸進式出現）
+      streamingFlightsRef.current = flights;
+      // 每 500ms 或首批時更新 loading 計數（不更新 trackFlights state）
+      const now = Date.now();
+      if (total <= 30 || now - lastProgressUpdate > 500) {
+        lastProgressUpdate = now;
+        setLoadingProgress({ loaded: total, label: `${total} flights` });
+        if (total > 0) setLoading(false);
       }
-    };
-
-    const cleanup = () => {
-      if (throttleTimer) clearTimeout(throttleTimer);
     };
 
     if (scope === "airport") {
       loadAirportFlights(selectedAirport, onProgress).then((flights) => {
-        cleanup();
         if (loadIdRef.current !== loadId) return;
-        setTrackFlights(flights);
+        streamingFlightsRef.current = flights;
+        setTrackFlights(flights); // 最終一次 state update
         setLoadingProgress(null);
         setLoading(false);
       });
@@ -124,15 +110,13 @@ export function useFlightData(
         onProgress,
         () => loadIdRef.current !== loadId,
       ).then((flights) => {
-        cleanup();
         if (loadIdRef.current !== loadId) return;
-        setTrackFlights(flights);
+        streamingFlightsRef.current = flights;
+        setTrackFlights(flights); // 最終一次 state update
         setLoadingProgress(null);
         setLoading(false);
       });
     }
-
-    return cleanup;
   }, [dataSource, scope, region, selectedAirport]);
 
   // 載入 airspace：依 selectedDate + rangeDays 按天載入
@@ -192,7 +176,6 @@ export function useFlightData(
 
   return {
     allFlights: sourceFlights,
-    filteredFlights,
     airports,
     selectedAirport,
     setSelectedAirport: handleSetAirport,
@@ -203,5 +186,6 @@ export function useFlightData(
     airspaceDates,
     regionDatesMap,
     regionFullDatesMap,
+    streamingFlightsRef,
   };
 }
