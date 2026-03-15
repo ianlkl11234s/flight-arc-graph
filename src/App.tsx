@@ -612,6 +612,17 @@ export default function App() {
             onOrbitSpeedChange={cinema.setOrbitSpeed}
             orbitDirection={cinema.orbitDirection}
             onOrbitDirectionChange={cinema.setOrbitDirection}
+            keyframes={cinema.keyframes}
+            cinemaPhase={cinema.cinemaPhase}
+            onAddKeyframe={cinema.addKeyframe}
+            onRemoveKeyframe={cinema.removeKeyframe}
+            onUpdateKeyframe={cinema.updateKeyframe}
+            onMoveKeyframe={cinema.moveKeyframe}
+            onPreviewKeyframe={cinema.previewKeyframe}
+            onPlaySequence={cinema.playSequence}
+            onStopSequence={cinema.stopSequence}
+            sequenceProgress={cinema.sequenceProgress}
+            currentKfIndex={cinema.currentKfIndex}
           />
           {/* 退出按鈕 */}
           <button
