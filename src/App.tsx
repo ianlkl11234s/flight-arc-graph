@@ -627,6 +627,12 @@ export default function App() {
             loop={cinema.loop}
             onLoopChange={cinema.setLoop}
             totalDuration={cinema.totalDuration}
+            savedSequences={cinema.savedSequences}
+            onSaveSequence={cinema.saveSequence}
+            onLoadSequence={cinema.loadSequence}
+            onDeleteSequence={cinema.deleteSequence}
+            onExportJSON={cinema.exportSequenceJSON}
+            onImportJSON={cinema.importSequenceJSON}
           />
           {/* 退出按鈕 */}
           <button

@@ -5,6 +5,28 @@ export type CinemaMode = "off" | "orbit" | "sequence";
 export type EasingType = "ease-in-out" | "linear" | "ease-out";
 export type CinemaPhase = "edit" | "play";
 
+export interface SavedSequence {
+  id: string;
+  name: string;
+  keyframes: CameraKeyframe[];
+  createdAt: string;
+}
+
+const STORAGE_KEY = "flight-arc-cinema-sequences";
+
+function loadFromStorage(): SavedSequence[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveToStorage(sequences: SavedSequence[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sequences));
+}
+
 export interface CameraKeyframe {
   id: string;
   center: [number, number];
@@ -46,6 +68,13 @@ interface UseCinemaCameraReturn {
   stopSequence: () => void;
   sequenceProgress: number;
   currentKfIndex: number;
+  // Save/Load
+  savedSequences: SavedSequence[];
+  saveSequence: (name: string) => void;
+  loadSequence: (id: string) => void;
+  deleteSequence: (id: string) => void;
+  exportSequenceJSON: () => void;
+  importSequenceJSON: () => void;
   loop: boolean;
   setLoop: (loop: boolean) => void;
   totalDuration: number;
@@ -257,6 +286,29 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
       for (let i = 0; i < keyframes.length; i++) {
         const kf = keyframes[i]!;
 
+        // Hold phase (到達此 KF 後先停留/旋轉，再過渡到下一個)
+        if (kf.hold) {
+          if (elapsed < cumulative + kf.hold.duration) {
+            setCurrentKfIndex(i);
+            if (kf.hold.type === "orbit") {
+              const holdElapsed = elapsed - cumulative;
+              const holdSpeed = kf.hold.speed ?? 2;
+              const holdDir = kf.hold.direction ?? 1;
+              map.jumpTo({
+                center: kf.center,
+                zoom: kf.zoom,
+                pitch: kf.pitch,
+                bearing: kf.bearing + holdSpeed * holdDir * holdElapsed,
+              });
+            }
+            // still: camera stays put
+
+            seqRafRef.current = requestAnimationFrame(animate);
+            return;
+          }
+          cumulative += kf.hold.duration;
+        }
+
         // Transition phase (not last keyframe)
         if (i < keyframes.length - 1) {
           const dur = kf.duration;
@@ -280,29 +332,6 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
             return;
           }
           cumulative += dur;
-        }
-
-        // Hold phase
-        if (kf.hold) {
-          if (elapsed < cumulative + kf.hold.duration) {
-            setCurrentKfIndex(i);
-            if (kf.hold.type === "orbit") {
-              const holdElapsed = elapsed - cumulative;
-              const holdSpeed = kf.hold.speed ?? 2;
-              const holdDir = kf.hold.direction ?? 1;
-              map.jumpTo({
-                center: kf.center,
-                zoom: kf.zoom,
-                pitch: kf.pitch,
-                bearing: kf.bearing + holdSpeed * holdDir * holdElapsed,
-              });
-            }
-            // still: camera stays put
-
-            seqRafRef.current = requestAnimationFrame(animate);
-            return;
-          }
-          cumulative += kf.hold.duration;
         }
       }
 
@@ -328,6 +357,73 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
 
   const totalDuration = keyframes.length >= 2 ? getTotalDuration(keyframes) : 0;
 
+  // --- Save/Load ---
+  const [savedSequences, setSavedSequences] = useState<SavedSequence[]>(() => loadFromStorage());
+
+  const saveSequence = useCallback((name: string) => {
+    if (keyframes.length < 2) return;
+    const seq: SavedSequence = {
+      id: `seq-${Date.now()}`,
+      name,
+      keyframes: JSON.parse(JSON.stringify(keyframes)),
+      createdAt: new Date().toISOString(),
+    };
+    setSavedSequences(prev => {
+      const next = [...prev, seq];
+      saveToStorage(next);
+      return next;
+    });
+  }, [keyframes]);
+
+  const loadSequence = useCallback((id: string) => {
+    const seq = savedSequences.find(s => s.id === id);
+    if (!seq) return;
+    setKeyframes(JSON.parse(JSON.stringify(seq.keyframes)));
+    setCinemaMode("sequence");
+  }, [savedSequences]);
+
+  const deleteSequence = useCallback((id: string) => {
+    setSavedSequences(prev => {
+      const next = prev.filter(s => s.id !== id);
+      saveToStorage(next);
+      return next;
+    });
+  }, []);
+
+  const exportSequenceJSON = useCallback(() => {
+    if (keyframes.length === 0) return;
+    const data = JSON.stringify(keyframes, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cinema-sequence-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [keyframes]);
+
+  const importSequenceJSON = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const kfs = JSON.parse(reader.result as string) as CameraKeyframe[];
+          if (Array.isArray(kfs) && kfs.length > 0 && kfs[0]?.center) {
+            setKeyframes(kfs);
+            setCinemaMode("sequence");
+          }
+        } catch { /* ignore invalid files */ }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }, []);
+
   return {
     cinemaMode,
     setCinemaMode,
@@ -351,5 +447,12 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
     loop,
     setLoop,
     totalDuration,
+    // Save/Load
+    savedSequences,
+    saveSequence,
+    loadSequence,
+    deleteSequence,
+    exportSequenceJSON,
+    importSequenceJSON,
   };
 }

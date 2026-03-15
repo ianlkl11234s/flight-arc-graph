@@ -1,5 +1,5 @@
 import React from "react";
-import type { CinemaMode, CameraKeyframe, CinemaPhase, EasingType } from "../hooks/useCinemaCamera";
+import type { CinemaMode, CameraKeyframe, CinemaPhase, EasingType, SavedSequence } from "../hooks/useCinemaCamera";
 
 interface CinemaBarProps {
   isDarkTheme: boolean;
@@ -25,6 +25,13 @@ interface CinemaBarProps {
   loop: boolean;
   onLoopChange: (loop: boolean) => void;
   totalDuration: number;
+  // Save/Load
+  savedSequences: SavedSequence[];
+  onSaveSequence: (name: string) => void;
+  onLoadSequence: (id: string) => void;
+  onDeleteSequence: (id: string) => void;
+  onExportJSON: () => void;
+  onImportJSON: () => void;
 }
 
 export function CinemaBar({
@@ -50,8 +57,17 @@ export function CinemaBar({
   loop,
   onLoopChange,
   totalDuration,
+  savedSequences,
+  onSaveSequence,
+  onLoadSequence,
+  onDeleteSequence,
+  onExportJSON,
+  onImportJSON,
 }: CinemaBarProps) {
   const dark = isDarkTheme;
+  const [showSaveDialog, setShowSaveDialog] = React.useState(false);
+  const [saveName, setSaveName] = React.useState("");
+  const [showLoadList, setShowLoadList] = React.useState(false);
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
     padding: "5px 14px",
@@ -167,9 +183,96 @@ export function CinemaBar({
                     </span>
                   </>
                 )}
+                <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.08)" }} />
+                {keyframes.length >= 1 && (
+                  <button onClick={() => setShowSaveDialog(v => !v)} style={pillStyle(showSaveDialog)}>Save</button>
+                )}
+                {savedSequences.length > 0 && (
+                  <button onClick={() => setShowLoadList(v => !v)} style={pillStyle(showLoadList)}>Load</button>
+                )}
+                <button onClick={onExportJSON} style={pillStyle(false)}>↓</button>
+                <button onClick={onImportJSON} style={pillStyle(false)}>↑</button>
               </>
             )}
           </div>
+
+          {/* Save dialog */}
+          {cinemaMode === "sequence" && showSaveDialog && (
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <input
+                type="text"
+                placeholder="Sequence name..."
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && saveName.trim()) {
+                    onSaveSequence(saveName.trim());
+                    setSaveName("");
+                    setShowSaveDialog(false);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: 8,
+                  color: "#fff",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  padding: "4px 8px",
+                  outline: "none",
+                }}
+                autoFocus
+              />
+              <button
+                onClick={() => {
+                  if (saveName.trim()) {
+                    onSaveSequence(saveName.trim());
+                    setSaveName("");
+                    setShowSaveDialog(false);
+                  }
+                }}
+                style={pillStyle(false)}
+              >
+                OK
+              </button>
+            </div>
+          )}
+
+          {/* Load list */}
+          {cinemaMode === "sequence" && showLoadList && savedSequences.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 3, maxHeight: 120, overflowY: "auto" }}>
+              {savedSequences.map(seq => (
+                <div key={seq.id} style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  background: "rgba(255,255,255,0.05)",
+                }}>
+                  <span style={{ flex: 1, color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "monospace" }}>
+                    {seq.name}
+                  </span>
+                  <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "monospace" }}>
+                    {seq.keyframes.length} KF
+                  </span>
+                  <button
+                    onClick={() => { onLoadSequence(seq.id); setShowLoadList(false); }}
+                    style={{ ...tinyBtnStyle, color: "rgba(150,200,255,0.8)" }}
+                  >
+                    Load
+                  </button>
+                  <button
+                    onClick={() => onDeleteSequence(seq.id)}
+                    style={{ ...tinyBtnStyle, color: "rgba(255,100,100,0.7)" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Orbit controls */}
           {cinemaMode === "orbit" && (
