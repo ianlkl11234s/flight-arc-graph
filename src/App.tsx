@@ -43,7 +43,6 @@ export default function App() {
     airspaceDates,
     regionDatesMap,
     regionFullDatesMap,
-    streamingFlightsRef,
   } = useFlightData(dataSource, scope, region, airspaceDate, airspaceRangeDays);
   const [trackMode, setTrackMode] = useState<TrackMode>("stack");
   const [timeWindow, setTimeWindow] = useState(false);
@@ -263,7 +262,7 @@ export default function App() {
     }
     const layer = createFlightLayer({
       getCurrentTime: () => timeRef.current,
-      getFlights: () => streamingFlightsRef.current.length > 0 ? streamingFlightsRef.current : flightsRef.current,
+      getFlights: () => flightsRef.current,
       getRenderMode: () => renderModeRef.current,
       getAltExaggeration: () => altExagRef.current,
       getAltOffset: () => altOffsetRef.current,
@@ -831,7 +830,7 @@ export default function App() {
                 background: isDarkTheme ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)",
                 backdropFilter: "blur(8px)",
                 borderRadius: 6,
-                border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.3)" : "rgba(0,0,0,0.1)"}`,
+                border: `1px solid ${isDarkTheme ? "rgba(180,60,60,0.6)" : "rgba(180,60,60,0.5)"}`,
               }}
             >
               <div
@@ -839,7 +838,7 @@ export default function App() {
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  background: "#64aaff",
+                  background: "#c44",
                   animation: "pulse 1s ease-in-out infinite",
                 }}
               />

@@ -25,8 +25,6 @@ interface UseFlightDataReturn {
   airspaceDates: string[];
   regionDatesMap: Record<string, string[]>;
   regionFullDatesMap: Record<string, string[]>;
-  /** Streaming 中的航班 ref（Three.js 直接讀取，不觸發 re-render） */
-  streamingFlightsRef: React.MutableRefObject<Flight[]>;
 }
 
 export function useFlightData(
@@ -45,7 +43,6 @@ export function useFlightData(
   const [selectedAirport, setSelectedAirport] = useState("RCTP");
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; label: string } | null>(null);
-  const streamingFlightsRef = useRef<Flight[]>([]);
 
   const loadIdRef = useRef(0);
 
@@ -77,30 +74,24 @@ export function useFlightData(
 
     setLoading(true);
     setLoadingProgress({ loaded: 0, label: "Loading..." });
-    streamingFlightsRef.current = [];
 
-    // Streaming 期間：只更新 ref（Three.js 直接讀取），不觸發 React re-render
-    // 僅更新 loadingProgress 顯示計數（輕量更新）
+    // Streaming 期間：只更新計數器（輕量），不更新 flights state
+    // 載入完成後一次性 setTrackFlights — 避免 Three.js 反覆重建幾何體
     let lastProgressUpdate = 0;
 
-    const onProgress = (flights: Flight[], total: number) => {
+    const onProgress = (_flights: Flight[], total: number) => {
       if (loadIdRef.current !== loadId) return;
-      // 更新 ref — Three.js 下一幀就會讀到新航班（漸進式出現）
-      streamingFlightsRef.current = flights;
-      // 每 500ms 或首批時更新 loading 計數（不更新 trackFlights state）
       const now = Date.now();
-      if (total <= 30 || now - lastProgressUpdate > 500) {
+      if (now - lastProgressUpdate > 300) {
         lastProgressUpdate = now;
         setLoadingProgress({ loaded: total, label: `${total} flights` });
-        if (total > 0) setLoading(false);
       }
     };
 
     if (scope === "airport") {
       loadAirportFlights(selectedAirport, onProgress).then((flights) => {
         if (loadIdRef.current !== loadId) return;
-        streamingFlightsRef.current = flights;
-        setTrackFlights(flights); // 最終一次 state update
+        setTrackFlights(flights);
         setLoadingProgress(null);
         setLoading(false);
       });
@@ -111,8 +102,7 @@ export function useFlightData(
         () => loadIdRef.current !== loadId,
       ).then((flights) => {
         if (loadIdRef.current !== loadId) return;
-        streamingFlightsRef.current = flights;
-        setTrackFlights(flights); // 最終一次 state update
+        setTrackFlights(flights);
         setLoadingProgress(null);
         setLoading(false);
       });
@@ -186,6 +176,5 @@ export function useFlightData(
     airspaceDates,
     regionDatesMap,
     regionFullDatesMap,
-    streamingFlightsRef,
   };
 }
