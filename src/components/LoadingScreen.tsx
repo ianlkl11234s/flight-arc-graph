@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FLAT_TIPS } from "../data/tips";
 
-const TOTAL_SECONDS = 30;
+const TOTAL_SECONDS = 70;
 const TIP_INTERVAL = 4000; // 4 秒切換
 
 export function LoadingScreen() {
@@ -14,7 +14,7 @@ export function LoadingScreen() {
     const t0 = Date.now();
     let raf: number;
     const tick = () => {
-      setElapsedMs(Math.min(TOTAL_SECONDS * 1000, Date.now() - t0));
+      setElapsedMs(Date.now() - t0);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -41,7 +41,8 @@ export function LoadingScreen() {
     };
   }, []);
 
-  const remainingSec = Math.max(0, TOTAL_SECONDS - elapsedMs / 1000);
+  const remainingSec = TOTAL_SECONDS - elapsedMs / 1000;
+  const isOvertime = remainingSec < 0;
   const progress = Math.min(1, elapsedMs / (TOTAL_SECONDS * 1000));
 
   // 飛機沿弧線飛行的位置
@@ -139,8 +140,8 @@ export function LoadingScreen() {
       </div>
 
       {/* 倒數 */}
-      <div style={{ fontSize: 28, fontWeight: 700, color: "rgba(100,170,255,0.9)", letterSpacing: 2, fontVariantNumeric: "tabular-nums" }}>
-        {remainingSec > 0 ? remainingSec.toFixed(3) : "0.000"}
+      <div style={{ fontSize: 28, fontWeight: 700, color: isOvertime ? "rgba(255,100,100,0.9)" : "rgba(100,170,255,0.9)", letterSpacing: 2, fontVariantNumeric: "tabular-nums" }}>
+        {isOvertime ? `-${Math.abs(remainingSec).toFixed(3)}` : remainingSec.toFixed(3)}
       </div>
 
       {/* Tips 輪播 */}
@@ -172,8 +173,8 @@ export function LoadingScreen() {
         </div>
       </div>
 
-      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 4 }}>
-        多數狀態下 30 秒可以載入完成
+      <div style={{ fontSize: 11, color: isOvertime ? "rgba(255,150,150,0.4)" : "rgba(255,255,255,0.2)", marginTop: 4 }}>
+        {isOvertime ? "因為機場軌跡眾多，請再等一下下" : "多數狀態下 70 秒可以載入完成"}
       </div>
     </div>
   );
