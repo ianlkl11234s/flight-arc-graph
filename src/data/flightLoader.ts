@@ -165,6 +165,11 @@ export function preprocessFlights(flights: Flight[]): Flight[] {
 let cachedTracks: Flight[] | null = null;
 let cachedAirspace: Flight[] | null = null;
 
+/** 按機場快取的軌跡 */
+const airportCache = new Map<string, Flight[]>();
+/** 按 region 快取的軌跡 */
+const regionCache = new Map<string, Flight[]>();
+
 const S3_BASE =
   "https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc";
 
@@ -201,7 +206,7 @@ async function loadFromS3(source: "tracks" | "airspace"): Promise<Flight[]> {
   return results.flat();
 }
 
-/** 載入 FR24 完整軌跡 */
+/** 載入 FR24 完整軌跡（舊式：一次全載） */
 export async function loadTracks(): Promise<Flight[]> {
   if (cachedTracks) return cachedTracks;
 
@@ -226,13 +231,294 @@ export async function loadTracks(): Promise<Flight[]> {
   return cachedTracks;
 }
 
-/** 載入 AirSpace Scan 資料 */
+// ── Manifest ──
+
+interface TrackManifest {
+  airports: Record<string, { flights: number; gzipBytes: number }>;
+  regions: Record<string, { flights: number; gzipBytes: number }>;
+  /** 各 region 有資料的日期（含部分） */
+  regionDates?: Record<string, string[]>;
+  /** 各 region 有完整抓取的日期 */
+  regionFullDates?: Record<string, string[]>;
+  totalFlights: number;
+}
+
+/** 取得指定 region 的所有可用日期 */
+export function getRegionDates(manifest: TrackManifest, region: string): string[] {
+  return manifest.regionDates?.[region] ?? [];
+}
+
+/** 取得指定 region 的完整資料日期 */
+export function getRegionFullDates(manifest: TrackManifest, region: string): string[] {
+  return manifest.regionFullDates?.[region] ?? [];
+}
+
+let cachedManifest: TrackManifest | null = null;
+
+/** 載入 tracks manifest（機場列表 + 檔案大小） */
+export async function loadManifest(): Promise<TrackManifest> {
+  if (cachedManifest) return cachedManifest;
+  try {
+    const res = await fetch("/tracks/manifest.json");
+    if (res.ok) {
+      cachedManifest = await res.json();
+      console.log(`[Loader] Manifest: ${Object.keys(cachedManifest!.airports).length} airports`);
+      return cachedManifest!;
+    }
+  } catch {
+    // fallback
+  }
+  cachedManifest = { airports: {}, regions: {}, totalFlights: 0 };
+  return cachedManifest;
+}
+
+/** 從 manifest 取得所有機場 ICAO */
+export function getManifestAirports(manifest: TrackManifest): string[] {
+  return Object.keys(manifest.airports).sort();
+}
+
+// ── JSONL 串流載入 ──
+
+/**
+ * 串流載入 JSONL 檔案，每批航班到達時呼叫 onBatch
+ * @returns 完整的航班陣列
+ */
+async function streamLoadJsonl(
+  url: string,
+  onBatch?: (flights: Flight[], total: number) => void,
+): Promise<Flight[]> {
+  const res = await fetch(url);
+  if (!res.ok || !res.body) return [];
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  const flights: Flight[] = [];
+  let buffer = "";
+  let batchBuffer: Flight[] = [];
+  const BATCH_SIZE = 30; // 每 30 筆通知一次
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop()!; // 最後一行可能不完整
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const f = preprocessFlight(JSON.parse(trimmed) as Flight);
+        if (f.path.length > 0) {
+          flights.push(f);
+          batchBuffer.push(f);
+        }
+      } catch {
+        // 略過無效行
+      }
+    }
+
+    if (batchBuffer.length >= BATCH_SIZE && onBatch) {
+      onBatch([...flights], flights.length);
+      batchBuffer = [];
+    }
+  }
+
+  // 處理剩餘 buffer
+  if (buffer.trim()) {
+    try {
+      const f = preprocessFlight(JSON.parse(buffer) as Flight);
+      if (f.path.length > 0) flights.push(f);
+    } catch {
+      // ignore
+    }
+  }
+
+  if (onBatch) onBatch([...flights], flights.length);
+  return flights;
+}
+
+/**
+ * 載入單一機場的完整軌跡（串流 + 漸進式）
+ */
+export async function loadAirportFlights(
+  icao: string,
+  onProgress?: (flights: Flight[], total: number) => void,
+): Promise<Flight[]> {
+  if (airportCache.has(icao)) {
+    const cached = airportCache.get(icao)!;
+    if (onProgress) onProgress(cached, cached.length);
+    return cached;
+  }
+
+  const url = `/tracks/airports/${icao}.jsonl`;
+  console.log(`[Loader] Airport ${icao}: streaming...`);
+
+  const flights = await streamLoadJsonl(url, onProgress);
+  console.log(`[Loader] Airport ${icao}: ${flights.length} flights`);
+  airportCache.set(icao, flights);
+  return flights;
+}
+
+/**
+ * 載入 Region 的降採樣軌跡（串流 + 漸進式）
+ */
+export async function loadRegionFlights(
+  region: string,
+  onProgress?: (flights: Flight[], total: number) => void,
+): Promise<Flight[]> {
+  if (regionCache.has(region)) {
+    const cached = regionCache.get(region)!;
+    if (onProgress) onProgress(cached, cached.length);
+    return cached;
+  }
+
+  const url = `/tracks/regions/${region}.jsonl`;
+  console.log(`[Loader] Region ${region}: streaming...`);
+
+  const flights = await streamLoadJsonl(url, onProgress);
+  console.log(`[Loader] Region ${region}: ${flights.length} flights`);
+  regionCache.set(region, flights);
+  return flights;
+}
+
+// ── Region ICAO matching ──
+
+const REGION_PREFIXES: Record<string, string[]> = {
+  TW: ["RC"],
+  JP: ["RJ", "RO"],
+  HK: ["VH"],
+};
+
+function icaoMatchesRegion(icao: string, region: string): boolean {
+  const prefixes = REGION_PREFIXES[region];
+  if (!prefixes) return false;
+  return prefixes.some((p) => icao.startsWith(p));
+}
+
+/**
+ * 載入 Region 的完整軌跡（依序載入各機場 JSONL，去重）
+ * All Region 時載入所有機場
+ */
+export async function loadRegionFullFlights(
+  region: string,
+  onProgress?: (flights: Flight[], total: number) => void,
+  abortCheck?: () => boolean,
+): Promise<Flight[]> {
+  if (!cachedManifest) await loadManifest();
+  const manifest = cachedManifest!;
+
+  // 找出該 region 的機場，按航班數降序（大機場先載）
+  let airportIcaos: string[];
+  if (region === "all") {
+    airportIcaos = Object.keys(manifest.airports);
+  } else {
+    airportIcaos = Object.keys(manifest.airports).filter((icao) =>
+      icaoMatchesRegion(icao, region),
+    );
+  }
+  airportIcaos.sort(
+    (a, b) => (manifest.airports[b]?.flights ?? 0) - (manifest.airports[a]?.flights ?? 0),
+  );
+
+  const seen = new Set<string>();
+  const accumulated: Flight[] = [];
+
+  for (const icao of airportIcaos) {
+    if (abortCheck?.()) return accumulated;
+
+    const airportFlights = await loadAirportFlights(icao);
+    // 去重
+    for (const f of airportFlights) {
+      if (!seen.has(f.fr24_id)) {
+        seen.add(f.fr24_id);
+        accumulated.push(f);
+      }
+    }
+
+    if (onProgress) onProgress([...accumulated], accumulated.length);
+  }
+
+  return accumulated;
+}
+
+// ── AirSpace Scan（按天懶載入）──
+
+interface AirspaceManifest {
+  dates: { date: string; flights: number }[];
+}
+
+let airspaceManifest: AirspaceManifest | null = null;
+const airspaceDayCache = new Map<string, Flight[]>();
+
+/** 載入 airspace manifest（可用日期列表） */
+export async function loadAirspaceManifest(): Promise<AirspaceManifest> {
+  if (airspaceManifest) return airspaceManifest;
+  try {
+    const res = await fetch("/airspace/manifest.json");
+    if (res.ok) {
+      airspaceManifest = await res.json();
+      console.log(`[Loader] Airspace manifest: ${airspaceManifest!.dates.length} dates`);
+      return airspaceManifest!;
+    }
+  } catch { /* ignore */ }
+  airspaceManifest = { dates: [] };
+  return airspaceManifest;
+}
+
+/** 載入指定日期的 airspace 資料 */
+async function loadAirspaceDay(date: string): Promise<Flight[]> {
+  if (airspaceDayCache.has(date)) return airspaceDayCache.get(date)!;
+
+  // 嘗試本地 JSONL
+  const url = `/airspace/days/${date}.jsonl`;
+  const flights = await streamLoadJsonl(url);
+  if (flights.length > 0) {
+    airspaceDayCache.set(date, flights);
+    return flights;
+  }
+
+  // fallback: 嘗試 S3
+  try {
+    const [y, m, d] = date.split("-");
+    const res = await fetch(`${S3_BASE}/airspace/${y}/${m}/${d}/data.json`);
+    if (res.ok) {
+      const data = preprocessFlights(await res.json());
+      airspaceDayCache.set(date, data);
+      return data;
+    }
+  } catch { /* ignore */ }
+
+  return [];
+}
+
+/**
+ * 載入指定日期範圍的 airspace 資料
+ * @param dates 要載入的日期列表
+ * @param onProgress 漸進式回呼
+ */
+export async function loadAirspaceDays(
+  dates: string[],
+  onProgress?: (flights: Flight[], total: number) => void,
+): Promise<Flight[]> {
+  const all: Flight[] = [];
+  for (const date of dates) {
+    const dayFlights = await loadAirspaceDay(date);
+    all.push(...dayFlights);
+    if (onProgress) onProgress([...all], all.length);
+  }
+  cachedAirspace = all;
+  return all;
+}
+
+/** 舊式：一次全載（向下相容） */
 export async function loadAirspace(): Promise<Flight[] | null> {
   if (cachedAirspace) return cachedAirspace;
 
   let data = await tryLoadLocal(
-    "data/airspace/latest.json",       // Zeabur /data volume
-    "airspace/aviation_data.json",     // 本地開發 / docker mount
+    "data/airspace/latest.json",
+    "airspace/aviation_data.json",
   );
   if (data) {
     console.log(`[Loader] Airspace: ${data.length} flights (local)`);
@@ -248,9 +534,7 @@ export async function loadAirspace(): Promise<Flight[] | null> {
       cachedAirspace = preprocessFlights(data);
       return cachedAirspace;
     }
-  } catch {
-    // no airspace data available
-  }
+  } catch { /* ignore */ }
 
   return null;
 }
@@ -298,7 +582,7 @@ export function filterByAirport(flights: Flight[], icao: string): Flight[] {
 }
 
 /** 取得資料中所有出現的機場 ICAO（origin） */
-export function getTaiwanAirports(flights: Flight[]): string[] {
+export function getAllAirports(flights: Flight[]): string[] {
   const airports = new Set<string>();
   for (const f of flights) {
     if (f.origin_icao) airports.add(f.origin_icao);

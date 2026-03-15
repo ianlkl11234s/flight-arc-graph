@@ -25,6 +25,13 @@ import { InfoModal } from "./components/InfoModal";
 
 export default function App() {
   const [dataSource, setDataSource] = useState<DataSource>("api");
+  const [scope, setScope] = useState<Scope>("airport");
+  const [region, setRegion] = useState<Region>("TW");
+
+  // airspace 日期追蹤（避免與 timeline 循環依賴）
+  const [airspaceDate, setAirspaceDate] = useState<string | undefined>();
+  const [airspaceRangeDays, setAirspaceRangeDays] = useState(1);
+
   const {
     allFlights,
     filteredFlights,
@@ -32,11 +39,12 @@ export default function App() {
     selectedAirport,
     setSelectedAirport,
     loading,
+    loadingProgress,
     hasFused,
-  } = useFlightData(dataSource);
-
-  const [scope, setScope] = useState<Scope>("airport");
-  const [region, setRegion] = useState<Region>("TW");
+    airspaceDates,
+    regionDatesMap,
+    regionFullDatesMap,
+  } = useFlightData(dataSource, scope, region, airspaceDate, airspaceRangeDays);
   const [trackMode, setTrackMode] = useState<TrackMode>("stack");
   const [timeWindow, setTimeWindow] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
@@ -61,20 +69,37 @@ export default function App() {
   const KNOWN_REGIONS = ["RC", "RJ", "RO", "VH"];
   const isKnownRegion = (icao: string) => KNOWN_REGIONS.some((p) => icao.startsWith(p));
 
-  const REGION_CONFIG: Record<Region, { title: string; label: string; icaoMatch: (icao: string) => boolean; camera: { center: [number, number]; zoom: number; pitch: number; bearing: number }; defaultAirport?: string }> = {
+  type RegionCfg = {
+    title: string;
+    label: string;
+    icaoMatch: (icao: string) => boolean;
+    /** 預設機場視角（點 region pill 時飛到的位置） */
+    camera: { center: [number, number]; zoom: number; pitch: number; bearing: number };
+    /** All Region 視角 */
+    regionCamera?: { center: [number, number]; zoom: number; pitch: number; bearing: number };
+    defaultAirport?: string;
+    /** 預設日期（切 region 時跳到的日期） */
+    defaultDate?: string;
+  };
+
+  const REGION_CONFIG: Record<Region, RegionCfg> = {
     TW: {
       title: "Taiwan Flight Arc",
       label: "TW",
       icaoMatch: (icao) => icao.startsWith("RC"),
-      camera: { center: [120.9, 24.2], zoom: 7.3, pitch: 42, bearing: 0 },
+      camera: { center: [121.2281, 25.0927], zoom: 10.4, pitch: 57, bearing: 16 },
+      regionCamera: { center: [120.1467, 23.4946], zoom: 7.4, pitch: 25, bearing: -10 },
       defaultAirport: "RCTP",
+      defaultDate: "2026-02-18",
     },
     JP: {
       title: "Japan Flight Arc",
       label: "JP",
       icaoMatch: (icao) => icao.startsWith("RJ") || icao.startsWith("RO"),
       camera: { center: [139.7816, 35.5895], zoom: 10.2, pitch: 54, bearing: 109 },
+      regionCamera: { center: [138.0288, 36.2247], zoom: 6.4, pitch: 40, bearing: 0 },
       defaultAirport: "RJTT",
+      defaultDate: "2026-02-18",
     },
     HK: {
       title: "Hong Kong Flight Arc",
@@ -82,6 +107,7 @@ export default function App() {
       icaoMatch: (icao) => icao.startsWith("VH"),
       camera: { center: [113.9184, 22.3094], zoom: 10.5, pitch: 62, bearing: 106 },
       defaultAirport: "VHHH",
+      defaultDate: "2026-02-18",
     },
     world: {
       title: "World Flight Arc",
@@ -89,6 +115,7 @@ export default function App() {
       icaoMatch: (icao) => !isKnownRegion(icao),
       camera: { center: [-16.7745, 32.6942], zoom: 12, pitch: 55, bearing: 0 },
       defaultAirport: "LPMA",
+      defaultDate: "2026-02-18",
     },
     all: {
       title: "Flight Arc",
@@ -96,34 +123,48 @@ export default function App() {
       icaoMatch: () => true,
       camera: { center: [127.0, 30.0], zoom: 4.5, pitch: 35, bearing: 0 },
       defaultAirport: "RCTP",
+      defaultDate: "2026-02-18",
     },
   };
 
   const regionTitle = REGION_CONFIG[region].title;
 
-  // 依 region 篩選航班（出發或抵達屬於該 region）
-  const regionFlights = useMemo(() => {
-    if (region === "all") return allFlights;
-    const match = REGION_CONFIG[region].icaoMatch;
-    return allFlights.filter((f) => match(f.origin_icao) || match(f.dest_icao));
-  }, [allFlights, region]);
-
-  // 本地資料可用日期（台灣時區）
+  // 可用日期：根據 dataSource + region 從 manifest 取得
   const availableDates = useMemo(() => {
     const dates = new Set<string>();
+
+    if (dataSource === "fused") {
+      // 空域快照日期
+      for (const d of airspaceDates) dates.add(d);
+    } else {
+      // 航線軌跡：當前 region 的日期
+      const regionKey = region === "all" ? "TW" : region;
+      const rd = regionDatesMap[regionKey] ?? [];
+      for (const d of rd) dates.add(d);
+    }
+
+    // 也加入已載入航班的日期（fallback）
     for (const f of allFlights) {
       const t = f.dep_time || f.path[0]?.[3];
       if (t && t > 0) {
-        const d = new Date(t * 1000);
-        const tw = new Date(d.getTime() + 8 * 3600_000); // UTC+8
-        dates.add(tw.toISOString().slice(0, 10));
+        const d = new Date(t * 1000 + 8 * 3600_000);
+        dates.add(d.toISOString().slice(0, 10));
       }
     }
+
     return [...dates].sort();
-  }, [allFlights]);
+  }, [dataSource, region, airspaceDates, regionDatesMap, allFlights]);
 
   const timeline = useTimeline({ availableDates });
   const mapRef = useRef<MapboxMap | null>(null);
+
+  // 同步 timeline 日期給 airspace 載入
+  useEffect(() => {
+    if (dataSource === "fused") {
+      setAirspaceDate(timeline.selectedDate);
+      setAirspaceRangeDays(timeline.rangeDays);
+    }
+  }, [dataSource, timeline.selectedDate, timeline.rangeDays]);
 
   // Airspace Scan 預設：切換時自動設定 All Taiwan、7d、拉遠視角、低 opacity
   const prevDataSourceRef = useRef(dataSource);
@@ -149,10 +190,11 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataSource]);
 
-  // 根據 scope + region + trackMode + 日期範圍決定要顯示的航班
+  // 根據 trackMode + 日期範圍決定要顯示的航班
+  // （scope/region 篩選已由 useFlightData 處理）
   const displayedFlights = useMemo(() => {
-    let base = scope === "region" ? regionFlights : filteredFlights;
-    // 日期範圍篩選（離散，只在使用者操作時改變）
+    let base = allFlights;
+    // 日期範圍篩選
     base = base.filter((f) => {
       const t = f.dep_time || f.path[0]?.[3];
       return t && t >= timeline.windowStart && t <= timeline.windowEnd;
@@ -161,7 +203,7 @@ export default function App() {
       return base.filter((f) => f.fr24_id === selectedFlightId);
     }
     return base;
-  }, [regionFlights, filteredFlights, scope, trackMode, selectedFlightId,
+  }, [allFlights, trackMode, selectedFlightId,
       timeline.windowStart, timeline.windowEnd]);
 
   // Aircraft type filter
@@ -362,7 +404,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, availableDates.length]);
 
-  if (loading) {
+  if (loading && allFlights.length === 0) {
     return <LoadingScreen />;
   }
 
@@ -536,7 +578,13 @@ export default function App() {
             timeWindow={timeWindow}
             pickableFlights={pickableFlights}
             selectedFlightId={selectedFlightId}
-            onScopeChange={setScope}
+            onScopeChange={(s) => {
+              setScope(s);
+              if (s === "region") {
+                const cam = REGION_CONFIG[region].regionCamera ?? REGION_CONFIG[region].camera;
+                mapRef.current?.flyTo({ ...cam, duration: 2000 });
+              }
+            }}
             onTrackModeChange={setTrackMode}
             onTimeWindowChange={setTimeWindow}
             onFlightSelect={setSelectedFlightId}
@@ -585,6 +633,7 @@ export default function App() {
               });
             }}
             availableDates={availableDates}
+            fullDates={dataSource === "fused" ? airspaceDates : (regionFullDatesMap[region === "all" ? "TW" : region] ?? [])}
             selectedDate={timeline.selectedDate}
             onDateSelect={timeline.setSelectedDate}
             onStatsClick={() => setShowStats(true)}
@@ -637,12 +686,12 @@ export default function App() {
                     key={r}
                     onClick={() => {
                       setRegion(r);
-                      // JP 機場太多，預設 This Airport；其他 region 用 All
-                      setScope(r === "JP" ? "airport" : "region");
-                      // 切換預設機場
+                      setScope("airport");
                       const cfg = REGION_CONFIG[r];
                       if (cfg.defaultAirport) setSelectedAirport(cfg.defaultAirport);
-                      // 飛到該 region 的預設視角
+                      // 跳到有資料的日期
+                      if (cfg.defaultDate) timeline.setSelectedDate(cfg.defaultDate);
+                      // 飛到預設機場視角
                       mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
                     }}
                     style={{
@@ -766,6 +815,40 @@ export default function App() {
             </div>
           </div>
 
+          {/* Loading indicator */}
+          {loadingProgress && (
+            <div
+              style={{
+                position: "absolute",
+                top: 76,
+                right: 16,
+                zIndex: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 12px",
+                background: isDarkTheme ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)",
+                backdropFilter: "blur(8px)",
+                borderRadius: 6,
+                border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.3)" : "rgba(0,0,0,0.1)"}`,
+              }}
+            >
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "#64aaff",
+                  animation: "pulse 1s ease-in-out infinite",
+                }}
+              />
+              <span style={{ fontSize: 11, fontFamily: "monospace", color: isDarkTheme ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)" }}>
+                Loading {loadingProgress.loaded} flights...
+              </span>
+              <style>{`@keyframes pulse { 0%,100% { opacity:0.3 } 50% { opacity:1 } }`}</style>
+            </div>
+          )}
+
           {/* 航班數 + 相機資訊 */}
           <div
             style={{
@@ -782,6 +865,7 @@ export default function App() {
             <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: "monospace" }}>
               {finalFlights.length} flights
               {scope === "region" && ` (${REGION_CONFIG[region].label})`}
+              {loadingProgress && ` · loading ${loadingProgress.loaded}...`}
               {` · ${timeline.selectedDate}`}
               {timeline.rangeDays > 1 && ` +${timeline.rangeDays - 1}d`}
             </div>

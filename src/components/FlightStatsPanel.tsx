@@ -779,7 +779,7 @@ function AirportTab({
   );
 }
 
-/* ── All Taiwan Tab ── */
+/* ── All Region Tab ── */
 
 function AllTaiwanTab({
   flights, dark, onSelectAirport,

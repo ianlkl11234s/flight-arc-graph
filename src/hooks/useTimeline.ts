@@ -30,9 +30,10 @@ interface UseTimelineReturn {
 export function useTimeline({
   availableDates,
 }: UseTimelineOptions): UseTimelineReturn {
-  // 初始選第二個 available date（2/19），fallback 到第一個或今天
-  const initialDate = availableDates.length > 1
-    ? availableDates[1]!
+  // 初始選 2026-02-18（主要資料日期），fallback 到第一個可用日期
+  const preferredDate = "2026-02-18";
+  const initialDate = availableDates.includes(preferredDate)
+    ? preferredDate
     : availableDates.length > 0
       ? availableDates[0]!
       : new Date().toISOString().slice(0, 10);

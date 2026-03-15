@@ -67,7 +67,7 @@ export function LoadingScreen() {
       }}
     >
       <div style={{ fontSize: 22, letterSpacing: 4, fontWeight: 700 }}>
-        Taiwan Flight Arc
+        Flight Arc
       </div>
 
       {/* 飛機動畫區域 */}

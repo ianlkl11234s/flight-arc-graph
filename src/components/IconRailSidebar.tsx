@@ -32,7 +32,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
   {
     id: "tw-air-corridor",
     name: "台灣空中走廊",
-    desc: "空域快照 · All Taiwan · 1d",
+    desc: "空域快照 · All TW · 1d",
     camera: { center: [121.0116, 24.5589], zoom: 9, pitch: 69, bearing: 69 },
     dataSource: "fused",
     scope: "region",
@@ -45,7 +45,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
   {
     id: "china-active",
     name: "活躍中國境內班機",
-    desc: "空域快照 · All Taiwan · 1d",
+    desc: "空域快照 · All TW · 1d",
     camera: { center: [118.286, 25.68], zoom: 8.2, pitch: 56, bearing: 23 },
     dataSource: "fused",
     scope: "region",
@@ -72,7 +72,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
   {
     id: "all-taiwan-overview",
     name: "全台航線總覽",
-    desc: "航線軌跡 · All Taiwan · 1d",
+    desc: "航線軌跡 · All TW · 1d",
     camera: { center: [120.6818, 23.4015], zoom: 7.5, pitch: 50, bearing: 0 },
     dataSource: "api",
     scope: "region",
@@ -168,6 +168,8 @@ export interface IconRailSidebarProps {
   onSceneSelect: (scene: ScenePreset) => void;
   // Calendar
   availableDates: string[];
+  /** 完整資料的日期（實心標記） */
+  fullDates: string[];
   selectedDate: string | null;
   onDateSelect: (date: string | null) => void;
   // Stats
@@ -760,10 +762,12 @@ function LocationsPanel({
 
 function CalendarPanel({
   availableDates,
+  fullDates,
   selectedDate,
   onDateSelect,
-}: Pick<IconRailSidebarProps, "availableDates" | "selectedDate" | "onDateSelect">) {
+}: Pick<IconRailSidebarProps, "availableDates" | "fullDates" | "selectedDate" | "onDateSelect">) {
   const availableSet = new Set(availableDates);
+  const fullSet = new Set(fullDates);
 
   // Determine initial month from selectedDate or first available date or current month
   const initDate = selectedDate
@@ -879,6 +883,7 @@ function CalendarPanel({
           const day = i + 1;
           const dateStr = formatDate(viewYear, viewMonth, day);
           const hasData = availableSet.has(dateStr);
+          const isFull = fullSet.has(dateStr);
           const isSelected = selectedDate === dateStr;
           return (
             <button
@@ -901,10 +906,11 @@ function CalendarPanel({
                   style={{
                     position: "absolute",
                     bottom: 2,
-                    width: 4,
-                    height: 4,
+                    width: isFull ? 4 : 4,
+                    height: isFull ? 4 : 4,
                     borderRadius: "50%",
-                    background: "#64aaff",
+                    background: isFull ? "#64aaff" : "transparent",
+                    border: isFull ? "none" : "1px solid rgba(100,170,255,0.5)",
                   }}
                 />
               )}
@@ -1067,6 +1073,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           {activePanel === "calendar" && (
             <CalendarPanel
               availableDates={props.availableDates}
+              fullDates={props.fullDates}
               selectedDate={props.selectedDate}
               onDateSelect={props.onDateSelect}
             />

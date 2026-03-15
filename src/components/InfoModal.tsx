@@ -109,8 +109,8 @@ function GettingStartedPage({ lang }: { lang: Lang }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <p style={{ fontSize: 13, lineHeight: 1.8, color: S.text, margin: 0 }}>
         {L
-          ? <>歡迎使用 <b>Taiwan Flight Arc</b> — 以 3D 弧線呈現台灣航班軌跡的生成式藝術作品。</>
-          : <>Welcome to <b>Taiwan Flight Arc</b> — a generative art piece rendering Taiwan's flight trajectories as 3D luminous arcs.</>
+          ? <>歡迎使用 <b>Flight Arc</b> — 以 3D 弧線呈現航班軌跡的生成式藝術作品。</>
+          : <>Welcome to <b>Flight Arc</b> — a generative art piece visualizing flight trajectories as 3D luminous arcs across East Asia and beyond.</>
         }
       </p>
 
@@ -162,8 +162,8 @@ function GettingStartedPage({ lang }: { lang: Lang }) {
         </Card>
         <Card title="Data Source">
           {L
-            ? <><b>航線軌跡</b>：FR24 API 精細航線軌跡，以台灣機場起降為主，細節豐富。<b>空域快照</b>：OpenSky 空域掃描，涵蓋台灣附近所有飛機，覆蓋完整但軌跡較粗。</>
-            : <><b>Route Tracks</b>: FR24 API detailed route trajectories centered on Taiwan airport departures/arrivals. <b>Airspace Scan</b>: OpenSky airspace scan covering all aircraft near Taiwan with broader coverage but coarser trails.</>
+            ? <><b>航線軌跡</b>：FR24 API 精細航線軌跡，涵蓋台灣、日本、香港及更多地區機場，細節豐富。<b>空域快照</b>：OpenSky 空域掃描，涵蓋東亞附近所有飛機，覆蓋完整但軌跡較粗。</>
+            : <><b>Route Tracks</b>: FR24 API detailed route trajectories covering airports across Taiwan, Japan, Hong Kong, and beyond. <b>Airspace Scan</b>: OpenSky airspace scan covering all aircraft across East Asia with broader coverage but coarser trails.</>
           }
         </Card>
         <Card title="Aircraft Filter">
@@ -173,8 +173,8 @@ function GettingStartedPage({ lang }: { lang: Lang }) {
         </Card>
         <Card title="Scope">
           {L
-            ? <><b>This Airport</b>：僅顯示選定機場的起降航班。<b>All Taiwan</b>：顯示全台所有航班。<b>Stack All</b>：同時顯示所有航班。<b>Track Single</b>：追蹤單一航班，鏡頭鎖定跟隨。</>
-            : <><b>This Airport</b>: Only flights for the selected airport. <b>All Taiwan</b>: All flights across Taiwan. <b>Stack All</b>: Display all flights at once. <b>Track Single</b>: Follow a single flight with camera lock.</>
+            ? <><b>This Airport</b>：僅顯示選定機場的起降航班。<b>All Region</b>：顯示當前區域所有航班（All Taiwan / All Japan 等）。<b>Stack All</b>：同時顯示所有航班。<b>Track Single</b>：追蹤單一航班，鏡頭鎖定跟隨。使用 Region pills（TW/JP/HK/World/All）切換不同區域。</>
+            : <><b>This Airport</b>: Only flights for the selected airport. <b>All Region</b>: All flights in the current region (All Taiwan / All Japan, etc.). <b>Stack All</b>: Display all flights at once. <b>Track Single</b>: Follow a single flight with camera lock. Use Region pills (TW/JP/HK/World/All) to switch between regions.</>
           }
         </Card>
         <Card title="Display Mode">
@@ -229,8 +229,8 @@ function FeatureLegendPage({ lang }: { lang: Lang }) {
       <SectionTitle>{L ? "機場標記" : "AIRPORT MARKERS"}</SectionTitle>
       <Card>
         {L
-          ? "機場邊界以 OpenStreetMap 多邊形繪製，搭配可調整的光暈效果（Glow 參數）。涵蓋台灣 22 座機場（含民用、軍民合用、軍用）。"
-          : "Airport boundaries drawn using OpenStreetMap polygons with adjustable glow effect (Glow parameter). Covers all 22 airports in Taiwan (civilian, dual-use, and military)."}
+          ? "機場邊界以 OpenStreetMap 多邊形繪製，搭配可調整的光暈效果（Glow 參數）。涵蓋台灣、日本、香港等地共 95+ 座機場。"
+          : "Airport boundaries drawn using OpenStreetMap polygons with adjustable glow effect (Glow parameter). Covers 95+ airports across Taiwan, Japan, Hong Kong, and more."}
       </Card>
     </div>
   );
@@ -242,19 +242,19 @@ function DataSourcesPage({ lang }: { lang: Lang }) {
     {
       name: { zh: "航線軌跡 — FlightRadar24 API", en: "Route Tracks — FlightRadar24 API" },
       source: "FR24 Explorer API",
-      desc: { zh: "以台灣 22 座機場起降為主的精細軌跡資料。透過 flight-summary/light 端點取得航班清單，再逐航班擷取詳細軌跡點（經緯度、高度、速度、時間戳）。軌跡細緻清晰，每日約 2,600+ 航班。", en: "Detailed trajectory data centered on departures/arrivals at all 22 Taiwan airports. Flight lists retrieved via flight-summary/light endpoint, then per-flight track points (lat/lon, altitude, speed, timestamp) fetched. High-fidelity trails, ~2,600+ flights daily." },
+      desc: { zh: "涵蓋台灣、日本、香港及世界各地 95+ 座機場的精細軌跡資料。透過 flight-summary/light 端點取得航班清單，再逐航班擷取詳細軌跡點（經緯度、高度、速度、時間戳）。支援按機場 lazy loading，軌跡細緻清晰。", en: "Detailed trajectory data covering 95+ airports across Taiwan, Japan, Hong Kong, and beyond. Flight lists retrieved via flight-summary/light endpoint, then per-flight track points (lat/lon, altitude, speed, timestamp) fetched. Supports per-airport lazy loading for efficient data delivery." },
       color: "#64aaff",
     },
     {
       name: { zh: "空域快照 — OpenSky Network", en: "Airspace Scan — OpenSky Network" },
       source: "OpenSky / ADS-B",
-      desc: { zh: "台灣附近空域的全覆蓋掃描 — 以 OpenSky Network 為主要資料來源，持續更新台灣周邊所有飛機位置。涵蓋範圍完整（包含過境、軍機等），但軌跡由點連線構成，降落過程細節較粗。與航線軌跡互補使用。", en: "Full-coverage airspace scan around Taiwan — primarily sourced from OpenSky Network, continuously tracking all aircraft near Taiwan. Broader coverage (including overflights, military, etc.) but trails are point-connected and less detailed during descent. Complementary to Route Tracks." },
+      desc: { zh: "東亞附近空域的全覆蓋掃描 — 以 OpenSky Network 為主要資料來源，持續更新區域內所有飛機位置。涵蓋範圍完整（包含過境、軍機等），但軌跡由點連線構成，降落過程細節較粗。與航線軌跡互補使用。", en: "Full-coverage airspace scan across East Asia — primarily sourced from OpenSky Network, continuously tracking all aircraft in the region. Broader coverage (including overflights, military, etc.) but trails are point-connected and less detailed during descent. Complementary to Route Tracks." },
       color: "#1ad9e5",
     },
     {
       name: { zh: "OpenStreetMap", en: "OpenStreetMap" },
       source: "OSM Overpass API",
-      desc: { zh: "機場邊界多邊形 — 透過 Overpass API 擷取台灣各機場的建築與跑道邊界，用於地圖上的機場區域渲染與光暈效果。", en: "Airport boundary polygons — retrieved via Overpass API for Taiwan's airports, used for airport area rendering and glow effects on the map." },
+      desc: { zh: "機場邊界多邊形 — 透過 Overpass API 擷取台灣、日本、香港等地機場的建築與跑道邊界，用於地圖上的機場區域渲染與光暈效果。", en: "Airport boundary polygons — retrieved via Overpass API for airports across Taiwan, Japan, Hong Kong, and more, used for airport area rendering and glow effects on the map." },
       color: "#66bb6a",
     },
     {
@@ -288,20 +288,20 @@ function DataSourcesPage({ lang }: { lang: Lang }) {
 function AboutPage({ lang }: { lang: Lang }) {
   const L = lang === "zh";
   const stats = [
-    { num: "2,600+", label: { zh: "航班", en: "Flights" } },
-    { num: "22", label: { zh: "機場", en: "Airports" } },
-    { num: "59", label: { zh: "機型", en: "Aircraft Types" } },
+    { num: "10,000+", label: { zh: "航班", en: "Flights" } },
+    { num: "95+", label: { zh: "機場", en: "Airports" } },
+    { num: "275", label: { zh: "機場資料檔", en: "Airport Data Files" } },
     { num: "6", label: { zh: "底圖樣式", en: "Map Styles" } },
   ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <div>
-        <h2 style={{ fontSize: 18, color: S.text, margin: "0 0 10px", letterSpacing: 1 }}>Taiwan Flight Arc</h2>
+        <h2 style={{ fontSize: 18, color: S.text, margin: "0 0 10px", letterSpacing: 1 }}>Flight Arc</h2>
         <p style={{ fontSize: 13, lineHeight: 1.9, color: S.text, margin: 0 }}>
           {L
-            ? "航班軌跡生成式藝術視覺化。以台灣機場為中心，將航班起降軌跡轉化為光軌藝術作品。"
-            : "Generative art visualization of flight trajectories. Centered on Taiwan's airports, transforming flight paths into luminous arc artworks."}
+            ? "航班軌跡生成式藝術視覺化。以東亞機場為中心，涵蓋台灣、日本、香港及更多地區，將航班起降軌跡轉化為光軌藝術作品。"
+            : "Generative art visualization of flight trajectories. Centered on East Asian airports including Taiwan, Japan, Hong Kong, and beyond, transforming flight paths into luminous arc artworks."}
         </p>
       </div>
 
@@ -346,8 +346,8 @@ function AboutPage({ lang }: { lang: Lang }) {
         </Card>
         <Card title="Flight Stats Engine">
           {L
-            ? "即時統計計算引擎 — 航班數、航線排名、機型分佈、航空公司統計、飛行時長分析，支援按機場 / 全台維度切換。"
-            : "Real-time statistics engine — flight counts, route rankings, aircraft type distribution, airline stats, duration analysis, supporting per-airport and all-Taiwan views."}
+            ? "即時統計計算引擎 — 航班數、航線排名、機型分佈、航空公司統計、飛行時長分析，支援按機場 / 全區域維度切換。"
+            : "Real-time statistics engine — flight counts, route rankings, aircraft type distribution, airline stats, duration analysis, supporting per-airport and all-region views."}
         </Card>
       </div>
     </div>
@@ -474,7 +474,7 @@ function TipsPage({ lang }: { lang: Lang }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <p style={{ fontSize: 13, lineHeight: 1.8, color: S.text, margin: 0 }}>
-        {L ? "以下是一些實用的操作技巧，幫助你更好地探索台灣的空中交通：" : "Here are some useful tips to help you explore Taiwan's air traffic:"}
+        {L ? "以下是一些實用的操作技巧，幫助你更好地探索東亞的空中交通：" : "Here are some useful tips to help you explore East Asia's air traffic:"}
       </p>
       {TIPS_BY_CATEGORY.map((group) => (
         <div key={group.cat}>
