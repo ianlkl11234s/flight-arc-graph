@@ -258,15 +258,18 @@ let cachedManifest: TrackManifest | null = null;
 /** 載入 tracks manifest（機場列表 + 檔案大小） */
 export async function loadManifest(): Promise<TrackManifest> {
   if (cachedManifest) return cachedManifest;
-  try {
-    const res = await fetch("/tracks/manifest.json");
-    if (res.ok) {
-      cachedManifest = await res.json();
+  for (const path of ["/data/tracks/manifest.json", "/tracks/manifest.json"]) {
+    try {
+      const res = await fetch(path);
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text.trimStart().startsWith("<")) continue;
+      cachedManifest = JSON.parse(text);
       console.log(`[Loader] Manifest: ${Object.keys(cachedManifest!.airports).length} airports`);
       return cachedManifest!;
+    } catch {
+      continue;
     }
-  } catch {
-    // fallback
   }
   cachedManifest = { airports: {}, regions: {}, totalFlights: 0 };
   return cachedManifest;
@@ -352,10 +355,18 @@ export async function loadAirportFlights(
     return cached;
   }
 
-  const url = `/tracks/airports/${icao}.jsonl`;
+  // 嘗試 Zeabur /data volume → 本地 public/ → S3
+  const paths = [
+    `/data/tracks/airports/${icao}.jsonl`,
+    `/tracks/airports/${icao}.jsonl`,
+  ];
   console.log(`[Loader] Airport ${icao}: streaming...`);
 
-  const flights = await streamLoadJsonl(url, onProgress);
+  let flights: Flight[] = [];
+  for (const url of paths) {
+    flights = await streamLoadJsonl(url, onProgress);
+    if (flights.length > 0) break;
+  }
   console.log(`[Loader] Airport ${icao}: ${flights.length} flights`);
   airportCache.set(icao, flights);
   return flights;
@@ -374,10 +385,17 @@ export async function loadRegionFlights(
     return cached;
   }
 
-  const url = `/tracks/regions/${region}.jsonl`;
+  const paths = [
+    `/data/tracks/regions/${region}.jsonl`,
+    `/tracks/regions/${region}.jsonl`,
+  ];
   console.log(`[Loader] Region ${region}: streaming...`);
 
-  const flights = await streamLoadJsonl(url, onProgress);
+  let flights: Flight[] = [];
+  for (const url of paths) {
+    flights = await streamLoadJsonl(url, onProgress);
+    if (flights.length > 0) break;
+  }
   console.log(`[Loader] Region ${region}: ${flights.length} flights`);
   regionCache.set(region, flights);
   return flights;
@@ -455,14 +473,17 @@ const airspaceDayCache = new Map<string, Flight[]>();
 /** 載入 airspace manifest（可用日期列表） */
 export async function loadAirspaceManifest(): Promise<AirspaceManifest> {
   if (airspaceManifest) return airspaceManifest;
-  try {
-    const res = await fetch("/airspace/manifest.json");
-    if (res.ok) {
-      airspaceManifest = await res.json();
+  for (const path of ["/data/airspace/manifest.json", "/airspace/manifest.json"]) {
+    try {
+      const res = await fetch(path);
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text.trimStart().startsWith("<")) continue;
+      airspaceManifest = JSON.parse(text);
       console.log(`[Loader] Airspace manifest: ${airspaceManifest!.dates.length} dates`);
       return airspaceManifest!;
-    }
-  } catch { /* ignore */ }
+    } catch { continue; }
+  }
   airspaceManifest = { dates: [] };
   return airspaceManifest;
 }
@@ -471,12 +492,13 @@ export async function loadAirspaceManifest(): Promise<AirspaceManifest> {
 async function loadAirspaceDay(date: string): Promise<Flight[]> {
   if (airspaceDayCache.has(date)) return airspaceDayCache.get(date)!;
 
-  // 嘗試本地 JSONL
-  const url = `/airspace/days/${date}.jsonl`;
-  const flights = await streamLoadJsonl(url);
-  if (flights.length > 0) {
-    airspaceDayCache.set(date, flights);
-    return flights;
+  // 嘗試 Zeabur /data → 本地 public/
+  for (const url of [`/data/airspace/days/${date}.jsonl`, `/airspace/days/${date}.jsonl`]) {
+    const flights = await streamLoadJsonl(url);
+    if (flights.length > 0) {
+      airspaceDayCache.set(date, flights);
+      return flights;
+    }
   }
 
   // fallback: 嘗試 S3
