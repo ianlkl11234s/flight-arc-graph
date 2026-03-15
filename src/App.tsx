@@ -554,6 +554,7 @@ export default function App() {
         <>
           {/* Icon Rail Sidebar */}
           <IconRailSidebar
+            isDarkTheme={isDarkTheme}
             displayMode={displayMode}
             renderMode={renderMode}
             mapStyleId={mapStyleId}
@@ -1124,27 +1125,28 @@ export default function App() {
             left: tooltipInfo.x + 12,
             top: tooltipInfo.y - 10,
             zIndex: 30,
-            background: "rgba(10,10,20,0.9)",
+            background: isDarkTheme ? "rgba(10,10,20,0.9)" : "rgba(255,255,255,0.95)",
             backdropFilter: "blur(12px)",
-            border: "1px solid rgba(100,170,255,0.4)",
+            border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.4)" : "rgba(59,130,246,0.3)"}`,
             borderRadius: 8,
             padding: "10px 14px",
             pointerEvents: "none",
             fontFamily: "monospace",
             minWidth: 160,
+            boxShadow: isDarkTheme ? "none" : "0 2px 12px rgba(0,0,0,0.1)",
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", letterSpacing: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: isDarkTheme ? "#fff" : "#1a1a1a", letterSpacing: 1 }}>
             {tooltipInfo.flight.callsign}
           </div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: isDarkTheme ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)", marginTop: 4 }}>
             {tooltipInfo.flight.origin_iata} → {tooltipInfo.flight.dest_iata}
           </div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: isDarkTheme ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)", marginTop: 2 }}>
             {tooltipInfo.flight.aircraft_type}
             {tooltipInfo.altitude != null && ` · ${tooltipInfo.altitude}m`}
           </div>
-          <div style={{ fontSize: 10, color: "rgba(100,170,255,0.6)", marginTop: 4 }}>
+          <div style={{ fontSize: 10, color: isDarkTheme ? "rgba(100,170,255,0.6)" : "rgba(59,130,246,0.6)", marginTop: 4 }}>
             double-click to track
           </div>
         </div>
