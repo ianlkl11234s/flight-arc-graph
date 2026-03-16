@@ -435,9 +435,7 @@ export default function App() {
 
     let animId: number;
     let lastLat = 0, lastLng = 0;
-    let lastVsUpdate = 0; // viewshed 更新節流
-
-    const tick = (now: number) => {
+    const tick = () => {
       // viewshed style 偵測
       const styleId = mapStyleIdRef.current;
       const vsStyle: ViewshedStyle = styleId.includes("satellite") ? "satellite"
@@ -481,16 +479,13 @@ export default function App() {
           lastLat = lat;
           lastLng = lng;
         }
-        // viewshed 更新節流（每 150ms，避免 GeoJSON 重建拖慢幀率）
-        if (now - lastVsUpdate > 150) {
-          lastVsUpdate = now;
-          updateViewshed(map, lat, lng, alt, heading, vsStyle, viewshedOpacityRef.current);
-          const scene = flightSceneRef.current;
-          if (scene) {
-            const arcs = getViewshedArcPoints(lat, lng, alt, heading);
-            const allPts = [...arcs.left, ...arcs.right];
-            scene.updateViewshedLines(allPts, lat, lng, alt, vsStyle === "satellite", viewshedOpacityRef.current);
-          }
+        // 2D 地面扇形 + 3D 掃描線：每幀更新
+        updateViewshed(map, lat, lng, alt, heading, vsStyle, viewshedOpacityRef.current);
+        const scene = flightSceneRef.current;
+        if (scene) {
+          const arcs = getViewshedArcPoints(lat, lng, alt, heading);
+          const allPts = [...arcs.left, ...arcs.right];
+          scene.updateViewshedLines(allPts, lat, lng, alt, vsStyle === "satellite", viewshedOpacityRef.current);
         }
       }
       animId = requestAnimationFrame(tick);
