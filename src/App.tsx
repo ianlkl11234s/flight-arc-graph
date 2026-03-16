@@ -437,6 +437,10 @@ export default function App() {
 
     let animId: number;
     let lastLat = 0, lastLng = 0;
+    // pre-allocated arrays 避免每幀 GC
+    let cachedArcPts: [number, number][] = [];
+    let cachedRings: { arc: [number, number][]; alpha: number }[] = [];
+
     const tick = () => {
       const styleId = mapStyleIdRef.current;
       const isSat = styleId.includes("satellite");
@@ -474,22 +478,20 @@ export default function App() {
           map.setCenter([lng, lat]);
           lastLat = lat;
           lastLng = lng;
+
+          // 位置有變才重算幾何（避免 ~1500 trig/幀白做）
+          const arcs = getViewshedArcPoints(lat, lng, alt, heading);
+          cachedArcPts = arcs.left.concat(arcs.right);
+          const ringData = getViewshedRings(lat, lng, alt, heading, 5, 16, viewshedSharpnessRef.current);
+          cachedRings = ringData ? ringData.left.concat(ringData.right) : [];
         }
-        // 全部在 Three.js 渲染（無 Mapbox GeoJSON）
+        // Three.js buffer 更新（每幀，用快取的幾何資料）
         const scene = flightSceneRef.current;
         if (scene) {
           const vsOpacity = viewshedOpacityRef.current;
-          // 3D 掃描線
-          const arcs = getViewshedArcPoints(lat, lng, alt, heading);
-          const allPts = [...arcs.left, ...arcs.right];
-          scene.updateViewshedLines(allPts, lat, lng, alt, isSat, vsOpacity);
-          // 3D 地面扇形
-          const ringData = getViewshedRings(lat, lng, alt, heading, 5, 16, viewshedSharpnessRef.current);
-          if (ringData) {
-            scene.updateViewshedFans(
-              [...ringData.left, ...ringData.right],
-              lat, lng, isSat, vsOpacity,
-            );
+          scene.updateViewshedLines(cachedArcPts, lat, lng, alt, isSat, vsOpacity);
+          if (cachedRings.length > 0) {
+            scene.updateViewshedFans(cachedRings, lat, lng, isSat, vsOpacity);
           }
         }
       }
