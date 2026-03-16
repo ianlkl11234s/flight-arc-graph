@@ -24,7 +24,7 @@ import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar"
 import { InfoModal } from "./components/InfoModal";
 import { useCinemaCamera } from "./hooks/useCinemaCamera";
 import { addViewshedLayer, updateViewshed, clearViewshed, computeBearing, getViewshedArcPoints } from "./map/viewshedOverlay";
-import type { ViewshedStyle } from "./map/viewshedOverlay";
+import type { ViewshedStyle, ViewshedMode } from "./map/viewshedOverlay";
 import { CinemaBar } from "./components/CinemaBar";
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
@@ -131,6 +131,7 @@ export default function App() {
   const [captureMode, setCaptureMode] = useState(false);
   const [trailDisplay, setTrailDisplay] = useState<TrailDisplay>("full");
   const [viewshedOpacity, setViewshedOpacity] = useState(0.5);
+  const [viewshedMode, setViewshedMode] = useState<ViewshedMode>("glow");
   const [showInfo, setShowInfo] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
@@ -310,6 +311,7 @@ export default function App() {
   const trailDisplayRef = useRef(trailDisplay);
   const mapStyleIdRef = useRef(mapStyleId);
   const viewshedOpacityRef = useRef(viewshedOpacity);
+  const viewshedModeRef = useRef(viewshedMode);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
 
@@ -326,6 +328,7 @@ export default function App() {
   trailDisplayRef.current = trailDisplay;
   mapStyleIdRef.current = mapStyleId;
   viewshedOpacityRef.current = viewshedOpacity;
+  viewshedModeRef.current = viewshedMode;
 
   const showTrails = displayMode === "trails";
 
@@ -481,7 +484,7 @@ export default function App() {
           lastLng = lng;
         }
         // 2D viewshed 扇形
-        updateViewshed(map, lat, lng, alt, heading, vsStyle, viewshedOpacityRef.current);
+        updateViewshed(map, lat, lng, alt, heading, vsStyle, viewshedOpacityRef.current, viewshedModeRef.current);
         // 3D 掃描線
         const scene = flightSceneRef.current;
         if (scene) {
@@ -741,6 +744,8 @@ export default function App() {
             onAirportGlowChange={setAirportGlow}
             viewshedOpacity={viewshedOpacity}
             onViewshedOpacityChange={setViewshedOpacity}
+            viewshedMode={viewshedMode}
+            onViewshedModeChange={(m) => setViewshedMode(m as ViewshedMode)}
             scope={scope}
             region={region}
             trackMode={trackMode}

@@ -6,15 +6,11 @@ const EDGE_LAYER = "viewshed-edge";
 
 const SIDE_OFFSET = 90;
 const HALF_FOV = 25;
-
-/**
- * 漸層用同心扇形數量
- * 用疊加（非 donut）避免 z-fighting：
- * 內層被所有層疊加 → 最亮，外層只有自己 → 最暗
- */
 const GRADIENT_RINGS = 5;
 
-/** 根據高度動態計算可視半徑 */
+type ViewshedStyle = "dark" | "light" | "satellite";
+type ViewshedMode = "glow" | "spotlight";
+
 function visibleDistanceKm(altM: number): number {
   if (altM <= 0) return 0;
   if (altM < 1000) return 20;
@@ -53,20 +49,16 @@ function destinationPoint(
   return [λ2 * toDeg, φ2 * toDeg];
 }
 
-type ViewshedStyle = "dark" | "light" | "satellite";
-
-/** 取得基礎色（RGB，不含 alpha） */
 function getBaseColor(style: ViewshedStyle) {
   switch (style) {
     case "satellite": return { r: 255, g: 200, b: 50 };
     case "light":     return { r: 255, g: 140, b: 20 };
-    case "dark":
     default:          return { r: 255, g: 255, b: 255 };
   }
 }
 
-/** 產生扇形 polygon */
-function createFanPolygon(
+/** 產生扇形座標 */
+function fanCoords(
   lat: number, lng: number, radiusKm: number,
   centerAngle: number, halfFov: number, segments: number = 24,
 ): [number, number][] {
@@ -81,38 +73,74 @@ function createFanPolygon(
   return coords;
 }
 
+/** 世界邊界（外框），用於 spotlight 模式 */
+const WORLD_RING: [number, number][] = [
+  [-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85],
+];
+
 function emptyFC(): GeoJSON.FeatureCollection {
   return { type: "FeatureCollection", features: [] };
 }
 
-/**
- * 產生漸層扇形 features（疊加模式）
- * 從最大半徑到最小，每層同樣的薄 opacity
- * 內圈被多層覆蓋 → 自然變亮，外圈只有一層 → 最淡
- */
-function createGradientFans(
-  lat: number, lng: number, maxRadius: number,
-  centerAngle: number, halfFov: number,
-  ringCount: number, perRingOpacity: number,
-): GeoJSON.Feature<GeoJSON.Polygon>[] {
-  const features: GeoJSON.Feature<GeoJSON.Polygon>[] = [];
-  // 從外到內建立（外層先畫，內層疊上去）
-  for (let r = ringCount; r >= 1; r--) {
-    const radius = maxRadius * (r / ringCount);
-    const coords = createFanPolygon(lat, lng, radius, centerAngle, halfFov);
+// ── Glow 模式：填亮扇形 ──
+
+function createGlowFeatures(
+  lat: number, lng: number, radiusKm: number, heading: number,
+  opacity: number,
+): GeoJSON.Feature[] {
+  const perRing = 0.025 * opacity;
+  const features: GeoJSON.Feature[] = [];
+
+  for (const offset of [SIDE_OFFSET, -SIDE_OFFSET]) {
+    for (let r = GRADIENT_RINGS; r >= 1; r--) {
+      const radius = radiusKm * (r / GRADIENT_RINGS);
+      const coords = fanCoords(lat, lng, radius, heading + offset, HALF_FOV);
+      const isEdge = r === GRADIENT_RINGS;
+      features.push({
+        type: "Feature",
+        properties: { opacity: perRing, isEdge },
+        geometry: { type: "Polygon", coordinates: [coords] },
+      });
+    }
+  }
+  return features;
+}
+
+// ── Spotlight 模式：暗化扇形以外的區域 ──
+
+function createSpotlightFeatures(
+  lat: number, lng: number, radiusKm: number, heading: number,
+  opacity: number,
+): GeoJSON.Feature[] {
+  const features: GeoJSON.Feature[] = [];
+  const perRing = 0.06 * opacity;
+
+  // 從小到大：每層是「世界 - N% 扇形」的反轉遮罩
+  // 外圈被更多層疊加 → 越暗，內圈越亮
+  for (let r = GRADIENT_RINGS; r >= 1; r--) {
+    const radius = radiusKm * (r / GRADIENT_RINGS);
+    // 左扇 + 右扇作為 holes
+    const leftHole = fanCoords(lat, lng, radius, heading + SIDE_OFFSET, HALF_FOV);
+    const rightHole = fanCoords(lat, lng, radius, heading - SIDE_OFFSET, HALF_FOV);
+
     features.push({
       type: "Feature",
-      properties: { opacity: perRingOpacity },
-      geometry: { type: "Polygon", coordinates: [coords] },
+      properties: { opacity: perRing, isEdge: r === GRADIENT_RINGS },
+      geometry: {
+        type: "Polygon",
+        // outer ring = world, holes = left fan + right fan（逆時針）
+        coordinates: [WORLD_RING, leftHole.slice().reverse(), rightHole.slice().reverse()],
+      },
     });
   }
   return features;
 }
 
-/** 新增 viewshed 圖層（style 未載入完成時會靜默跳過） */
+// ── Public API ──
+
 export function addViewshedLayer(map: MapboxMap, style: ViewshedStyle) {
   if (map.getSource(SOURCE_ID)) return;
-  if (!map.isStyleLoaded()) return; // style 切換中，等下一幀再試
+  if (!map.isStyleLoaded()) return;
   const { r, g, b } = getBaseColor(style);
 
   try {
@@ -140,32 +168,20 @@ export function addViewshedLayer(map: MapboxMap, style: ViewshedStyle) {
       },
       filter: ["==", ["get", "isEdge"], true],
     });
-  } catch {
-    // style 切換期間可能失敗，RAF 下一幀會重試
-  }
+  } catch { /* style 切換期間 */ }
 }
 
-/**
- * 更新 viewshed
- * @param opacity 整體不透明度乘數（0~1，預設 0.5）
- */
 export function updateViewshed(
   map: MapboxMap,
   lat: number, lng: number,
   altitudeM: number, heading: number,
   style: ViewshedStyle,
   opacity: number = 0.5,
+  mode: ViewshedMode = "glow",
 ) {
   if (!map.isStyleLoaded()) return;
   const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
   if (!source) return;
-
-  // 更新顏色
-  const { r, g, b } = getBaseColor(style);
-  try {
-    if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", `rgb(${r},${g},${b})`);
-    if (map.getLayer(EDGE_LAYER)) map.setPaintProperty(EDGE_LAYER, "line-color", `rgba(${r},${g},${b},${0.15 * opacity * 2})`);
-  } catch { /* style 切換中 */ }
 
   const radiusKm = visibleDistanceKm(altitudeM);
   if (radiusKm < 3) {
@@ -173,24 +189,29 @@ export function updateViewshed(
     return;
   }
 
-  // 每層的 opacity = 基礎值 × 使用者 opacity
-  // 5 層疊加，中心 = 5 × perRing，所以 perRing 要小
-  const perRing = 0.025 * opacity;
+  // 更新顏色
+  try {
+    if (mode === "spotlight") {
+      // Spotlight: 用黑色暗化外部
+      if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", "rgb(0,0,0)");
+      if (map.getLayer(EDGE_LAYER)) {
+        const { r, g, b } = getBaseColor(style);
+        map.setPaintProperty(EDGE_LAYER, "line-color", `rgba(${r},${g},${b},${0.2 * opacity})`);
+      }
+    } else {
+      const { r, g, b } = getBaseColor(style);
+      if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", `rgb(${r},${g},${b})`);
+      if (map.getLayer(EDGE_LAYER)) map.setPaintProperty(EDGE_LAYER, "line-color", `rgba(${r},${g},${b},${0.15 * opacity * 2})`);
+    }
+  } catch { /* style 切換中 */ }
 
-  const leftRings = createGradientFans(lat, lng, radiusKm, heading + SIDE_OFFSET, HALF_FOV, GRADIENT_RINGS, perRing);
-  const rightRings = createGradientFans(lat, lng, radiusKm, heading - SIDE_OFFSET, HALF_FOV, GRADIENT_RINGS, perRing);
+  const features = mode === "spotlight"
+    ? createSpotlightFeatures(lat, lng, radiusKm, heading, opacity)
+    : createGlowFeatures(lat, lng, radiusKm, heading, opacity);
 
-  // 最外層加上 isEdge 屬性（供邊線 filter 用）
-  if (leftRings.length > 0) leftRings[0]!.properties = { ...leftRings[0]!.properties, isEdge: true };
-  if (rightRings.length > 0) rightRings[0]!.properties = { ...rightRings[0]!.properties, isEdge: true };
-
-  source.setData({
-    type: "FeatureCollection",
-    features: [...leftRings, ...rightRings],
-  });
+  source.setData({ type: "FeatureCollection", features });
 }
 
-/** 取得扇形弧線上的地面點（供 3D 掃描線用） */
 export function getViewshedArcPoints(
   lat: number, lng: number, altitudeM: number, heading: number,
   segments: number = 8,
@@ -221,4 +242,4 @@ export function clearViewshed(map: MapboxMap) {
 }
 
 export { computeBearing };
-export type { ViewshedStyle };
+export type { ViewshedStyle, ViewshedMode };
