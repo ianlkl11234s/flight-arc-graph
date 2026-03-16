@@ -462,7 +462,7 @@ export default function App() {
           }
         }
         map.setCenter([lng, lat]);
-        updateViewshed(map, lat, lng, alt, heading);
+        updateViewshed(map, lat, lng, alt, heading, isDarkThemeRef.current);
       }
       animId = requestAnimationFrame(tick);
     };
