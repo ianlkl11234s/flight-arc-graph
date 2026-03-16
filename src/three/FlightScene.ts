@@ -57,6 +57,10 @@ export class FlightScene {
   private showTrails = true;
   private lastMatrix: THREE.Matrix4 | null = null;
 
+  // 3D 視域掃描線
+  private viewshedLines: THREE.LineSegments | null = null;
+  private viewshedMat: THREE.LineBasicMaterial | null = null;
+
   // 靜態軌跡
   private staticMesh: THREE.LineSegments | null = null;
   private staticGlowMesh: THREE.LineSegments | null = null;
@@ -609,8 +613,113 @@ export class FlightScene {
     this.staticTimestamps = null;
   }
 
+  /**
+   * 更新 3D 視域掃描線
+   * arcPoints: 地面弧線的 [lng, lat] 陣列（左+右兩側）
+   * originLat/Lng/Alt: 飛機位置
+   */
+  updateViewshedLines(
+    arcPoints: [number, number][],
+    originLat: number, originLng: number, originAlt: number,
+    isSatellite: boolean,
+  ) {
+    if (arcPoints.length === 0) {
+      this.clearViewshedLines();
+      return;
+    }
+
+    const origin = toMercator(originLat, originLng, originAlt);
+    const lineCount = arcPoints.length;
+    const vertCount = lineCount * 2; // 每條線 2 個頂點
+
+    if (!this.viewshedLines) {
+      const color = isSatellite
+        ? new THREE.Color(1.0, 0.82, 0.3)    // 金黃
+        : (this.isDarkTheme
+          ? new THREE.Color(1.0, 1.0, 1.0)   // 白
+          : new THREE.Color(1.0, 0.6, 0.15)); // 橘
+
+      this.viewshedMat = new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.08,
+        blending: this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending,
+        depthWrite: false,
+      });
+
+      const geo = new THREE.BufferGeometry();
+      const positions = new Float32Array(vertCount * 3);
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      this.viewshedLines = new THREE.LineSegments(geo, this.viewshedMat);
+      this.viewshedLines.frustumCulled = false;
+      this.scene.add(this.viewshedLines);
+    }
+
+    // 更新顏色
+    if (this.viewshedMat) {
+      if (isSatellite) {
+        this.viewshedMat.color.setRGB(1.0, 0.82, 0.3);
+      } else if (this.isDarkTheme) {
+        this.viewshedMat.color.setRGB(1.0, 1.0, 1.0);
+      } else {
+        this.viewshedMat.color.setRGB(1.0, 0.6, 0.15);
+      }
+      this.viewshedMat.blending = this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending;
+    }
+
+    const geo = this.viewshedLines.geometry;
+    const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
+    const arr = posAttr.array as Float32Array;
+
+    // 確保 buffer 大小足夠
+    if (arr.length < vertCount * 3) {
+      const newArr = new Float32Array(vertCount * 3);
+      geo.setAttribute("position", new THREE.BufferAttribute(newArr, 3));
+      geo.setDrawRange(0, vertCount);
+      this.updateViewshedPositions(geo, arcPoints, origin);
+    } else {
+      geo.setDrawRange(0, vertCount);
+      this.updateViewshedPositions(geo, arcPoints, origin);
+    }
+  }
+
+  private updateViewshedPositions(
+    geo: THREE.BufferGeometry,
+    arcPoints: [number, number][],
+    origin: { x: number; y: number; z: number },
+  ) {
+    const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
+    const arr = posAttr.array as Float32Array;
+    let offset = 0;
+
+    for (const [lng, lat] of arcPoints) {
+      // 起點：飛機位置
+      arr[offset++] = origin.x;
+      arr[offset++] = origin.y;
+      arr[offset++] = origin.z;
+      // 終點：地面
+      const ground = toMercator(lat, lng, 0);
+      arr[offset++] = ground.x;
+      arr[offset++] = ground.y;
+      arr[offset++] = ground.z;
+    }
+
+    posAttr.needsUpdate = true;
+  }
+
+  clearViewshedLines() {
+    if (this.viewshedLines) {
+      this.scene.remove(this.viewshedLines);
+      this.viewshedLines.geometry.dispose();
+      this.viewshedMat?.dispose();
+      this.viewshedLines = null;
+      this.viewshedMat = null;
+    }
+  }
+
   dispose() {
     this.clearScene();
+    this.clearViewshedLines();
     this.renderer.dispose();
   }
 }
