@@ -428,6 +428,8 @@ export default function App() {
     if (!map) return;
 
     let animId: number;
+    let lastLat = 0, lastLng = 0;
+
     const tick = () => {
       // 確保 viewshed 圖層存在（style 切換後會被清除）
       addViewshedLayer(map, isDarkThemeRef.current);
@@ -461,7 +463,14 @@ export default function App() {
             }
           }
         }
-        map.setCenter([lng, lat]);
+        // 只在飛機位置有變化時才更新地圖中心（暫停時讓使用者自由操控）
+        const moved = Math.abs(lat - lastLat) > 0.0001 || Math.abs(lng - lastLng) > 0.0001;
+        if (moved) {
+          map.setCenter([lng, lat]);
+          lastLat = lat;
+          lastLng = lng;
+        }
+        // viewshed 總是更新（即使暫停也要顯示正確位置）
         updateViewshed(map, lat, lng, alt, heading, isDarkThemeRef.current);
       }
       animId = requestAnimationFrame(tick);
