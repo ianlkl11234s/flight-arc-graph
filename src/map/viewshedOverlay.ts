@@ -5,9 +5,26 @@ const FILL_LAYER = "viewshed-fill";
 const GLOW_LAYER = "viewshed-glow";
 const EDGE_LAYER = "viewshed-edge";
 
-/** 理論地平線距離 (km)：d ≈ 3.57 × √h */
+/** 最大顯示半徑 (km) — 避免扇形過大佔滿地圖 */
+const MAX_RADIUS_KM = 200;
+
+/** 最小顯示半徑 (km) — 地面滑行時不顯示 */
+const MIN_RADIUS_KM = 5;
+
+/**
+ * 乘客窗戶視野參數
+ * - 左右各一個扇形，中心在航向的 ±90°（垂直於機身）
+ * - 每側 FOV ≈ 90°（±45° from perpendicular）
+ *   前方被機身/機翼擋住（約 heading ±45° 的死角）
+ *   後方也被機身擋住
+ */
+const SIDE_OFFSET = 90;   // 扇形中心相對航向的偏移角度
+const HALF_FOV = 45;      // 每側扇形的半張角
+
+/** 理論地平線距離 (km)：d ≈ 3.57 × √h，加上上限 */
 function horizonDistanceKm(altitudeMeters: number): number {
-  return 3.57 * Math.sqrt(Math.max(0, altitudeMeters));
+  const d = 3.57 * Math.sqrt(Math.max(0, altitudeMeters));
+  return Math.min(d, MAX_RADIUS_KM);
 }
 
 /** 計算兩點間的航向角 (degrees, 0=N, CW) */
@@ -25,7 +42,7 @@ function computeBearing(lat1: number, lng1: number, lat2: number, lng2: number):
 function destinationPoint(
   lat: number, lng: number, bearing: number, distanceKm: number,
 ): [number, number] {
-  const R = 6371; // 地球半徑 km
+  const R = 6371;
   const toRad = Math.PI / 180;
   const toDeg = 180 / Math.PI;
   const φ1 = lat * toRad;
@@ -44,18 +61,18 @@ function destinationPoint(
   return [λ2 * toDeg, φ2 * toDeg];
 }
 
-/** 產生扇形 GeoJSON Polygon */
+/** 產生單側扇形 GeoJSON Polygon */
 function createFanPolygon(
   lat: number,
   lng: number,
   radiusKm: number,
-  heading: number,
-  halfFov: number = 60,
-  segments: number = 32,
+  centerAngle: number,
+  halfFov: number,
+  segments: number = 24,
 ): GeoJSON.Feature<GeoJSON.Polygon> {
-  const coords: [number, number][] = [[lng, lat]]; // 起點
-  const startAngle = heading - halfFov;
-  const endAngle = heading + halfFov;
+  const coords: [number, number][] = [[lng, lat]];
+  const startAngle = centerAngle - halfFov;
+  const endAngle = centerAngle + halfFov;
   const step = (endAngle - startAngle) / segments;
 
   for (let i = 0; i <= segments; i++) {
@@ -63,7 +80,7 @@ function createFanPolygon(
     coords.push(destinationPoint(lat, lng, angle, radiusKm));
   }
 
-  coords.push([lng, lat]); // 回到原點封閉
+  coords.push([lng, lat]);
 
   return {
     type: "Feature",
@@ -93,7 +110,6 @@ export function addViewshedLayer(map: MapboxMap, isDark: boolean) {
     data: emptyFC(),
   });
 
-  // 外層 glow（稍微擴大的半透明層）
   map.addLayer({
     id: GLOW_LAYER,
     type: "fill",
@@ -104,7 +120,6 @@ export function addViewshedLayer(map: MapboxMap, isDark: boolean) {
     },
   });
 
-  // 主填充
   map.addLayer({
     id: FILL_LAYER,
     type: "fill",
@@ -115,7 +130,6 @@ export function addViewshedLayer(map: MapboxMap, isDark: boolean) {
     },
   });
 
-  // 邊線
   map.addLayer({
     id: EDGE_LAYER,
     type: "line",
@@ -128,7 +142,7 @@ export function addViewshedLayer(map: MapboxMap, isDark: boolean) {
   });
 }
 
-/** 更新 viewshed 扇形位置 */
+/** 更新 viewshed：左右兩個扇形 */
 export function updateViewshed(
   map: MapboxMap,
   lat: number,
@@ -140,16 +154,28 @@ export function updateViewshed(
   if (!source) return;
 
   const radiusKm = horizonDistanceKm(altitudeM);
-  // 高度太低時不顯示（地面滑行）
-  if (radiusKm < 5) {
+  if (radiusKm < MIN_RADIUS_KM) {
     source.setData(emptyFC());
     return;
   }
 
-  const fan = createFanPolygon(lat, lng, radiusKm, heading);
+  // 左側窗戶：航向 + 90°（左舷）
+  const leftFan = createFanPolygon(
+    lat, lng, radiusKm,
+    heading + SIDE_OFFSET,
+    HALF_FOV,
+  );
+
+  // 右側窗戶：航向 - 90°（右舷）
+  const rightFan = createFanPolygon(
+    lat, lng, radiusKm,
+    heading - SIDE_OFFSET,
+    HALF_FOV,
+  );
+
   source.setData({
     type: "FeatureCollection",
-    features: [fan],
+    features: [leftFan, rightFan],
   });
 }
 
@@ -157,35 +183,6 @@ export function updateViewshed(
 export function clearViewshed(map: MapboxMap) {
   const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
   if (source) source.setData(emptyFC());
-}
-
-/** 移除 viewshed 圖層 */
-export function removeViewshedLayer(map: MapboxMap) {
-  if (map.getLayer(EDGE_LAYER)) map.removeLayer(EDGE_LAYER);
-  if (map.getLayer(FILL_LAYER)) map.removeLayer(FILL_LAYER);
-  if (map.getLayer(GLOW_LAYER)) map.removeLayer(GLOW_LAYER);
-  if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID);
-}
-
-/** 更新主題色 */
-export function setViewshedTheme(map: MapboxMap, isDark: boolean) {
-  if (!map.getLayer(FILL_LAYER)) return;
-
-  const fillColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(255,160,40,0.10)";
-  const glowColor = isDark ? "rgba(255,255,255,0.03)" : "rgba(255,160,40,0.05)";
-  const edgeColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(255,140,20,0.25)";
-
-  map.setPaintProperty(FILL_LAYER, "fill-color", fillColor);
-  map.setPaintProperty(GLOW_LAYER, "fill-color", glowColor);
-  map.setPaintProperty(EDGE_LAYER, "line-color", edgeColor);
-}
-
-/** 設定可見度 */
-export function setViewshedVisible(map: MapboxMap, visible: boolean) {
-  const vis = visible ? "visible" : "none";
-  if (map.getLayer(FILL_LAYER)) map.setLayoutProperty(FILL_LAYER, "visibility", vis);
-  if (map.getLayer(GLOW_LAYER)) map.setLayoutProperty(GLOW_LAYER, "visibility", vis);
-  if (map.getLayer(EDGE_LAYER)) map.setLayoutProperty(EDGE_LAYER, "visibility", vis);
 }
 
 export { computeBearing };
