@@ -130,6 +130,7 @@ export default function App() {
   const [captureMode, setCaptureMode] = useState(false);
   const [trailDisplay, setTrailDisplay] = useState<TrailDisplay>("full");
   const [viewshedOpacity, setViewshedOpacity] = useState(0.5);
+  const [viewshedSharpness, setViewshedSharpness] = useState(0.5);
   const [showInfo, setShowInfo] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
@@ -309,6 +310,7 @@ export default function App() {
   const trailDisplayRef = useRef(trailDisplay);
   const mapStyleIdRef = useRef(mapStyleId);
   const viewshedOpacityRef = useRef(viewshedOpacity);
+  const viewshedSharpnessRef = useRef(viewshedSharpness);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
 
@@ -325,6 +327,7 @@ export default function App() {
   trailDisplayRef.current = trailDisplay;
   mapStyleIdRef.current = mapStyleId;
   viewshedOpacityRef.current = viewshedOpacity;
+  viewshedSharpnessRef.current = viewshedSharpness;
 
   const showTrails = displayMode === "trails";
 
@@ -481,7 +484,7 @@ export default function App() {
           const allPts = [...arcs.left, ...arcs.right];
           scene.updateViewshedLines(allPts, lat, lng, alt, isSat, vsOpacity);
           // 3D 地面扇形
-          const ringData = getViewshedRings(lat, lng, alt, heading);
+          const ringData = getViewshedRings(lat, lng, alt, heading, 5, 16, viewshedSharpnessRef.current);
           if (ringData) {
             scene.updateViewshedFans(
               [...ringData.left, ...ringData.right],
@@ -740,6 +743,8 @@ export default function App() {
             onAirportGlowChange={setAirportGlow}
             viewshedOpacity={viewshedOpacity}
             onViewshedOpacityChange={setViewshedOpacity}
+            viewshedSharpness={viewshedSharpness}
+            onViewshedSharpnessChange={setViewshedSharpness}
             scope={scope}
             region={region}
             trackMode={trackMode}

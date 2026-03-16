@@ -76,21 +76,29 @@ export interface ViewshedRing {
  * 取得 viewshed 漸層環資料（供 Three.js 渲染）
  * @returns left/right 各 ringCount 個環
  */
+/**
+ * @param sharpness 邊緣銳利度 0~1（0=漸層模糊, 1=銳利邊界）
+ */
 export function getViewshedRings(
   lat: number, lng: number, altM: number, heading: number,
   ringCount: number = 5, segments: number = 16,
+  sharpness: number = 0.5,
 ): { left: ViewshedRing[]; right: ViewshedRing[] } | null {
   const maxRadius = visibleDistanceKm(altM);
   if (maxRadius < 3) return null;
+
+  // sharpness 控制衰減曲線：
+  // exponent 小 → 邊緣銳利（值維持高，接近邊緣才急降）
+  // exponent 大 → 漸層模糊（從中心開始就逐漸降低）
+  const exponent = 0.15 + (1 - sharpness) * 2.85; // 0.15(銳利) ~ 3.0(模糊)
 
   const buildSide = (offset: number): ViewshedRing[] => {
     const rings: ViewshedRing[] = [];
     for (let r = 1; r <= ringCount; r++) {
       const radius = maxRadius * (r / ringCount);
       const arc = fanArc(lat, lng, radius, heading + offset, HALF_FOV, segments);
-      // 二次方衰減：內圈亮外圈暗
       const frac = r / ringCount;
-      const alpha = 1 - frac * frac;
+      const alpha = Math.pow(1 - frac, exponent);
       rings.push({ arc, alpha });
     }
     return rings;
