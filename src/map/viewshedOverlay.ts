@@ -109,35 +109,40 @@ function createGradientFans(
   return features;
 }
 
-/** 新增 viewshed 圖層 */
+/** 新增 viewshed 圖層（style 未載入完成時會靜默跳過） */
 export function addViewshedLayer(map: MapboxMap, style: ViewshedStyle) {
   if (map.getSource(SOURCE_ID)) return;
+  if (!map.isStyleLoaded()) return; // style 切換中，等下一幀再試
   const { r, g, b } = getBaseColor(style);
 
-  map.addSource(SOURCE_ID, { type: "geojson", data: emptyFC() });
+  try {
+    map.addSource(SOURCE_ID, { type: "geojson", data: emptyFC() });
 
-  map.addLayer({
-    id: FILL_LAYER,
-    type: "fill",
-    source: SOURCE_ID,
-    paint: {
-      "fill-color": `rgb(${r},${g},${b})`,
-      "fill-opacity": ["coalesce", ["get", "opacity"], 0.03],
-      "fill-antialias": true,
-    },
-  });
+    map.addLayer({
+      id: FILL_LAYER,
+      type: "fill",
+      source: SOURCE_ID,
+      paint: {
+        "fill-color": `rgb(${r},${g},${b})`,
+        "fill-opacity": ["coalesce", ["get", "opacity"], 0.03],
+        "fill-antialias": true,
+      },
+    });
 
-  map.addLayer({
-    id: EDGE_LAYER,
-    type: "line",
-    source: SOURCE_ID,
-    paint: {
-      "line-color": `rgba(${r},${g},${b},0.15)`,
-      "line-width": 0.8,
-      "line-dasharray": [4, 4],
-    },
-    filter: ["==", ["get", "isEdge"], true],
-  });
+    map.addLayer({
+      id: EDGE_LAYER,
+      type: "line",
+      source: SOURCE_ID,
+      paint: {
+        "line-color": `rgba(${r},${g},${b},0.15)`,
+        "line-width": 0.8,
+        "line-dasharray": [4, 4],
+      },
+      filter: ["==", ["get", "isEdge"], true],
+    });
+  } catch {
+    // style 切換期間可能失敗，RAF 下一幀會重試
+  }
 }
 
 /**
@@ -151,13 +156,16 @@ export function updateViewshed(
   style: ViewshedStyle,
   opacity: number = 0.5,
 ) {
+  if (!map.isStyleLoaded()) return;
   const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
   if (!source) return;
 
   // 更新顏色
   const { r, g, b } = getBaseColor(style);
-  if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", `rgb(${r},${g},${b})`);
-  if (map.getLayer(EDGE_LAYER)) map.setPaintProperty(EDGE_LAYER, "line-color", `rgba(${r},${g},${b},${0.15 * opacity * 2})`);
+  try {
+    if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", `rgb(${r},${g},${b})`);
+    if (map.getLayer(EDGE_LAYER)) map.setPaintProperty(EDGE_LAYER, "line-color", `rgba(${r},${g},${b},${0.15 * opacity * 2})`);
+  } catch { /* style 切換中 */ }
 
   const radiusKm = visibleDistanceKm(altitudeM);
   if (radiusKm < 3) {
