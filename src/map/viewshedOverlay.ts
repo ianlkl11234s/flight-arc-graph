@@ -113,7 +113,8 @@ function createSpotlightFeatures(
   opacity: number,
 ): GeoJSON.Feature[] {
   const features: GeoJSON.Feature[] = [];
-  const perRing = 0.06 * opacity;
+  // 5 層疊加，opacity=1 時外圈最暗 = 5×0.12 = 0.60
+  const perRing = 0.12 * opacity;
 
   // 從小到大：每層是「世界 - N% 扇形」的反轉遮罩
   // 外圈被更多層疊加 → 越暗，內圈越亮
