@@ -8,9 +8,13 @@ const SIDE_OFFSET = 90;
 const HALF_FOV = 25;
 
 /**
- * 根據高度動態計算可視半徑 (km)
- * 含大氣衰減上限
+ * 漸層用同心扇形數量
+ * 用疊加（非 donut）避免 z-fighting：
+ * 內層被所有層疊加 → 最亮，外層只有自己 → 最暗
  */
+const GRADIENT_RINGS = 5;
+
+/** 根據高度動態計算可視半徑 */
 function visibleDistanceKm(altM: number): number {
   if (altM <= 0) return 0;
   if (altM < 1000) return 20;
@@ -19,7 +23,6 @@ function visibleDistanceKm(altM: number): number {
   return Math.min(120 + (altM - 10000) / 3000 * 30, 150);
 }
 
-/** 計算兩點間的航向角 */
 function computeBearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const toRad = Math.PI / 180;
   const dLng = (lng2 - lng1) * toRad;
@@ -30,7 +33,6 @@ function computeBearing(lat1: number, lng1: number, lat2: number, lng2: number):
   return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
 }
 
-/** 從 origin 沿 bearing 走 distance_km */
 function destinationPoint(
   lat: number, lng: number, bearing: number, distanceKm: number,
 ): [number, number] {
@@ -53,23 +55,21 @@ function destinationPoint(
 
 type ViewshedStyle = "dark" | "light" | "satellite";
 
-function getColors(style: ViewshedStyle) {
+/** 取得基礎色（RGB，不含 alpha） */
+function getBaseColor(style: ViewshedStyle) {
   switch (style) {
-    case "satellite":
-      return { fill: "rgba(255,200,50,0.07)", edge: "rgba(255,200,50,0.15)" };
-    case "light":
-      return { fill: "rgba(255,140,20,0.08)", edge: "rgba(255,140,20,0.18)" };
+    case "satellite": return { r: 255, g: 200, b: 50 };
+    case "light":     return { r: 255, g: 140, b: 20 };
     case "dark":
-    default:
-      return { fill: "rgba(255,255,255,0.05)", edge: "rgba(255,255,255,0.10)" };
+    default:          return { r: 255, g: 255, b: 255 };
   }
 }
 
-/** 產生單側扇形 */
+/** 產生扇形 polygon */
 function createFanPolygon(
   lat: number, lng: number, radiusKm: number,
   centerAngle: number, halfFov: number, segments: number = 24,
-): GeoJSON.Feature<GeoJSON.Polygon> {
+): [number, number][] {
   const coords: [number, number][] = [[lng, lat]];
   const start = centerAngle - halfFov;
   const end = centerAngle + halfFov;
@@ -78,21 +78,41 @@ function createFanPolygon(
     coords.push(destinationPoint(lat, lng, start + step * i, radiusKm));
   }
   coords.push([lng, lat]);
-  return {
-    type: "Feature",
-    properties: {},
-    geometry: { type: "Polygon", coordinates: [coords] },
-  };
+  return coords;
 }
 
 function emptyFC(): GeoJSON.FeatureCollection {
   return { type: "FeatureCollection", features: [] };
 }
 
-/** 新增/重建 viewshed 圖層 */
+/**
+ * 產生漸層扇形 features（疊加模式）
+ * 從最大半徑到最小，每層同樣的薄 opacity
+ * 內圈被多層覆蓋 → 自然變亮，外圈只有一層 → 最淡
+ */
+function createGradientFans(
+  lat: number, lng: number, maxRadius: number,
+  centerAngle: number, halfFov: number,
+  ringCount: number, perRingOpacity: number,
+): GeoJSON.Feature<GeoJSON.Polygon>[] {
+  const features: GeoJSON.Feature<GeoJSON.Polygon>[] = [];
+  // 從外到內建立（外層先畫，內層疊上去）
+  for (let r = ringCount; r >= 1; r--) {
+    const radius = maxRadius * (r / ringCount);
+    const coords = createFanPolygon(lat, lng, radius, centerAngle, halfFov);
+    features.push({
+      type: "Feature",
+      properties: { opacity: perRingOpacity },
+      geometry: { type: "Polygon", coordinates: [coords] },
+    });
+  }
+  return features;
+}
+
+/** 新增 viewshed 圖層 */
 export function addViewshedLayer(map: MapboxMap, style: ViewshedStyle) {
   if (map.getSource(SOURCE_ID)) return;
-  const { fill, edge } = getColors(style);
+  const { r, g, b } = getBaseColor(style);
 
   map.addSource(SOURCE_ID, { type: "geojson", data: emptyFC() });
 
@@ -100,31 +120,44 @@ export function addViewshedLayer(map: MapboxMap, style: ViewshedStyle) {
     id: FILL_LAYER,
     type: "fill",
     source: SOURCE_ID,
-    paint: { "fill-color": fill, "fill-antialias": true },
+    paint: {
+      "fill-color": `rgb(${r},${g},${b})`,
+      "fill-opacity": ["coalesce", ["get", "opacity"], 0.03],
+      "fill-antialias": true,
+    },
   });
 
   map.addLayer({
     id: EDGE_LAYER,
     type: "line",
     source: SOURCE_ID,
-    paint: { "line-color": edge, "line-width": 0.8, "line-dasharray": [4, 4] },
+    paint: {
+      "line-color": `rgba(${r},${g},${b},0.15)`,
+      "line-width": 0.8,
+      "line-dasharray": [4, 4],
+    },
+    filter: ["==", ["get", "isEdge"], true],
   });
 }
 
-/** 更新 viewshed 位置 + 顏色 */
+/**
+ * 更新 viewshed
+ * @param opacity 整體不透明度乘數（0~1，預設 0.5）
+ */
 export function updateViewshed(
   map: MapboxMap,
   lat: number, lng: number,
   altitudeM: number, heading: number,
   style: ViewshedStyle,
+  opacity: number = 0.5,
 ) {
   const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
   if (!source) return;
 
-  // 更新顏色（style 可能在運行中切換）
-  const { fill, edge } = getColors(style);
-  if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", fill);
-  if (map.getLayer(EDGE_LAYER)) map.setPaintProperty(EDGE_LAYER, "line-color", edge);
+  // 更新顏色
+  const { r, g, b } = getBaseColor(style);
+  if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", `rgb(${r},${g},${b})`);
+  if (map.getLayer(EDGE_LAYER)) map.setPaintProperty(EDGE_LAYER, "line-color", `rgba(${r},${g},${b},${0.15 * opacity * 2})`);
 
   const radiusKm = visibleDistanceKm(altitudeM);
   if (radiusKm < 3) {
@@ -132,10 +165,21 @@ export function updateViewshed(
     return;
   }
 
-  const leftFan = createFanPolygon(lat, lng, radiusKm, heading + SIDE_OFFSET, HALF_FOV);
-  const rightFan = createFanPolygon(lat, lng, radiusKm, heading - SIDE_OFFSET, HALF_FOV);
+  // 每層的 opacity = 基礎值 × 使用者 opacity
+  // 5 層疊加，中心 = 5 × perRing，所以 perRing 要小
+  const perRing = 0.025 * opacity;
 
-  source.setData({ type: "FeatureCollection", features: [leftFan, rightFan] });
+  const leftRings = createGradientFans(lat, lng, radiusKm, heading + SIDE_OFFSET, HALF_FOV, GRADIENT_RINGS, perRing);
+  const rightRings = createGradientFans(lat, lng, radiusKm, heading - SIDE_OFFSET, HALF_FOV, GRADIENT_RINGS, perRing);
+
+  // 最外層加上 isEdge 屬性（供邊線 filter 用）
+  if (leftRings.length > 0) leftRings[0]!.properties = { ...leftRings[0]!.properties, isEdge: true };
+  if (rightRings.length > 0) rightRings[0]!.properties = { ...rightRings[0]!.properties, isEdge: true };
+
+  source.setData({
+    type: "FeatureCollection",
+    features: [...leftRings, ...rightRings],
+  });
 }
 
 /** 取得扇形弧線上的地面點（供 3D 掃描線用） */

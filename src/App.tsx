@@ -130,6 +130,7 @@ export default function App() {
   const [aircraftFilter, setAircraftFilter] = useState<AircraftFilterKey>("all");
   const [captureMode, setCaptureMode] = useState(false);
   const [trailDisplay, setTrailDisplay] = useState<TrailDisplay>("full");
+  const [viewshedOpacity, setViewshedOpacity] = useState(0.5);
   const [showInfo, setShowInfo] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
@@ -308,6 +309,7 @@ export default function App() {
   const timeWindowRef = useRef(timeWindow);
   const trailDisplayRef = useRef(trailDisplay);
   const mapStyleIdRef = useRef(mapStyleId);
+  const viewshedOpacityRef = useRef(viewshedOpacity);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
 
@@ -323,6 +325,7 @@ export default function App() {
   timeWindowRef.current = timeWindow;
   trailDisplayRef.current = trailDisplay;
   mapStyleIdRef.current = mapStyleId;
+  viewshedOpacityRef.current = viewshedOpacity;
 
   const showTrails = displayMode === "trails";
 
@@ -478,13 +481,13 @@ export default function App() {
           lastLng = lng;
         }
         // 2D viewshed 扇形
-        updateViewshed(map, lat, lng, alt, heading, vsStyle);
+        updateViewshed(map, lat, lng, alt, heading, vsStyle, viewshedOpacityRef.current);
         // 3D 掃描線
         const scene = flightSceneRef.current;
         if (scene) {
           const arcs = getViewshedArcPoints(lat, lng, alt, heading);
           const allPts = [...arcs.left, ...arcs.right];
-          scene.updateViewshedLines(allPts, lat, lng, alt, vsStyle === "satellite");
+          scene.updateViewshedLines(allPts, lat, lng, alt, vsStyle === "satellite", viewshedOpacityRef.current);
         }
       }
       animId = requestAnimationFrame(tick);
@@ -736,6 +739,8 @@ export default function App() {
             onOrbScaleChange={setOrbScale}
             onAirportOpacityChange={setAirportOpacity}
             onAirportGlowChange={setAirportGlow}
+            viewshedOpacity={viewshedOpacity}
+            onViewshedOpacityChange={setViewshedOpacity}
             scope={scope}
             region={region}
             trackMode={trackMode}

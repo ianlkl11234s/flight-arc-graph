@@ -622,6 +622,7 @@ export class FlightScene {
     arcPoints: [number, number][],
     originLat: number, originLng: number, originAlt: number,
     isSatellite: boolean,
+    opacity: number = 0.5,
   ) {
     if (arcPoints.length === 0) {
       this.clearViewshedLines();
@@ -642,7 +643,7 @@ export class FlightScene {
       this.viewshedMat = new THREE.LineBasicMaterial({
         color,
         transparent: true,
-        opacity: 0.08,
+        opacity: 0.15 * opacity,
         blending: this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending,
         depthWrite: false,
       });
@@ -665,6 +666,7 @@ export class FlightScene {
         this.viewshedMat.color.setRGB(1.0, 0.6, 0.15);
       }
       this.viewshedMat.blending = this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending;
+      this.viewshedMat.opacity = 0.15 * opacity;
     }
 
     const geo = this.viewshedLines.geometry;
