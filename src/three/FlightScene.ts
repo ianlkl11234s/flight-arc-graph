@@ -648,6 +648,7 @@ export class FlightScene {
         opacity: 0.15 * opacity,
         blending: this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending,
         depthWrite: false,
+        depthTest: false,
       });
 
       const geo = new THREE.BufferGeometry();
@@ -766,6 +767,7 @@ export class FlightScene {
         transparent: true,
         blending: this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending,
         depthWrite: false,
+        depthTest: false,
         side: THREE.DoubleSide,
       });
 
