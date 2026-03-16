@@ -113,23 +113,22 @@ function createSpotlightFeatures(
   opacity: number,
 ): GeoJSON.Feature[] {
   const features: GeoJSON.Feature[] = [];
-  // 5 層疊加，opacity=1 時外圈最暗 = 5×0.12 = 0.60
-  const perRing = 0.12 * opacity;
+  // 3 層疊加（比 glow 少，減少效能開銷），opacity=1 時外圈最暗 = 3×0.20 = 0.60
+  const perRing = 0.20 * opacity;
+  const spotlightRings = 3;
 
   // 從小到大：每層是「世界 - N% 扇形」的反轉遮罩
   // 外圈被更多層疊加 → 越暗，內圈越亮
-  for (let r = GRADIENT_RINGS; r >= 1; r--) {
-    const radius = radiusKm * (r / GRADIENT_RINGS);
-    // 左扇 + 右扇作為 holes
+  for (let r = spotlightRings; r >= 1; r--) {
+    const radius = radiusKm * (r / spotlightRings);
     const leftHole = fanCoords(lat, lng, radius, heading + SIDE_OFFSET, HALF_FOV);
     const rightHole = fanCoords(lat, lng, radius, heading - SIDE_OFFSET, HALF_FOV);
 
     features.push({
       type: "Feature",
-      properties: { opacity: perRing, isEdge: r === GRADIENT_RINGS },
+      properties: { opacity: perRing, isEdge: r === spotlightRings },
       geometry: {
         type: "Polygon",
-        // outer ring = world, holes = left fan + right fan（逆時針）
         coordinates: [WORLD_RING, leftHole.slice().reverse(), rightHole.slice().reverse()],
       },
     });
