@@ -23,8 +23,7 @@ import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCat
 import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
 import { useCinemaCamera } from "./hooks/useCinemaCamera";
-import { addViewshedLayer, updateViewshed, clearViewshed, computeBearing, getViewshedArcPoints } from "./map/viewshedOverlay";
-import type { ViewshedStyle } from "./map/viewshedOverlay";
+import { computeBearing, getViewshedArcPoints, getViewshedRings } from "./map/viewshedOverlay";
 import { CinemaBar } from "./components/CinemaBar";
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
@@ -436,17 +435,12 @@ export default function App() {
     let animId: number;
     let lastLat = 0, lastLng = 0;
     const tick = () => {
-      // viewshed style 偵測
       const styleId = mapStyleIdRef.current;
-      const vsStyle: ViewshedStyle = styleId.includes("satellite") ? "satellite"
-        : ["light", "streets"].includes(styleId) ? "light" : "dark";
-      // 確保 viewshed 圖層存在（style 切換後會被清除）
-      addViewshedLayer(map, vsStyle);
+      const isSat = styleId.includes("satellite");
       const flight = flightsRef.current.find((f) => f.fr24_id === selectedFlightId);
       if (flight && flight.path.length > 0) {
         const t = timeRef.current;
         const path = flight.path;
-        // 線性插值取得精確位置 + 高度 + 航向
         let lat: number, lng: number, alt = 0, heading = 0;
         if (t <= path[0]![3]) {
           lat = path[0]![0]; lng = path[0]![1]; alt = path[0]![2];
@@ -472,20 +466,28 @@ export default function App() {
             }
           }
         }
-        // 只在飛機位置有變化時才更新地圖中心（暫停時讓使用者自由操控）
         const moved = Math.abs(lat - lastLat) > 0.0001 || Math.abs(lng - lastLng) > 0.0001;
         if (moved) {
           map.setCenter([lng, lat]);
           lastLat = lat;
           lastLng = lng;
         }
-        // 2D 地面扇形 + 3D 掃描線：每幀更新
-        updateViewshed(map, lat, lng, alt, heading, vsStyle, viewshedOpacityRef.current);
+        // 全部在 Three.js 渲染（無 Mapbox GeoJSON）
         const scene = flightSceneRef.current;
         if (scene) {
+          const vsOpacity = viewshedOpacityRef.current;
+          // 3D 掃描線
           const arcs = getViewshedArcPoints(lat, lng, alt, heading);
           const allPts = [...arcs.left, ...arcs.right];
-          scene.updateViewshedLines(allPts, lat, lng, alt, vsStyle === "satellite", viewshedOpacityRef.current);
+          scene.updateViewshedLines(allPts, lat, lng, alt, isSat, vsOpacity);
+          // 3D 地面扇形
+          const ringData = getViewshedRings(lat, lng, alt, heading);
+          if (ringData) {
+            scene.updateViewshedFans(
+              [...ringData.left, ...ringData.right],
+              lat, lng, isSat, vsOpacity,
+            );
+          }
         }
       }
       animId = requestAnimationFrame(tick);
@@ -493,7 +495,6 @@ export default function App() {
     animId = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(animId);
-      clearViewshed(map);
       flightSceneRef.current?.clearViewshedLines();
     };
   }, [trackMode, selectedFlightId]);

@@ -57,9 +57,11 @@ export class FlightScene {
   private showTrails = true;
   private lastMatrix: THREE.Matrix4 | null = null;
 
-  // 3D 視域掃描線
+  // 3D 視域
   private viewshedLines: THREE.LineSegments | null = null;
-  private viewshedMat: THREE.LineBasicMaterial | null = null;
+  private viewshedLineMat: THREE.LineBasicMaterial | null = null;
+  private viewshedFan: THREE.Mesh | null = null;
+  private viewshedFanMat: THREE.ShaderMaterial | null = null;
 
   // 靜態軌跡
   private staticMesh: THREE.LineSegments | null = null;
@@ -640,7 +642,7 @@ export class FlightScene {
           ? new THREE.Color(1.0, 1.0, 1.0)   // 白
           : new THREE.Color(1.0, 0.6, 0.15)); // 橘
 
-      this.viewshedMat = new THREE.LineBasicMaterial({
+      this.viewshedLineMat = new THREE.LineBasicMaterial({
         color,
         transparent: true,
         opacity: 0.15 * opacity,
@@ -651,22 +653,22 @@ export class FlightScene {
       const geo = new THREE.BufferGeometry();
       const positions = new Float32Array(vertCount * 3);
       geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-      this.viewshedLines = new THREE.LineSegments(geo, this.viewshedMat);
+      this.viewshedLines = new THREE.LineSegments(geo, this.viewshedLineMat);
       this.viewshedLines.frustumCulled = false;
       this.scene.add(this.viewshedLines);
     }
 
     // 更新顏色
-    if (this.viewshedMat) {
+    if (this.viewshedLineMat) {
       if (isSatellite) {
-        this.viewshedMat.color.setRGB(1.0, 0.82, 0.3);
+        this.viewshedLineMat.color.setRGB(1.0, 0.82, 0.3);
       } else if (this.isDarkTheme) {
-        this.viewshedMat.color.setRGB(1.0, 1.0, 1.0);
+        this.viewshedLineMat.color.setRGB(1.0, 1.0, 1.0);
       } else {
-        this.viewshedMat.color.setRGB(1.0, 0.6, 0.15);
+        this.viewshedLineMat.color.setRGB(1.0, 0.6, 0.15);
       }
-      this.viewshedMat.blending = this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending;
-      this.viewshedMat.opacity = 0.15 * opacity;
+      this.viewshedLineMat.blending = this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending;
+      this.viewshedLineMat.opacity = 0.15 * opacity;
     }
 
     const geo = this.viewshedLines.geometry;
@@ -709,13 +711,180 @@ export class FlightScene {
     posAttr.needsUpdate = true;
   }
 
+  /**
+   * 更新 3D 視域扇形 mesh（取代 Mapbox GeoJSON）
+   * rings: 每側的漸層環（由 getViewshedRings 產生）
+   */
+  updateViewshedFans(
+    rings: { arc: [number, number][]; alpha: number }[],
+    originLat: number, originLng: number,
+    isSatellite: boolean,
+    opacity: number = 0.5,
+  ) {
+    if (rings.length === 0) {
+      if (this.viewshedFan) this.viewshedFan.visible = false;
+      return;
+    }
+
+    const origin = toMercator(originLat, originLng, 0);
+    const segments = rings[0]!.arc.length - 1; // arc 有 segments+1 個點
+    const ringCount = rings.length;
+
+    // 頂點數：1 中心 + ringCount × (segments+1) 弧線頂點
+    const vertPerSide = 1 + ringCount * (segments + 1);
+    const totalVerts = vertPerSide * 2; // 左 + 右兩側
+    // 三角形數：per side = segments (center fan) + (ringCount-1) * segments * 2 (ring strips)
+    const trisPerSide = segments + (ringCount - 1) * segments * 2;
+    const totalTris = trisPerSide * 2;
+
+    if (!this.viewshedFanMat) {
+      const color = isSatellite
+        ? new THREE.Color(1.0, 0.82, 0.3)
+        : (this.isDarkTheme ? new THREE.Color(1.0, 1.0, 1.0) : new THREE.Color(1.0, 0.6, 0.15));
+
+      this.viewshedFanMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uColor: { value: color },
+          uOpacity: { value: opacity },
+        },
+        vertexShader: `
+          attribute float alpha;
+          varying float vAlpha;
+          void main() {
+            vAlpha = alpha;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 uColor;
+          uniform float uOpacity;
+          varying float vAlpha;
+          void main() {
+            gl_FragColor = vec4(uColor, uOpacity * vAlpha);
+          }
+        `,
+        transparent: true,
+        blending: this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(totalVerts * 3), 3));
+      geo.setAttribute("alpha", new THREE.BufferAttribute(new Float32Array(totalVerts), 1));
+      geo.setIndex(new THREE.BufferAttribute(new Uint32Array(totalTris * 3), 1));
+
+      this.viewshedFan = new THREE.Mesh(geo, this.viewshedFanMat);
+      this.viewshedFan.frustumCulled = false;
+      this.scene.add(this.viewshedFan);
+    }
+
+    // 更新 uniforms
+    const colorU = this.viewshedFanMat.uniforms["uColor"]!;
+    if (isSatellite) {
+      (colorU.value as THREE.Color).setRGB(1.0, 0.82, 0.3);
+    } else if (this.isDarkTheme) {
+      (colorU.value as THREE.Color).setRGB(1.0, 1.0, 1.0);
+    } else {
+      (colorU.value as THREE.Color).setRGB(1.0, 0.6, 0.15);
+    }
+    this.viewshedFanMat.uniforms["uOpacity"]!.value = opacity;
+    this.viewshedFanMat.blending = this.isDarkTheme ? THREE.AdditiveBlending : THREE.NormalBlending;
+
+    this.viewshedFan!.visible = true;
+
+    const geo = this.viewshedFan!.geometry;
+    const posArr = (geo.getAttribute("position") as THREE.BufferAttribute).array as Float32Array;
+
+    // 確保 buffer 夠大
+    if (posArr.length < totalVerts * 3) {
+      geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(totalVerts * 3), 3));
+      geo.setAttribute("alpha", new THREE.BufferAttribute(new Float32Array(totalVerts), 1));
+      geo.setIndex(new THREE.BufferAttribute(new Uint32Array(totalTris * 3), 1));
+    }
+
+    const pos = (geo.getAttribute("position") as THREE.BufferAttribute).array as Float32Array;
+    const alp = (geo.getAttribute("alpha") as THREE.BufferAttribute).array as Float32Array;
+    const idx = geo.getIndex()!.array as Uint32Array;
+
+    let vOff = 0; // vertex offset (per float)
+    let aOff = 0; // alpha offset
+    let iOff = 0; // index offset
+
+    // 左右兩側共用同一個 rings array（左半在前，右半在後）
+    // rings 已包含兩側的資料（caller 合併傳入）
+    // 但我們需要知道哪些是左、哪些是右，這裡 rings 是合併的
+    // 簡化：把所有 rings 視為一個大 fan，中心在 origin
+
+    // 寫入兩側：sideIdx=0 是前半 rings，sideIdx=1 是後半
+    const halfLen = rings.length / 2;
+
+    for (let side = 0; side < 2; side++) {
+      const baseVert = (vOff / 3);
+      const sideRings = rings.slice(side * halfLen, (side + 1) * halfLen);
+
+      // 中心頂點
+      pos[vOff++] = origin.x;
+      pos[vOff++] = origin.y;
+      pos[vOff++] = origin.z;
+      alp[aOff++] = 1.0; // 中心最亮
+
+      // 各環頂點
+      for (const ring of sideRings) {
+        for (const [lng, lat] of ring.arc) {
+          const m = toMercator(lat, lng, 0);
+          pos[vOff++] = m.x;
+          pos[vOff++] = m.y;
+          pos[vOff++] = m.z;
+          alp[aOff++] = ring.alpha;
+        }
+      }
+
+      // 索引：center fan (center → ring0)
+      const arcLen = sideRings[0]!.arc.length;
+      const ring0Start = baseVert + 1;
+      for (let s = 0; s < arcLen - 1; s++) {
+        idx[iOff++] = baseVert; // center
+        idx[iOff++] = ring0Start + s;
+        idx[iOff++] = ring0Start + s + 1;
+      }
+
+      // 索引：ring strips (ring[i] → ring[i+1])
+      for (let r = 0; r < sideRings.length - 1; r++) {
+        const curStart = baseVert + 1 + r * arcLen;
+        const nextStart = curStart + arcLen;
+        for (let s = 0; s < arcLen - 1; s++) {
+          idx[iOff++] = curStart + s;
+          idx[iOff++] = nextStart + s;
+          idx[iOff++] = curStart + s + 1;
+
+          idx[iOff++] = curStart + s + 1;
+          idx[iOff++] = nextStart + s;
+          idx[iOff++] = nextStart + s + 1;
+        }
+      }
+    }
+
+    (geo.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+    (geo.getAttribute("alpha") as THREE.BufferAttribute).needsUpdate = true;
+    geo.getIndex()!.needsUpdate = true;
+    geo.setDrawRange(0, iOff);
+  }
+
   clearViewshedLines() {
     if (this.viewshedLines) {
       this.scene.remove(this.viewshedLines);
       this.viewshedLines.geometry.dispose();
-      this.viewshedMat?.dispose();
+      this.viewshedLineMat?.dispose();
       this.viewshedLines = null;
-      this.viewshedMat = null;
+      this.viewshedLineMat = null;
+    }
+    if (this.viewshedFan) {
+      this.scene.remove(this.viewshedFan);
+      this.viewshedFan.geometry.dispose();
+      this.viewshedFanMat?.dispose();
+      this.viewshedFan = null;
+      this.viewshedFanMat = null;
     }
   }
 
