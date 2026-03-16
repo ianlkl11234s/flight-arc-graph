@@ -9,7 +9,6 @@ const HALF_FOV = 25;
 const GRADIENT_RINGS = 5;
 
 type ViewshedStyle = "dark" | "light" | "satellite";
-type ViewshedMode = "glow" | "spotlight";
 
 function visibleDistanceKm(altM: number): number {
   if (altM <= 0) return 0;
@@ -57,7 +56,6 @@ function getBaseColor(style: ViewshedStyle) {
   }
 }
 
-/** 產生扇形座標 */
 function fanCoords(
   lat: number, lng: number, radiusKm: number,
   centerAngle: number, halfFov: number, segments: number = 24,
@@ -73,57 +71,33 @@ function fanCoords(
   return coords;
 }
 
-/** 世界邊界（外框），用於 spotlight 模式 */
-const WORLD_RING: [number, number][] = [
-  [-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85],
-];
-
 function emptyFC(): GeoJSON.FeatureCollection {
   return { type: "FeatureCollection", features: [] };
 }
 
-// ── Glow 模式：填亮扇形 ──
-
+/**
+ * Glow 漸層扇形（疊加模式）
+ * perRing 提高：slider=1 時中心 = 5×0.06 = 0.30（明顯可見）
+ */
 function createGlowFeatures(
   lat: number, lng: number, radiusKm: number, heading: number,
   opacity: number,
 ): GeoJSON.Feature[] {
-  const perRing = 0.025 * opacity;
+  const perRing = 0.06 * opacity;
   const features: GeoJSON.Feature[] = [];
 
   for (const offset of [SIDE_OFFSET, -SIDE_OFFSET]) {
     for (let r = GRADIENT_RINGS; r >= 1; r--) {
       const radius = radiusKm * (r / GRADIENT_RINGS);
       const coords = fanCoords(lat, lng, radius, heading + offset, HALF_FOV);
-      const isEdge = r === GRADIENT_RINGS;
       features.push({
         type: "Feature",
-        properties: { opacity: perRing, isEdge },
+        properties: { opacity: perRing, isEdge: r === GRADIENT_RINGS },
         geometry: { type: "Polygon", coordinates: [coords] },
       });
     }
   }
   return features;
-}
-
-// ── Spotlight 模式：暗化扇形以外的區域 ──
-
-function createSpotlightFeatures(
-  lat: number, lng: number, radiusKm: number, heading: number,
-  opacity: number,
-): GeoJSON.Feature[] {
-  // 單一遮罩：世界 polygon - 2 個扇形 hole（效能最佳）
-  const leftHole = fanCoords(lat, lng, radiusKm, heading + SIDE_OFFSET, HALF_FOV);
-  const rightHole = fanCoords(lat, lng, radiusKm, heading - SIDE_OFFSET, HALF_FOV);
-
-  return [{
-    type: "Feature",
-    properties: { opacity: 0.45 * opacity, isEdge: true },
-    geometry: {
-      type: "Polygon",
-      coordinates: [WORLD_RING, leftHole.slice().reverse(), rightHole.slice().reverse()],
-    },
-  }];
 }
 
 // ── Public API ──
@@ -167,7 +141,6 @@ export function updateViewshed(
   altitudeM: number, heading: number,
   style: ViewshedStyle,
   opacity: number = 0.5,
-  mode: ViewshedMode = "glow",
 ) {
   if (!map.isStyleLoaded()) return;
   const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
@@ -180,25 +153,13 @@ export function updateViewshed(
   }
 
   // 更新顏色
+  const { r, g, b } = getBaseColor(style);
   try {
-    if (mode === "spotlight") {
-      // Spotlight: 用黑色暗化外部
-      if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", "rgb(0,0,0)");
-      if (map.getLayer(EDGE_LAYER)) {
-        const { r, g, b } = getBaseColor(style);
-        map.setPaintProperty(EDGE_LAYER, "line-color", `rgba(${r},${g},${b},${0.2 * opacity})`);
-      }
-    } else {
-      const { r, g, b } = getBaseColor(style);
-      if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", `rgb(${r},${g},${b})`);
-      if (map.getLayer(EDGE_LAYER)) map.setPaintProperty(EDGE_LAYER, "line-color", `rgba(${r},${g},${b},${0.15 * opacity * 2})`);
-    }
+    if (map.getLayer(FILL_LAYER)) map.setPaintProperty(FILL_LAYER, "fill-color", `rgb(${r},${g},${b})`);
+    if (map.getLayer(EDGE_LAYER)) map.setPaintProperty(EDGE_LAYER, "line-color", `rgba(${r},${g},${b},${0.3 * opacity})`);
   } catch { /* style 切換中 */ }
 
-  const features = mode === "spotlight"
-    ? createSpotlightFeatures(lat, lng, radiusKm, heading, opacity)
-    : createGlowFeatures(lat, lng, radiusKm, heading, opacity);
-
+  const features = createGlowFeatures(lat, lng, radiusKm, heading, opacity);
   source.setData({ type: "FeatureCollection", features });
 }
 
@@ -232,4 +193,4 @@ export function clearViewshed(map: MapboxMap) {
 }
 
 export { computeBearing };
-export type { ViewshedStyle, ViewshedMode };
+export type { ViewshedStyle };

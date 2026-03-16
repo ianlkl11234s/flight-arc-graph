@@ -228,8 +228,6 @@ export interface IconRailSidebarProps {
   onAirportGlowChange: (v: number) => void;
   viewshedOpacity: number;
   onViewshedOpacityChange: (v: number) => void;
-  viewshedMode: string;
-  onViewshedModeChange: (mode: string) => void;
   // Scope & Track mode
   scope: Scope;
   region: Region;
@@ -672,37 +670,14 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
         theme={theme}
       />
       {props.trackMode === "single" && (
-        <>
-          <SliderRow
-            label="View"
-            value={props.viewshedOpacity}
-            min={0} max={1} step={0.05}
-            format={(v) => v.toFixed(2)}
-            onChange={props.onViewshedOpacityChange}
-            theme={theme}
-          />
-          <div style={{ display: "flex", gap: 4, marginTop: 2 }}>
-            {(["glow", "spotlight"] as const).map(m => (
-              <button
-                key={m}
-                onClick={() => props.onViewshedModeChange(m)}
-                style={{
-                  flex: 1,
-                  padding: "3px 0",
-                  borderRadius: 6,
-                  border: `1px solid ${props.viewshedMode === m ? theme.ACTIVE_BORDER : theme.BORDER}`,
-                  background: props.viewshedMode === m ? theme.ACTIVE_BG : "transparent",
-                  color: props.viewshedMode === m ? theme.ACTIVE_TEXT : theme.DIM,
-                  fontSize: 11,
-                  fontFamily: "monospace",
-                  cursor: "pointer",
-                }}
-              >
-                {m === "glow" ? "Glow" : "Spotlight"}
-              </button>
-            ))}
-          </div>
-        </>
+        <SliderRow
+          label="View"
+          value={props.viewshedOpacity}
+          min={0} max={2} step={0.05}
+          format={(v) => v.toFixed(2)}
+          onChange={props.onViewshedOpacityChange}
+          theme={theme}
+        />
       )}
     </>
   );
