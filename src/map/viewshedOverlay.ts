@@ -112,28 +112,18 @@ function createSpotlightFeatures(
   lat: number, lng: number, radiusKm: number, heading: number,
   opacity: number,
 ): GeoJSON.Feature[] {
-  const features: GeoJSON.Feature[] = [];
-  // 3 層疊加（比 glow 少，減少效能開銷），opacity=1 時外圈最暗 = 3×0.20 = 0.60
-  const perRing = 0.20 * opacity;
-  const spotlightRings = 3;
+  // 單一遮罩：世界 polygon - 2 個扇形 hole（效能最佳）
+  const leftHole = fanCoords(lat, lng, radiusKm, heading + SIDE_OFFSET, HALF_FOV);
+  const rightHole = fanCoords(lat, lng, radiusKm, heading - SIDE_OFFSET, HALF_FOV);
 
-  // 從小到大：每層是「世界 - N% 扇形」的反轉遮罩
-  // 外圈被更多層疊加 → 越暗，內圈越亮
-  for (let r = spotlightRings; r >= 1; r--) {
-    const radius = radiusKm * (r / spotlightRings);
-    const leftHole = fanCoords(lat, lng, radius, heading + SIDE_OFFSET, HALF_FOV);
-    const rightHole = fanCoords(lat, lng, radius, heading - SIDE_OFFSET, HALF_FOV);
-
-    features.push({
-      type: "Feature",
-      properties: { opacity: perRing, isEdge: r === spotlightRings },
-      geometry: {
-        type: "Polygon",
-        coordinates: [WORLD_RING, leftHole.slice().reverse(), rightHole.slice().reverse()],
-      },
-    });
-  }
-  return features;
+  return [{
+    type: "Feature",
+    properties: { opacity: 0.45 * opacity, isEdge: true },
+    geometry: {
+      type: "Polygon",
+      coordinates: [WORLD_RING, leftHole.slice().reverse(), rightHole.slice().reverse()],
+    },
+  }];
 }
 
 // ── Public API ──
