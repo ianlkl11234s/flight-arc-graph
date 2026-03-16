@@ -23,6 +23,7 @@ import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCat
 import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
 import { useCinemaCamera } from "./hooks/useCinemaCamera";
+import { addViewshedLayer, updateViewshed, clearViewshed, computeBearing } from "./map/viewshedOverlay";
 import { CinemaBar } from "./components/CinemaBar";
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
@@ -420,7 +421,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAirport, scope, trackMode, selectedFlightId]);
 
-  // Track Single 模式：相機鎖定飛機，飛機固定在畫面中央
+  // Track Single 模式：相機鎖定飛機 + 動態視域扇形
   useEffect(() => {
     if (trackMode !== "single" || !selectedFlightId) return;
     const map = mapRef.current;
@@ -428,16 +429,23 @@ export default function App() {
 
     let animId: number;
     const tick = () => {
+      // 確保 viewshed 圖層存在（style 切換後會被清除）
+      addViewshedLayer(map, isDarkThemeRef.current);
       const flight = flightsRef.current.find((f) => f.fr24_id === selectedFlightId);
       if (flight && flight.path.length > 0) {
         const t = timeRef.current;
         const path = flight.path;
-        // 線性插值取得精確位置
-        let lat: number, lng: number;
+        // 線性插值取得精確位置 + 高度 + 航向
+        let lat: number, lng: number, alt = 0, heading = 0;
         if (t <= path[0]![3]) {
-          lat = path[0]![0]; lng = path[0]![1];
+          lat = path[0]![0]; lng = path[0]![1]; alt = path[0]![2];
+          if (path.length > 1) heading = computeBearing(path[0]![0], path[0]![1], path[1]![0], path[1]![1]);
         } else if (t >= path[path.length - 1]![3]) {
-          lat = path[path.length - 1]![0]; lng = path[path.length - 1]![1];
+          lat = path[path.length - 1]![0]; lng = path[path.length - 1]![1]; alt = path[path.length - 1]![2];
+          if (path.length > 1) {
+            const n = path.length;
+            heading = computeBearing(path[n - 2]![0], path[n - 2]![1], path[n - 1]![0], path[n - 1]![1]);
+          }
         } else {
           lat = path[0]![0]; lng = path[0]![1];
           for (let i = 1; i < path.length; i++) {
@@ -447,16 +455,22 @@ export default function App() {
               const r = (t - a[3]) / (b[3] - a[3]);
               lat = a[0] + (b[0] - a[0]) * r;
               lng = a[1] + (b[1] - a[1]) * r;
+              alt = a[2] + (b[2] - a[2]) * r;
+              heading = computeBearing(a[0], a[1], b[0], b[1]);
               break;
             }
           }
         }
         map.setCenter([lng, lat]);
+        updateViewshed(map, lat, lng, alt, heading);
       }
       animId = requestAnimationFrame(tick);
     };
     animId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animId);
+    return () => {
+      cancelAnimationFrame(animId);
+      clearViewshed(map);
+    };
   }, [trackMode, selectedFlightId]);
 
   // ESC 退出拍攝模式
