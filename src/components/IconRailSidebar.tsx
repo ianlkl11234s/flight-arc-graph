@@ -226,6 +226,10 @@ export interface IconRailSidebarProps {
   onOrbScaleChange: (v: number) => void;
   onAirportOpacityChange: (v: number) => void;
   onAirportGlowChange: (v: number) => void;
+  viewshedOpacity: number;
+  onViewshedOpacityChange: (v: number) => void;
+  viewshedSharpness: number;
+  onViewshedSharpnessChange: (v: number) => void;
   // Scope & Track mode
   scope: Scope;
   region: Region;
@@ -667,6 +671,26 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
         onChange={props.onAirportGlowChange}
         theme={theme}
       />
+      {props.trackMode === "single" && (
+        <>
+          <SliderRow
+            label="View"
+            value={props.viewshedOpacity}
+            min={0} max={2} step={0.05}
+            format={(v) => v.toFixed(2)}
+            onChange={props.onViewshedOpacityChange}
+            theme={theme}
+          />
+          <SliderRow
+            label="Edge"
+            value={props.viewshedSharpness}
+            min={0} max={1} step={0.05}
+            format={(v) => v.toFixed(2)}
+            onChange={props.onViewshedSharpnessChange}
+            theme={theme}
+          />
+        </>
+      )}
     </>
   );
 }

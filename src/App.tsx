@@ -23,6 +23,7 @@ import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCat
 import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
 import { useCinemaCamera } from "./hooks/useCinemaCamera";
+import { computeBearing, getViewshedArcPoints, getViewshedRings } from "./map/viewshedOverlay";
 import { CinemaBar } from "./components/CinemaBar";
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
@@ -128,6 +129,8 @@ export default function App() {
   const [aircraftFilter, setAircraftFilter] = useState<AircraftFilterKey>("all");
   const [captureMode, setCaptureMode] = useState(false);
   const [trailDisplay, setTrailDisplay] = useState<TrailDisplay>("full");
+  const [viewshedOpacity, setViewshedOpacity] = useState(0.5);
+  const [viewshedSharpness, setViewshedSharpness] = useState(0.5);
   const [showInfo, setShowInfo] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
@@ -305,6 +308,9 @@ export default function App() {
   const showTrailsRef = useRef(displayMode === "trails");
   const timeWindowRef = useRef(timeWindow);
   const trailDisplayRef = useRef(trailDisplay);
+  const mapStyleIdRef = useRef(mapStyleId);
+  const viewshedOpacityRef = useRef(viewshedOpacity);
+  const viewshedSharpnessRef = useRef(viewshedSharpness);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
 
@@ -319,6 +325,9 @@ export default function App() {
   showTrailsRef.current = displayMode === "trails";
   timeWindowRef.current = timeWindow;
   trailDisplayRef.current = trailDisplay;
+  mapStyleIdRef.current = mapStyleId;
+  viewshedOpacityRef.current = viewshedOpacity;
+  viewshedSharpnessRef.current = viewshedSharpness;
 
   const showTrails = displayMode === "trails";
 
@@ -420,24 +429,35 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAirport, scope, trackMode, selectedFlightId]);
 
-  // Track Single 模式：相機鎖定飛機，飛機固定在畫面中央
+  // Track Single 模式：相機鎖定飛機 + 動態視域扇形
   useEffect(() => {
     if (trackMode !== "single" || !selectedFlightId) return;
     const map = mapRef.current;
     if (!map) return;
 
     let animId: number;
+    let lastLat = 0, lastLng = 0;
+    // pre-allocated arrays 避免每幀 GC
+    let cachedArcPts: [number, number][] = [];
+    let cachedRings: { arc: [number, number][]; alpha: number }[] = [];
+
     const tick = () => {
+      const styleId = mapStyleIdRef.current;
+      const isSat = styleId.includes("satellite");
       const flight = flightsRef.current.find((f) => f.fr24_id === selectedFlightId);
       if (flight && flight.path.length > 0) {
         const t = timeRef.current;
         const path = flight.path;
-        // 線性插值取得精確位置
-        let lat: number, lng: number;
+        let lat: number, lng: number, alt = 0, heading = 0;
         if (t <= path[0]![3]) {
-          lat = path[0]![0]; lng = path[0]![1];
+          lat = path[0]![0]; lng = path[0]![1]; alt = path[0]![2];
+          if (path.length > 1) heading = computeBearing(path[0]![0], path[0]![1], path[1]![0], path[1]![1]);
         } else if (t >= path[path.length - 1]![3]) {
-          lat = path[path.length - 1]![0]; lng = path[path.length - 1]![1];
+          lat = path[path.length - 1]![0]; lng = path[path.length - 1]![1]; alt = path[path.length - 1]![2];
+          if (path.length > 1) {
+            const n = path.length;
+            heading = computeBearing(path[n - 2]![0], path[n - 2]![1], path[n - 1]![0], path[n - 1]![1]);
+          }
         } else {
           lat = path[0]![0]; lng = path[0]![1];
           for (let i = 1; i < path.length; i++) {
@@ -447,16 +467,41 @@ export default function App() {
               const r = (t - a[3]) / (b[3] - a[3]);
               lat = a[0] + (b[0] - a[0]) * r;
               lng = a[1] + (b[1] - a[1]) * r;
+              alt = a[2] + (b[2] - a[2]) * r;
+              heading = computeBearing(a[0], a[1], b[0], b[1]);
               break;
             }
           }
         }
-        map.setCenter([lng, lat]);
+        const moved = Math.abs(lat - lastLat) > 0.0001 || Math.abs(lng - lastLng) > 0.0001;
+        if (moved) {
+          map.setCenter([lng, lat]);
+          lastLat = lat;
+          lastLng = lng;
+
+          // 位置有變才重算幾何（避免 ~1500 trig/幀白做）
+          const arcs = getViewshedArcPoints(lat, lng, alt, heading);
+          cachedArcPts = arcs.left.concat(arcs.right);
+          const ringData = getViewshedRings(lat, lng, alt, heading, 5, 16, viewshedSharpnessRef.current);
+          cachedRings = ringData ? ringData.left.concat(ringData.right) : [];
+        }
+        // Three.js buffer 更新（每幀，用快取的幾何資料）
+        const scene = flightSceneRef.current;
+        if (scene) {
+          const vsOpacity = viewshedOpacityRef.current;
+          scene.updateViewshedLines(cachedArcPts, lat, lng, alt, isSat, vsOpacity);
+          if (cachedRings.length > 0) {
+            scene.updateViewshedFans(cachedRings, lat, lng, isSat, vsOpacity);
+          }
+        }
       }
       animId = requestAnimationFrame(tick);
     };
     animId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animId);
+    return () => {
+      cancelAnimationFrame(animId);
+      flightSceneRef.current?.clearViewshedLines();
+    };
   }, [trackMode, selectedFlightId]);
 
   // ESC 退出拍攝模式
@@ -612,6 +657,27 @@ export default function App() {
             onOrbitSpeedChange={cinema.setOrbitSpeed}
             orbitDirection={cinema.orbitDirection}
             onOrbitDirectionChange={cinema.setOrbitDirection}
+            keyframes={cinema.keyframes}
+            cinemaPhase={cinema.cinemaPhase}
+            onAddKeyframe={cinema.addKeyframe}
+            onRemoveKeyframe={cinema.removeKeyframe}
+            onUpdateKeyframe={cinema.updateKeyframe}
+            onMoveKeyframe={cinema.moveKeyframe}
+            onPreviewKeyframe={cinema.previewKeyframe}
+            onPlaySequence={cinema.playSequence}
+            onStopSequence={cinema.stopSequence}
+            sequenceProgress={cinema.sequenceProgress}
+            currentKfIndex={cinema.currentKfIndex}
+            onRecaptureKeyframe={cinema.recaptureKeyframe}
+            loop={cinema.loop}
+            onLoopChange={cinema.setLoop}
+            totalDuration={cinema.totalDuration}
+            savedSequences={cinema.savedSequences}
+            onSaveSequence={cinema.saveSequence}
+            onLoadSequence={cinema.loadSequence}
+            onDeleteSequence={cinema.deleteSequence}
+            onExportJSON={cinema.exportSequenceJSON}
+            onImportJSON={cinema.importSequenceJSON}
           />
           {/* 退出按鈕 */}
           <button
@@ -677,6 +743,10 @@ export default function App() {
             onOrbScaleChange={setOrbScale}
             onAirportOpacityChange={setAirportOpacity}
             onAirportGlowChange={setAirportGlow}
+            viewshedOpacity={viewshedOpacity}
+            onViewshedOpacityChange={setViewshedOpacity}
+            viewshedSharpness={viewshedSharpness}
+            onViewshedSharpnessChange={setViewshedSharpness}
             scope={scope}
             region={region}
             trackMode={trackMode}
