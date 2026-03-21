@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight } from "../types";
 import type { AircraftFilterKey } from "../data/aircraftCategories";
+import { COLOR_THEMES, type ColorTheme } from "../types/colorTheme";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
 
@@ -200,7 +201,7 @@ function getThemeColors(isDark: boolean): ThemeColors {
 
 /* ── Types ───────────────────────────────────────────────── */
 
-type PanelId = "settings" | "locations" | "calendar";
+type PanelId = "settings" | "locations" | "calendar" | "colors";
 
 export interface IconRailSidebarProps {
   // Theme
@@ -257,6 +258,11 @@ export interface IconRailSidebarProps {
   onStatsClick: () => void;
   // Info
   onInfoClick: () => void;
+  // Color Theme
+  colorThemeKey: string;
+  onColorThemeChange: (key: string) => void;
+  colorThemeOverride: ColorTheme | null;
+  onColorThemeOverride: (theme: ColorTheme) => void;
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -1045,6 +1051,115 @@ function CalendarPanel({
   );
 }
 
+/* ── Color Theme Panel ────────────────────────────────────── */
+
+function ColorThemePanel({ colorThemeKey, onColorThemeChange, colorThemeOverride, onColorThemeOverride, theme }:
+  Pick<IconRailSidebarProps, "colorThemeKey" | "onColorThemeChange" | "colorThemeOverride" | "onColorThemeOverride"> & { theme: ThemeColors }) {
+
+  const entries = Object.entries(COLOR_THEMES);
+  const ct: ColorTheme = colorThemeOverride ?? COLOR_THEMES[colorThemeKey] ?? COLOR_THEMES["default"]!;
+
+  const update = (patch: Partial<ColorTheme>) => {
+    onColorThemeOverride({ ...ct, ...patch });
+  };
+
+  const pickerStyle: React.CSSProperties = {
+    width: 24, height: 24, padding: 0, border: "1px solid rgba(255,255,255,0.2)",
+    borderRadius: 4, cursor: "pointer", background: "transparent",
+  };
+  const labelStyle: React.CSSProperties = {
+    fontSize: 10, color: theme.DIM, fontFamily: "monospace", minWidth: 55,
+  };
+
+  return (
+    <>
+      <SectionHeader theme={theme}>Preset</SectionHeader>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+        {entries.map(([key, preset]) => {
+          const active = key === colorThemeKey && !colorThemeOverride;
+          return (
+            <button
+              key={key}
+              onClick={() => onColorThemeChange(key)}
+              style={{
+                padding: "5px 10px",
+                borderRadius: 6,
+                border: `1px solid ${active ? theme.ACCENT_BLUE : theme.BORDER}`,
+                background: active ? "rgba(100,160,255,0.15)" : "rgba(255,255,255,0.05)",
+                color: active ? theme.ACCENT_BLUE : theme.DIM,
+                fontSize: 11,
+                fontFamily: "monospace",
+                cursor: "pointer",
+              }}
+            >
+              {preset.name}
+            </button>
+          );
+        })}
+      </div>
+
+      <SectionHeader theme={theme}>Adjust</SectionHeader>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {/* Trail colors */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={labelStyle}>Trails</span>
+          {ct.trailColors.map((c, i) => (
+            <input key={i} type="color" value={c} style={pickerStyle}
+              onChange={(e) => {
+                const newColors = [...ct.trailColors] as [string, string, string, string, string];
+                newColors[i] = e.target.value;
+                update({ trailColors: newColors });
+              }} />
+          ))}
+        </div>
+
+        {/* Static gradient (multi-stop) */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={labelStyle}>Static</span>
+          {ct.staticGradient.map((c, i) => (
+            <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+              {i > 0 && <span style={{ fontSize: 9, color: theme.DIM }}>→</span>}
+              <input type="color" value={c} style={pickerStyle}
+                onChange={(e) => {
+                  const g = [...ct.staticGradient];
+                  g[i] = e.target.value;
+                  update({ staticGradient: g });
+                }} />
+            </span>
+          ))}
+          {ct.staticGradient.length < 5 && (
+            <button onClick={() => update({ staticGradient: [...ct.staticGradient, ct.staticGradient[ct.staticGradient.length - 1]!] })}
+              style={{ ...pickerStyle, width: 20, height: 20, fontSize: 14, color: theme.DIM, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+          )}
+          {ct.staticGradient.length > 2 && (
+            <button onClick={() => update({ staticGradient: ct.staticGradient.slice(0, -1) })}
+              style={{ ...pickerStyle, width: 20, height: 20, fontSize: 14, color: theme.DIM, display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
+          )}
+        </div>
+        <div style={{ marginLeft: 59, height: 12, borderRadius: 3, background: `linear-gradient(90deg, ${ct.staticGradient.join(", ")})`, border: "1px solid rgba(255,255,255,0.1)", marginTop: -4, marginBottom: 4 }} />
+
+        {/* Orb glow */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={labelStyle}>Orb</span>
+          <input type="color" value={ct.orbGlow} style={pickerStyle}
+            onChange={(e) => update({ orbGlow: e.target.value })} />
+        </div>
+
+        {/* 2D Map trail */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={labelStyle}>2D Map</span>
+          <input type="color" value={ct.mapTrailA} style={pickerStyle}
+            onChange={(e) => update({ mapTrailA: e.target.value })} />
+          <span style={{ fontSize: 9, color: theme.DIM }}>→</span>
+          <input type="color" value={ct.mapTrailB} style={pickerStyle}
+            onChange={(e) => update({ mapTrailB: e.target.value })} />
+          <div style={{ flex: 1, height: 16, borderRadius: 3, background: `linear-gradient(90deg, ${ct.mapTrailA}, ${ct.mapTrailB})`, border: "1px solid rgba(255,255,255,0.1)" }} />
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ── Main Component ──────────────────────────────────────── */
 
 export function IconRailSidebar(props: IconRailSidebarProps) {
@@ -1150,6 +1265,16 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           <IconCalendar />
         </RailIcon>
 
+        {/* Colors */}
+        <RailIcon
+          active={activePanel === "colors"}
+          onClick={() => togglePanel("colors")}
+          title="Color Theme"
+          theme={theme}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="13.5" r="2.5"/><circle cx="6.5" cy="10.5" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>
+        </RailIcon>
+
         {/* Stats */}
         <RailIcon
           active={false}
@@ -1205,6 +1330,15 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               fullDates={props.fullDates}
               selectedDate={props.selectedDate}
               onDateSelect={props.onDateSelect}
+              theme={theme}
+            />
+          )}
+          {activePanel === "colors" && (
+            <ColorThemePanel
+              colorThemeKey={props.colorThemeKey}
+              onColorThemeChange={props.onColorThemeChange}
+              colorThemeOverride={props.colorThemeOverride}
+              onColorThemeOverride={props.onColorThemeOverride}
               theme={theme}
             />
           )}

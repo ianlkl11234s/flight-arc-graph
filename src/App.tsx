@@ -27,6 +27,8 @@ import { useCanvasRecorder } from "./hooks/useCanvasRecorder";
 import { computeBearing, getViewshedArcPoints, getViewshedRings } from "./map/viewshedOverlay";
 import { CinemaBar } from "./components/CinemaBar";
 import { RecordingGuide } from "./components/RecordingGuide";
+import { COLOR_THEMES, DEFAULT_THEME_KEY } from "./types/colorTheme";
+import { setMapTrailColors } from "./map/staticTrails";
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
   loadingProgress: { loaded: number; label: string } | null;
@@ -130,6 +132,8 @@ export default function App() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
   const [aircraftFilter, setAircraftFilter] = useState<AircraftFilterKey>("all");
   const [captureMode, setCaptureMode] = useState(false);
+  const [colorThemeKey, setColorThemeKey] = useState(() => localStorage.getItem("flight-arc-color-theme") ?? DEFAULT_THEME_KEY);
+  const [colorThemeOverride, setColorThemeOverride] = useState<import("./types/colorTheme").ColorTheme | null>(null);
   const [showGuide, setShowGuide] = useState(true);
   const [showGuideGrid, setShowGuideGrid] = useState(true);
   const [trailDisplay, setTrailDisplay] = useState<TrailDisplay>("full");
@@ -285,6 +289,31 @@ export default function App() {
       flightCount: flightsRef.current.length,
     };
   }, []);
+
+  const handleColorThemeChange = useCallback((key: string) => {
+    setColorThemeKey(key);
+    setColorThemeOverride(null);
+    localStorage.setItem("flight-arc-color-theme", key);
+    const theme = COLOR_THEMES[key];
+    if (!theme) return;
+    flightSceneRef.current?.setColorTheme(theme);
+    setMapTrailColors(theme.mapTrailA, theme.mapTrailB);
+  }, []);
+
+  const handleColorThemeOverride = useCallback((theme: import("./types/colorTheme").ColorTheme) => {
+    setColorThemeOverride(theme);
+    flightSceneRef.current?.setColorTheme(theme);
+    setMapTrailColors(theme.mapTrailA, theme.mapTrailB);
+  }, []);
+
+  // Apply initial color theme on scene ready
+  useEffect(() => {
+    const theme = COLOR_THEMES[colorThemeKey];
+    if (theme && flightSceneRef.current) {
+      flightSceneRef.current.setColorTheme(theme);
+      setMapTrailColors(theme.mapTrailA, theme.mapTrailB);
+    }
+  }, [colorThemeKey]);
 
   const handleStartRecording = useCallback(() => {
     recorder.startRecording(getOverlay);
@@ -946,6 +975,10 @@ export default function App() {
             onDateSelect={timeline.setSelectedDate}
             onStatsClick={() => setShowStats(true)}
             onInfoClick={() => setShowInfo(true)}
+            colorThemeKey={colorThemeKey}
+            onColorThemeChange={handleColorThemeChange}
+            colorThemeOverride={colorThemeOverride}
+            onColorThemeOverride={handleColorThemeOverride}
           />
 
           {/* 頂部控制列（sidebar 右邊） */}

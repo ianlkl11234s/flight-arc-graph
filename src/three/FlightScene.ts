@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import type { Flight, RenderMode, TrailPoint } from "../types";
+import type { ColorTheme } from "../types/colorTheme";
+import { COLOR_THEMES, DEFAULT_THEME_KEY, hexToRgb } from "../types/colorTheme";
 import { toMercator } from "../utils/coordinates";
 import { getTrailUpToTime } from "../utils/interpolation";
 import { LightTrail } from "./LightTrail";
@@ -11,16 +13,7 @@ import staticTrailFrag from "./shaders/staticTrail.frag?raw";
 /** 預計算的 Mercator 座標快取：[mx, my, mz, timestamp] */
 type MercatorPoint = [number, number, number, number];
 
-// 暗色主題調色盤（Additive Blending 用，淺色系）
-const DARK_COLORS = [
-  new THREE.Color(0.3, 0.6, 1.0),
-  new THREE.Color(0.2, 0.8, 0.9),
-  new THREE.Color(0.5, 0.4, 1.0),
-  new THREE.Color(0.3, 0.9, 0.7),
-  new THREE.Color(0.6, 0.5, 1.0),
-];
-
-// 亮色主題調色盤（Normal Blending 用，深飽和色系）
+// 亮色主題 fallback（Normal Blending 用，深飽和色系）
 const LIGHT_COLORS = [
   new THREE.Color(0.05, 0.15, 0.6),  // 深藍
   new THREE.Color(0.6, 0.05, 0.15),  // 深紅
@@ -28,6 +21,13 @@ const LIGHT_COLORS = [
   new THREE.Color(0.0, 0.35, 0.35),  // 深青
   new THREE.Color(0.5, 0.25, 0.0),   // 深琥珀
 ];
+
+function themeToColors(theme: ColorTheme): THREE.Color[] {
+  return theme.trailColors.map((hex) => {
+    const [r, g, b] = hexToRgb(hex);
+    return new THREE.Color(r, g, b);
+  });
+}
 
 /** Trail pool 上限：超過時回收最久未使用的 */
 const MAX_TRAILS = 600;
@@ -55,6 +55,8 @@ export class FlightScene {
   private currentStaticOpacity = 0.2;
   private isDarkTheme = true;
   private showTrails = true;
+  private colorTheme: ColorTheme = COLOR_THEMES[DEFAULT_THEME_KEY]!;
+  private themeColors: THREE.Color[] = themeToColors(COLOR_THEMES[DEFAULT_THEME_KEY]!);
   private lastMatrix: THREE.Matrix4 | null = null;
 
   // 3D 視域
@@ -100,7 +102,7 @@ export class FlightScene {
   private static readonly VERTS_PER_FRAME = 10000;
 
   private get colors() {
-    return this.isDarkTheme ? DARK_COLORS : LIGHT_COLORS;
+    return this.isDarkTheme ? this.themeColors : LIGHT_COLORS;
   }
 
   private get blending() {
@@ -127,7 +129,20 @@ export class FlightScene {
   setTheme(isDark: boolean) {
     if (this.isDarkTheme === isDark) return;
     this.isDarkTheme = isDark;
+    this.applyColors();
+  }
 
+  setColorTheme(theme: ColorTheme) {
+    this.colorTheme = theme;
+    this.themeColors = themeToColors(theme);
+    this.applyColors();
+  }
+
+  getColorTheme(): ColorTheme {
+    return this.colorTheme;
+  }
+
+  private applyColors() {
     let idx = 0;
     for (const entry of this.trails.values()) {
       const color = this.colors[idx % this.colors.length]!;
@@ -136,7 +151,10 @@ export class FlightScene {
       entry.trail.setBlending(this.blending);
     }
 
-    this.instancedOrbs?.setTheme(this.colors[0]!, this.blending);
+    const orbColor = this.isDarkTheme
+      ? (() => { const [r, g, b] = hexToRgb(this.colorTheme.orbGlow); return new THREE.Color(r, g, b); })()
+      : this.colors[0]!;
+    this.instancedOrbs?.setTheme(orbColor, this.blending);
     this.forceRebuildStatic();
   }
 
@@ -261,16 +279,25 @@ export class FlightScene {
     if (!state || !this.staticMesh || !this.staticGlowMesh) return;
 
     const MAX_ALT = 13000;
-    let lowR: number, lowG: number, lowB: number;
-    let highR: number, highG: number, highB: number;
 
-    if (this.isDarkTheme) {
-      lowR = 1.0; lowG = 0.8; lowB = 0.5;
-      highR = 0.5; highG = 0.75; highB = 1.0;
-    } else {
-      lowR = 0.6; lowG = 0.1; lowB = 0.05;
-      highR = 0.05; highG = 0.15; highB = 0.55;
-    }
+    // 多色停漸層
+    const gradientStops: [number, number, number][] = this.isDarkTheme
+      ? this.colorTheme.staticGradient.map((hex) => hexToRgb(hex))
+      : [[0.6, 0.1, 0.05], [0.05, 0.15, 0.55]];
+
+    const lerpGradient = (t: number): [number, number, number] => {
+      if (gradientStops.length === 1) return gradientStops[0]!;
+      const segments = gradientStops.length - 1;
+      const seg = Math.min(Math.floor(t * segments), segments - 1);
+      const localT = t * segments - seg;
+      const a = gradientStops[seg]!;
+      const b = gradientStops[seg + 1]!;
+      return [
+        a[0] + (b[0] - a[0]) * localT,
+        a[1] + (b[1] - a[1]) * localT,
+        a[2] + (b[2] - a[2]) * localT,
+      ];
+    };
 
     let vertsThisFrame = 0;
     const limit = FlightScene.VERTS_PER_FRAME;
@@ -308,13 +335,15 @@ export class FlightScene {
         state.positions[state.offset++] = mb.z;
 
         let t = Math.min(Math.max(a[2] / MAX_ALT, 0), 1);
-        state.colors[state.cOffset++] = lowR + (highR - lowR) * t;
-        state.colors[state.cOffset++] = lowG + (highG - lowG) * t;
-        state.colors[state.cOffset++] = lowB + (highB - lowB) * t;
+        let [cr, cg, cb] = lerpGradient(t);
+        state.colors[state.cOffset++] = cr;
+        state.colors[state.cOffset++] = cg;
+        state.colors[state.cOffset++] = cb;
         t = Math.min(Math.max(b[2] / MAX_ALT, 0), 1);
-        state.colors[state.cOffset++] = lowR + (highR - lowR) * t;
-        state.colors[state.cOffset++] = lowG + (highG - lowG) * t;
-        state.colors[state.cOffset++] = lowB + (highB - lowB) * t;
+        [cr, cg, cb] = lerpGradient(t);
+        state.colors[state.cOffset++] = cr;
+        state.colors[state.cOffset++] = cg;
+        state.colors[state.cOffset++] = cb;
 
         state.alphas[state.aOffset++] = 1.0;
         state.alphas[state.aOffset++] = 1.0;

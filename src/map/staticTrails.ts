@@ -16,29 +16,40 @@ function hashToUnit(str: string): number {
   return (hash % 10000) / 10000;
 }
 
-/**
- * 暗色主題：t=0 → 白色 #ffffff，t=1 → 橘色 #ff8833
- * 亮色主題：t=0 → 深藍 #1a3a8a，t=1 → 深紅 #8a1a2a
- */
-function lerpColorDark(t: number): string {
-  const r = Math.round(255 + (0xff - 255) * t);
-  const g = Math.round(255 + (0x88 - 255) * t);
-  const b = Math.round(255 + (0x33 - 255) * t);
-  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+function parseHex(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
 }
 
-function lerpColorLight(t: number): string {
-  const r = Math.round(26 + (138 - 26) * t);
-  const g = Math.round(58 + (26 - 58) * t);
-  const b = Math.round(138 + (42 - 138) * t);
-  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+/** 產生 lerp 函式，在兩個 hex 色之間插值 */
+function makeLerpColor(hexA: string, hexB: string): (t: number) => string {
+  const [ar, ag, ab] = parseHex(hexA);
+  const [br, bg, bb] = parseHex(hexB);
+  return (t: number) => {
+    const r = Math.round(ar + (br - ar) * t);
+    const g = Math.round(ag + (bg - ag) * t);
+    const b = Math.round(ab + (bb - ab) * t);
+    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+  };
+}
+
+// Default fallbacks
+const lerpColorDark = makeLerpColor("#ffffff", "#ff8833");
+const lerpColorLight = makeLerpColor("#1a3a8a", "#8a1a2a");
+
+// Custom theme colors (mutable)
+let customLerpDark: ((t: number) => string) | null = null;
+
+/** 設定 2D 軌跡的自訂顏色 */
+export function setMapTrailColors(hexA: string, hexB: string) {
+  customLerpDark = makeLerpColor(hexA, hexB);
 }
 
 /**
  * 將航班路徑轉為 GeoJSON FeatureCollection
  */
 function flightsToGeoJSON(flights: Flight[], isDark = true): GeoJSON.FeatureCollection {
-  const lerpColor = isDark ? lerpColorDark : lerpColorLight;
+  const lerpColor = isDark ? (customLerpDark ?? lerpColorDark) : lerpColorLight;
   return {
     type: "FeatureCollection",
     features: flights
