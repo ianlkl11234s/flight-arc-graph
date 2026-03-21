@@ -525,7 +525,7 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
       <ToggleButtons<Scope>
         options={[
           { value: "airport", label: "This Airport" },
-          { value: "region", label: props.region === "all" ? "All Regions" : props.region === "world" ? "All World" : `All ${props.region === "TW" ? "Taiwan" : props.region === "JP" ? "Japan" : "Hong Kong"}` },
+          { value: "region", label: props.region === "all" ? "All Regions" : props.region === "world" ? "All World" : `All ${REGION_LABELS[props.region] ?? props.region}` },
         ]}
         value={props.scope}
         onChange={props.onScopeChange}
@@ -634,7 +634,7 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
       <SliderRow
         label="Z"
         value={props.altOffset}
-        min={0} max={200} step={50}
+        min={0} max={1000} step={50}
         format={(v) => `+${v}m`}
         onChange={props.onAltOffsetChange}
         theme={theme}
@@ -735,11 +735,12 @@ function AirportButton({ preset, isActive, onAirportChange, onLocationJump, them
   );
 }
 
-const KNOWN_PREFIXES = ["RC", "RJ", "RO", "VH"];
+const KNOWN_PREFIXES = ["RC", "RJ", "RO", "VH", "K"];
 const REGION_ICAO_MATCH: Record<string, (icao: string) => boolean> = {
   TW: (icao) => icao.startsWith("RC"),
   JP: (icao) => icao.startsWith("RJ") || icao.startsWith("RO"),
   HK: (icao) => icao.startsWith("VH"),
+  US: (icao) => icao.startsWith("K"),
   world: (icao) => !KNOWN_PREFIXES.some((p) => icao.startsWith(p)),
   all: () => true,
 };
@@ -748,6 +749,7 @@ const REGION_LABELS: Record<string, string> = {
   TW: "台灣 Taiwan",
   JP: "日本 Japan",
   HK: "香港 Hong Kong",
+  US: "United States",
   world: "World",
 };
 
@@ -767,7 +769,7 @@ function LocationsPanel({
 
   // Group by region when "all"
   const groupedByRegion = region === "all"
-    ? (["TW", "JP", "HK", "world"] as const).map((r) => ({
+    ? (["TW", "JP", "HK", "US", "world"] as const).map((r) => ({
         key: r,
         label: REGION_LABELS[r],
         presets: CAMERA_PRESETS.filter((p) => available.has(p.icao) && REGION_ICAO_MATCH[r]!(p.icao)),

@@ -44,7 +44,7 @@ export type DataSource = "api" | "fused";
 export type Scope = "airport" | "region";
 
 /** 區域 */
-export type Region = "TW" | "JP" | "HK" | "world" | "all";
+export type Region = "TW" | "JP" | "HK" | "US" | "world" | "all";
 
 /** 軌跡模式：stack 顯示全部航班、single 追蹤單一航班 */
 export type TrackMode = "stack" | "single";

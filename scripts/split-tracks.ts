@@ -85,11 +85,12 @@ function reducePrecision(path: number[][]): number[][] {
 
 // ── Region matching ──
 
-const KNOWN = ["RC", "RJ", "RO", "VH"];
+const KNOWN = ["RC", "RJ", "RO", "VH", "K"];
 function getRegion(icao: string): string {
   if (icao.startsWith("RC")) return "TW";
   if (icao.startsWith("RJ") || icao.startsWith("RO")) return "JP";
   if (icao.startsWith("VH")) return "HK";
+  if (icao.startsWith("K")) return "US";
   return "other";
 }
 

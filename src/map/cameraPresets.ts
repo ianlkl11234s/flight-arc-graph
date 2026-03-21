@@ -94,6 +94,9 @@ export const AIRPORT_INFO: Record<string, { name: string; iata: string }> = {
   RORS: { name: "下地島空港", iata: "SHI" },
   RORY: { name: "与論空港", iata: "RNJ" },
   ROYN: { name: "与那国空港", iata: "OGN" },
+  // United States
+  KATL: { name: "Hartsfield-Jackson Atlanta Intl", iata: "ATL" },
+  KADW: { name: "Joint Base Andrews", iata: "ADW" },
   // Portugal
   LPMA: { name: "Aeroporto da Madeira", iata: "FNC" },
   // Bhutan
@@ -802,6 +805,23 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     icao: "ROYN",
     center: [122.9823, 24.4669],
     zoom: 12,
+    pitch: 55,
+    bearing: 0,
+  },
+  // United States
+  {
+    name: "Hartsfield-Jackson Atlanta Intl",
+    icao: "KATL",
+    center: [-84.4277, 33.6407],
+    zoom: 10.5,
+    pitch: 55,
+    bearing: 0,
+  },
+  {
+    name: "Joint Base Andrews",
+    icao: "KADW",
+    center: [-76.8667, 38.8108],
+    zoom: 11,
     pitch: 55,
     bearing: 0,
   },

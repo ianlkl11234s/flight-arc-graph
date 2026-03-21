@@ -77,6 +77,8 @@ interface UseCinemaCameraReturn {
   importSequenceJSON: () => void;
   loop: boolean;
   setLoop: (loop: boolean) => void;
+  pingpong: boolean;
+  setPingpong: (pp: boolean) => void;
   totalDuration: number;
 }
 
@@ -100,7 +102,7 @@ function lerpAngle(a: number, b: number, t: number): number {
   return a + diff * t;
 }
 
-function getTotalDuration(kfs: CameraKeyframe[]): number {
+export function getSequenceDuration(kfs: CameraKeyframe[]): number {
   let total = 0;
   for (let i = 0; i < kfs.length - 1; i++) {
     total += kfs[i]!.duration;
@@ -109,6 +111,92 @@ function getTotalDuration(kfs: CameraKeyframe[]): number {
   const last = kfs[kfs.length - 1];
   if (last?.hold) total += last.hold.duration;
   return total;
+}
+
+// 保留內部別名
+const getTotalDuration = getSequenceDuration;
+
+/**
+ * Pingpong: 將 elapsed 時間映射到正向/反向序列時間
+ * 一個 cycle = 2 × seqDuration（去 + 回）
+ */
+export function resolvePingpongTime(elapsed: number, seqDuration: number): number {
+  const cycle = seqDuration * 2;
+  const t = elapsed % cycle;
+  return t < seqDuration ? t : cycle - t;
+}
+
+export interface CameraState {
+  center: [number, number];
+  zoom: number;
+  pitch: number;
+  bearing: number;
+}
+
+/**
+ * 給定 elapsed 時間，計算該瞬間的相機狀態
+ * 純函式，無 side effect
+ */
+export function computeCameraAtTime(
+  keyframes: CameraKeyframe[],
+  elapsed: number,
+): CameraState | null {
+  if (keyframes.length < 2) return null;
+
+  const totalDur = getTotalDuration(keyframes);
+  // 超過總長 → 回傳最後一幀
+  if (elapsed >= totalDur) {
+    const last = keyframes[keyframes.length - 1]!;
+    return { center: last.center, zoom: last.zoom, pitch: last.pitch, bearing: last.bearing };
+  }
+
+  let cumulative = 0;
+  for (let i = 0; i < keyframes.length; i++) {
+    const kf = keyframes[i]!;
+
+    // Hold phase
+    if (kf.hold) {
+      if (elapsed < cumulative + kf.hold.duration) {
+        if (kf.hold.type === "orbit") {
+          const holdElapsed = elapsed - cumulative;
+          const holdSpeed = kf.hold.speed ?? 2;
+          const holdDir = kf.hold.direction ?? 1;
+          return {
+            center: kf.center,
+            zoom: kf.zoom,
+            pitch: kf.pitch,
+            bearing: kf.bearing + holdSpeed * holdDir * holdElapsed,
+          };
+        }
+        // still
+        return { center: kf.center, zoom: kf.zoom, pitch: kf.pitch, bearing: kf.bearing };
+      }
+      cumulative += kf.hold.duration;
+    }
+
+    // Transition phase
+    if (i < keyframes.length - 1) {
+      const dur = kf.duration;
+      if (elapsed < cumulative + dur) {
+        const t = (elapsed - cumulative) / dur;
+        const eased = applyEasing(t, kf.easing);
+        const next = keyframes[i + 1]!;
+        return {
+          center: [
+            kf.center[0] + (next.center[0] - kf.center[0]) * eased,
+            kf.center[1] + (next.center[1] - kf.center[1]) * eased,
+          ],
+          zoom: kf.zoom + (next.zoom - kf.zoom) * eased,
+          pitch: kf.pitch + (next.pitch - kf.pitch) * eased,
+          bearing: lerpAngle(kf.bearing, next.bearing, eased),
+        };
+      }
+      cumulative += dur;
+    }
+  }
+
+  const last = keyframes[keyframes.length - 1]!;
+  return { center: last.center, zoom: last.zoom, pitch: last.pitch, bearing: last.bearing };
 }
 
 // --- Hook ---
@@ -126,13 +214,16 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
   const [sequenceProgress, setSequenceProgress] = useState(0);
   const [currentKfIndex, setCurrentKfIndex] = useState(0);
   const [loop, setLoop] = useState(false);
+  const [pingpong, setPingpong] = useState(false);
   const loopRef = useRef(false);
+  const pingpongRef = useRef(false);
   const seqRafRef = useRef<number>(0);
   const seqStartRef = useRef<number>(0);
   const kfCounter = useRef(0);
 
-  // Sync loop ref
+  // Sync refs
   useEffect(() => { loopRef.current = loop; }, [loop]);
+  useEffect(() => { pingpongRef.current = pingpong; }, [pingpong]);
 
   // --- Orbit RAF ---
   useEffect(() => {
@@ -257,22 +348,22 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
       return;
     }
 
-    const totalDur = getTotalDuration(keyframes);
+    const seqDur = getTotalDuration(keyframes);
+    // pingpong 一個 cycle = 去 + 回 = 2× seqDur
+    const cycleDur = pingpongRef.current ? seqDur * 2 : seqDur;
 
     const animate = (now: number) => {
       if (seqStartRef.current === 0) seqStartRef.current = now;
-      const elapsed = (now - seqStartRef.current) / 1000;
+      const rawElapsed = (now - seqStartRef.current) / 1000;
 
-      if (elapsed >= totalDur) {
+      if (rawElapsed >= cycleDur) {
         if (loopRef.current) {
-          // Loop: 重頭開始
           seqStartRef.current = now;
           setSequenceProgress(0);
           setCurrentKfIndex(0);
           seqRafRef.current = requestAnimationFrame(animate);
           return;
         }
-        // 不 loop: 停止
         setCinemaPhase("edit");
         setSequenceProgress(1);
         setCurrentKfIndex(keyframes.length - 1);
@@ -280,59 +371,21 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
         return;
       }
 
-      setSequenceProgress(elapsed / totalDur);
+      setSequenceProgress(rawElapsed / cycleDur);
 
-      let cumulative = 0;
-      for (let i = 0; i < keyframes.length; i++) {
-        const kf = keyframes[i]!;
+      // pingpong: 後半段反向
+      const seqTime = pingpongRef.current
+        ? resolvePingpongTime(rawElapsed, seqDur)
+        : rawElapsed;
 
-        // Hold phase (到達此 KF 後先停留/旋轉，再過渡到下一個)
-        if (kf.hold) {
-          if (elapsed < cumulative + kf.hold.duration) {
-            setCurrentKfIndex(i);
-            if (kf.hold.type === "orbit") {
-              const holdElapsed = elapsed - cumulative;
-              const holdSpeed = kf.hold.speed ?? 2;
-              const holdDir = kf.hold.direction ?? 1;
-              map.jumpTo({
-                center: kf.center,
-                zoom: kf.zoom,
-                pitch: kf.pitch,
-                bearing: kf.bearing + holdSpeed * holdDir * holdElapsed,
-              });
-            }
-            // still: camera stays put
-
-            seqRafRef.current = requestAnimationFrame(animate);
-            return;
-          }
-          cumulative += kf.hold.duration;
-        }
-
-        // Transition phase (not last keyframe)
-        if (i < keyframes.length - 1) {
-          const dur = kf.duration;
-          if (elapsed < cumulative + dur) {
-            const t = (elapsed - cumulative) / dur;
-            const eased = applyEasing(t, kf.easing);
-            const next = keyframes[i + 1]!;
-
-            setCurrentKfIndex(i);
-            map.jumpTo({
-              center: [
-                kf.center[0] + (next.center[0] - kf.center[0]) * eased,
-                kf.center[1] + (next.center[1] - kf.center[1]) * eased,
-              ],
-              zoom: kf.zoom + (next.zoom - kf.zoom) * eased,
-              pitch: kf.pitch + (next.pitch - kf.pitch) * eased,
-              bearing: lerpAngle(kf.bearing, next.bearing, eased),
-            });
-
-            seqRafRef.current = requestAnimationFrame(animate);
-            return;
-          }
-          cumulative += dur;
-        }
+      const cam = computeCameraAtTime(keyframes, seqTime);
+      if (cam) {
+        map.jumpTo({
+          center: cam.center,
+          zoom: cam.zoom,
+          pitch: cam.pitch,
+          bearing: cam.bearing,
+        });
       }
 
       seqRafRef.current = requestAnimationFrame(animate);
@@ -446,6 +499,8 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
     currentKfIndex,
     loop,
     setLoop,
+    pingpong,
+    setPingpong,
     totalDuration,
     // Save/Load
     savedSequences,

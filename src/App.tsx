@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
 import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay } from "./types";
 import type { FlightScene } from "./three/FlightScene";
@@ -23,8 +23,10 @@ import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCat
 import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
 import { useCinemaCamera } from "./hooks/useCinemaCamera";
+import { useCanvasRecorder } from "./hooks/useCanvasRecorder";
 import { computeBearing, getViewshedArcPoints, getViewshedRings } from "./map/viewshedOverlay";
 import { CinemaBar } from "./components/CinemaBar";
+import { RecordingGuide } from "./components/RecordingGuide";
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
   loadingProgress: { loaded: number; label: string } | null;
@@ -128,6 +130,8 @@ export default function App() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
   const [aircraftFilter, setAircraftFilter] = useState<AircraftFilterKey>("all");
   const [captureMode, setCaptureMode] = useState(false);
+  const [showGuide, setShowGuide] = useState(true);
+  const [showGuideGrid, setShowGuideGrid] = useState(true);
   const [trailDisplay, setTrailDisplay] = useState<TrailDisplay>("full");
   const [viewshedOpacity, setViewshedOpacity] = useState(0.5);
   const [viewshedSharpness, setViewshedSharpness] = useState(0.5);
@@ -138,7 +142,7 @@ export default function App() {
   const { isMobile, isLandscape } = useIsMobile();
 
   // Region 相關 helper
-  const KNOWN_REGIONS = ["RC", "RJ", "RO", "VH"];
+  const KNOWN_REGIONS = ["RC", "RJ", "RO", "VH", "K"];
   const isKnownRegion = (icao: string) => KNOWN_REGIONS.some((p) => icao.startsWith(p));
 
   type RegionCfg = {
@@ -179,6 +183,15 @@ export default function App() {
       icaoMatch: (icao) => icao.startsWith("VH"),
       camera: { center: [113.9184, 22.3094], zoom: 10.5, pitch: 62, bearing: 106 },
       defaultAirport: "VHHH",
+      defaultDate: "2026-02-18",
+    },
+    US: {
+      title: "US Flight Arc",
+      label: "US",
+      icaoMatch: (icao) => icao.startsWith("K"),
+      camera: { center: [-84.4277, 33.6407], zoom: 10.5, pitch: 55, bearing: 0 },
+      regionCamera: { center: [-98.5795, 39.8283], zoom: 4.0, pitch: 25, bearing: 0 },
+      defaultAirport: "KATL",
       defaultDate: "2026-02-18",
     },
     world: {
@@ -230,6 +243,61 @@ export default function App() {
   const timeline = useTimeline({ availableDates });
   const mapRef = useRef<MapboxMap | null>(null);
   const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode });
+  const recorder = useCanvasRecorder({ map: mapRef.current });
+  const isRecording = recorder.recordingState === "recording";
+  const isExporting = isRecording || recorder.recordingState === "hq";
+
+  // ── Dynamic overlay provider: reads live map state each frame ──
+  const selectedAirportRef = useRef(selectedAirport);
+  const regionTitleRef = useRef(regionTitle);
+  const speedRef = useRef(timeline.speed);
+  selectedAirportRef.current = selectedAirport;
+  regionTitleRef.current = regionTitle;
+  speedRef.current = timeline.speed;
+
+  const getOverlay = useCallback(() => {
+    const map = mapRef.current;
+    const airport = selectedAirportRef.current;
+    const info = getAirportInfo(airport);
+    const airportLabel = info
+      ? `${info.name} / ${info.iata} / ${airport}`
+      : airport;
+    const timeLabel = new Date(timeRef.current * 1000).toLocaleString("zh-TW", {
+      timeZone: "Asia/Taipei",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    let cameraLabel = "";
+    if (map) {
+      const c = map.getCenter();
+      cameraLabel = `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)} z${map.getZoom().toFixed(1)} pitch ${map.getPitch().toFixed(0)} bearing ${map.getBearing().toFixed(0)}`;
+    }
+    return {
+      regionTitle: regionTitleRef.current,
+      airportLabel,
+      timeLabel,
+      cameraLabel,
+      speed: speedRef.current,
+      flightCount: flightsRef.current.length,
+    };
+  }, []);
+
+  const handleStartRecording = useCallback(() => {
+    recorder.startRecording(getOverlay);
+  }, [recorder, getOverlay]);
+
+  const handleStartHQExport = useCallback(() => {
+    recorder.startHQExport(
+      getOverlay,
+      cinema.keyframes,
+      cinema.loop,
+      cinema.pingpong,
+    );
+  }, [recorder, cinema.keyframes, cinema.loop, cinema.pingpong, getOverlay]);
 
   // 同步 timeline 日期給 airspace 載入
   useEffect(() => {
@@ -543,179 +611,244 @@ export default function App() {
       {/* ── 拍攝模式 vignette + 標題 ── */}
       {captureMode && (
         <>
-          {/* 暗角 vignette */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 20,
-              pointerEvents: "none",
-              background:
-                "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 80%, rgba(0,0,0,0.6) 100%)",
-            }}
-          />
-          {/* 左上標題 */}
-          <div
-            style={{
+          {/* 暗角 vignette — 錄製中由 composite canvas 繪製 */}
+          {!isExporting && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 20,
+                pointerEvents: "none",
+                background:
+                  "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 80%, rgba(0,0,0,0.6) 100%)",
+              }}
+            />
+          )}
+          {/* 左上標題 — 錄製中由 composite canvas 繪製，HTML 版隱藏 */}
+          {!isExporting && (
+            <div
+              style={{
+                position: "absolute",
+                top: isMobile ? 16 : 32,
+                left: isMobile ? 16 : 32,
+                zIndex: 21,
+                pointerEvents: "none",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: isMobile ? 20 : 28,
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                  color: "#fff",
+                  letterSpacing: isMobile ? 2 : 4,
+                  textShadow: "0 2px 12px rgba(0,0,0,0.6)",
+                }}
+              >
+                {regionTitle}
+              </div>
+              <div
+                style={{
+                  fontSize: 18,
+                  fontFamily: "monospace",
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.7)",
+                  letterSpacing: 2,
+                  marginTop: 6,
+                  textShadow: "0 1px 8px rgba(0,0,0,0.5)",
+                }}
+              >
+                {(() => {
+                  const info = getAirportInfo(selectedAirport);
+                  return info
+                    ? `${info.name} / ${info.iata} / ${selectedAirport}`
+                    : selectedAirport;
+                })()}
+              </div>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontFamily: "monospace",
+                  color: "rgba(255,255,255,0.4)",
+                  letterSpacing: 1,
+                  marginTop: 4,
+                  textShadow: "0 1px 6px rgba(0,0,0,0.5)",
+                }}
+              >
+                {new Date(timeline.currentTime * 1000).toLocaleString("zh-TW", {
+                  timeZone: "Asia/Taipei",
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
+              </div>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontFamily: "monospace",
+                  color: "rgba(255,255,255,0.3)",
+                  letterSpacing: 1,
+                  marginTop: 4,
+                  textShadow: "0 1px 6px rgba(0,0,0,0.5)",
+                }}
+              >
+                {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
+              </div>
+            </div>
+          )}
+          {/* Trail 模式切換 — 錄製中隱藏 */}
+          {!isExporting && (
+            <button
+              onClick={() => setTrailDisplay(d => d === "full" ? "progressive" : "full")}
+              style={{
+                position: "absolute",
+                top: isMobile ? 120 : 140,
+                left: isMobile ? 16 : 32,
+                zIndex: 21,
+                padding: "5px 14px",
+                borderRadius: 16,
+                border: "1px solid rgba(255,255,255,0.2)",
+                background: trailDisplay === "progressive" ? "rgba(255,255,255,0.15)" : "rgba(60,60,60,0.4)",
+                color: trailDisplay === "progressive" ? "#fff" : "rgba(255,255,255,0.6)",
+                fontSize: 13,
+                fontFamily: "monospace",
+                cursor: "pointer",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              Trail: {trailDisplay === "full" ? "Full" : "Progressive"}
+            </button>
+          )}
+          {/* 鏡頭控制列 — HTML overlay 不會被錄進影片 */}
+          <CinemaBar
+              isDarkTheme={isDarkTheme}
+              cinemaMode={cinema.cinemaMode}
+              onCinemaModeChange={cinema.setCinemaMode}
+              orbitSpeed={cinema.orbitSpeed}
+              onOrbitSpeedChange={cinema.setOrbitSpeed}
+              orbitDirection={cinema.orbitDirection}
+              onOrbitDirectionChange={cinema.setOrbitDirection}
+              keyframes={cinema.keyframes}
+              cinemaPhase={cinema.cinemaPhase}
+              onAddKeyframe={cinema.addKeyframe}
+              onRemoveKeyframe={cinema.removeKeyframe}
+              onUpdateKeyframe={cinema.updateKeyframe}
+              onMoveKeyframe={cinema.moveKeyframe}
+              onPreviewKeyframe={cinema.previewKeyframe}
+              onPlaySequence={cinema.playSequence}
+              onStopSequence={cinema.stopSequence}
+              sequenceProgress={cinema.sequenceProgress}
+              currentKfIndex={cinema.currentKfIndex}
+              onRecaptureKeyframe={cinema.recaptureKeyframe}
+              loop={cinema.loop}
+              onLoopChange={cinema.setLoop}
+              pingpong={cinema.pingpong}
+              onPingpongChange={cinema.setPingpong}
+              totalDuration={cinema.totalDuration}
+              savedSequences={cinema.savedSequences}
+              onSaveSequence={cinema.saveSequence}
+              onLoadSequence={cinema.loadSequence}
+              onDeleteSequence={cinema.deleteSequence}
+              onExportJSON={cinema.exportSequenceJSON}
+              onImportJSON={cinema.importSequenceJSON}
+              recordingState={recorder.recordingState}
+              recordingTime={recorder.recordingTime}
+              onStartRecording={handleStartRecording}
+              onStopRecording={recorder.stopRecording}
+              onStartHQExport={handleStartHQExport}
+              onStopHQExport={recorder.stopHQExport}
+              hqProgress={recorder.hqProgress}
+            />
+          {/* 退出按鈕 — 錄製中隱藏，避免誤按中斷 */}
+          {!isExporting && (
+            <button
+              onClick={() => setCaptureMode(false)}
+              style={isMobile ? {
+                position: "absolute",
+                top: 16,
+                right: 16,
+                zIndex: 21,
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                background: "rgba(0,0,0,0.4)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "#fff",
+                fontSize: 22,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backdropFilter: "blur(8px)",
+              } : {
+                position: "absolute",
+                bottom: 32,
+                right: 32,
+                zIndex: 21,
+                padding: "4px 12px",
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 4,
+                color: "rgba(255,255,255,0.4)",
+                fontSize: 11,
+                fontFamily: "monospace",
+                cursor: "pointer",
+              }}
+            >
+              {isMobile ? "✕" : "ESC"}
+            </button>
+          )}
+          {/* 攝影輔助框（HTML overlay，不會被錄進影片） */}
+          <RecordingGuide visible={showGuide} showGrid={showGuideGrid} />
+          {/* 輔助框切換按鈕 */}
+          {!isExporting && (
+            <div style={{
               position: "absolute",
               top: isMobile ? 16 : 32,
-              left: isMobile ? 16 : 32,
-              zIndex: 21,
-              pointerEvents: "none",
-            }}
-          >
-            <div
-              style={{
-                fontSize: isMobile ? 20 : 28,
-                fontFamily: "monospace",
-                fontWeight: 700,
-                color: "#fff",
-                letterSpacing: isMobile ? 2 : 4,
-                textShadow: "0 2px 12px rgba(0,0,0,0.6)",
-              }}
-            >
-              {regionTitle}
-            </div>
-            <div
-              style={{
-                fontSize: 18,
-                fontFamily: "monospace",
-                fontWeight: 600,
-                color: "rgba(255,255,255,0.7)",
-                letterSpacing: 2,
-                marginTop: 6,
-                textShadow: "0 1px 8px rgba(0,0,0,0.5)",
-              }}
-            >
-              {(() => {
-                const info = getAirportInfo(selectedAirport);
-                return info
-                  ? `${info.name} / ${info.iata} / ${selectedAirport}`
-                  : selectedAirport;
-              })()}
-            </div>
-            <div
-              style={{
-                fontSize: 14,
-                fontFamily: "monospace",
-                color: "rgba(255,255,255,0.4)",
-                letterSpacing: 1,
-                marginTop: 4,
-                textShadow: "0 1px 6px rgba(0,0,0,0.5)",
-              }}
-            >
-              {new Date(timeline.currentTime * 1000).toLocaleString("zh-TW", {
-                timeZone: "Asia/Taipei",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              })}
-            </div>
-            <div
-              style={{
-                fontSize: 14,
-                fontFamily: "monospace",
-                color: "rgba(255,255,255,0.3)",
-                letterSpacing: 1,
-                marginTop: 4,
-                textShadow: "0 1px 6px rgba(0,0,0,0.5)",
-              }}
-            >
-              {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
-            </div>
-          </div>
-          {/* Trail 模式切換 */}
-          <button
-            onClick={() => setTrailDisplay(d => d === "full" ? "progressive" : "full")}
-            style={{
-              position: "absolute",
-              top: isMobile ? 120 : 140,
-              left: isMobile ? 16 : 32,
-              zIndex: 21,
-              padding: "5px 14px",
-              borderRadius: 16,
-              border: "1px solid rgba(255,255,255,0.2)",
-              background: trailDisplay === "progressive" ? "rgba(255,255,255,0.15)" : "rgba(60,60,60,0.4)",
-              color: trailDisplay === "progressive" ? "#fff" : "rgba(255,255,255,0.6)",
-              fontSize: 13,
-              fontFamily: "monospace",
-              cursor: "pointer",
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            Trail: {trailDisplay === "full" ? "Full" : "Progressive"}
-          </button>
-          {/* 鏡頭控制列 */}
-          <CinemaBar
-            isDarkTheme={isDarkTheme}
-            cinemaMode={cinema.cinemaMode}
-            onCinemaModeChange={cinema.setCinemaMode}
-            orbitSpeed={cinema.orbitSpeed}
-            onOrbitSpeedChange={cinema.setOrbitSpeed}
-            orbitDirection={cinema.orbitDirection}
-            onOrbitDirectionChange={cinema.setOrbitDirection}
-            keyframes={cinema.keyframes}
-            cinemaPhase={cinema.cinemaPhase}
-            onAddKeyframe={cinema.addKeyframe}
-            onRemoveKeyframe={cinema.removeKeyframe}
-            onUpdateKeyframe={cinema.updateKeyframe}
-            onMoveKeyframe={cinema.moveKeyframe}
-            onPreviewKeyframe={cinema.previewKeyframe}
-            onPlaySequence={cinema.playSequence}
-            onStopSequence={cinema.stopSequence}
-            sequenceProgress={cinema.sequenceProgress}
-            currentKfIndex={cinema.currentKfIndex}
-            onRecaptureKeyframe={cinema.recaptureKeyframe}
-            loop={cinema.loop}
-            onLoopChange={cinema.setLoop}
-            totalDuration={cinema.totalDuration}
-            savedSequences={cinema.savedSequences}
-            onSaveSequence={cinema.saveSequence}
-            onLoadSequence={cinema.loadSequence}
-            onDeleteSequence={cinema.deleteSequence}
-            onExportJSON={cinema.exportSequenceJSON}
-            onImportJSON={cinema.importSequenceJSON}
-          />
-          {/* 退出按鈕 */}
-          <button
-            onClick={() => setCaptureMode(false)}
-            style={isMobile ? {
-              position: "absolute",
-              top: 16,
-              right: 16,
-              zIndex: 21,
-              width: 48,
-              height: 48,
-              borderRadius: 24,
-              background: "rgba(0,0,0,0.4)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "#fff",
-              fontSize: 22,
-              cursor: "pointer",
+              right: isMobile ? 16 : 32,
+              zIndex: 51,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backdropFilter: "blur(8px)",
-            } : {
-              position: "absolute",
-              bottom: 32,
-              right: 32,
-              zIndex: 21,
-              padding: "4px 12px",
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: 4,
-              color: "rgba(255,255,255,0.4)",
-              fontSize: 11,
-              fontFamily: "monospace",
-              cursor: "pointer",
-            }}
-          >
-            {isMobile ? "✕" : "ESC"}
-          </button>
+              gap: 6,
+            }}>
+              <button
+                onClick={() => setShowGuide(g => !g)}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 8,
+                  border: `1px solid ${showGuide ? "rgba(255,80,80,0.4)" : "rgba(255,255,255,0.15)"}`,
+                  background: showGuide ? "rgba(255,80,80,0.15)" : "rgba(255,255,255,0.08)",
+                  color: showGuide ? "rgba(255,80,80,0.8)" : "rgba(255,255,255,0.4)",
+                  fontSize: 11,
+                  fontFamily: "monospace",
+                  cursor: "pointer",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                16:9
+              </button>
+              {showGuide && (
+                <button
+                  onClick={() => setShowGuideGrid(g => !g)}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 8,
+                    border: `1px solid ${showGuideGrid ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.15)"}`,
+                    background: showGuideGrid ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.08)",
+                    color: showGuideGrid ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)",
+                    fontSize: 11,
+                    fontFamily: "monospace",
+                    cursor: "pointer",
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
+                  Grid
+                </button>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -854,7 +987,7 @@ export default function App() {
             </div>
             {/* Region Pills */}
             <div style={{ display: "flex", gap: 4 }}>
-              {(["TW", "JP", "HK", "world", "all"] as Region[]).map((r) => {
+              {(["TW", "JP", "HK", "US", "world", "all"] as Region[]).map((r) => {
                 const isActive = region === r;
                 return (
                   <button
@@ -1231,7 +1364,7 @@ export default function App() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {[
                         { label: `Alt ×${altExaggeration.toFixed(1)}`, min: 1, max: 5, step: 0.5, value: altExaggeration, set: setAltExaggeration },
-                        { label: `Z +${altOffset}m`, min: 0, max: 200, step: 50, value: altOffset, set: setAltOffset },
+                        { label: `Z +${altOffset}m`, min: 0, max: 1000, step: 50, value: altOffset, set: setAltOffset },
                         { label: `Opacity ${staticOpacity.toFixed(2)}`, min: 0.02, max: 0.5, step: 0.02, value: staticOpacity, set: setStaticOpacity },
                         { label: `Orb ${(orbScale * 100000).toFixed(1)}`, min: 0.000001, max: 0.00001, step: 0.000001, value: orbScale, set: setOrbScale },
                         { label: `APT ${airportOpacity.toFixed(2)}`, min: 0, max: 0.3, step: 0.01, value: airportOpacity, set: setAirportOpacity },

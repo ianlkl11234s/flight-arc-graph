@@ -166,6 +166,7 @@ export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity,
       pitch: presetRef.current.pitch,
       bearing: presetRef.current.bearing,
       antialias: true,
+      preserveDrawingBuffer: true,
     });
 
     // 唯一的 style.load handler：每次底圖切換都會觸發，重建所有圖層

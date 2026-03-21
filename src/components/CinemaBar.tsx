@@ -1,5 +1,42 @@
 import React from "react";
 import type { CinemaMode, CameraKeyframe, CinemaPhase, EasingType, SavedSequence } from "../hooks/useCinemaCamera";
+import type { RecordingState, HQExportProgress } from "../hooks/useCanvasRecorder";
+
+/* ── Duration Input (m:ss) ── */
+function DurationInput({ value, onChange, min = 0, max = 5999, compact = false }: {
+  value: number; onChange: (sec: number) => void; min?: number; max?: number; compact?: boolean;
+}) {
+  const m = Math.floor(value / 60);
+  const s = Math.round(value % 60);
+  const inputStyle: React.CSSProperties = {
+    width: compact ? 30 : 34,
+    background: "rgba(255,255,255,0.15)",
+    border: "1px solid rgba(255,255,255,0.25)",
+    borderRadius: 4,
+    color: "#fff",
+    fontSize: compact ? 11 : 12,
+    fontFamily: "monospace",
+    padding: compact ? "2px 3px" : "3px 4px",
+    textAlign: "center",
+  };
+  const labelStyle: React.CSSProperties = {
+    color: "rgba(255,255,255,0.5)", fontSize: compact ? 9 : 10, fontFamily: "monospace",
+  };
+  const clamp = (newM: number, newS: number) => {
+    const total = Math.max(min, Math.min(max, newM * 60 + newS));
+    onChange(total);
+  };
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+      <input type="number" min={0} max={Math.floor(max / 60)} step={1} value={m}
+        onChange={(e) => clamp(Number(e.target.value), s)} style={inputStyle} />
+      <span style={labelStyle}>m</span>
+      <input type="number" min={0} max={59} step={1} value={s}
+        onChange={(e) => clamp(m, Number(e.target.value))} style={inputStyle} />
+      <span style={labelStyle}>s</span>
+    </span>
+  );
+}
 
 interface CinemaBarProps {
   isDarkTheme: boolean;
@@ -24,6 +61,8 @@ interface CinemaBarProps {
   onRecaptureKeyframe: (id: string) => void;
   loop: boolean;
   onLoopChange: (loop: boolean) => void;
+  pingpong: boolean;
+  onPingpongChange: (pp: boolean) => void;
   totalDuration: number;
   // Save/Load
   savedSequences: SavedSequence[];
@@ -32,6 +71,15 @@ interface CinemaBarProps {
   onDeleteSequence: (id: string) => void;
   onExportJSON: () => void;
   onImportJSON: () => void;
+  // Recording
+  recordingState: RecordingState;
+  recordingTime: number;
+  onStartRecording: () => void;
+  onStopRecording: () => void;
+  // HQ Export
+  onStartHQExport: () => void;
+  onStopHQExport: () => void;
+  hqProgress: HQExportProgress | null;
 }
 
 export function CinemaBar({
@@ -56,6 +104,8 @@ export function CinemaBar({
   onRecaptureKeyframe,
   loop,
   onLoopChange,
+  pingpong,
+  onPingpongChange,
   totalDuration,
   savedSequences,
   onSaveSequence,
@@ -63,12 +113,34 @@ export function CinemaBar({
   onDeleteSequence,
   onExportJSON,
   onImportJSON,
+  recordingState,
+  recordingTime,
+  onStartRecording,
+  onStopRecording,
+  onStartHQExport,
+  onStopHQExport,
+  hqProgress,
 }: CinemaBarProps) {
   const dark = isDarkTheme;
   const [collapsed, setCollapsed] = React.useState(false);
   const [showSaveDialog, setShowSaveDialog] = React.useState(false);
   const [saveName, setSaveName] = React.useState("");
   const [showLoadList, setShowLoadList] = React.useState(false);
+
+  const isRecording = recordingState === "recording";
+  const isHQ = recordingState === "hq";
+
+  const formatDuration = (totalSec: number) => {
+    const m = Math.floor(totalSec / 60);
+    const s = Math.round(totalSec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
 
   const panelBg = dark ? "rgba(20,20,20,0.7)" : "rgba(10,10,10,0.6)";
   const panelBorder = `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.1)"}`;
@@ -179,6 +251,11 @@ export function CinemaBar({
           <div style={{ flex: 1, height: 3, background: "rgba(255,255,255,0.15)", borderRadius: 2, minWidth: 100 }}>
             <div style={{ width: `${sequenceProgress * 100}%`, height: "100%", background: "#fff", borderRadius: 2, transition: "width 0.1s" }} />
           </div>
+          {isRecording && (
+            <span style={{ color: "#ff4444", fontSize: 12, fontFamily: "monospace", animation: "pulse 1s ease-in-out infinite" }}>
+              REC {formatTime(recordingTime)}
+            </span>
+          )}
           <button onClick={onStopSequence} style={pillStyle(true)}>■ Stop</button>
         </div>
       ) : (
@@ -236,14 +313,54 @@ export function CinemaBar({
                 {keyframes.length >= 2 && (
                   <>
                     <button onClick={onPlaySequence} style={pillStyle(false)}>▶ Play</button>
+                    {isRecording ? (
+                      <button
+                        onClick={onStopRecording}
+                        style={{ ...pillStyle(true), color: "#ff4444", borderColor: "rgba(255,68,68,0.5)" }}
+                      >
+                        ■ REC {formatTime(recordingTime)}
+                      </button>
+                    ) : isHQ ? (
+                      <button
+                        onClick={onStopHQExport}
+                        style={{ ...pillStyle(true), color: "#44aaff", borderColor: "rgba(68,170,255,0.5)" }}
+                      >
+                        ■ HQ {hqProgress ? `${hqProgress.percent}%` : "..."}
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={onStartRecording}
+                          style={{ ...pillStyle(false), color: "#ff6666" }}
+                          title="Realtime recording"
+                        >
+                          ● REC
+                        </button>
+                        <button
+                          onClick={onStartHQExport}
+                          style={{ ...pillStyle(false), color: "#44aaff" }}
+                          title="Offline HQ export (slower, perfect framerate)"
+                        >
+                          HQ
+                        </button>
+                      </>
+                    )}
                     <button
                       onClick={() => onLoopChange(!loop)}
                       style={{ ...pillStyle(loop), padding: "5px 10px" }}
+                      title="Loop"
                     >
                       ⟳
                     </button>
+                    <button
+                      onClick={() => onPingpongChange(!pingpong)}
+                      style={{ ...pillStyle(pingpong), padding: "5px 10px", fontSize: 11 }}
+                      title="Pingpong (forward + reverse)"
+                    >
+                      ⇄
+                    </button>
                     <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "monospace" }}>
-                      {totalDuration.toFixed(1)}s
+                      {formatDuration(totalDuration)}{pingpong ? " ×2" : ""}
                     </span>
                   </>
                 )}
@@ -357,26 +474,7 @@ export function CinemaBar({
                         <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "monospace", minWidth: 45 }}>
                           z{kf.zoom.toFixed(1)}
                         </span>
-                        <input
-                          type="number"
-                          min={0.5}
-                          max={30}
-                          step={0.5}
-                          value={kf.duration}
-                          onChange={(e) => onUpdateKeyframe(kf.id, { duration: Number(e.target.value) })}
-                          style={{
-                            width: 40,
-                            background: "rgba(255,255,255,0.1)",
-                            border: "1px solid rgba(255,255,255,0.15)",
-                            borderRadius: 4,
-                            color: "#fff",
-                            fontSize: 11,
-                            fontFamily: "monospace",
-                            padding: "2px 4px",
-                            textAlign: "center" as const,
-                          }}
-                        />
-                        <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>s</span>
+                        <DurationInput value={kf.duration} onChange={(sec) => onUpdateKeyframe(kf.id, { duration: sec })} min={1} max={5999} />
                         <select
                           value={kf.easing}
                           onChange={(e) => onUpdateKeyframe(kf.id, { easing: e.target.value as EasingType })}
@@ -449,28 +547,9 @@ export function CinemaBar({
                               <option value="still" style={{ background: "#333" }}>still</option>
                               <option value="orbit" style={{ background: "#333" }}>orbit</option>
                             </select>
-                            <input
-                              type="number"
-                              min={1}
-                              max={60}
-                              step={1}
-                              value={kf.hold.duration}
-                              onChange={(e) => onUpdateKeyframe(kf.id, {
-                                hold: { ...kf.hold!, duration: Number(e.target.value) },
-                              })}
-                              style={{
-                                width: 32,
-                                background: "rgba(255,255,255,0.1)",
-                                border: "1px solid rgba(255,255,255,0.15)",
-                                borderRadius: 4,
-                                color: "#fff",
-                                fontSize: 10,
-                                fontFamily: "monospace",
-                                padding: "1px 3px",
-                                textAlign: "center" as const,
-                              }}
-                            />
-                            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>s</span>
+                            <DurationInput compact value={kf.hold.duration} onChange={(sec) => onUpdateKeyframe(kf.id, {
+                                hold: { ...kf.hold!, duration: sec },
+                              })} min={1} max={5999} />
                             {kf.hold.type === "orbit" && (
                               <>
                                 <input

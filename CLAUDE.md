@@ -69,6 +69,41 @@ bash scripts/pull-from-s3.sh
 - `src/hooks/useCinemaCamera.ts` — 鏡頭運動 hook（Orbit + Keyframe + Save/Load）
 - `src/components/CinemaBar.tsx` — Capture 模式下的鏡頭控制 UI
 
+## YouTube 影片製作流程（已完成）
+
+### 標準流程
+
+```bash
+# Step 1: 開專用 Chrome（1920x1080，無 Retina 縮放）
+npm run video:chrome
+
+# Step 2: 在 Chrome 中開啟網頁 → Capture Mode → Sequence
+#   - 設好 Keyframes（鏡頭序列）
+#   - 按 HQ 按鈕 → 離線逐幀匯出 → 自動下載 .webm
+#   - 檔案存到 video/ 資料夾
+
+# Step 3: 合成最終影片（影片循環 + 音樂循環 → 指定長度）
+npm run video:compose video/你的HQ檔.webm "music/Lo-fi v3.mp3" 600
+#                                                                 ↑ 秒數（600=10分鐘）
+```
+
+### 技術細節
+- **HQ 匯出**：`captureStream(0)` 手動幀模式，離線逐幀渲染
+- **Composite Canvas**：map canvas + vignette + 標題文字合成到離屏 canvas
+- **FFmpeg `-r 30`**（在 `-i` 之前）：修正 HQ 匯出的 variable timestamp → 強制 30fps
+- **攝影輔助框**：16:9 邊框 + 中心準心 + 三分法格線（HTML overlay，不會錄進影片）
+- 錄製中自動隱藏：vignette、標題、Trail 按鈕、ESC 按鈕（由 composite canvas 繪製）
+- CinemaBar 錄製中保持可見（HTML overlay 不會被錄到）
+
+### 相關檔案
+- `src/hooks/useCanvasRecorder.ts` — 即時錄製 + HQ 離線匯出
+- `src/components/RecordingGuide.tsx` — 16:9 攝影輔助框
+- `src/components/CinemaBar.tsx` — REC / HQ 按鈕
+- `scripts/compose-video.sh` — FFmpeg 合成腳本
+- `video/` — HQ 匯出的 .webm 素材
+- `music/` — Suno 音樂檔案
+- `output/` — 合成完的 MP4 成品
+
 ## Dynamic Viewshed（已完成）
 
 Track Single 模式下的動態視域分析：
