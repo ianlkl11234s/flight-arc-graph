@@ -62,6 +62,7 @@ bash scripts/pull-from-s3.sh
    - Hold 階段（still / orbit with speed/direction）
    - Easing（ease-in-out / linear / ease-out）
    - Recapture、Loop、總時長顯示
+   - Duration 輸入支援分:秒格式（m:ss），上限 99m59s
 5. **儲存/載入**：localStorage 自動保存 + JSON 匯出/匯入
 6. **收合式 CinemaBar**：▼ 收合 / Cinema ▲ 展開
 
@@ -103,6 +104,50 @@ npm run video:compose video/你的HQ檔.webm "music/Lo-fi v3.mp3" 600
 - `video/` — HQ 匯出的 .webm 素材
 - `music/` — Suno 音樂檔案
 - `output/` — 合成完的 MP4 成品
+
+## Color Theme System（已完成）
+
+可自訂所有 3D/2D 渲染元素的配色。
+
+### 功能
+- **6 組 Preset**：Default、Warm、Ocean、Neon、Mono、Sunset
+- **即時微調**：每個顏色都有 color picker，改色即時反映到地圖
+- **多色停漸層**：靜態軌跡支援 2~5 個色停（低空 → 中空 → 高空）
+- **localStorage 持久化**：選擇的主題會記住
+
+### 可調整元素
+| 元素 | 說明 |
+|------|------|
+| Trails (×5) | 動態光軌 5 色（Additive Blending） |
+| Static Gradient | 靜態軌跡高度漸層（多色停） |
+| Orb | 光球 glow 色 |
+| 2D Map (×2) | Mapbox 2D 軌跡漸層（A→B） |
+
+### 新增檔案
+- `src/types/colorTheme.ts` — ColorTheme interface + 6 組 preset 定義
+
+### 技術細節
+- `FlightScene.setColorTheme(theme)` — 更新所有 Three.js material
+- `setMapTrailColors(hexA, hexB)` — 更新 Mapbox 2D 軌跡色
+- Preset 選擇清除 override，微調產生 override 覆蓋 preset
+- 暗色主題用自訂 theme，亮色主題維持固定配色
+
+## Recording Overlay（已完成）
+
+### 動態 Overlay
+- 左上角的日期時間 + 相機角度**每幀更新**（非靜態快照）
+- `OverlayProvider` callback 模式，REC / HQ 模式都生效
+
+### 右下角資訊
+- 播放速度（`×60`，1x 時不顯示）
+- 即時航班數量（`42 flights`）
+- 資料來源（`Data: Flightradar24`）
+
+### 4K 錄製
+```bash
+npm run video:chrome       # 1080p（原本）
+npm run video:chrome:4k    # 4K（DPR=2 全螢幕）
+```
 
 ## Dynamic Viewshed（已完成）
 
