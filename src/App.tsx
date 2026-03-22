@@ -90,7 +90,7 @@ function LoadingIndicator({ loadingProgress, isDarkTheme }: {
         fontWeight: 500,
         color: isDarkTheme ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
       }}>
-        {fadeOut ? `${lastCount} flights loaded` : `Loading ${loadingProgress?.loaded ?? 0} flights...`}
+        {fadeOut ? `${lastCount} flights loaded` : `Loading ${loadingProgress?.label ?? "..."}` }
       </span>
       <style>{`@keyframes pulse { 0%,100% { opacity:0.3 } 50% { opacity:1 } }`}</style>
     </div>

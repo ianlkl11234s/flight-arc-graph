@@ -45,10 +45,12 @@ export function useFlightData(
   const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; label: string } | null>(null);
 
   const loadIdRef = useRef(0);
+  const manifestRef = useRef<{ airports: Record<string, { flights: number }> } | null>(null);
 
   // 載入 manifest（機場列表）+ airspace manifest（一次性）
   useEffect(() => {
     loadManifest().then((m) => {
+      manifestRef.current = m;
       setAllAirports(getManifestAirports(m));
       // 各 region 日期
       const rdm: Record<string, string[]> = {};
@@ -75,8 +77,26 @@ export function useFlightData(
     setLoading(true);
     setLoadingProgress({ loaded: 0, label: "Loading..." });
 
-    // Streaming 期間：只更新計數器（輕量），不更新 flights state
-    // 載入完成後一次性 setTrackFlights — 避免 Three.js 反覆重建幾何體
+    // 從 manifest 取得預期總數
+    const manifest = manifestRef.current;
+    let expectedTotal = 0;
+    if (scope === "airport") {
+      expectedTotal = manifest?.airports[selectedAirport]?.flights ?? 0;
+    } else {
+      // region: 加總所有匹配機場的航班數
+      const REGION_PREFIX: Record<string, string[]> = {
+        TW: ["RC"], JP: ["RJ", "RO"], HK: ["VH"], US: ["K"], world: [], all: [],
+      };
+      const prefixes = REGION_PREFIX[region] ?? [];
+      if (prefixes.length > 0 && manifest) {
+        for (const [icao, info] of Object.entries(manifest.airports)) {
+          if (prefixes.some((p) => icao.startsWith(p))) expectedTotal += info.flights;
+        }
+      } else if (manifest) {
+        expectedTotal = Object.values(manifest.airports).reduce((s, a) => s + a.flights, 0);
+      }
+    }
+
     let lastProgressUpdate = 0;
 
     const onProgress = (_flights: Flight[], total: number) => {
@@ -84,7 +104,8 @@ export function useFlightData(
       const now = Date.now();
       if (now - lastProgressUpdate > 300) {
         lastProgressUpdate = now;
-        setLoadingProgress({ loaded: total, label: `${total} flights` });
+        const label = expectedTotal > 0 ? `${total} / ${expectedTotal} flights` : `${total} flights`;
+        setLoadingProgress({ loaded: total, label });
       }
     };
 
