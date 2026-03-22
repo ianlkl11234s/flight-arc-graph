@@ -4,7 +4,11 @@ dist
 .env.local
 *.local
 *.tsbuildinfo
-public/tracks/aviation_data.json
-public/airspace/aviation_data.json
+public/tracks/
+public/airspace/
 scripts/flight-list.json
 scripts/track-progress.json
+video/
+output/
+music/
+scripts/__pycache__/
