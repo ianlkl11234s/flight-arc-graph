@@ -1,13 +1,9 @@
 #!/bin/sh
 # pull-from-s3.sh
 # 從 S3 拉取分拆後的 tracks/airspace 資料到 /data volume
-# 在 Zeabur 終端機上執行
+# 在 Zeabur 終端機上執行：sh /app/scripts/pull-from-s3.sh
 #
-# Usage:
-#   curl -sL <this-script-url> | bash
-#   或手動：bash pull-from-s3.sh
-#
-# 需要環境變數：S3_BUCKET, S3_REGION (或用預設值)
+# Alpine 相容（用 wget，不依賴 curl/bash）
 
 set -e
 
@@ -25,45 +21,44 @@ mkdir -p "${DATA_DIR}/airspace/days"
 
 # 1. 下載 tracks manifest
 echo "[1/4] Tracks manifest..."
-curl -sL "${S3_BASE}/tracks/manifest.json" -o "${DATA_DIR}/tracks/manifest.json"
-echo "  ✓ manifest.json"
+wget -q "${S3_BASE}/tracks/manifest.json" -O "${DATA_DIR}/tracks/manifest.json"
+echo "  done"
 
 # 2. 從 manifest 解析機場列表，逐一下載
 echo ""
 echo "[2/4] Tracks airports..."
-# 用 grep 從 manifest.json 提取機場 ICAO（格式："RCTP": {）
 AIRPORTS=$(grep -o '"[A-Z][A-Z0-9]\{3\}": {' "${DATA_DIR}/tracks/manifest.json" | sed 's/": {//' | sed 's/"//' | sort)
 
 COUNT=0
 TOTAL=$(echo "$AIRPORTS" | wc -l | tr -d ' ')
 for ICAO in $AIRPORTS; do
   COUNT=$((COUNT + 1))
-  curl -sL "${S3_BASE}/tracks/airports/${ICAO}.jsonl" -o "${DATA_DIR}/tracks/airports/${ICAO}.jsonl"
+  wget -q "${S3_BASE}/tracks/airports/${ICAO}.jsonl" -O "${DATA_DIR}/tracks/airports/${ICAO}.jsonl"
   if [ $((COUNT % 50)) -eq 0 ]; then
     echo "  ... ${COUNT}/${TOTAL}"
   fi
 done
-echo "  ✓ ${COUNT} airport files"
+echo "  done: ${COUNT} airport files"
 
 # 3. 下載 regions
 echo ""
 echo "[3/4] Tracks regions..."
-for R in TW JP HK other; do
-  curl -sL "${S3_BASE}/tracks/regions/${R}.jsonl" -o "${DATA_DIR}/tracks/regions/${R}.jsonl" 2>/dev/null || true
-  echo "  ✓ ${R}.jsonl"
+for R in TW JP HK US other; do
+  wget -q "${S3_BASE}/tracks/regions/${R}.jsonl" -O "${DATA_DIR}/tracks/regions/${R}.jsonl" 2>/dev/null || true
+  echo "  ${R}.jsonl"
 done
 
 # 4. 下載 airspace
 echo ""
 echo "[4/4] Airspace..."
-curl -sL "${S3_BASE}/airspace/manifest.json" -o "${DATA_DIR}/airspace/manifest.json" 2>/dev/null || true
+wget -q "${S3_BASE}/airspace/manifest.json" -O "${DATA_DIR}/airspace/manifest.json" 2>/dev/null || true
 
-# 從 airspace manifest 取得日期（grep 提取 "date": "YYYY-MM-DD"）
+# 從 airspace manifest 取得日期
 DATES=$(grep -o '"date": "[0-9-]*"' "${DATA_DIR}/airspace/manifest.json" 2>/dev/null | sed 's/"date": "//' | sed 's/"//' | sort)
 
 for DATE in $DATES; do
-  curl -sL "${S3_BASE}/airspace/days/${DATE}.jsonl" -o "${DATA_DIR}/airspace/days/${DATE}.jsonl" 2>/dev/null || true
-  echo "  ✓ ${DATE}.jsonl"
+  wget -q "${S3_BASE}/airspace/days/${DATE}.jsonl" -O "${DATA_DIR}/airspace/days/${DATE}.jsonl" 2>/dev/null || true
+  echo "  ${DATE}.jsonl"
 done
 
 echo ""
