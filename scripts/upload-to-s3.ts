@@ -15,7 +15,7 @@
  *   flight-arc/airspace/YYYY/MM/DD/data.json
  */
 
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, readdirSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -136,6 +136,44 @@ async function uploadSource(
   await upload(`${prefix}/manifest.json`, JSON.stringify(manifest, null, 2));
 }
 
+/**
+ * 上傳 split tracks 目錄結構（airports/*.jsonl + regions/*.jsonl + manifest.json）
+ * 不讀 aviation_data.json，避免 ERR_STRING_TOO_LONG
+ */
+async function uploadSplitTracks(prefix: string, tracksDir: string): Promise<void> {
+  console.log(`\n=== Split Tracks Upload ===`);
+  console.log(`Source: ${tracksDir}`);
+
+  // manifest.json
+  const manifestPath = resolve(tracksDir, "manifest.json");
+  if (existsSync(manifestPath)) {
+    const body = readFileSync(manifestPath, "utf-8");
+    await upload(`${prefix}/manifest.json`, body);
+  }
+
+  // airports/*.jsonl
+  const airportsDir = resolve(tracksDir, "airports");
+  if (existsSync(airportsDir)) {
+    const files = readdirSync(airportsDir).filter((f) => f.endsWith(".jsonl"));
+    console.log(`\nAirports: ${files.length} files`);
+    for (const file of files) {
+      const body = readFileSync(resolve(airportsDir, file), "utf-8");
+      await upload(`${prefix}/airports/${file}`, body);
+    }
+  }
+
+  // regions/*.jsonl
+  const regionsDir = resolve(tracksDir, "regions");
+  if (existsSync(regionsDir)) {
+    const files = readdirSync(regionsDir).filter((f) => f.endsWith(".jsonl"));
+    console.log(`\nRegions: ${files.length} files`);
+    for (const file of files) {
+      const body = readFileSync(resolve(regionsDir, file), "utf-8");
+      await upload(`${prefix}/regions/${file}`, body);
+    }
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const tracksOnly = args.includes("--tracks");
@@ -143,11 +181,19 @@ async function main() {
   const uploadBoth = !tracksOnly && !airspaceOnly;
 
   if (uploadBoth || tracksOnly) {
-    await uploadSource(
-      "FR24 Tracks",
-      `${BASE_PREFIX}/tracks`,
-      resolve(__dirname, "../public/tracks/aviation_data.json"),
-    );
+    const tracksDir = resolve(__dirname, "../public/tracks");
+    const splitExists = existsSync(resolve(tracksDir, "airports"));
+
+    if (splitExists) {
+      // 優先用 split 目錄（不讀巨大的 aviation_data.json）
+      await uploadSplitTracks(`${BASE_PREFIX}/tracks`, tracksDir);
+    } else {
+      await uploadSource(
+        "FR24 Tracks",
+        `${BASE_PREFIX}/tracks`,
+        resolve(tracksDir, "aviation_data.json"),
+      );
+    }
   }
 
   if (uploadBoth || airspaceOnly) {
