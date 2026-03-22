@@ -15,10 +15,10 @@
  *   flight-arc/airspace/YYYY/MM/DD/data.json
  */
 
-import { readFileSync, existsSync, readdirSync } from "fs";
+import { readFileSync, existsSync, readdirSync, statSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import "dotenv/config";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -137,18 +137,61 @@ async function uploadSource(
 }
 
 /**
- * 上傳 split tracks 目錄結構（airports/*.jsonl + regions/*.jsonl + manifest.json）
- * 不讀 aviation_data.json，避免 ERR_STRING_TOO_LONG
+ * 列出 S3 prefix 下所有物件的 key → size 映射
  */
-async function uploadSplitTracks(prefix: string, tracksDir: string): Promise<void> {
-  console.log(`\n=== Split Tracks Upload ===`);
+async function listS3Objects(prefix: string): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  let continuationToken: string | undefined;
+  do {
+    const res = await s3.send(new ListObjectsV2Command({
+      Bucket: BUCKET,
+      Prefix: prefix,
+      ContinuationToken: continuationToken,
+    }));
+    for (const obj of res.Contents ?? []) {
+      if (obj.Key && obj.Size != null) result.set(obj.Key, obj.Size);
+    }
+    continuationToken = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (continuationToken);
+  return result;
+}
+
+/**
+ * 上傳 split tracks 目錄結構（airports/*.jsonl + regions/*.jsonl + manifest.json）
+ * --force 全量上傳，否則增量（比對檔案大小）
+ */
+async function uploadSplitTracks(prefix: string, tracksDir: string, force: boolean): Promise<void> {
+  console.log(`\n=== Split Tracks Upload (${force ? "full" : "incremental"}) ===`);
   console.log(`Source: ${tracksDir}`);
 
-  // manifest.json
+  // 增量模式：先取 S3 現有檔案大小
+  let s3Objects = new Map<string, number>();
+  if (!force) {
+    console.log("Listing S3 objects for diff...");
+    s3Objects = await listS3Objects(prefix);
+    console.log(`S3 existing: ${s3Objects.size} files\n`);
+  }
+
+  let uploaded = 0;
+  let skipped = 0;
+
+  const uploadIfChanged = async (key: string, localPath: string) => {
+    const localSize = statSync(localPath).size;
+    if (!force && s3Objects.has(key) && s3Objects.get(key) === localSize) {
+      skipped++;
+      return;
+    }
+    const body = readFileSync(localPath, "utf-8");
+    await upload(key, body);
+    uploaded++;
+  };
+
+  // manifest.json（總是上傳）
   const manifestPath = resolve(tracksDir, "manifest.json");
   if (existsSync(manifestPath)) {
     const body = readFileSync(manifestPath, "utf-8");
     await upload(`${prefix}/manifest.json`, body);
+    uploaded++;
   }
 
   // airports/*.jsonl
@@ -157,8 +200,7 @@ async function uploadSplitTracks(prefix: string, tracksDir: string): Promise<voi
     const files = readdirSync(airportsDir).filter((f) => f.endsWith(".jsonl"));
     console.log(`\nAirports: ${files.length} files`);
     for (const file of files) {
-      const body = readFileSync(resolve(airportsDir, file), "utf-8");
-      await upload(`${prefix}/airports/${file}`, body);
+      await uploadIfChanged(`${prefix}/airports/${file}`, resolve(airportsDir, file));
     }
   }
 
@@ -168,10 +210,11 @@ async function uploadSplitTracks(prefix: string, tracksDir: string): Promise<voi
     const files = readdirSync(regionsDir).filter((f) => f.endsWith(".jsonl"));
     console.log(`\nRegions: ${files.length} files`);
     for (const file of files) {
-      const body = readFileSync(resolve(regionsDir, file), "utf-8");
-      await upload(`${prefix}/regions/${file}`, body);
+      await uploadIfChanged(`${prefix}/regions/${file}`, resolve(regionsDir, file));
     }
   }
+
+  console.log(`\n📊 Uploaded: ${uploaded}, Skipped (unchanged): ${skipped}`);
 }
 
 async function main() {
@@ -180,13 +223,15 @@ async function main() {
   const airspaceOnly = args.includes("--airspace");
   const uploadBoth = !tracksOnly && !airspaceOnly;
 
+  const force = args.includes("--force");
+
   if (uploadBoth || tracksOnly) {
     const tracksDir = resolve(__dirname, "../public/tracks");
     const splitExists = existsSync(resolve(tracksDir, "airports"));
 
     if (splitExists) {
       // 優先用 split 目錄（不讀巨大的 aviation_data.json）
-      await uploadSplitTracks(`${BASE_PREFIX}/tracks`, tracksDir);
+      await uploadSplitTracks(`${BASE_PREFIX}/tracks`, tracksDir, force);
     } else {
       await uploadSource(
         "FR24 Tracks",
