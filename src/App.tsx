@@ -19,6 +19,8 @@ import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
 import { DataSourceToggle } from "./components/DataSourceToggle";
 import { AircraftTypeFilter } from "./components/AircraftTypeFilter";
+import { AirlineFilter } from "./components/AirlineFilter";
+import { DepArrToggle, type DepArrFilter } from "./components/DepArrToggle";
 import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCategories";
 import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
@@ -29,6 +31,7 @@ import { CinemaBar } from "./components/CinemaBar";
 import { RecordingGuide } from "./components/RecordingGuide";
 import { COLOR_THEMES, DEFAULT_THEME_KEY } from "./types/colorTheme";
 import { setMapTrailColors } from "./map/staticTrails";
+import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
   loadingProgress: { loaded: number; label: string } | null;
@@ -131,7 +134,10 @@ export default function App() {
   const [airportGlow, setAirportGlow] = useState(0.8);
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
   const [aircraftFilter, setAircraftFilter] = useState<AircraftFilterKey>("all");
+  const [airlineFilter, setAirlineFilter] = useState("all");
+  const [depArrFilter, setDepArrFilter] = useState<DepArrFilter>("all");
   const [captureMode, setCaptureMode] = useState(false);
+  const [showTerminator, setShowTerminator] = useState(false);
   const [colorThemeKey, setColorThemeKey] = useState(() => localStorage.getItem("flight-arc-color-theme") ?? DEFAULT_THEME_KEY);
   const [colorThemeOverride, setColorThemeOverride] = useState<import("./types/colorTheme").ColorTheme | null>(null);
   const [showGuide, setShowGuide] = useState(true);
@@ -377,7 +383,7 @@ export default function App() {
       timeline.windowStart, timeline.windowEnd]);
 
   // Aircraft type filter
-  const finalFlights = useMemo(
+  const typeFilteredFlights = useMemo(
     () => filterByAircraftType(displayedFlights, aircraftFilter),
     [displayedFlights, aircraftFilter],
   );
@@ -385,6 +391,34 @@ export default function App() {
     () => [...new Set(displayedFlights.map((f) => f.aircraft_type))].filter(Boolean).sort(),
     [displayedFlights],
   );
+
+  // Airline filter
+  const airlineFilteredFlights = useMemo(() => {
+    if (airlineFilter === "all") return typeFilteredFlights;
+    return typeFilteredFlights.filter((f) => {
+      const match = f.callsign.match(/^([A-Z]{2,3})/);
+      return match?.[1] === airlineFilter;
+    });
+  }, [typeFilteredFlights, airlineFilter]);
+
+  // Dep/Arr filter
+  const finalFlights = useMemo(() => {
+    if (depArrFilter === "all") return airlineFilteredFlights;
+    return airlineFilteredFlights.filter((f) =>
+      depArrFilter === "dep" ? f.origin_icao === selectedAirport : f.dest_icao === selectedAirport
+    );
+  }, [airlineFilteredFlights, depArrFilter, selectedAirport]);
+  const availableAirlines = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const f of typeFilteredFlights) {
+      const match = f.callsign.match(/^([A-Z]{2,3})/);
+      const code = match?.[1] ?? "???";
+      map.set(code, (map.get(code) ?? 0) + 1);
+    }
+    return [...map.entries()]
+      .map(([code, count]) => ({ code, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [typeFilteredFlights]);
 
   // 用於 FlightPicker 的航班列表（always based on airport filter）
   const pickableFlights = useMemo(
@@ -426,6 +460,21 @@ export default function App() {
   viewshedOpacityRef.current = viewshedOpacity;
   viewshedSharpnessRef.current = viewshedSharpness;
 
+  const showTerminatorRef = useRef(showTerminator);
+  showTerminatorRef.current = showTerminator;
+
+  // Toggle terminator layer (satellite only)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const isSatellite = mapStyleId === "satellite";
+    if (showTerminator && isSatellite) {
+      initTerminatorLayer(map, () => timeRef.current, isDarkTheme);
+    } else {
+      removeTerminatorLayer(map);
+    }
+  }, [showTerminator, isDarkTheme, mapStyleId]);
+
   const showTrails = displayMode === "trails";
 
   const preset = useMemo(
@@ -459,6 +508,9 @@ export default function App() {
   const handleMapReady = (map: MapboxMap) => {
     mapRef.current = map;
     addFlightLayer(map);
+    if (showTerminatorRef.current) {
+      initTerminatorLayer(map, () => timeRef.current, isDarkThemeRef.current);
+    }
     const updateCamera = () => {
       const c = map.getCenter();
       setCameraInfo({
@@ -973,8 +1025,11 @@ export default function App() {
             fullDates={dataSource === "fused" ? airspaceDates : (regionFullDatesMap[region === "all" ? "TW" : region] ?? [])}
             selectedDate={timeline.selectedDate}
             onDateSelect={timeline.setSelectedDate}
+            allFlights={allFlights}
             onStatsClick={() => setShowStats(true)}
             onInfoClick={() => setShowInfo(true)}
+            showTerminator={showTerminator}
+            onTerminatorChange={setShowTerminator}
             colorThemeKey={colorThemeKey}
             onColorThemeChange={handleColorThemeChange}
             colorThemeOverride={colorThemeOverride}
@@ -1016,6 +1071,17 @@ export default function App() {
                 isDarkTheme={isDarkTheme}
                 availableTypes={availableTypes}
                 onChange={setAircraftFilter}
+              />
+              <AirlineFilter
+                filter={airlineFilter}
+                isDarkTheme={isDarkTheme}
+                availableAirlines={availableAirlines}
+                onChange={setAirlineFilter}
+              />
+              <DepArrToggle
+                filter={depArrFilter}
+                isDarkTheme={isDarkTheme}
+                onChange={setDepArrFilter}
               />
             </div>
             {/* Region Pills */}
@@ -1356,6 +1422,17 @@ export default function App() {
                         isDarkTheme={true}
                         availableTypes={availableTypes}
                         onChange={setAircraftFilter}
+                      />
+                      <AirlineFilter
+                        filter={airlineFilter}
+                        isDarkTheme={true}
+                        availableAirlines={availableAirlines}
+                        onChange={setAirlineFilter}
+                      />
+                      <DepArrToggle
+                        filter={depArrFilter}
+                        isDarkTheme={true}
+                        onChange={setDepArrFilter}
                       />
                     </div>
                     <FlightPicker

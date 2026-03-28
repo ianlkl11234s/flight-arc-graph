@@ -1,9 +1,19 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useState, useMemo, type CSSProperties, type ReactNode } from "react";
 import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight } from "../types";
 import type { AircraftFilterKey } from "../data/aircraftCategories";
 import { COLOR_THEMES, type ColorTheme } from "../types/colorTheme";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
+import {
+  getDepArrCount,
+  computeTopRoutes,
+  getAirlineStats,
+  getFleetMix,
+  getFlightDurationDistribution,
+  computeHourlyStats,
+  computeAirportComparison,
+  getUniqueDays,
+} from "../data/flightStats";
 
 /* ── Scene Presets ─────────────────────────────────────── */
 
@@ -201,7 +211,7 @@ function getThemeColors(isDark: boolean): ThemeColors {
 
 /* ── Types ───────────────────────────────────────────────── */
 
-type PanelId = "settings" | "locations" | "calendar" | "colors";
+type PanelId = "settings" | "locations" | "calendar" | "colors" | "summary";
 
 export interface IconRailSidebarProps {
   // Theme
@@ -254,10 +264,15 @@ export interface IconRailSidebarProps {
   fullDates: string[];
   selectedDate: string | null;
   onDateSelect: (date: string | null) => void;
+  // Flights data (for summary panel)
+  allFlights: Flight[];
   // Stats
   onStatsClick: () => void;
   // Info
   onInfoClick: () => void;
+  // Day/Night
+  showTerminator: boolean;
+  onTerminatorChange: (v: boolean) => void;
   // Color Theme
   colorThemeKey: string;
   onColorThemeChange: (key: string) => void;
@@ -627,6 +642,12 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
           onChange={props.onMapStyleChange}
         />
       </div>
+      {props.mapStyleId === "satellite" && (
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontFamily: "monospace", color: theme.DIM, cursor: "pointer", marginBottom: 8 }}>
+          <input type="checkbox" checked={props.showTerminator} onChange={(e) => props.onTerminatorChange(e.target.checked)} />
+          Day/Night
+        </label>
+      )}
 
       <SectionHeader theme={theme}>Visual</SectionHeader>
       <SliderRow
@@ -1160,6 +1181,215 @@ function ColorThemePanel({ colorThemeKey, onColorThemeChange, colorThemeOverride
   );
 }
 
+/* ── Summary Panel ──────────────────────────────────────── */
+
+function StatRow({ label, value, sub, theme }: { label: string; value: string | number; sub?: string; theme: ThemeColors }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "3px 0" }}>
+      <span style={{ fontSize: 11, color: theme.DIM, fontFamily: "monospace" }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 600, color: theme.ACCENT, fontFamily: "monospace" }}>
+        {value}
+        {sub && <span style={{ fontSize: 10, color: theme.DIM, marginLeft: 4, fontWeight: 400 }}>{sub}</span>}
+      </span>
+    </div>
+  );
+}
+
+function MiniBar({ items, theme }: { items: { label: string; value: number; color?: string }[]; theme: ThemeColors }) {
+  const max = Math.max(...items.map((i) => i.value), 1);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {items.map((item) => (
+        <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace", width: 32, textAlign: "right", flexShrink: 0 }}>
+            {item.label}
+          </span>
+          <div style={{ flex: 1, height: 10, background: theme.SLIDER_TRACK, borderRadius: 3, overflow: "hidden" }}>
+            <div style={{
+              width: `${(item.value / max) * 100}%`,
+              height: "100%",
+              background: item.color ?? theme.ACCENT_BLUE,
+              borderRadius: 3,
+              transition: "width 0.3s ease",
+            }} />
+          </div>
+          <span style={{ fontSize: 10, color: theme.ACCENT, fontFamily: "monospace", width: 28, textAlign: "right", flexShrink: 0 }}>
+            {item.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SummaryPanel({ flights, selectedAirport, scope, region, theme }: {
+  flights: Flight[];
+  selectedAirport: string;
+  scope: Scope;
+  region: Region;
+  theme: ThemeColors;
+}) {
+  const airportInfo = getAirportInfo(selectedAirport);
+  const isAirportScope = scope === "airport";
+
+  // Airport-level stats
+  const airportStats = useMemo(() => {
+    if (!isAirportScope || flights.length === 0) return null;
+    const depArr = getDepArrCount(flights, selectedAirport);
+    const topRoutes = computeTopRoutes(flights, selectedAirport, 5);
+    const airlines = getAirlineStats(flights, selectedAirport);
+    const fleetMix = getFleetMix(flights, selectedAirport);
+    const durations = getFlightDurationDistribution(flights, selectedAirport);
+    const hourly = computeHourlyStats(flights, selectedAirport);
+    const days = getUniqueDays(flights, selectedAirport);
+    const peakHour = hourly.reduce((a, b) => (b.count > a.count ? b : a), { hour: 0, count: 0 });
+    const total = depArr.departures + depArr.arrivals;
+
+    return { depArr, topRoutes, airlines, fleetMix, durations, peakHour, days, total };
+  }, [flights, selectedAirport, isAirportScope]);
+
+  // Region-level stats
+  const regionStats = useMemo(() => {
+    if (isAirportScope || flights.length === 0) return null;
+    const comparison = computeAirportComparison(flights);
+    const totalFlights = flights.length;
+    const domestic = flights.filter((f) => f.origin_icao.startsWith("RC") && f.dest_icao.startsWith("RC")).length;
+    const international = totalFlights - domestic;
+    const uniqueAirports = new Set([...flights.map((f) => f.origin_icao), ...flights.map((f) => f.dest_icao)]).size;
+
+    return { comparison, totalFlights, domestic, international, uniqueAirports };
+  }, [flights, isAirportScope]);
+
+  if (flights.length === 0) {
+    return (
+      <>
+        <SectionHeader theme={theme}>Summary</SectionHeader>
+        <div style={{ fontSize: 11, color: theme.NO_DATA_TEXT, fontFamily: "monospace", textAlign: "center", padding: "20px 0" }}>
+          No flight data loaded
+        </div>
+      </>
+    );
+  }
+
+  // ── Airport Scope ──
+  if (isAirportScope && airportStats) {
+    const { depArr, topRoutes, airlines, fleetMix, durations, peakHour, days, total } = airportStats;
+    return (
+      <>
+        <SectionHeader theme={theme}>
+          {airportInfo ? `${airportInfo.iata} — ${airportInfo.name}` : selectedAirport}
+        </SectionHeader>
+
+        {/* Key metrics */}
+        <div style={{ marginBottom: 10, padding: "6px 8px", background: theme.HOVER_BG, borderRadius: 8 }}>
+          <StatRow label="Total" value={total} sub={`${days}d`} theme={theme} />
+          <StatRow label="Dep" value={depArr.departures} theme={theme} />
+          <StatRow label="Arr" value={depArr.arrivals} theme={theme} />
+          <StatRow label="Peak" value={`${String(peakHour.hour).padStart(2, "0")}:00`} sub={`${peakHour.count} flights`} theme={theme} />
+        </div>
+
+        {/* Top Routes */}
+        {topRoutes.length > 0 && (
+          <>
+            <SectionHeader theme={theme}>Top Routes</SectionHeader>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 10 }}>
+              {topRoutes.map((r) => (
+                <div key={r.destIcao} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontFamily: "monospace", padding: "2px 0" }}>
+                  <span style={{ color: theme.ACCENT }}>
+                    {r.originIata}→{r.destIata}
+                    <span style={{ color: theme.DIM, marginLeft: 4, fontSize: 10 }}>{r.airlines.join("/")}</span>
+                  </span>
+                  <span style={{ color: theme.ACCENT_BLUE, fontWeight: 600 }}>{r.count}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Top Airlines */}
+        {airlines.length > 0 && (
+          <>
+            <SectionHeader theme={theme}>Airlines</SectionHeader>
+            <MiniBar
+              items={airlines.slice(0, 5).map((a) => ({ label: a.code, value: a.count }))}
+              theme={theme}
+            />
+            <div style={{ height: 8 }} />
+          </>
+        )}
+
+        {/* Fleet Mix */}
+        {fleetMix.length > 0 && (
+          <>
+            <SectionHeader theme={theme}>Fleet Mix</SectionHeader>
+            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+              {fleetMix.filter((f) => f.count > 0).map((f) => (
+                <div key={f.category} style={{
+                  flex: 1,
+                  textAlign: "center",
+                  padding: "4px 0",
+                  borderRadius: 6,
+                  background: theme.HOVER_BG,
+                  border: `1px solid ${theme.BORDER}`,
+                }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: theme.ACCENT, fontFamily: "monospace" }}>{f.percentage}%</div>
+                  <div style={{ fontSize: 9, color: theme.DIM }}>{f.category}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Duration Distribution */}
+        {durations.some((d) => d.count > 0) && (
+          <>
+            <SectionHeader theme={theme}>Duration</SectionHeader>
+            <MiniBar
+              items={durations.filter((d) => d.count > 0).map((d) => ({ label: d.label, value: d.count }))}
+              theme={theme}
+            />
+          </>
+        )}
+      </>
+    );
+  }
+
+  // ── Region Scope ──
+  if (!isAirportScope && regionStats) {
+    const { comparison, totalFlights, domestic, international, uniqueAirports } = regionStats;
+    const regionLabel = region === "all" ? "All Regions" : region.toUpperCase();
+
+    return (
+      <>
+        <SectionHeader theme={theme}>{`${regionLabel} Overview`}</SectionHeader>
+
+        <div style={{ marginBottom: 10, padding: "6px 8px", background: theme.HOVER_BG, borderRadius: 8 }}>
+          <StatRow label="Total" value={totalFlights.toLocaleString()} theme={theme} />
+          <StatRow label="Airports" value={uniqueAirports} theme={theme} />
+          <StatRow label="Domestic" value={domestic.toLocaleString()} theme={theme} />
+          <StatRow label="Int'l" value={international.toLocaleString()} theme={theme} />
+        </div>
+
+        {/* Airport Ranking */}
+        {comparison.length > 0 && (
+          <>
+            <SectionHeader theme={theme}>Airport Ranking</SectionHeader>
+            <MiniBar
+              items={comparison.slice(0, 8).map((a) => ({
+                label: a.iata,
+                value: a.count,
+              }))}
+              theme={theme}
+            />
+          </>
+        )}
+      </>
+    );
+  }
+
+  return null;
+}
+
 /* ── Main Component ──────────────────────────────────────── */
 
 export function IconRailSidebar(props: IconRailSidebarProps) {
@@ -1275,6 +1505,18 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="13.5" r="2.5"/><circle cx="6.5" cy="10.5" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>
         </RailIcon>
 
+        {/* Summary */}
+        <RailIcon
+          active={activePanel === "summary"}
+          onClick={() => togglePanel("summary")}
+          title="Summary"
+          theme={theme}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+          </svg>
+        </RailIcon>
+
         {/* Stats */}
         <RailIcon
           active={false}
@@ -1339,6 +1581,15 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onColorThemeChange={props.onColorThemeChange}
               colorThemeOverride={props.colorThemeOverride}
               onColorThemeOverride={props.onColorThemeOverride}
+              theme={theme}
+            />
+          )}
+          {activePanel === "summary" && (
+            <SummaryPanel
+              flights={props.allFlights}
+              selectedAirport={props.selectedAirport}
+              scope={props.scope}
+              region={props.region}
               theme={theme}
             />
           )}
