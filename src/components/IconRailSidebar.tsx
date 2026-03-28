@@ -11,6 +11,7 @@ import {
   getFleetMix,
   getFlightDurationDistribution,
   computeHourlyStats,
+  computeDailyStats,
   computeAirportComparison,
   getUniqueDays,
 } from "../data/flightStats";
@@ -264,8 +265,10 @@ export interface IconRailSidebarProps {
   fullDates: string[];
   selectedDate: string | null;
   onDateSelect: (date: string | null) => void;
-  // Flights data (for summary panel)
-  allFlights: Flight[];
+  // Flights data (for summary panel — already filtered by time window)
+  summaryFlights: Flight[];
+  /** 時間範圍天數（1d / 3d / 7d）影響顯示內容 */
+  rangeDays: number;
   // Stats
   onStatsClick: () => void;
   // Info
@@ -1222,11 +1225,77 @@ function MiniBar({ items, theme }: { items: { label: string; value: number; colo
   );
 }
 
-function SummaryPanel({ flights, selectedAirport, scope, region, theme }: {
+/** 24h 迷你熱力條 */
+function HourlyHeatmap({ hourly, theme }: { hourly: { hour: number; count: number }[]; theme: ThemeColors }) {
+  const max = Math.max(...hourly.map((h) => h.count), 1);
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ display: "flex", gap: 1, height: 20 }}>
+        {hourly.map((h) => {
+          const intensity = h.count / max;
+          const r = Math.round(100 + 155 * intensity);
+          const g = Math.round(170 * (1 - intensity * 0.6));
+          const b = 255;
+          return (
+            <div
+              key={h.hour}
+              title={`${String(h.hour).padStart(2, "0")}:00 — ${h.count} flights`}
+              style={{
+                flex: 1,
+                borderRadius: 2,
+                background: h.count > 0 ? `rgba(${r},${g},${b},${0.2 + intensity * 0.8})` : theme.SLIDER_TRACK,
+                transition: "background 0.3s",
+              }}
+            />
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: theme.DIM, fontFamily: "monospace", marginTop: 2 }}>
+        <span>00</span><span>06</span><span>12</span><span>18</span><span>23</span>
+      </div>
+    </div>
+  );
+}
+
+/** 每日趨勢 SVG 折線圖 */
+function DailyTrendChart({ daily, theme }: { daily: { date: string; departures: number; arrivals: number; total: number }[]; theme: ThemeColors }) {
+  if (daily.length < 2) return null;
+  const W = 210;
+  const H = 50;
+  const PAD = 2;
+  const maxVal = Math.max(...daily.map((d) => d.total), 1);
+  const stepX = (W - PAD * 2) / (daily.length - 1);
+
+  const toPoints = (getValue: (d: typeof daily[0]) => number) =>
+    daily.map((d, i) => `${PAD + i * stepX},${H - PAD - ((getValue(d) / maxVal) * (H - PAD * 2))}`).join(" ");
+
+  const depPoints = toPoints((d) => d.departures);
+  const arrPoints = toPoints((d) => d.arrivals);
+
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <svg width={W} height={H} style={{ display: "block" }}>
+        <polyline points={depPoints} fill="none" stroke={theme.ACCENT_BLUE} strokeWidth="1.5" strokeLinejoin="round" />
+        <polyline points={arrPoints} fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3,2" />
+      </svg>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: theme.DIM, fontFamily: "monospace", marginTop: 1 }}>
+        <span>{daily[0]!.date.slice(5)}</span>
+        <span style={{ display: "flex", gap: 8 }}>
+          <span style={{ color: theme.ACCENT_BLUE }}>— Dep</span>
+          <span style={{ color: "#f59e0b" }}>┈ Arr</span>
+        </span>
+        <span>{daily[daily.length - 1]!.date.slice(5)}</span>
+      </div>
+    </div>
+  );
+}
+
+function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays, theme }: {
   flights: Flight[];
   selectedAirport: string;
   scope: Scope;
   region: Region;
+  rangeDays: number;
   theme: ThemeColors;
 }) {
   const airportInfo = getAirportInfo(selectedAirport);
@@ -1241,11 +1310,12 @@ function SummaryPanel({ flights, selectedAirport, scope, region, theme }: {
     const fleetMix = getFleetMix(flights, selectedAirport);
     const durations = getFlightDurationDistribution(flights, selectedAirport);
     const hourly = computeHourlyStats(flights, selectedAirport);
+    const daily = computeDailyStats(flights, selectedAirport);
     const days = getUniqueDays(flights, selectedAirport);
     const peakHour = hourly.reduce((a, b) => (b.count > a.count ? b : a), { hour: 0, count: 0 });
     const total = depArr.departures + depArr.arrivals;
 
-    return { depArr, topRoutes, airlines, fleetMix, durations, peakHour, days, total };
+    return { depArr, topRoutes, airlines, fleetMix, durations, hourly, daily, peakHour, days, total };
   }, [flights, selectedAirport, isAirportScope]);
 
   // Region-level stats
@@ -1273,7 +1343,7 @@ function SummaryPanel({ flights, selectedAirport, scope, region, theme }: {
 
   // ── Airport Scope ──
   if (isAirportScope && airportStats) {
-    const { depArr, topRoutes, airlines, fleetMix, durations, peakHour, days, total } = airportStats;
+    const { depArr, topRoutes, airlines, fleetMix, durations, peakHour, days, total, hourly, daily } = airportStats;
     return (
       <>
         <SectionHeader theme={theme}>
@@ -1287,6 +1357,18 @@ function SummaryPanel({ flights, selectedAirport, scope, region, theme }: {
           <StatRow label="Arr" value={depArr.arrivals} theme={theme} />
           <StatRow label="Peak" value={`${String(peakHour.hour).padStart(2, "0")}:00`} sub={`${peakHour.count} flights`} theme={theme} />
         </div>
+
+        {/* Hourly Heatmap */}
+        <SectionHeader theme={theme}>Hourly Activity</SectionHeader>
+        <HourlyHeatmap hourly={hourly} theme={theme} />
+
+        {/* Daily Trend (only for multi-day ranges) */}
+        {rangeDays > 1 && daily.length > 1 && (
+          <>
+            <SectionHeader theme={theme}>Daily Trend</SectionHeader>
+            <DailyTrendChart daily={daily} theme={theme} />
+          </>
+        )}
 
         {/* Top Routes */}
         {topRoutes.length > 0 && (
@@ -1586,10 +1668,11 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           )}
           {activePanel === "summary" && (
             <SummaryPanel
-              flights={props.allFlights}
+              flights={props.summaryFlights}
               selectedAirport={props.selectedAirport}
               scope={props.scope}
               region={props.region}
+              rangeDays={props.rangeDays}
               theme={theme}
             />
           )}

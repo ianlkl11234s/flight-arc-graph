@@ -1025,7 +1025,8 @@ export default function App() {
             fullDates={dataSource === "fused" ? airspaceDates : (regionFullDatesMap[region === "all" ? "TW" : region] ?? [])}
             selectedDate={timeline.selectedDate}
             onDateSelect={timeline.setSelectedDate}
-            allFlights={allFlights}
+            summaryFlights={displayedFlights}
+            rangeDays={timeline.rangeDays}
             onStatsClick={() => setShowStats(true)}
             onInfoClick={() => setShowInfo(true)}
             showTerminator={showTerminator}
