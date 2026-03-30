@@ -407,6 +407,7 @@ const REGION_PREFIXES: Record<string, string[]> = {
   TW: ["RC"],
   JP: ["RJ", "RO"],
   HK: ["VH"],
+  US: ["K"],
 };
 
 function icaoMatchesRegion(icao: string, region: string): boolean {

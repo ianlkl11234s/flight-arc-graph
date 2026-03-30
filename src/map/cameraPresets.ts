@@ -101,6 +101,14 @@ export const AIRPORT_INFO: Record<string, { name: string; iata: string }> = {
   LPMA: { name: "Aeroporto da Madeira", iata: "FNC" },
   // Bhutan
   VQPR: { name: "Paro Airport", iata: "PBH" },
+  // Ethiopia
+  HAAB: { name: "Addis Ababa Bole International", iata: "ADD" },
+  // United States (cont.)
+  KDCA: { name: "Ronald Reagan Washington National", iata: "DCA" },
+  // United Kingdom
+  EGLL: { name: "London Heathrow", iata: "LHR" },
+  // Ireland
+  EIDW: { name: "Dublin Airport", iata: "DUB" },
 };
 
 export function getAirportInfo(icao: string): { name: string; iata: string } | undefined {
@@ -840,6 +848,42 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     icao: "VQPR",
     center: [89.4246, 27.4033],
     zoom: 12,
+    pitch: 55,
+    bearing: 0,
+  },
+  // Ethiopia
+  {
+    name: "Addis Ababa Bole International",
+    icao: "HAAB",
+    center: [38.7993, 8.9779],
+    zoom: 11,
+    pitch: 55,
+    bearing: 0,
+  },
+  // United States (cont.)
+  {
+    name: "Ronald Reagan Washington National",
+    icao: "KDCA",
+    center: [-77.0377, 38.8521],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 30,
+  },
+  // United Kingdom
+  {
+    name: "London Heathrow",
+    icao: "EGLL",
+    center: [-0.4614, 51.4700],
+    zoom: 11,
+    pitch: 55,
+    bearing: -10,
+  },
+  // Ireland
+  {
+    name: "Dublin Airport",
+    icao: "EIDW",
+    center: [-6.2701, 53.4264],
+    zoom: 11.5,
     pitch: 55,
     bearing: 0,
   },
