@@ -12,3 +12,10 @@ video/
 output/
 music/
 scripts/__pycache__/
+
+# Claude Code 內部儲存（不 commit）
+.claude/projects/
+.claude/worktrees/
+.claude/todos/
+.claude/settings.local.json
+.claude/.cache/
