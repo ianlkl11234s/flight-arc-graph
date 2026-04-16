@@ -14,6 +14,7 @@
 
 ## 文件清單
 
+- [next-steps.md](next-steps.md) — **目前進行中的工作**（重開 session 先看這個）
 - [principles.md](principles.md) — 開發慣例
 - 專案根 [CLAUDE.md](../CLAUDE.md) — 必做的 build 檢查與程式碼慣例
 
