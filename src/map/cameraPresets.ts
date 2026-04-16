@@ -962,6 +962,14 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     pitch: 55,
     bearing: 130, // 跑道 13L/31R
   },
+  {
+    name: "Arabian Gulf (DXB · AUH · DOH)",
+    icao: "OMDB_OVERVIEW",
+    center: [53.5, 25.1],
+    zoom: 7,
+    pitch: 45,
+    bearing: 0,
+  },
 ];
 
 export function getPresetByIcao(icao: string): CameraPreset | undefined {
