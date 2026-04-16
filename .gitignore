@@ -8,6 +8,9 @@ public/tracks/
 public/airspace/
 scripts/flight-list.json
 scripts/track-progress.json
+scripts/track-progress.json.bak
+scripts/track-done.ndjson
+scripts/track-failed.ndjson
 video/
 output/
 music/

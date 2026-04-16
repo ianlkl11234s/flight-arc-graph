@@ -16,3 +16,7 @@
 
 - [principles.md](principles.md) — 開發慣例
 - 專案根 [CLAUDE.md](../CLAUDE.md) — 必做的 build 檢查與程式碼慣例
+
+### Pitfalls
+
+- [track-progress-migration.md](pitfalls/track-progress-migration.md) — 322MB progress 檔瘦身成 NDJSON（2026-04-16）

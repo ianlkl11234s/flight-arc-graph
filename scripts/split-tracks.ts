@@ -1,22 +1,35 @@
 /**
  * split-tracks.ts
- * 將 aviation_data.json 拆成：
- *   1. public/tracks/airports/{ICAO}.jsonl — 每個機場的完整軌跡（NDJSON）
- *   2. public/tracks/regions/{REGION}.jsonl — 每個 region 的 DP 降採樣版（NDJSON）
- *   3. public/tracks/manifest.json — 索引檔
+ *
+ * 掃描 public/tracks/airports/{ICAO}.jsonl，產出：
+ *   1. public/tracks/regions/{REGION}.jsonl — 每個 region 的 DP 降採樣版
+ *   2. public/tracks/manifest.json          — 索引檔（airports + regions）
+ *
+ * 注意：airports/{ICAO}.jsonl 是 fetch-tracks.ts 直接寫入的最終輸出，
+ *       本腳本只做 dedupe（排序 + 去重）+ 產生 region + manifest。
  *
  * Usage:
  *   npx tsx scripts/split-tracks.ts
+ *   npx tsx scripts/split-tracks.ts --dedupe-only   # 只去重 airports/*.jsonl，不動 region
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
-import { resolve, dirname } from "path";
+import {
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  mkdirSync,
+  existsSync,
+} from "fs";
+import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { gzipSync } from "zlib";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const INPUT = resolve(__dirname, "../public/tracks/aviation_data.json");
-const OUT_DIR = resolve(__dirname, "../public/tracks");
+const ROOT = resolve(__dirname, "..");
+const TRACKS_DIR = resolve(ROOT, "public/tracks");
+const AIRPORTS_DIR = join(TRACKS_DIR, "airports");
+const REGIONS_DIR = join(TRACKS_DIR, "regions");
+const MANIFEST_FILE = join(TRACKS_DIR, "manifest.json");
 
 interface Flight {
   fr24_id: string;
@@ -29,11 +42,7 @@ interface Flight {
 
 // ── Douglas-Peucker ──
 
-function perpDistKm(
-  p: number[],
-  a: number[],
-  b: number[],
-): number {
+function perpDistKm(p: number[], a: number[], b: number[]): number {
   const cosLat = Math.cos((a[0]! * Math.PI) / 180);
   const dlat = (b[0]! - a[0]!) * 111.32;
   const dlng = (b[1]! - a[1]!) * 111.32 * cosLat;
@@ -72,20 +81,8 @@ function dpSimplify(path: number[][], epsilon: number): number[][] {
   return [a, b];
 }
 
-// ── Coordinate precision reduction ──
-
-function reducePrecision(path: number[][]): number[][] {
-  return path.map((p) => [
-    +p[0]!.toFixed(4),
-    +p[1]!.toFixed(4),
-    Math.round(p[2]!),
-    p[3]!,
-  ]);
-}
-
 // ── Region matching ──
 
-const KNOWN = ["RC", "RJ", "RO", "VH", "K"];
 function getRegion(icao: string): string {
   if (icao.startsWith("RC")) return "TW";
   if (icao.startsWith("RJ") || icao.startsWith("RO")) return "JP";
@@ -94,37 +91,48 @@ function getRegion(icao: string): string {
   return "other";
 }
 
+// ── 讀取一個 JSONL 檔，dedupe 並回寫 ──
+
+function readAndDedupe(icao: string): Flight[] {
+  const path = join(AIRPORTS_DIR, `${icao}.jsonl`);
+  const content = readFileSync(path, "utf-8");
+  const lines = content.split("\n").filter(Boolean);
+  const byId = new Map<string, Flight>();
+  for (const line of lines) {
+    try {
+      const f = JSON.parse(line) as Flight;
+      if (f.fr24_id) byId.set(f.fr24_id, f); // 後寫的覆蓋前寫的
+    } catch {
+      /* skip bad line */
+    }
+  }
+  const arr = [...byId.values()].sort((a, b) => a.dep_time - b.dep_time);
+
+  // 若原檔有重複（dedupe 有效果）才回寫
+  if (arr.length !== lines.length) {
+    const jsonl = arr.map((f) => JSON.stringify(f)).join("\n") + "\n";
+    writeFileSync(path, jsonl);
+  }
+  return arr;
+}
+
 // ── Main ──
 
 function main() {
   console.log("=== split-tracks ===\n");
 
-  if (!existsSync(INPUT)) {
-    console.error("❌ 找不到", INPUT);
+  if (!existsSync(AIRPORTS_DIR)) {
+    console.error(`❌ 找不到 ${AIRPORTS_DIR}`);
     process.exit(1);
   }
 
-  const raw: Flight[] = JSON.parse(readFileSync(INPUT, "utf-8"));
-  console.log(`載入 ${raw.length} 筆航班\n`);
+  const dedupeOnly = process.argv.includes("--dedupe-only");
 
-  // 4 位小數（不降採樣）
-  const flights = raw.map((f) => ({
-    ...f,
-    path: reducePrecision(f.path),
-  }));
-
-  // ── 1. 按機場分 ──
-  const airportsDir = resolve(OUT_DIR, "airports");
-  mkdirSync(airportsDir, { recursive: true });
-
-  const byAirport = new Map<string, Map<string, Flight>>();
-  for (const f of flights) {
-    for (const icao of [f.origin_icao, f.dest_icao]) {
-      if (!icao) continue;
-      if (!byAirport.has(icao)) byAirport.set(icao, new Map());
-      byAirport.get(icao)!.set(f.fr24_id, f);
-    }
-  }
+  // 1. 掃 airports/*.jsonl，dedupe + 建 manifest
+  console.log("📖 載入 airports/*.jsonl...");
+  const files = readdirSync(AIRPORTS_DIR).filter((f) => f.endsWith(".jsonl"));
+  const byAirport = new Map<string, Flight[]>();
+  let totalFlightsIndexed = 0;
 
   const manifest: {
     airports: Record<string, { flights: number; gzipBytes: number }>;
@@ -134,36 +142,43 @@ function main() {
   } = {
     airports: {},
     regions: {},
-    totalFlights: flights.length,
+    totalFlights: 0,
     generatedAt: new Date().toISOString(),
   };
 
-  let airportCount = 0;
-  for (const [icao, flightsMap] of byAirport) {
-    const arr = [...flightsMap.values()].sort(
-      (a, b) => a.dep_time - b.dep_time,
-    );
-    const jsonl = arr.map((f) => JSON.stringify(f)).join("\n") + "\n";
-    const outPath = resolve(airportsDir, `${icao}.jsonl`);
-    writeFileSync(outPath, jsonl);
-    const gzSize = gzipSync(jsonl).length;
-    manifest.airports[icao] = { flights: arr.length, gzipBytes: gzSize };
-    airportCount++;
-  }
-  console.log(`✅ ${airportCount} 機場檔案 → airports/`);
+  for (const file of files) {
+    const icao = file.replace(".jsonl", "");
+    const flights = readAndDedupe(icao);
+    byAirport.set(icao, flights);
+    totalFlightsIndexed += flights.length;
 
-  // ── 2. 按 Region 分（DP 0.5km 降採樣版）──
-  const regionsDir = resolve(OUT_DIR, "regions");
-  mkdirSync(regionsDir, { recursive: true });
+    const jsonl = flights.map((f) => JSON.stringify(f)).join("\n") + "\n";
+    const gzSize = gzipSync(jsonl).length;
+    manifest.airports[icao] = { flights: flights.length, gzipBytes: gzSize };
+  }
+  console.log(`   ${files.length} 機場，${totalFlightsIndexed} 筆（含重複歸屬）\n`);
+
+  if (dedupeOnly) {
+    console.log("(--dedupe-only, 跳過 region + manifest)");
+    return;
+  }
+
+  // 2. 按 Region 分（DP 0.5km 降採樣）
+  mkdirSync(REGIONS_DIR, { recursive: true });
+
+  const uniqueFlights = new Map<string, Flight>();
+  for (const flights of byAirport.values()) {
+    for (const f of flights) uniqueFlights.set(f.fr24_id, f);
+  }
+  manifest.totalFlights = uniqueFlights.size;
+  console.log(`🛫 不重複航班: ${uniqueFlights.size}\n`);
 
   const byRegion = new Map<string, Flight[]>();
-  for (const f of flights) {
+  for (const f of uniqueFlights.values()) {
     const r1 = getRegion(f.origin_icao);
     const r2 = getRegion(f.dest_icao);
-    // 歸屬到 origin 的 region
     if (!byRegion.has(r1)) byRegion.set(r1, []);
     byRegion.get(r1)!.push(f);
-    // 如果 dest 不同 region，也加到 dest region（All Region 需要）
     if (r2 !== r1) {
       if (!byRegion.has(r2)) byRegion.set(r2, []);
       byRegion.get(r2)!.push(f);
@@ -171,19 +186,17 @@ function main() {
   }
 
   for (const [region, regionFlights] of byRegion) {
-    // 去重
     const unique = new Map<string, Flight>();
     for (const f of regionFlights) unique.set(f.fr24_id, f);
     const arr = [...unique.values()].sort((a, b) => a.dep_time - b.dep_time);
 
-    // DP 降採樣
     const dpFlights = arr.map((f) => ({
       ...f,
-      path: dpSimplify(f.path, 0.5), // 0.5km epsilon
+      path: dpSimplify(f.path, 0.5),
     }));
 
     const jsonl = dpFlights.map((f) => JSON.stringify(f)).join("\n") + "\n";
-    const outPath = resolve(regionsDir, `${region}.jsonl`);
+    const outPath = join(REGIONS_DIR, `${region}.jsonl`);
     writeFileSync(outPath, jsonl);
     const gzSize = gzipSync(jsonl).length;
     manifest.regions[region] = { flights: arr.length, gzipBytes: gzSize };
@@ -192,11 +205,8 @@ function main() {
     );
   }
 
-  // ── 3. manifest ──
-  writeFileSync(
-    resolve(OUT_DIR, "manifest.json"),
-    JSON.stringify(manifest, null, 2),
-  );
+  // 3. manifest
+  writeFileSync(MANIFEST_FILE, JSON.stringify(manifest, null, 2));
   console.log(`\n✅ manifest.json`);
 
   // 統計
@@ -209,11 +219,9 @@ function main() {
     0,
   );
   console.log(`\n=== 統計 ===`);
-  console.log(`機場檔案: ${airportCount} 個`);
-  console.log(`Region 檔案: ${byRegion.size} 個`);
-  console.log(
-    `Region 合計 gzip: ${(totalRegionGz / 1024 / 1024).toFixed(1)} MB`,
-  );
+  console.log(`機場檔案: ${files.length} 個 (gzip ${(totalAirportGz / 1024 / 1024).toFixed(1)} MB)`);
+  console.log(`Region:   ${byRegion.size} 個 (gzip ${(totalRegionGz / 1024 / 1024).toFixed(1)} MB)`);
+  console.log(`不重複航班: ${uniqueFlights.size}`);
 }
 
 main();

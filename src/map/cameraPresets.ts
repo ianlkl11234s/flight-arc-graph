@@ -107,8 +107,17 @@ export const AIRPORT_INFO: Record<string, { name: string; iata: string }> = {
   KDCA: { name: "Ronald Reagan Washington National", iata: "DCA" },
   // United Kingdom
   EGLL: { name: "London Heathrow", iata: "LHR" },
+  EGKK: { name: "London Gatwick", iata: "LGW" },
+  EGLC: { name: "London City", iata: "LCY" },
+  EGSS: { name: "London Stansted", iata: "STN" },
+  EGGW: { name: "London Luton", iata: "LTN" },
   // Ireland
   EIDW: { name: "Dublin Airport", iata: "DUB" },
+  // Singapore
+  WSSS: { name: "Singapore Changi", iata: "SIN" },
+  // United Arab Emirates
+  OMDB: { name: "Dubai International", iata: "DXB" },
+  OMAA: { name: "Abu Dhabi International", iata: "AUH" },
 };
 
 export function getAirportInfo(icao: string): { name: string; iata: string } | undefined {
@@ -878,6 +887,46 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     pitch: 55,
     bearing: -10,
   },
+  {
+    name: "London Gatwick",
+    icao: "EGKK",
+    center: [-0.1903, 51.1481],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 78, // 跑道 08R/26L
+  },
+  {
+    name: "London City",
+    icao: "EGLC",
+    center: [0.0553, 51.5053],
+    zoom: 12.2,
+    pitch: 55,
+    bearing: 93, // 跑道 09/27，陡降 5.5°
+  },
+  {
+    name: "London Stansted",
+    icao: "EGSS",
+    center: [0.2389, 51.8847],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 43, // 跑道 04/22
+  },
+  {
+    name: "London Luton",
+    icao: "EGGW",
+    center: [-0.3683, 51.8747],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 76, // 跑道 07/25
+  },
+  {
+    name: "Greater London (5 airports)",
+    icao: "EGLL_OVERVIEW",
+    center: [0.0, 51.5],
+    zoom: 9,
+    pitch: 45,
+    bearing: 0,
+  },
   // Ireland
   {
     name: "Dublin Airport",
@@ -886,6 +935,32 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     zoom: 11.5,
     pitch: 55,
     bearing: 0,
+  },
+  // Singapore
+  {
+    name: "Singapore Changi",
+    icao: "WSSS",
+    center: [103.9915, 1.3644],
+    zoom: 11,
+    pitch: 55,
+    bearing: 20, // 跑道 02L/20R
+  },
+  // United Arab Emirates
+  {
+    name: "Dubai International",
+    icao: "OMDB",
+    center: [55.3644, 25.2528],
+    zoom: 11,
+    pitch: 55,
+    bearing: 122, // 跑道 12L/30R
+  },
+  {
+    name: "Abu Dhabi International",
+    icao: "OMAA",
+    center: [54.6511, 24.4330],
+    zoom: 11,
+    pitch: 55,
+    bearing: 130, // 跑道 13L/31R
   },
 ];
 

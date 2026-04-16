@@ -3,32 +3,49 @@
  *
  * 使用方式：
  *   npx tsx scripts/fetch-tracks.ts --date 2026-02-18
+ *   npx tsx scripts/fetch-tracks.ts --airports EGKK,EGLC,EGSS,EGGW
  *
  * 參數：
- *   --date YYYY-MM-DD  只處理該日期的航班（依 datetime_takeoff）
- *   不帶 --date 則處理全部航班
+ *   --date YYYY-MM-DD                只處理該日期的航班（datetime_takeoff 起頭）
+ *   --airports RCTP,RJTT,...         只處理 orig 或 dest 落在清單內的航班（推薦）
+ *   --limit N                        最多處理 N 筆（測試用）
+ *   --dry-run                        只印 todo 數量，不打 API
+ *   不帶參數 → 處理全部航班
  *
- * Essential 方案限制：
- *   - Response limit: 300 筆/次
- *   - Rate limit: 30 次/分鐘
- *   - Monthly credits: 666,000
+ * Essential 方案限制：300 筆/次、30 次/分鐘、666,000 credits/月
+ *
+ * 資料流（v2, NDJSON append-only）：
+ *   flight-list.json  → 航班清單 (Step 1 產出)
+ *   track-done.ndjson / track-failed.ndjson → progress (append-only，不 re-serialize)
+ *   public/tracks/airports/{ICAO}.jsonl     → 軌跡 (直接 append, dep + dest 各一份)
  *
  * 支援中斷續接：已取得軌跡的航班會自動跳過
  */
 
 import dotenv from "dotenv";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import {
+  readFileSync,
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+} from "fs";
+import { resolve, dirname, join } from "path";
+import { fileURLToPath } from "url";
 dotenv.config();
 
 // ── 設定 ──────────────────────────────────────────────
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, "..");
+
 const API_BASE = "https://fr24api.flightradar24.com/api";
-const DELAY_MS = 2050;         // 2.05s → ~29 req/min，接近 Essential 30 req/min 上限
+const DELAY_MS = 2050; // 2.05s → ~29 req/min，接近 Essential 30 req/min 上限
 const MAX_RETRIES = 5;
 
-const INPUT_FILE = "scripts/flight-list.json";
-const PROGRESS_FILE = "scripts/track-progress.json";
-const OUTPUT_FILE = "public/tracks/aviation_data.json";
+const INPUT_FILE = resolve(ROOT, "scripts/flight-list.json");
+const DONE_NDJSON = resolve(ROOT, "scripts/track-done.ndjson");
+const FAILED_NDJSON = resolve(ROOT, "scripts/track-failed.ndjson");
+const AIRPORTS_DIR = resolve(ROOT, "public/tracks/airports");
 
 // ── 型別 ──────────────────────────────────────────────
 
@@ -77,6 +94,18 @@ function sleep(ms: number) {
 
 function isoToUnix(iso: string): number {
   return iso ? Math.floor(new Date(iso).getTime() / 1000) : 0;
+}
+
+/** 4 位小數 + 整數高度（與 split-tracks.ts 一致） */
+function reducePrecision(
+  path: number[][],
+): [number, number, number, number][] {
+  return path.map((p) => [
+    +p[0]!.toFixed(4),
+    +p[1]!.toFixed(4),
+    Math.round(p[2]!),
+    p[3]!,
+  ] as [number, number, number, number]);
 }
 
 // ── API 呼叫 ──────────────────────────────────────────
@@ -130,12 +159,10 @@ function parseTrackPoints(
 ): [number, number, number, number][] | null {
   if (!raw || typeof raw !== "object") return null;
 
-  // 嘗試多種可能的回傳結構
   const data = (raw as Record<string, unknown>).data ?? raw;
   let tracks: unknown[] = [];
 
   if (Array.isArray(data)) {
-    // { data: [ { fr24_id, tracks: [...] } ] }
     const first = data[0] as Record<string, unknown> | undefined;
     if (first?.tracks && Array.isArray(first.tracks)) {
       tracks = first.tracks;
@@ -158,7 +185,6 @@ function parseTrackPoints(
     if (!pt || typeof pt !== "object") continue;
     const p = pt as Record<string, unknown>;
 
-    // 嘗試多種欄位名
     const lat = Number(p.lat ?? p.latitude ?? 0);
     const lng = Number(p.lng ?? p.lon ?? p.longitude ?? 0);
     const alt = Number(
@@ -173,8 +199,7 @@ function parseTrackPoints(
     );
 
     if (lat !== 0 && lng !== 0 && ts !== 0) {
-      // 如果高度單位是 feet，轉換為 meters
-      // FR24 API 通常回傳 feet
+      // FR24 通常回傳 feet，>1000 則視為 feet 轉 meters
       const altM = alt > 1000 ? Math.round(alt * 0.3048) : alt;
       points.push([lat, lng, altM, ts]);
     }
@@ -183,28 +208,53 @@ function parseTrackPoints(
   return points.length > 0 ? points : null;
 }
 
-// ── 進度管理 ──────────────────────────────────────────
+// ── 進度管理（NDJSON append-only）─────────────────────
 
-interface ProgressData {
-  completed: Record<string, FlightOutput>; // fr24_id → output
-  failed: string[]; // fr24_id list
-  updated_at: string;
+interface Progress {
+  done: Set<string>;
+  failed: Set<string>;
 }
 
-function loadProgress(): ProgressData {
-  if (existsSync(PROGRESS_FILE)) {
-    try {
-      return JSON.parse(readFileSync(PROGRESS_FILE, "utf-8"));
-    } catch {
-      // ignore
+function loadProgress(): Progress {
+  const done = new Set<string>();
+  const failed = new Set<string>();
+  if (existsSync(DONE_NDJSON)) {
+    const lines = readFileSync(DONE_NDJSON, "utf-8").split("\n");
+    for (const line of lines) {
+      const id = line.trim();
+      if (id) done.add(id);
     }
   }
-  return { completed: {}, failed: [], updated_at: "" };
+  if (existsSync(FAILED_NDJSON)) {
+    const lines = readFileSync(FAILED_NDJSON, "utf-8").split("\n");
+    for (const line of lines) {
+      const id = line.trim();
+      if (id) failed.add(id);
+    }
+  }
+  return { done, failed };
 }
 
-function saveProgress(progress: ProgressData) {
-  progress.updated_at = new Date().toISOString();
-  writeFileSync(PROGRESS_FILE, JSON.stringify(progress));
+function markDone(fr24Id: string) {
+  appendFileSync(DONE_NDJSON, `${fr24Id}\n`);
+}
+
+function markFailed(fr24Id: string) {
+  appendFileSync(FAILED_NDJSON, `${fr24Id}\n`);
+}
+
+/** 把 output append 到 origin 和 dest 的 JSONL */
+function writeFlightToJsonl(output: FlightOutput) {
+  if (!existsSync(AIRPORTS_DIR)) {
+    mkdirSync(AIRPORTS_DIR, { recursive: true });
+  }
+  const line = JSON.stringify(output) + "\n";
+  const icaos = new Set<string>();
+  if (output.origin_icao) icaos.add(output.origin_icao);
+  if (output.dest_icao) icaos.add(output.dest_icao);
+  for (const icao of icaos) {
+    appendFileSync(join(AIRPORTS_DIR, `${icao}.jsonl`), line);
+  }
 }
 
 // ── 主程式 ──────────────────────────────────────────
@@ -218,9 +268,22 @@ async function main() {
 
   // 解析 --airports 參數（篩選 orig_icao 或 dest_icao）
   const airportsIdx = process.argv.indexOf("--airports");
-  const airportsFilter = airportsIdx !== -1
-    ? new Set(process.argv[airportsIdx + 1]!.split(","))
-    : null;
+  const airportsFilter =
+    airportsIdx !== -1
+      ? new Set(
+          process.argv[airportsIdx + 1]!
+            .split(",")
+            .map((s) => s.trim().toUpperCase()),
+        )
+      : null;
+
+  // --limit N (測試用)
+  const limitIdx = process.argv.indexOf("--limit");
+  const limit =
+    limitIdx !== -1 ? parseInt(process.argv[limitIdx + 1]!, 10) : null;
+
+  // --dry-run (不打 API)
+  const dryRun = process.argv.includes("--dry-run");
 
   // 讀取 Step 1 航班清單
   if (!existsSync(INPUT_FILE)) {
@@ -229,7 +292,8 @@ async function main() {
   }
 
   const inputData = JSON.parse(readFileSync(INPUT_FILE, "utf-8"));
-  const allSummaries: FR24FlightSummary[] = inputData.flights ?? inputData;
+  const allSummaries: FR24FlightSummary[] =
+    inputData.flights ?? inputData;
 
   // 篩選日期
   let targets: FR24FlightSummary[];
@@ -247,7 +311,8 @@ async function main() {
   // 篩選機場
   if (airportsFilter) {
     targets = targets.filter(
-      (f) => airportsFilter.has(f.orig_icao) || airportsFilter.has(f.dest_icao),
+      (f) =>
+        airportsFilter.has(f.orig_icao) || airportsFilter.has(f.dest_icao),
     );
     console.log(`機場篩選: ${[...airportsFilter].join(", ")}`);
   }
@@ -255,41 +320,49 @@ async function main() {
 
   // 載入進度
   const progress = loadProgress();
-  const totalDoneCount = Object.keys(progress.completed).length;
-  const failSet = new Set(progress.failed);
+  const totalDoneCount = progress.done.size;
+  console.log(`📂 進度檔（全域）: done=${totalDoneCount}, failed=${progress.failed.size}`);
 
-  // 計算篩選範圍內已完成的數量（用於正確的進度顯示）
+  // 計算篩選範圍內已完成的數量
   const targetIds = new Set(targets.map((f) => f.fr24_id));
-  const doneInTargets = Object.keys(progress.completed).filter((id) =>
-    targetIds.has(id),
-  ).length;
-
-  if (totalDoneCount > 0) {
-    console.log(
-      `📂 載入進度: ${totalDoneCount} 筆已完成 (本次篩選範圍: ${doneInTargets}), ${failSet.size} 筆失敗\n`,
-    );
-  }
+  const doneInTargets = [...progress.done].filter((id) => targetIds.has(id))
+    .length;
 
   // 篩掉已完成的
-  const todo = targets.filter(
-    (f) => !progress.completed[f.fr24_id] && !failSet.has(f.fr24_id),
+  let todo = targets.filter(
+    (f) => !progress.done.has(f.fr24_id) && !progress.failed.has(f.fr24_id),
   );
-  console.log(`待處理: ${todo.length} 筆\n`);
+  console.log(
+    `   本次範圍: ${doneInTargets}/${targets.length} 已完成，待處理 ${todo.length} 筆`,
+  );
 
-  if (todo.length === 0 && doneInTargets > 0) {
+  if (limit !== null && todo.length > limit) {
+    todo = todo.slice(0, limit);
+    console.log(`   --limit ${limit}: 只處理前 ${todo.length} 筆`);
+  }
+  console.log();
+
+  if (dryRun) {
+    console.log("🧪 --dry-run：不打 API，結束。");
+    return;
+  }
+
+  if (todo.length === 0) {
     console.log("✅ 所有航班已處理完成！");
-    writeOutput(progress);
     return;
   }
 
   let successCount = 0;
   let failCount = 0;
   let emptyCount = 0;
-  let firstLogged = totalDoneCount === 0;
+  let firstLogged = totalDoneCount > 0; // 若已有進度，跳過首筆 log
 
   for (let i = 0; i < todo.length; i++) {
     const flight = todo[i]!;
-    const pct = ((doneInTargets + i + 1) / targets.length * 100).toFixed(1);
+    const pct = (
+      ((doneInTargets + i + 1) / targets.length) *
+      100
+    ).toFixed(1);
     process.stdout.write(
       `[${doneInTargets + i + 1}/${targets.length}] ${pct}% ${flight.callsign || flight.flight} (${flight.fr24_id}) ... `,
     );
@@ -321,57 +394,40 @@ async function main() {
           arr_time: isoToUnix(flight.datetime_landed),
           status: flight.flight_ended ? "landed" : "active",
           trail_points: points.length,
-          path: points,
+          path: reducePrecision(points),
         };
 
-        progress.completed[flight.fr24_id] = output;
+        // 順序很重要：先 append JSONL，再標記 done
+        // 若 JSONL 寫入失敗會 throw，done 不會被標記 → 下次可重抓
+        writeFlightToJsonl(output);
+        markDone(flight.fr24_id);
+        progress.done.add(flight.fr24_id);
         successCount++;
         console.log(`✅ ${points.length} 點`);
       } else {
-        progress.failed.push(flight.fr24_id);
+        markFailed(flight.fr24_id);
+        progress.failed.add(flight.fr24_id);
         emptyCount++;
         console.log("⚪ 無軌跡");
       }
     } catch (err) {
-      progress.failed.push(flight.fr24_id);
+      markFailed(flight.fr24_id);
+      progress.failed.add(flight.fr24_id);
       failCount++;
       console.log(`❌ ${(err as Error).message}`);
-    }
-
-    // 每 10 筆存一次進度
-    if ((i + 1) % 10 === 0) {
-      saveProgress(progress);
     }
 
     await sleep(DELAY_MS);
   }
 
-  saveProgress(progress);
-
   // ── 統計 ──
-  const totalDone = Object.keys(progress.completed).length;
   console.log("\n=== 統計 ===\n");
   console.log(`成功取得軌跡: ${successCount} 筆（本次）`);
   console.log(`無軌跡資料:   ${emptyCount} 筆`);
   console.log(`失敗:         ${failCount} 筆`);
-  console.log(`累計完成:     ${totalDone} 筆`);
+  console.log(`累計 done:    ${progress.done.size} 筆`);
+  console.log(`累計 failed:  ${progress.failed.size} 筆`);
   console.log(`API 請求次數: ${totalRequests}`);
-
-  // 寫出最終檔案
-  writeOutput(progress);
-}
-
-function writeOutput(progress: ProgressData) {
-  const flights = Object.values(progress.completed);
-  if (flights.length === 0) {
-    console.log("\n⚠️ 沒有軌跡資料可輸出");
-    return;
-  }
-
-  // 依 dep_time 排序
-  flights.sort((a, b) => a.dep_time - b.dep_time);
-  writeFileSync(OUTPUT_FILE, JSON.stringify(flights, null, 2));
-  console.log(`\n📁 已輸出 ${flights.length} 筆至 ${OUTPUT_FILE}`);
 }
 
 main().catch((err) => {

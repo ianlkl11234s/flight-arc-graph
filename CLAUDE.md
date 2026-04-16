@@ -29,9 +29,14 @@ npx tsc --noEmit
 ## 資料架構
 
 - 航線軌跡：`tracks/airports/{ICAO}.jsonl`（NDJSON 格式，per-airport lazy loading）
+  - fetch-tracks.ts **直接 append** 寫入此檔（dep + dest 各一份），不再經過 aviation_data.json
+  - split-tracks.ts 掃 JSONL 做 dedupe + 產生 region + manifest
 - 空域快照：`airspace/days/{YYYY-MM-DD}.jsonl`（按天分檔）
 - 索引：`tracks/manifest.json`、`airspace/manifest.json`
-- 原始資料：`scripts/track-progress.json`、`scripts/flight-list.json`（gitignored）
+- 進度記錄：`scripts/track-done.ndjson`、`scripts/track-failed.ndjson`（append-only，gitignored）
+  - 每行一個 `fr24_id`，fetch-tracks 用來跳過已抓過的航班
+  - 取代舊的 `scripts/track-progress.json`（322MB，有 RangeError，已 migrate 到 NDJSON）
+- 航班清單：`scripts/flight-list.json`（Step 1 產出，gitignored）
 
 ## 部署流程
 
