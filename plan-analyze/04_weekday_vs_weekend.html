@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>週末 vs 平日差異 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+.hero { text-align: center; padding: 48px 24px; }
+.hero-number { font-size: 72px; font-weight: 700; color: var(--green); }
+.hero-label { font-size: 16px; color: var(--dim); margin-top: 8px; }
+.hero-sub { font-size: 14px; color: var(--dim); margin-top: 16px; max-width: 600px; margin-left: auto; margin-right: auto; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; }
+.stat-value { font-size: 32px; font-weight: 700; }
+.stat-label { font-size: 12px; color: var(--dim); margin-top: 4px; }
+.chart-wrap { position: relative; width: 100%; max-height: 400px; }
+.insight { background: rgba(100,170,255,0.06); border-left: 3px solid var(--accent); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.insight strong { color: var(--text); }
+.route-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.route-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+.route-name { color: var(--text); }
+.route-count { color: var(--orange); font-weight: 600; }
+.bottom-nav { text-align: right; margin-top: 32px; }
+.bottom-nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.bottom-nav a:hover { text-decoration: underline; }
+.tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; margin-left: 6px; }
+.tag-weekend { background: rgba(16,185,129,0.15); color: var(--green); }
+.tag-weekday { background: rgba(100,170,255,0.15); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>週末 vs 平日差異</h1>
+  <p class="subtitle">台灣的航空市場週末和平日差多少？答案可能出乎意料。</p>
+
+  <!-- Hero -->
+  <div class="card hero" id="hero">
+    <div class="hero-number" id="heroRatio">--</div>
+    <div class="hero-label">週末 / 平日 航班比</div>
+    <div class="hero-sub">比例接近 1.0，意味著台灣的航空市場在週末幾乎不減班，穩定的需求貫穿一整週。</div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--accent)" id="weekdayAvg">--</div>
+      <div class="stat-label">平日日均航班</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--green)" id="weekendAvg">--</div>
+      <div class="stat-label">週末日均航班</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--orange)" id="weekendRouteCount">--</div>
+      <div class="stat-label">週末限定航線</div>
+    </div>
+  </div>
+
+  <!-- Section 1: Daily bar chart -->
+  <div class="card">
+    <h2>01 / 每日航班量分佈</h2>
+    <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+    <div class="insight" id="dailyInsight"></div>
+  </div>
+
+  <!-- Section 2: Weekend-only routes -->
+  <div class="card">
+    <h2>02 / 週末限定航線</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">這些航線只在週末出現——可能是包機、季節性需求、或特殊航班。</p>
+    <div class="route-list" id="weekendRoutes"></div>
+    <div class="insight"><strong>觀察：</strong>台中出發的航線佔多數，反映中部地區週末包機需求。部分航線可能是不定期或charter航班。</div>
+  </div>
+
+  <!-- Section 3: Weekday-heavy routes -->
+  <div class="card">
+    <h2>03 / 平日偏重航線</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">這些航線在平日的班次遠多於週末，反映商務旅行需求。</p>
+    <div id="weekdayHeavyList"></div>
+  </div>
+
+  <!-- Section 4: Airport comparison -->
+  <div class="card">
+    <h2>04 / 各機場平日 vs 週末對比</h2>
+    <div class="chart-wrap" style="max-height:500px"><canvas id="airportChart"></canvas></div>
+    <div class="insight" id="airportInsight"></div>
+  </div>
+
+  <div class="bottom-nav"><a href="05_diversions.html">下一篇：轉降異常事件 &rarr;</a></div>
+</div>
+
+<script>
+const CHART_DEFAULTS = {
+  color: '#9ca3af',
+  borderColor: 'rgba(255,255,255,0.06)',
+};
+Chart.defaults.color = CHART_DEFAULTS.color;
+Chart.defaults.borderColor = CHART_DEFAULTS.borderColor;
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+
+fetch('data/04_weekday_vs_weekend.json')
+  .then(r => r.json())
+  .then(render);
+
+function render(data) {
+  // Hero
+  document.getElementById('heroRatio').textContent = data.ratio.toFixed(2);
+  document.getElementById('weekdayAvg').textContent = data.weekdayAvg.toFixed(1);
+  document.getElementById('weekendAvg').textContent = data.weekendAvg.toFixed(1);
+  document.getElementById('weekendRouteCount').textContent = data.weekendOnlyRoutes.length;
+
+  // Daily chart
+  const dayLabels = ['週一', '週二', '週三', '週四', '週五', '週六', '週日'];
+  const dayData = data.byDayOfWeek.map(d => d.avgFlights);
+  const isWeekend = [false, false, false, false, false, true, true];
+
+  const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+  new Chart(dailyCtx, {
+    type: 'bar',
+    data: {
+      labels: dayLabels,
+      datasets: [{
+        label: '日均航班數',
+        data: dayData,
+        backgroundColor: isWeekend.map(w => w ? 'rgba(16,185,129,0.6)' : 'rgba(100,170,255,0.6)'),
+        borderColor: isWeekend.map(w => w ? '#10b981' : '#64aaff'),
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        annotation: undefined,
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          min: Math.floor(Math.min(...dayData) * 0.9),
+          grid: { color: 'rgba(255,255,255,0.04)' },
+        },
+        x: { grid: { display: false } }
+      }
+    },
+    plugins: [{
+      id: 'avgLines',
+      afterDraw(chart) {
+        const ctx = chart.ctx;
+        const yScale = chart.scales.y;
+        const xScale = chart.scales.x;
+        // Weekday avg line
+        const yWd = yScale.getPixelForValue(data.weekdayAvg);
+        ctx.save();
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = '#64aaff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(xScale.left, yWd);
+        ctx.lineTo(xScale.left + (xScale.width * 5/7), yWd);
+        ctx.stroke();
+        // Weekend avg line
+        const yWe = yScale.getPixelForValue(data.weekendAvg);
+        ctx.strokeStyle = '#10b981';
+        ctx.beginPath();
+        ctx.moveTo(xScale.left + (xScale.width * 5/7), yWe);
+        ctx.lineTo(xScale.right, yWe);
+        ctx.stroke();
+        ctx.restore();
+        // Labels
+        ctx.font = "11px 'JetBrains Mono'";
+        ctx.fillStyle = '#64aaff';
+        ctx.fillText(`平日均 ${data.weekdayAvg}`, xScale.left + 4, yWd - 6);
+        ctx.fillStyle = '#10b981';
+        ctx.fillText(`週末均 ${data.weekendAvg}`, xScale.right - 100, yWe - 6);
+      }
+    }]
+  });
+
+  const peakDay = data.byDayOfWeek.reduce((a, b) => a.avgFlights > b.avgFlights ? a : b);
+  const lowDay = data.byDayOfWeek.reduce((a, b) => a.avgFlights < b.avgFlights ? a : b);
+  document.getElementById('dailyInsight').innerHTML =
+    `<strong>觀察：</strong>一週中航班量最高的是${dayLabels[peakDay.day]}（${peakDay.avgFlights.toFixed(1)} 班），最低的是${dayLabels[lowDay.day]}（${lowDay.avgFlights.toFixed(1)} 班），差距僅 ${(peakDay.avgFlights - lowDay.avgFlights).toFixed(1)} 班。週末與平日的差異極小。`;
+
+  // Weekend-only routes
+  const routeList = document.getElementById('weekendRoutes');
+  data.weekendOnlyRoutes.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'route-item';
+    div.innerHTML = `<span class="route-name">${r.route} <span class="tag tag-weekend">週末限定</span></span><span class="route-count">${r.weekendCount} 班</span>`;
+    routeList.appendChild(div);
+  });
+
+  // Weekday-heavy routes
+  const heavyList = document.getElementById('weekdayHeavyList');
+  data.weekdayHeavyRoutes.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'route-item';
+    div.style.marginBottom = '8px';
+    div.innerHTML = `
+      <span class="route-name">${r.route} <span class="tag tag-weekday">平日 ${r.ratio.toFixed(1)}x</span></span>
+      <span style="font-size:12px; color:var(--dim)">平日 ${r.weekdayAvg.toFixed(2)} / 週末 ${r.weekendAvg.toFixed(2)}</span>`;
+    heavyList.appendChild(div);
+  });
+
+  // Airport comparison
+  const airports = data.airportComparison.filter(a => a.weekdayAvg > 2 || a.weekendAvg > 2);
+  const airportCtx = document.getElementById('airportChart').getContext('2d');
+  new Chart(airportCtx, {
+    type: 'bar',
+    data: {
+      labels: airports.map(a => a.airport),
+      datasets: [
+        {
+          label: '平日日均',
+          data: airports.map(a => a.weekdayAvg),
+          backgroundColor: 'rgba(100,170,255,0.5)',
+          borderColor: '#64aaff',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: '週末日均',
+          data: airports.map(a => a.weekendAvg),
+          backgroundColor: 'rgba(16,185,129,0.5)',
+          borderColor: '#10b981',
+          borderWidth: 1,
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top', labels: { padding: 20, usePointStyle: true, pointStyle: 'rectRounded' } }
+      },
+      scales: {
+        y: { grid: { color: 'rgba(255,255,255,0.04)' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  document.getElementById('airportInsight').innerHTML =
+    `<strong>觀察：</strong>桃園機場（RCTP）在週末日均反而略高（${airports[0].weekendAvg.toFixed(1)} vs ${airports[0].weekdayAvg.toFixed(1)}），反映國際旅遊需求在週末更強。離島機場如澎湖（RCQC）、金門（RCBS）週末也明顯上升，顯示週末旅遊效應。`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1764 @@
+{
+  "byCountry": [
+    {
+      "country": "Taiwan",
+      "flights": 9041,
+      "routes": 18,
+      "topDest": [
+        {
+          "airport": "TSA 松山",
+          "icao": "RCSS",
+          "count": 1880
+        },
+        {
+          "airport": "MZG 馬公",
+          "icao": "RCQC",
+          "count": 1875
+        },
+        {
+          "airport": "KNH 金門",
+          "icao": "RCBS",
+          "count": 1630
+        },
+        {
+          "airport": "KHH 高雄",
+          "icao": "RCKH",
+          "count": 1203
+        },
+        {
+          "airport": "RMQ 臺中",
+          "icao": "RCMQ",
+          "count": 856
+        }
+      ]
+    },
+    {
+      "country": "Japan",
+      "flights": 4732,
+      "routes": 32,
+      "topDest": [
+        {
+          "airport": "NRT 成田",
+          "icao": "RJAA",
+          "count": 1107
+        },
+        {
+          "airport": "KIX 關西",
+          "icao": "RJBB",
+          "count": 891
+        },
+        {
+          "airport": "OKA 那霸",
+          "icao": "ROAH",
+          "count": 657
+        },
+        {
+          "airport": "HND 羽田",
+          "icao": "RJTT",
+          "count": 387
+        },
+        {
+          "airport": "NGO 中部",
+          "icao": "RJGG",
+          "count": 334
+        }
+      ]
+    },
+    {
+      "country": "Hong Kong",
+      "flights": 2024,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "HKG 香港",
+          "icao": "VHHH",
+          "count": 2024
+        }
+      ]
+    },
+    {
+      "country": "China",
+      "flights": 1793,
+      "routes": 16,
+      "topDest": [
+        {
+          "airport": "PVG 浦東",
+          "icao": "ZSPD",
+          "count": 541
+        },
+        {
+          "airport": "SZX 深圳",
+          "icao": "ZGSZ",
+          "count": 180
+        },
+        {
+          "airport": "XMN 廈門",
+          "icao": "ZSAM",
+          "count": 154
+        },
+        {
+          "airport": "SHA 虹橋",
+          "icao": "ZSSS",
+          "count": 147
+        },
+        {
+          "airport": "CAN 廣州",
+          "icao": "ZGGG",
+          "count": 132
+        }
+      ]
+    },
+    {
+      "country": "South Korea",
+      "flights": 1730,
+      "routes": 6,
+      "topDest": [
+        {
+          "airport": "ICN 仁川",
+          "icao": "RKSI",
+          "count": 772
+        },
+        {
+          "airport": "PUS 釜山",
+          "icao": "RKPK",
+          "count": 486
+        },
+        {
+          "airport": "CJU 濟州",
+          "icao": "RKPC",
+          "count": 194
+        },
+        {
+          "airport": "GMP 金浦",
+          "icao": "RKSS",
+          "count": 139
+        },
+        {
+          "airport": "RKTU",
+          "icao": "RKTU",
+          "count": 100
+        }
+      ]
+    },
+    {
+      "country": "USA",
+      "flights": 1178,
+      "routes": 13,
+      "topDest": [
+        {
+          "airport": "SFO 舊金山",
+          "icao": "KSFO",
+          "count": 261
+        },
+        {
+          "airport": "LAX 洛杉磯",
+          "icao": "KLAX",
+          "count": 258
+        },
+        {
+          "airport": "ANC 安克拉治",
+          "icao": "PANC",
+          "count": 242
+        },
+        {
+          "airport": "SEA 西雅圖",
+          "icao": "KSEA",
+          "count": 152
+        },
+        {
+          "airport": "KONT",
+          "icao": "KONT",
+          "count": 57
+        }
+      ]
+    },
+    {
+      "country": "Vietnam",
+      "flights": 1137,
+      "routes": 5,
+      "topDest": [
+        {
+          "airport": "SGN 胡志明",
+          "icao": "VVTS",
+          "count": 474
+        },
+        {
+          "airport": "HAN 河內",
+          "icao": "VVNB",
+          "count": 417
+        },
+        {
+          "airport": "VVDN",
+          "icao": "VVDN",
+          "count": 188
+        },
+        {
+          "airport": "VVPQ",
+          "icao": "VVPQ",
+          "count": 46
+        },
+        {
+          "airport": "VVCR",
+          "icao": "VVCR",
+          "count": 12
+        }
+      ]
+    },
+    {
+      "country": "Thailand",
+      "flights": 994,
+      "routes": 4,
+      "topDest": [
+        {
+          "airport": "BKK 曼谷",
+          "icao": "VTBS",
+          "count": 685
+        },
+        {
+          "airport": "DMK 曼谷廊曼",
+          "icao": "VTBD",
+          "count": 180
+        },
+        {
+          "airport": "VTCC",
+          "icao": "VTCC",
+          "count": 121
+        },
+        {
+          "airport": "HKT 普吉",
+          "icao": "VTSP",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "country": "Philippines",
+      "flights": 766,
+      "routes": 3,
+      "topDest": [
+        {
+          "airport": "MNL 馬尼拉",
+          "icao": "RPLL",
+          "count": 561
+        },
+        {
+          "airport": "RPLC",
+          "icao": "RPLC",
+          "count": 115
+        },
+        {
+          "airport": "CEB 宿霧",
+          "icao": "RPVM",
+          "count": 90
+        }
+      ]
+    },
+    {
+      "country": "Macau",
+      "flights": 519,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "MFM 澳門",
+          "icao": "VMMC",
+          "count": 519
+        }
+      ]
+    },
+    {
+      "country": "Singapore",
+      "flights": 503,
+      "routes": 2,
+      "topDest": [
+        {
+          "airport": "SIN 新加坡",
+          "icao": "WSSS",
+          "count": 496
+        },
+        {
+          "airport": "WSSL",
+          "icao": "WSSL",
+          "count": 7
+        }
+      ]
+    },
+    {
+      "country": "Malaysia",
+      "flights": 342,
+      "routes": 5,
+      "topDest": [
+        {
+          "airport": "KUL 吉隆坡",
+          "icao": "WMKK",
+          "count": 224
+        },
+        {
+          "airport": "WMKP",
+          "icao": "WMKP",
+          "count": 66
+        },
+        {
+          "airport": "WBKK",
+          "icao": "WBKK",
+          "count": 36
+        },
+        {
+          "airport": "WBSB",
+          "icao": "WBSB",
+          "count": 13
+        },
+        {
+          "airport": "SZB 梳邦",
+          "icao": "WMSA",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "country": "Indonesia",
+      "flights": 187,
+      "routes": 3,
+      "topDest": [
+        {
+          "airport": "CGK 雅加達",
+          "icao": "WIII",
+          "count": 120
+        },
+        {
+          "airport": "DPS 峇里島",
+          "icao": "WADD",
+          "count": 66
+        },
+        {
+          "airport": "WAMM",
+          "icao": "WAMM",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "country": "Canada",
+      "flights": 107,
+      "routes": 2,
+      "topDest": [
+        {
+          "airport": "CYVR",
+          "icao": "CYVR",
+          "count": 72
+        },
+        {
+          "airport": "YYZ 多倫多",
+          "icao": "CYYZ",
+          "count": 35
+        }
+      ]
+    },
+    {
+      "country": "Australia",
+      "flights": 93,
+      "routes": 3,
+      "topDest": [
+        {
+          "airport": "BNE 布里斯班",
+          "icao": "YBBN",
+          "count": 43
+        },
+        {
+          "airport": "MEL 墨爾本",
+          "icao": "YMML",
+          "count": 26
+        },
+        {
+          "airport": "SYD 雪梨",
+          "icao": "YSSY",
+          "count": 24
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "flights": 68,
+      "routes": 2,
+      "topDest": [
+        {
+          "airport": "FRA 法蘭克福",
+          "icao": "EDDF",
+          "count": 48
+        },
+        {
+          "airport": "EDDM",
+          "icao": "EDDM",
+          "count": 20
+        }
+      ]
+    },
+    {
+      "country": "Unknown (LT)",
+      "flights": 62,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "IST 伊斯坦堡",
+          "icao": "LTFM",
+          "count": 62
+        }
+      ]
+    },
+    {
+      "country": "Unknown (VD)",
+      "flights": 57,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "VDTI",
+          "icao": "VDTI",
+          "count": 57
+        }
+      ]
+    },
+    {
+      "country": "UAE",
+      "flights": 49,
+      "routes": 3,
+      "topDest": [
+        {
+          "airport": "DXB 杜拜",
+          "icao": "OMDB",
+          "count": 38
+        },
+        {
+          "airport": "OMAA",
+          "icao": "OMAA",
+          "count": 6
+        },
+        {
+          "airport": "OMDW",
+          "icao": "OMDW",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "country": "Unknown (LI)",
+      "flights": 47,
+      "routes": 2,
+      "topDest": [
+        {
+          "airport": "LIMC",
+          "icao": "LIMC",
+          "count": 36
+        },
+        {
+          "airport": "FCO 羅馬",
+          "icao": "LIRF",
+          "count": 11
+        }
+      ]
+    },
+    {
+      "country": "Unknown (EH)",
+      "flights": 42,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "AMS 阿姆斯特丹",
+          "icao": "EHAM",
+          "count": 42
+        }
+      ]
+    },
+    {
+      "country": "Unknown (LO)",
+      "flights": 39,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "VIE 維也納",
+          "icao": "LOWW",
+          "count": 39
+        }
+      ]
+    },
+    {
+      "country": "France",
+      "flights": 38,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "CDG 巴黎",
+          "icao": "LFPG",
+          "count": 38
+        }
+      ]
+    },
+    {
+      "country": "India",
+      "flights": 35,
+      "routes": 3,
+      "topDest": [
+        {
+          "airport": "DEL 新德里",
+          "icao": "VIDP",
+          "count": 20
+        },
+        {
+          "airport": "VABB",
+          "icao": "VABB",
+          "count": 10
+        },
+        {
+          "airport": "VOBL",
+          "icao": "VOBL",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "country": "United Kingdom",
+      "flights": 24,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "LHR 倫敦",
+          "icao": "EGLL",
+          "count": 24
+        }
+      ]
+    },
+    {
+      "country": "Unknown (PT)",
+      "flights": 21,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "PTRO",
+          "icao": "PTRO",
+          "count": 21
+        }
+      ]
+    },
+    {
+      "country": "New Zealand",
+      "flights": 17,
+      "routes": 2,
+      "topDest": [
+        {
+          "airport": "AKL 奧克蘭",
+          "icao": "NZAA",
+          "count": 16
+        },
+        {
+          "airport": "NZCH",
+          "icao": "NZCH",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "country": "Unknown (UB)",
+      "flights": 11,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "UBBB",
+          "icao": "UBBB",
+          "count": 11
+        }
+      ]
+    },
+    {
+      "country": "Unknown (LK)",
+      "flights": 10,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "PRG 布拉格",
+          "icao": "LKPR",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "country": "Unknown (VY)",
+      "flights": 4,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "RGN 仰光",
+          "icao": "VYYY",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "country": "Unknown (EL)",
+      "flights": 4,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "ELLX",
+          "icao": "ELLX",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "country": "Unknown (YP)",
+      "flights": 1,
+      "routes": 1,
+      "topDest": [
+        {
+          "airport": "YPDN",
+          "icao": "YPDN",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "domestic": {
+    "flights": 9041,
+    "routes": 85,
+    "topRoutes": [
+      {
+        "route": "TSA 松山→MZG 馬公",
+        "route_icao": "RCSS-RCQC",
+        "count": 684
+      },
+      {
+        "route": "MZG 馬公→TSA 松山",
+        "route_icao": "RCQC-RCSS",
+        "count": 684
+      },
+      {
+        "route": "TSA 松山→KNH 金門",
+        "route_icao": "RCSS-RCBS",
+        "count": 673
+      },
+      {
+        "route": "KNH 金門→TSA 松山",
+        "route_icao": "RCBS-RCSS",
+        "count": 667
+      },
+      {
+        "route": "MZG 馬公→KHH 高雄",
+        "route_icao": "RCQC-RCKH",
+        "count": 639
+      },
+      {
+        "route": "KHH 高雄→MZG 馬公",
+        "route_icao": "RCKH-RCQC",
+        "count": 638
+      },
+      {
+        "route": "RMQ 臺中→KNH 金門",
+        "route_icao": "RCMQ-RCBS",
+        "count": 407
+      },
+      {
+        "route": "KNH 金門→RMQ 臺中",
+        "route_icao": "RCBS-RCMQ",
+        "count": 405
+      },
+      {
+        "route": "KHH 高雄→KNH 金門",
+        "route_icao": "RCKH-RCBS",
+        "count": 390
+      },
+      {
+        "route": "KNH 金門→KHH 高雄",
+        "route_icao": "RCBS-RCKH",
+        "count": 384
+      }
+    ]
+  },
+  "international": {
+    "flights": 16634,
+    "routes": 202
+  },
+  "monopolyRoutes": [
+    {
+      "route": "MZG 馬公→TTT 臺東",
+      "route_icao": "RCQC-RCNN",
+      "airline": "UIA",
+      "count": 123
+    },
+    {
+      "route": "RMQ 臺中→HKG 香港",
+      "route_icao": "RCMQ-VHHH",
+      "airline": "HKE",
+      "count": 122
+    },
+    {
+      "route": "TTT 臺東→MZG 馬公",
+      "route_icao": "RCNN-RCQC",
+      "airline": "UIA",
+      "count": 121
+    },
+    {
+      "route": "TTT 臺東→KNH 金門",
+      "route_icao": "RCNN-RCBS",
+      "airline": "UIA",
+      "count": 116
+    },
+    {
+      "route": "KNH 金門→TTT 臺東",
+      "route_icao": "RCBS-RCNN",
+      "airline": "UIA",
+      "count": 113
+    },
+    {
+      "route": "RMQ 臺中→OKA 那霸",
+      "route_icao": "RCMQ-ROAH",
+      "airline": "SJX",
+      "count": 77
+    },
+    {
+      "route": "TSA 松山→MFK 北竿",
+      "route_icao": "RCSS-RCMT",
+      "airline": "UIA",
+      "count": 73
+    },
+    {
+      "route": "MFK 北竿→TSA 松山",
+      "route_icao": "RCMT-RCSS",
+      "airline": "UIA",
+      "count": 70
+    },
+    {
+      "route": "TPE 桃園→IST 伊斯坦堡",
+      "route_icao": "RCTP-LTFM",
+      "airline": "THY",
+      "count": 62
+    },
+    {
+      "route": "TPE 桃園→HIJ 廣島",
+      "route_icao": "RCTP-RJOB",
+      "airline": "TTW",
+      "count": 43
+    },
+    {
+      "route": "TPE 桃園→TAE 大邱",
+      "route_icao": "RCTP-RKTN",
+      "airline": "TWB",
+      "count": 39
+    },
+    {
+      "route": "RMQ 臺中→RJBE",
+      "route_icao": "RCMQ-RJBE",
+      "airline": "SJX",
+      "count": 39
+    },
+    {
+      "route": "CYI 嘉義→KNH 金門",
+      "route_icao": "RCKU-RCBS",
+      "airline": "UIA",
+      "count": 39
+    },
+    {
+      "route": "MZG 馬公→CYI 嘉義",
+      "route_icao": "RCQC-RCKU",
+      "airline": "UIA",
+      "count": 39
+    },
+    {
+      "route": "TPE 桃園→CDG 巴黎",
+      "route_icao": "RCTP-LFPG",
+      "airline": "EVA",
+      "count": 38
+    },
+    {
+      "route": "TPE 桃園→DXB 杜拜",
+      "route_icao": "RCTP-OMDB",
+      "airline": "UAE",
+      "count": 38
+    },
+    {
+      "route": "CYI 嘉義→MZG 馬公",
+      "route_icao": "RCKU-RCQC",
+      "airline": "UIA",
+      "count": 38
+    },
+    {
+      "route": "KNH 金門→CYI 嘉義",
+      "route_icao": "RCBS-RCKU",
+      "airline": "UIA",
+      "count": 37
+    },
+    {
+      "route": "TPE 桃園→LIMC",
+      "route_icao": "RCTP-LIMC",
+      "airline": "EVA",
+      "count": 36
+    },
+    {
+      "route": "KHH 高雄→HUN 花蓮",
+      "route_icao": "RCKH-RCYU",
+      "airline": "MDA",
+      "count": 36
+    },
+    {
+      "route": "HUN 花蓮→KHH 高雄",
+      "route_icao": "RCYU-RCKH",
+      "airline": "MDA",
+      "count": 36
+    },
+    {
+      "route": "RMQ 臺中→HAN 河內",
+      "route_icao": "RCMQ-VVNB",
+      "airline": "VJC",
+      "count": 36
+    },
+    {
+      "route": "TPE 桃園→YYZ 多倫多",
+      "route_icao": "RCTP-CYYZ",
+      "airline": "EVA",
+      "count": 35
+    },
+    {
+      "route": "TPE 桃園→TAK 高松",
+      "route_icao": "RCTP-RJOT",
+      "airline": "CAL",
+      "count": 34
+    },
+    {
+      "route": "TPE 桃園→ORD 芝加哥",
+      "route_icao": "RCTP-KORD",
+      "airline": "EVA",
+      "count": 34
+    },
+    {
+      "route": "TPE 桃園→CGO 鄭州",
+      "route_icao": "RCTP-ZHCC",
+      "airline": "CSN",
+      "count": 32
+    },
+    {
+      "route": "RMQ 臺中→LZN 南竿",
+      "route_icao": "RCMQ-RCFG",
+      "airline": "UIA",
+      "count": 32
+    },
+    {
+      "route": "LZN 南竿→RMQ 臺中",
+      "route_icao": "RCFG-RCMQ",
+      "airline": "UIA",
+      "count": 32
+    },
+    {
+      "route": "RMQ 臺中→TAK 高松",
+      "route_icao": "RCMQ-RJOT",
+      "airline": "SJX",
+      "count": 28
+    },
+    {
+      "route": "KHH 高雄→VVDN",
+      "route_icao": "RCKH-VVDN",
+      "airline": "TTW",
+      "count": 27
+    }
+  ],
+  "competitiveRoutes": [
+    {
+      "route": "TPE 桃園→NRT 成田",
+      "route_icao": "RCTP-RJAA",
+      "airlines": [
+        {
+          "code": "CAL",
+          "count": 162
+        },
+        {
+          "code": "APJ",
+          "count": 105
+        },
+        {
+          "code": "EVA",
+          "count": 102
+        },
+        {
+          "code": "SJX",
+          "count": 102
+        },
+        {
+          "code": "TTW",
+          "count": 71
+        },
+        {
+          "code": "JJP",
+          "count": 69
+        },
+        {
+          "code": "TGW",
+          "count": 69
+        },
+        {
+          "code": "JAL",
+          "count": 64
+        },
+        {
+          "code": "CPA",
+          "count": 35
+        },
+        {
+          "code": "TLM",
+          "count": 31
+        },
+        {
+          "code": "ANA",
+          "count": 26
+        },
+        {
+          "code": "NCA",
+          "count": 11
+        },
+        {
+          "code": "GTI",
+          "count": 4
+        },
+        {
+          "code": "TZP",
+          "count": 3
+        }
+      ],
+      "totalAirlines": 14
+    },
+    {
+      "route": "TPE 桃園→ICN 仁川",
+      "route_icao": "RCTP-RKSI",
+      "airlines": [
+        {
+          "code": "EVA",
+          "count": 91
+        },
+        {
+          "code": "AAR",
+          "count": 69
+        },
+        {
+          "code": "KAL",
+          "count": 66
+        },
+        {
+          "code": "CAL",
+          "count": 65
+        },
+        {
+          "code": "JNA",
+          "count": 36
+        },
+        {
+          "code": "JJA",
+          "count": 36
+        },
+        {
+          "code": "TGW",
+          "count": 36
+        },
+        {
+          "code": "FDX",
+          "count": 35
+        },
+        {
+          "code": "TTW",
+          "count": 33
+        },
+        {
+          "code": "ESR",
+          "count": 22
+        },
+        {
+          "code": "CKS",
+          "count": 6
+        },
+        {
+          "code": "GTI",
+          "count": 3
+        },
+        {
+          "code": "UPS",
+          "count": 2
+        },
+        {
+          "code": "AIH",
+          "count": 1
+        }
+      ],
+      "totalAirlines": 14
+    },
+    {
+      "route": "TPE 桃園→HKG 香港",
+      "route_icao": "RCTP-VHHH",
+      "airlines": [
+        {
+          "code": "CPA",
+          "count": 448
+        },
+        {
+          "code": "CAL",
+          "count": 289
+        },
+        {
+          "code": "EVA",
+          "count": 263
+        },
+        {
+          "code": "HKE",
+          "count": 136
+        },
+        {
+          "code": "CRK",
+          "count": 133
+        },
+        {
+          "code": "HGB",
+          "count": 82
+        },
+        {
+          "code": "SJX",
+          "count": 68
+        },
+        {
+          "code": "AHK",
+          "count": 38
+        },
+        {
+          "code": "HKC",
+          "count": 28
+        },
+        {
+          "code": "UPS",
+          "count": 4
+        },
+        {
+          "code": "TTW",
+          "count": 1
+        }
+      ],
+      "totalAirlines": 11
+    },
+    {
+      "route": "TPE 桃園→KIX 關西",
+      "route_icao": "RCTP-RJBB",
+      "airlines": [
+        {
+          "code": "APJ",
+          "count": 119
+        },
+        {
+          "code": "CAL",
+          "count": 116
+        },
+        {
+          "code": "EVA",
+          "count": 109
+        },
+        {
+          "code": "SJX",
+          "count": 72
+        },
+        {
+          "code": "TTW",
+          "count": 70
+        },
+        {
+          "code": "JJP",
+          "count": 70
+        },
+        {
+          "code": "FDX",
+          "count": 33
+        },
+        {
+          "code": "TVJ",
+          "count": 31
+        },
+        {
+          "code": "XAX",
+          "count": 31
+        },
+        {
+          "code": "CPA",
+          "count": 30
+        },
+        {
+          "code": "TLM",
+          "count": 19
+        }
+      ],
+      "totalAirlines": 11
+    },
+    {
+      "route": "TPE 桃園→OKA 那霸",
+      "route_icao": "RCTP-ROAH",
+      "airlines": [
+        {
+          "code": "APJ",
+          "count": 101
+        },
+        {
+          "code": "TTW",
+          "count": 74
+        },
+        {
+          "code": "CAL",
+          "count": 73
+        },
+        {
+          "code": "EVA",
+          "count": 67
+        },
+        {
+          "code": "AIQ",
+          "count": 36
+        },
+        {
+          "code": "SJX",
+          "count": 34
+        },
+        {
+          "code": "JTA",
+          "count": 33
+        },
+        {
+          "code": "MXD",
+          "count": 31
+        },
+        {
+          "code": "TVJ",
+          "count": 30
+        }
+      ],
+      "totalAirlines": 9
+    },
+    {
+      "route": "TPE 桃園→PVG 浦東",
+      "route_icao": "RCTP-ZSPD",
+      "airlines": [
+        {
+          "code": "EVA",
+          "count": 98
+        },
+        {
+          "code": "CAL",
+          "count": 90
+        },
+        {
+          "code": "CES",
+          "count": 62
+        },
+        {
+          "code": "CCA",
+          "count": 34
+        },
+        {
+          "code": "CSN",
+          "count": 34
+        },
+        {
+          "code": "DKH",
+          "count": 25
+        },
+        {
+          "code": "CQH",
+          "count": 23
+        },
+        {
+          "code": "CKK",
+          "count": 21
+        }
+      ],
+      "totalAirlines": 8
+    },
+    {
+      "route": "TPE 桃園→PUS 釜山",
+      "route_icao": "RCTP-RKPK",
+      "airlines": [
+        {
+          "code": "ABL",
+          "count": 93
+        },
+        {
+          "code": "CAL",
+          "count": 66
+        },
+        {
+          "code": "JJA",
+          "count": 62
+        },
+        {
+          "code": "EVA",
+          "count": 49
+        },
+        {
+          "code": "ESR",
+          "count": 38
+        },
+        {
+          "code": "KAL",
+          "count": 35
+        },
+        {
+          "code": "JNA",
+          "count": 34
+        },
+        {
+          "code": "TTW",
+          "count": 34
+        }
+      ],
+      "totalAirlines": 8
+    },
+    {
+      "route": "TPE 桃園→NGO 中部",
+      "route_icao": "RCTP-RJGG",
+      "airlines": [
+        {
+          "code": "CAL",
+          "count": 96
+        },
+        {
+          "code": "JAL",
+          "count": 50
+        },
+        {
+          "code": "SJX",
+          "count": 36
+        },
+        {
+          "code": "TTW",
+          "count": 35
+        },
+        {
+          "code": "CPA",
+          "count": 35
+        },
+        {
+          "code": "APJ",
+          "count": 30
+        },
+        {
+          "code": "TLM",
+          "count": 16
+        },
+        {
+          "code": "SIA",
+          "count": 2
+        }
+      ],
+      "totalAirlines": 8
+    },
+    {
+      "route": "TPE 桃園→BKK 曼谷",
+      "route_icao": "RCTP-VTBS",
+      "airlines": [
+        {
+          "code": "EVA",
+          "count": 171
+        },
+        {
+          "code": "CAL",
+          "count": 154
+        },
+        {
+          "code": "TVJ",
+          "count": 104
+        },
+        {
+          "code": "THA",
+          "count": 103
+        },
+        {
+          "code": "SJX",
+          "count": 71
+        },
+        {
+          "code": "CLX",
+          "count": 3
+        },
+        {
+          "code": "BOX",
+          "count": 2
+        },
+        {
+          "code": "AUA",
+          "count": 1
+        }
+      ],
+      "totalAirlines": 8
+    },
+    {
+      "route": "TPE 桃園→MNL 馬尼拉",
+      "route_icao": "RCTP-RPLL",
+      "airlines": [
+        {
+          "code": "EVA",
+          "count": 105
+        },
+        {
+          "code": "CAL",
+          "count": 95
+        },
+        {
+          "code": "APG",
+          "count": 94
+        },
+        {
+          "code": "CEB",
+          "count": 70
+        },
+        {
+          "code": "PAL",
+          "count": 68
+        },
+        {
+          "code": "SJX",
+          "count": 34
+        },
+        {
+          "code": "KLM",
+          "count": 17
+        }
+      ],
+      "totalAirlines": 7
+    },
+    {
+      "route": "TPE 桃園→CTS 新千歲",
+      "route_icao": "RCTP-RJCC",
+      "airlines": [
+        {
+          "code": "EVA",
+          "count": 72
+        },
+        {
+          "code": "CAL",
+          "count": 39
+        },
+        {
+          "code": "TTW",
+          "count": 38
+        },
+        {
+          "code": "SJX",
+          "count": 36
+        },
+        {
+          "code": "TVJ",
+          "count": 35
+        },
+        {
+          "code": "AIQ",
+          "count": 34
+        },
+        {
+          "code": "TGW",
+          "count": 32
+        }
+      ],
+      "totalAirlines": 7
+    },
+    {
+      "route": "TPE 桃園→SIN 新加坡",
+      "route_icao": "RCTP-WSSS",
+      "airlines": [
+        {
+          "code": "TGW",
+          "count": 143
+        },
+        {
+          "code": "CAL",
+          "count": 113
+        },
+        {
+          "code": "EVA",
+          "count": 93
+        },
+        {
+          "code": "SIA",
+          "count": 90
+        },
+        {
+          "code": "SJX",
+          "count": 35
+        },
+        {
+          "code": "CLX",
+          "count": 5
+        }
+      ],
+      "totalAirlines": 6
+    },
+    {
+      "route": "TPE 桃園→KUL 吉隆坡",
+      "route_icao": "RCTP-WMKK",
+      "airlines": [
+        {
+          "code": "XAX",
+          "count": 41
+        },
+        {
+          "code": "CAL",
+          "count": 40
+        },
+        {
+          "code": "EVA",
+          "count": 37
+        },
+        {
+          "code": "MAS",
+          "count": 32
+        },
+        {
+          "code": "MXD",
+          "count": 29
+        },
+        {
+          "code": "SJX",
+          "count": 24
+        }
+      ],
+      "totalAirlines": 6
+    },
+    {
+      "route": "TPE 桃園→VVDN",
+      "route_icao": "RCTP-VVDN",
+      "airlines": [
+        {
+          "code": "EVA",
+          "count": 46
+        },
+        {
+          "code": "CAL",
+          "count": 33
+        },
+        {
+          "code": "TTW",
+          "count": 25
+        },
+        {
+          "code": "SJX",
+          "count": 25
+        },
+        {
+          "code": "BAV",
+          "count": 9
+        },
+        {
+          "code": "VJC",
+          "count": 2
+        }
+      ],
+      "totalAirlines": 6
+    },
+    {
+      "route": "TPE 桃園→HAN 河內",
+      "route_icao": "RCTP-VVNB",
+      "airlines": [
+        {
+          "code": "EVA",
+          "count": 75
+        },
+        {
+          "code": "CAL",
+          "count": 74
+        },
+        {
+          "code": "VJC",
+          "count": 68
+        },
+        {
+          "code": "SJX",
+          "count": 34
+        },
+        {
+          "code": "HVN",
+          "count": 33
+        },
+        {
+          "code": "UAE",
+          "count": 3
+        }
+      ],
+      "totalAirlines": 6
+    },
+    {
+      "route": "KHH 高雄→NRT 成田",
+      "route_icao": "RCKH-RJAA",
+      "airlines": [
+        {
+          "code": "CAL",
+          "count": 70
+        },
+        {
+          "code": "JJP",
+          "count": 39
+        },
+        {
+          "code": "AIQ",
+          "count": 37
+        },
+        {
+          "code": "TTW",
+          "count": 36
+        },
+        {
+          "code": "EVA",
+          "count": 34
+        },
+        {
+          "code": "UAL",
+          "count": 34
+        }
+      ],
+      "totalAirlines": 6
+    },
+    {
+      "route": "TPE 桃園→SZX 深圳",
+      "route_icao": "RCTP-ZGSZ",
+      "airlines": [
+        {
+          "code": "CSZ",
+          "count": 39
+        },
+        {
+          "code": "CAL",
+          "count": 38
+        },
+        {
+          "code": "EVA",
+          "count": 36
+        },
+        {
+          "code": "CSN",
+          "count": 34
+        },
+        {
+          "code": "CSS",
+          "count": 23
+        }
+      ],
+      "totalAirlines": 5
+    },
+    {
+      "route": "TPE 桃園→CAN 廣州",
+      "route_icao": "RCTP-ZGGG",
+      "airlines": [
+        {
+          "code": "CAL",
+          "count": 43
+        },
+        {
+          "code": "CSN",
+          "count": 31
+        },
+        {
+          "code": "EVA",
+          "count": 22
+        },
+        {
+          "code": "CSS",
+          "count": 20
+        },
+        {
+          "code": "CHH",
+          "count": 16
+        }
+      ],
+      "totalAirlines": 5
+    },
+    {
+      "route": "TPE 桃園→ANC 安克拉治",
+      "route_icao": "RCTP-PANC",
+      "airlines": [
+        {
+          "code": "EVA",
+          "count": 100
+        },
+        {
+          "code": "CAL",
+          "count": 87
+        },
+        {
+          "code": "UPS",
+          "count": 29
+        },
+        {
+          "code": "GTI",
+          "count": 22
+        },
+        {
+          "code": "ICV",
+          "count": 4
+        }
+      ],
+      "totalAirlines": 5
+    },
+    {
+      "route": "TPE 桃園→FUK 福岡",
+      "route_icao": "RCTP-RJFF",
+      "airlines": [
+        {
+          "code": "EVA",
+          "count": 83
+        },
+        {
+          "code": "CAL",
+          "count": 77
+        },
+        {
+          "code": "TTW",
+          "count": 43
+        },
+        {
+          "code": "SJX",
+          "count": 36
+        },
+        {
+          "code": "AXM",
+          "count": 35
+        }
+      ],
+      "totalAirlines": 5
+    }
+  ],
+  "longestRoutes": [
+    {
+      "route": "TPE 桃園→LHR 倫敦",
+      "route_icao": "RCTP-EGLL",
+      "avgDurationMin": 913.1,
+      "airline": "CAL",
+      "flights": 16
+    },
+    {
+      "route": "TPE 桃園→CDG 巴黎",
+      "route_icao": "RCTP-LFPG",
+      "avgDurationMin": 881.6,
+      "airline": "EVA",
+      "flights": 37
+    },
+    {
+      "route": "TPE 桃園→AMS 阿姆斯特丹",
+      "route_icao": "RCTP-EHAM",
+      "avgDurationMin": 862.4,
+      "airline": "CAL",
+      "flights": 39
+    },
+    {
+      "route": "TPE 桃園→FRA 法蘭克福",
+      "route_icao": "RCTP-EDDF",
+      "avgDurationMin": 860.6,
+      "airline": "CAL",
+      "flights": 33
+    },
+    {
+      "route": "TPE 桃園→JFK 紐約",
+      "route_icao": "RCTP-KJFK",
+      "avgDurationMin": 841.6,
+      "airline": "EVA",
+      "flights": 48
+    },
+    {
+      "route": "TPE 桃園→LIMC",
+      "route_icao": "RCTP-LIMC",
+      "avgDurationMin": 838.5,
+      "airline": "EVA",
+      "flights": 32
+    },
+    {
+      "route": "TPE 桃園→FCO 羅馬",
+      "route_icao": "RCTP-LIRF",
+      "avgDurationMin": 833.2,
+      "airline": "CAL",
+      "flights": 9
+    },
+    {
+      "route": "TPE 桃園→PRG 布拉格",
+      "route_icao": "RCTP-LKPR",
+      "avgDurationMin": 824.6,
+      "airline": "CAL",
+      "flights": 10
+    },
+    {
+      "route": "TPE 桃園→EDDM",
+      "route_icao": "RCTP-EDDM",
+      "avgDurationMin": 824.3,
+      "airline": "EVA",
+      "flights": 16
+    },
+    {
+      "route": "TPE 桃園→VIE 維也納",
+      "route_icao": "RCTP-LOWW",
+      "avgDurationMin": 808.3,
+      "airline": "CAL",
+      "flights": 35
+    },
+    {
+      "route": "TPE 桃園→YYZ 多倫多",
+      "route_icao": "RCTP-CYYZ",
+      "avgDurationMin": 791.3,
+      "airline": "EVA",
+      "flights": 35
+    },
+    {
+      "route": "TPE 桃園→KIAH",
+      "route_icao": "RCTP-KIAH",
+      "avgDurationMin": 786.4,
+      "airline": "EVA",
+      "flights": 38
+    },
+    {
+      "route": "TPE 桃園→ORD 芝加哥",
+      "route_icao": "RCTP-KORD",
+      "avgDurationMin": 777.9,
+      "airline": "EVA",
+      "flights": 33
+    },
+    {
+      "route": "TPE 桃園→DFW 達拉斯",
+      "route_icao": "RCTP-KDFW",
+      "avgDurationMin": 759.4,
+      "airline": "EVA",
+      "flights": 35
+    },
+    {
+      "route": "TPE 桃園→KPHX",
+      "route_icao": "RCTP-KPHX",
+      "avgDurationMin": 712.5,
+      "airline": "SJX",
+      "flights": 34
+    },
+    {
+      "route": "TPE 桃園→IST 伊斯坦堡",
+      "route_icao": "RCTP-LTFM",
+      "avgDurationMin": 711.6,
+      "airline": "THY",
+      "flights": 56
+    },
+    {
+      "route": "TPE 桃園→KONT",
+      "route_icao": "RCTP-KONT",
+      "avgDurationMin": 687.3,
+      "airline": "CAL",
+      "flights": 55
+    },
+    {
+      "route": "TPE 桃園→LAX 洛杉磯",
+      "route_icao": "RCTP-KLAX",
+      "avgDurationMin": 686.3,
+      "airline": "EVA",
+      "flights": 252
+    },
+    {
+      "route": "TSA 松山→KSJC",
+      "route_icao": "RCSS-KSJC",
+      "avgDurationMin": 660.9,
+      "airline": "",
+      "flights": 1
+    },
+    {
+      "route": "TPE 桃園→SFO 舊金山",
+      "route_icao": "RCTP-KSFO",
+      "avgDurationMin": 653.4,
+      "airline": "EVA",
+      "flights": 254
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "routes": [
+    {
+      "airportA": "PANC",
+      "airportB": "RCTP",
+      "aToB": 143,
+      "bToA": 242,
+      "diff": 99,
+      "ratio": 0.409,
+      "routeA": "ANC 安克拉治→TPE 桃園",
+      "routeB": "TPE 桃園→ANC 安克拉治"
+    },
+    {
+      "airportA": "KORD",
+      "airportB": "RCTP",
+      "aToB": 55,
+      "bToA": 34,
+      "diff": 21,
+      "ratio": 0.382,
+      "routeA": "ORD 芝加哥→TPE 桃園",
+      "routeB": "TPE 桃園→ORD 芝加哥"
+    },
+    {
+      "airportA": "RCTP",
+      "airportB": "VIDP",
+      "aToB": 20,
+      "bToA": 13,
+      "diff": 7,
+      "ratio": 0.35,
+      "routeA": "TPE 桃園→DEL 新德里",
+      "routeB": "DEL 新德里→TPE 桃園"
+    },
+    {
+      "airportA": "RCKH",
+      "airportB": "RCTP",
+      "aToB": 19,
+      "bToA": 12,
+      "diff": 7,
+      "ratio": 0.368,
+      "routeA": "KHH 高雄→TPE 桃園",
+      "routeB": "TPE 桃園→KHH 高雄"
+    },
+    {
+      "airportA": "RCKH",
+      "airportB": "RCSS",
+      "aToB": 4,
+      "bToA": 8,
+      "diff": 4,
+      "ratio": 0.5,
+      "routeA": "KHH 高雄→TSA 松山",
+      "routeB": "TSA 松山→KHH 高雄"
+    },
+    {
+      "airportA": "OMAA",
+      "airportB": "RCTP",
+      "aToB": 9,
+      "bToA": 6,
+      "diff": 3,
+      "ratio": 0.333,
+      "routeA": "OMAA→TPE 桃園",
+      "routeB": "TPE 桃園→OMAA"
+    }
+  ],
+  "summary": {
+    "totalPairs": 272,
+    "asymmetricCount": 6,
+    "mostAsymmetric": "ANC 安克拉治→TPE 桃園 (diff=99)"
+  }
+}

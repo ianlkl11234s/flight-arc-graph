@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轉降異常事件 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+.hero { text-align: center; padding: 48px 24px; }
+.hero-row { display: flex; justify-content: center; align-items: flex-end; gap: 48px; flex-wrap: wrap; }
+.hero-item { text-align: center; }
+.hero-number { font-size: 64px; font-weight: 700; }
+.hero-label { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.donut-wrap { display: flex; justify-content: center; align-items: center; gap: 48px; flex-wrap: wrap; }
+.donut-container { width: 220px; height: 220px; }
+.donut-legend { font-size: 13px; }
+.donut-legend div { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.donut-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.chart-wrap { position: relative; width: 100%; max-height: 400px; }
+.insight { background: rgba(100,170,255,0.06); border-left: 3px solid var(--accent); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.insight strong { color: var(--text); }
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.tl-item { position: relative; margin-bottom: 20px; padding-left: 20px; }
+.tl-item::before { content: ''; position: absolute; left: -20px; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--red); background: var(--bg); }
+.tl-date { font-size: 14px; font-weight: 600; color: var(--orange); }
+.tl-count { font-size: 12px; color: var(--dim); margin-left: 8px; }
+.tl-flights { font-size: 12px; color: var(--dim); margin-top: 4px; }
+.tl-dest { font-size: 11px; color: var(--accent); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: 500; position: sticky; top: 0; background: #0d0d1a; }
+tbody td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+.table-scroll { max-height: 400px; overflow-y: auto; border-radius: 8px; }
+.table-scroll::-webkit-scrollbar { width: 6px; }
+.table-scroll::-webkit-scrollbar-track { background: transparent; }
+.table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+.badge-return { background: rgba(245,158,11,0.15); color: var(--orange); }
+.badge-alt { background: rgba(239,68,68,0.15); color: var(--red); }
+.bottom-nav { text-align: right; margin-top: 32px; }
+.bottom-nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.bottom-nav a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>轉降異常事件</h1>
+  <p class="subtitle">在近 5 萬航班中，有些飛機沒有降落在原定目的地——它們去了哪裡？</p>
+
+  <!-- Hero -->
+  <div class="card hero">
+    <div class="hero-row">
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--red)" id="heroTotal">--</div>
+        <div class="hero-label">轉降航班數</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--orange); font-size:48px" id="heroRate">--</div>
+        <div class="hero-label">轉降率</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--dim); font-size:36px" id="heroAnalyzed">--</div>
+        <div class="hero-label">分析航班數</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1: Overview donut -->
+  <div class="card">
+    <h2>01 / 轉降率概覽</h2>
+    <div class="donut-wrap">
+      <div class="donut-container"><canvas id="donutChart"></canvas></div>
+      <div class="donut-legend" id="donutLegend"></div>
+    </div>
+    <div class="insight"><strong>觀察：</strong>0.12% 的轉降率非常低，代表台灣及周邊地區的航空營運穩定。但每一次轉降背後都可能有一個故事——天氣、機械、或醫療緊急情況。</div>
+  </div>
+
+  <!-- Section 2: Top diversion airports -->
+  <div class="card">
+    <h2>02 / 熱門轉降機場</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">哪些機場最常接收轉降航班？這些通常是計畫目的地附近的替代機場。</p>
+    <div class="chart-wrap"><canvas id="destChart"></canvas></div>
+    <div class="insight" id="destInsight"></div>
+  </div>
+
+  <!-- Section 3: Cluster events timeline -->
+  <div class="card">
+    <h2>03 / 群聚事件時間線</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">當同一天有多架航班轉降時，通常意味著系統性事件（如惡劣天氣）。</p>
+    <div class="timeline" id="timeline"></div>
+    <div class="insight"><strong>觀察：</strong>群聚轉降通常集中在特定日期，暗示天氣系統或機場臨時關閉等系統性原因。</div>
+  </div>
+
+  <!-- Section 4: Full list -->
+  <div class="card">
+    <h2>04 / 逐筆轉降清單</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>日期</th><th>時間</th><th>航班</th><th>航空</th><th>出發</th><th>計畫目的地</th><th>實際降落</th><th>機型</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bottom-nav"><a href="06_route_network.html">下一篇：航線網路結構 &rarr;</a></div>
+</div>
+
+<script>
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+
+fetch('data/05_diversions.json')
+  .then(r => r.json())
+  .then(render);
+
+function render(data) {
+  // Hero
+  document.getElementById('heroTotal').textContent = data.total;
+  document.getElementById('heroRate').textContent = data.rate;
+  document.getElementById('heroAnalyzed').textContent = data.totalFlightsAnalyzed.toLocaleString();
+
+  // Donut
+  const normal = data.totalFlightsAnalyzed - data.total;
+  const donutCtx = document.getElementById('donutChart').getContext('2d');
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['正常航班', '轉降航班'],
+      datasets: [{
+        data: [normal, data.total],
+        backgroundColor: ['rgba(100,170,255,0.3)', 'rgba(239,68,68,0.7)'],
+        borderColor: ['rgba(100,170,255,0.5)', '#ef4444'],
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '70%',
+      plugins: {
+        legend: { display: false },
+      }
+    },
+    plugins: [{
+      id: 'centerText',
+      afterDraw(chart) {
+        const ctx = chart.ctx;
+        const { width, height } = chart;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = "bold 28px 'JetBrains Mono'";
+        ctx.fillStyle = '#ef4444';
+        ctx.fillText(data.rate, width / 2, height / 2 - 8);
+        ctx.font = "12px 'JetBrains Mono'";
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('轉降率', width / 2, height / 2 + 18);
+        ctx.restore();
+      }
+    }]
+  });
+
+  const legend = document.getElementById('donutLegend');
+  legend.innerHTML = `
+    <div><span class="dot" style="background:rgba(100,170,255,0.5)"></span> 正常航班 ${normal.toLocaleString()}</div>
+    <div><span class="dot" style="background:#ef4444"></span> 轉降航班 ${data.total}</div>
+  `;
+
+  // Destination bar chart
+  const dests = data.byActualDest.slice(0, 12);
+  const destCtx = document.getElementById('destChart').getContext('2d');
+  new Chart(destCtx, {
+    type: 'bar',
+    data: {
+      labels: dests.map(d => d.airport),
+      datasets: [{
+        label: '轉降次數',
+        data: dests.map(d => d.count),
+        backgroundColor: 'rgba(239,68,68,0.5)',
+        borderColor: '#ef4444',
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  if (dests.length > 0) {
+    document.getElementById('destInsight').innerHTML =
+      `<strong>觀察：</strong>${dests[0].airport} 是最常見的轉降目的地（${dests[0].count} 次），轉降機場通常是計畫目的地附近具備足夠跑道與設施的替代機場。`;
+  }
+
+  // Timeline
+  const timeline = document.getElementById('timeline');
+  const clusterDays = data.byCause.filter(d => d.count >= 2).sort((a, b) => b.count - a.count);
+  clusterDays.forEach(day => {
+    const item = document.createElement('div');
+    item.className = 'tl-item';
+    const flightList = day.flights
+      ? day.flights.map(f => `${f.flight || f.callsign}: ${f.orig}→${f.actualDest}`).join('、')
+      : '';
+    item.innerHTML = `
+      <div><span class="tl-date">${day.date}</span><span class="tl-count">${day.count} 架轉降</span></div>
+      <div class="tl-dest">常見轉降地：${day.commonDest || '—'}</div>
+      ${flightList ? `<div class="tl-flights">${flightList}</div>` : ''}
+    `;
+    timeline.appendChild(item);
+  });
+
+  if (clusterDays.length === 0) {
+    timeline.innerHTML = '<p style="color:var(--dim); font-size:13px;">無明顯群聚事件（所有日期轉降數均 < 2）。</p>';
+  }
+
+  // Table
+  const tbody = document.getElementById('tableBody');
+  data.diversions.forEach(d => {
+    const isReturn = d.actualDest === d.orig;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${d.date}</td>
+      <td>${d.time || '—'}</td>
+      <td style="color:var(--text); font-weight:500">${d.flight || d.callsign}</td>
+      <td>${d.airline}</td>
+      <td>${d.orig}</td>
+      <td>${d.plannedDest}</td>
+      <td style="color:var(--red)">${d.actualDest} ${isReturn ? '<span class="badge badge-return">返航</span>' : '<span class="badge badge-alt">替代</span>'}</td>
+      <td style="color:var(--dim)">${d.type}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+</script>
+</body>
+</html>

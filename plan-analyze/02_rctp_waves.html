@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃園機場起降波次</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #0a0a14; --bg2: #12121e;
+    --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+    --text: #e0e0e8; --text-dim: #888899; --text-muted: #555566;
+    --accent: #6c8cff; --accent2: #ff6c8c; --accent3: #5cffc8;
+    --dep: #5a9cff; --arr: #ff8c5a;
+    --font: 'SF Mono','Fira Code','JetBrains Mono','Cascadia Code',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.7}
+  .bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+  .container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:48px 24px 60px}
+  nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px;font-size:0.75rem}
+  nav a{color:var(--text-dim);text-decoration:none;transition:color .2s}
+  nav a:hover{color:var(--accent)}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;background:rgba(108,140,255,0.12);color:var(--accent);font-size:0.7rem;font-weight:700;margin-bottom:12px}
+  header{margin-bottom:56px}
+  header h1{font-size:clamp(1.4rem,3.5vw,2rem);font-weight:700;margin-bottom:12px;line-height:1.3}
+  header .lead{font-size:0.85rem;color:var(--text-dim);max-width:640px;line-height:1.8}
+  section{margin-bottom:56px}
+  section h2{font-size:1.15rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  section h2 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .insight{font-size:0.8rem;color:var(--text-dim);margin-bottom:24px;line-height:1.8}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;backdrop-filter:blur(12px);margin-bottom:20px}
+  .chart-wrap{position:relative;width:100%;margin:16px 0}
+  .chart-note{font-size:0.7rem;color:var(--text-muted);margin-top:8px;text-align:center}
+
+  .hero-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:40px}
+  .hero-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center}
+  .hero-stat .hn{font-size:1.8rem;font-weight:700;line-height:1.1}
+  .hero-stat .hl{font-size:0.65rem;color:var(--text-dim);margin-top:6px;text-transform:uppercase;letter-spacing:0.08em}
+  .dep-color{color:var(--dep)}
+  .arr-color{color:var(--arr)}
+
+  .wave-list{display:grid;gap:12px}
+  .wave-item{display:grid;grid-template-columns:80px 1fr 60px;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--border);font-size:0.78rem}
+  .wave-time{font-weight:700;color:var(--accent)}
+  .wave-bar{height:6px;border-radius:3px;position:relative;overflow:hidden;background:rgba(255,255,255,0.04)}
+  .wave-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+  .wave-count{text-align:right;color:var(--text-dim);font-size:0.72rem}
+  .wave-dep .wave-bar-fill{background:linear-gradient(90deg,var(--dep),rgba(90,156,255,0.3))}
+  .wave-arr .wave-bar-fill{background:linear-gradient(90deg,var(--arr),rgba(255,140,90,0.3))}
+
+  .gap-list{display:grid;gap:8px}
+  .gap-item{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:rgba(255,255,255,0.02);border-radius:8px;font-size:0.75rem;border:1px solid var(--border)}
+  .gap-time{color:var(--text)}
+  .gap-dur{color:var(--accent3);font-weight:600}
+
+  .wave-annotation{font-size:0.72rem;color:var(--text-dim);padding:8px 12px;background:rgba(108,140,255,0.06);border-radius:8px;margin-top:12px;line-height:1.7;border-left:3px solid var(--accent)}
+
+  footer{text-align:center;margin-top:48px;padding-top:20px;border-top:1px solid var(--border)}
+  footer a{color:var(--text-dim);text-decoration:none;font-size:0.75rem;transition:color .2s}
+  footer a:hover{color:var(--accent)}
+
+  @media(max-width:640px){
+    .container{padding:32px 16px}
+    .hero-stats{grid-template-columns:1fr 1fr}
+    .wave-item{grid-template-columns:60px 1fr 50px;font-size:0.7rem}
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+  <nav>
+    <a href="index.html">&larr; 返回目錄</a>
+    <a href="03_aircraft_utilization.html">下一篇 &rarr;</a>
+  </nav>
+
+  <header>
+    <div class="badge">02</div>
+    <h1>桃園機場<br>起降波次分析</h1>
+    <p class="lead">
+      桃園國際機場（RCTP）是台灣最繁忙的機場。每一天，數百架飛機在此起降，
+      形成規律的「波次」節奏。讓我們用數據揭開這座機場 24 小時的呼吸脈動。
+    </p>
+  </header>
+
+  <div class="hero-stats" id="heroStats"></div>
+
+  <!-- Section 1: Hourly bar -->
+  <section>
+    <h2><span class="dot" style="background:var(--dep)"></span>24 小時起降分佈</h2>
+    <p class="insight">
+      藍色為起飛、橘色為降落。可以清楚看到白天（07:00~21:00）是主要運作時段，
+      深夜仍有可觀的起降量——那些是紅眼航班與貨機。
+    </p>
+    <div class="card">
+      <div class="chart-wrap" style="height:360px">
+        <canvas id="hourlyChart"></canvas>
+      </div>
+      <p class="chart-note">Y 軸為 40 天累計班次（非日均）</p>
+    </div>
+  </section>
+
+  <!-- Section 2: Quarter line -->
+  <section>
+    <h2><span class="dot" style="background:var(--arr)"></span>15 分鐘細緻度波次圖</h2>
+    <p class="insight">
+      將時間切成 15 分鐘一個區間，波次的節奏更加清晰。
+      每個尖峰代表一個波次，而波谷則是跑道的喘息時間。
+    </p>
+    <div class="card">
+      <div class="chart-wrap" style="height:380px">
+        <canvas id="quarterChart"></canvas>
+      </div>
+      <p class="chart-note">每個數據點為 15 分鐘區間內的起降班次（40 天累計）</p>
+    </div>
+  </section>
+
+  <!-- Section 3: Wave peaks -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent)"></span>波次峰值分析</h2>
+    <p class="insight" id="waveInsight"></p>
+    <div class="card">
+      <div class="wave-list" id="waveList"></div>
+      <div class="wave-annotation" id="waveAnnotation"></div>
+    </div>
+  </section>
+
+  <!-- Section 4: Gaps -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent3)"></span>波次間隔 — 機場的喘息空間</h2>
+    <p class="insight">
+      兩個波次之間的低谷，是跑道維護、地勤換班的寶貴喘息空間。
+      以下是間隔最長的時段（僅顯示 60 分鐘以上）。
+    </p>
+    <div class="card">
+      <div class="gap-list" id="gapList"></div>
+    </div>
+  </section>
+
+  <footer>
+    <a href="03_aircraft_utilization.html">下一篇：同機一日行程追蹤 &rarr;</a>
+  </footer>
+</div>
+
+<script>
+fetch('data/02_rctp_waves.json')
+  .then(r => r.json())
+  .then(render);
+
+function render(d) {
+  // Hero stats
+  const totalDep = d.hourly.reduce((s, h) => s + h.dep, 0);
+  const totalArr = d.hourly.reduce((s, h) => s + h.arr, 0);
+  document.getElementById('heroStats').innerHTML = [
+    { n: d.avgDaily.dep.toFixed(0), l: '日均起飛', c: 'dep-color' },
+    { n: d.avgDaily.arr.toFixed(0), l: '日均降落', c: 'arr-color' },
+    { n: (d.avgDaily.dep + d.avgDaily.arr).toFixed(0), l: '日均總架次', c: '' },
+    { n: d.waves.length, l: '波次峰值', c: '' },
+  ].map(i => `<div class="hero-stat"><div class="hn ${i.c}">${i.n}</div><div class="hl">${i.l}</div></div>`).join('');
+
+  // Hourly stacked bar
+  new Chart(document.getElementById('hourlyChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: d.hourly.map(h => String(h.hour).padStart(2,'0') + ':00'),
+      datasets: [
+        { label: '起飛', data: d.hourly.map(h => h.dep), backgroundColor: 'rgba(90,156,255,0.7)', borderColor: 'rgba(90,156,255,1)', borderWidth: 1, borderRadius: 3 },
+        { label: '降落', data: d.hourly.map(h => h.arr), backgroundColor: 'rgba(255,140,90,0.7)', borderColor: 'rgba(255,140,90,1)', borderWidth: 1, borderRadius: 3 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { color: '#888899', font: { family: "'SF Mono',monospace", size: 11 }, boxWidth: 12, padding: 16 } },
+        tooltip: { backgroundColor: '#1a1a2e', titleColor: '#e0e0e8', bodyColor: '#888899', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleFont: { family: "'SF Mono',monospace" }, bodyFont: { family: "'SF Mono',monospace" } }
+      },
+      scales: {
+        x: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888899', font: { family: "'SF Mono',monospace", size: 10 } } },
+        y: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888899', font: { family: "'SF Mono',monospace", size: 10 } } }
+      }
+    }
+  });
+
+  // Quarter line chart
+  new Chart(document.getElementById('quarterChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: d.quarter.map(q => q.timeLabel),
+      datasets: [
+        { label: '起飛', data: d.quarter.map(q => q.dep), borderColor: 'rgba(90,156,255,0.9)', backgroundColor: 'rgba(90,156,255,0.08)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+        { label: '降落', data: d.quarter.map(q => q.arr), borderColor: 'rgba(255,140,90,0.9)', backgroundColor: 'rgba(255,140,90,0.08)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { color: '#888899', font: { family: "'SF Mono',monospace", size: 11 }, boxWidth: 12, padding: 16 } },
+        tooltip: { backgroundColor: '#1a1a2e', titleColor: '#e0e0e8', bodyColor: '#888899', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleFont: { family: "'SF Mono',monospace" }, bodyFont: { family: "'SF Mono',monospace" } }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888899', font: { family: "'SF Mono',monospace", size: 9 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 24 } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888899', font: { family: "'SF Mono',monospace", size: 10 } } }
+      }
+    }
+  });
+
+  // Wave peaks
+  const maxWave = Math.max(...d.waves.map(w => w.depCount + w.arrCount));
+  const depWaves = d.waves.filter(w => w.type === 'departure');
+  const arrWaves = d.waves.filter(w => w.type === 'arrival');
+
+  document.getElementById('waveInsight').textContent =
+    `共偵測到 ${d.waves.length} 個波次峰值，其中起飛主導 ${depWaves.length} 個、降落主導 ${arrWaves.length} 個。` +
+    `起飛波次集中在上午，降落波次集中在下午到深夜。`;
+
+  document.getElementById('waveList').innerHTML = d.waves.map(w => {
+    const total = w.depCount + w.arrCount;
+    const pct = (total / maxWave * 100).toFixed(0);
+    const isDep = w.type === 'departure';
+    return `<div class="wave-item ${isDep ? 'wave-dep' : 'wave-arr'}">
+      <div class="wave-time">${w.peakTime}</div>
+      <div class="wave-bar"><div class="wave-bar-fill" style="width:${pct}%"></div></div>
+      <div class="wave-count">${isDep ? '↑' : '↓'} ${total}</div>
+    </div>`;
+  }).join('');
+
+  // Wave annotations
+  const annotations = [
+    '07:00~09:00 — 早班出發波：東北亞（日韓）、東南亞航線集中起飛',
+    '10:00~12:00 — 上午中段：港澳、中國大陸航線起飛',
+    '13:00~15:00 — 午後到達波：上午出發的短程航線開始返航',
+    '16:00~18:00 — 下午波：歐美長程航線起飛、日韓航線返抵',
+    '21:00~01:00 — 夜間/紅眼波：貨機與紅眼客機的世界',
+  ];
+  document.getElementById('waveAnnotation').innerHTML = annotations.join('<br>');
+
+  // Gaps
+  const bigGaps = d.gaps.filter(g => g.durationMin >= 60).sort((a,b) => b.durationMin - a.durationMin);
+  const gapsToShow = bigGaps.length > 0 ? bigGaps : d.gaps.sort((a,b) => b.durationMin - a.durationMin).slice(0, 8);
+  document.getElementById('gapList').innerHTML = gapsToShow.map(g =>
+    `<div class="gap-item"><span class="gap-time">${g.from} → ${g.to}</span><span class="gap-dur">${g.durationMin} 分鐘</span></div>`
+  ).join('');
+}
+</script>
+</body>
+</html>

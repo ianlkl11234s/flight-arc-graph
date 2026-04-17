@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>航線網路結構 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; }
+.stat-value { font-size: 32px; font-weight: 700; }
+.stat-label { font-size: 12px; color: var(--dim); margin-top: 4px; }
+.chart-wrap { position: relative; width: 100%; }
+.insight { background: rgba(100,170,255,0.06); border-left: 3px solid var(--accent); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.insight strong { color: var(--text); }
+.donut-wrap { display: flex; justify-content: center; align-items: center; gap: 48px; flex-wrap: wrap; }
+.donut-container { width: 240px; height: 240px; }
+.donut-legend { font-size: 14px; }
+.donut-legend div { margin-bottom: 10px; }
+.route-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.route-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 12px; }
+.route-item .route-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.route-item .route-name { color: var(--text); font-weight: 500; font-size: 13px; }
+.route-item .route-airline { color: var(--orange); font-size: 11px; }
+.route-item .route-count { color: var(--dim); font-size: 11px; }
+.competitive-route { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+.competitive-route .cr-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.competitive-route .cr-name { font-weight: 600; font-size: 14px; }
+.competitive-route .cr-count { color: var(--accent); font-size: 12px; }
+.airline-bars { display: flex; gap: 2px; height: 24px; border-radius: 4px; overflow: hidden; }
+.airline-bar { display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: #fff; min-width: 20px; }
+.longest-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.longest-item:last-child { border-bottom: none; }
+.longest-route { font-weight: 500; font-size: 14px; }
+.longest-time { color: var(--orange); font-size: 18px; font-weight: 600; }
+.longest-detail { font-size: 11px; color: var(--dim); }
+.bottom-nav { text-align: right; margin-top: 32px; }
+.bottom-nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.bottom-nav a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>航線網路結構</h1>
+  <p class="subtitle">台灣連結了全球多個國家，但航班分佈極度不均。</p>
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--accent)" id="statCountries">--</div>
+      <div class="stat-label">連結國家</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--green)" id="statDomRoutes">--</div>
+      <div class="stat-label">國內航線</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--orange)" id="statIntlRoutes">--</div>
+      <div class="stat-label">國際航線</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--red)" id="statMonopoly">--</div>
+      <div class="stat-label">壟斷航線</div>
+    </div>
+  </div>
+
+  <!-- Section 1: Country ranking -->
+  <div class="card">
+    <h2>01 / 國際航線目的地國家排行</h2>
+    <div class="chart-wrap" style="max-height:500px"><canvas id="countryChart"></canvas></div>
+    <div class="insight" id="countryInsight"></div>
+  </div>
+
+  <!-- Section 2: Domestic vs International -->
+  <div class="card">
+    <h2>02 / 國內 vs 國際航班比例</h2>
+    <div class="donut-wrap">
+      <div class="donut-container"><canvas id="ratioDonut"></canvas></div>
+      <div class="donut-legend" id="ratioLegend"></div>
+    </div>
+    <div class="insight"><strong>觀察：</strong>國際航班數量是國內航班的將近兩倍，反映台灣作為國際航空樞紐的定位。國內航線主要服務離島交通需求。</div>
+  </div>
+
+  <!-- Section 3: Monopoly routes -->
+  <div class="card">
+    <h2>03 / 壟斷航線</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">只有一家航空公司經營的航線——缺乏競爭可能影響票價與服務品質。</p>
+    <div class="route-grid" id="monopolyGrid"></div>
+    <div class="insight" id="monopolyInsight"></div>
+  </div>
+
+  <!-- Section 4: Competitive routes -->
+  <div class="card">
+    <h2>04 / 競爭最激烈的航線</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">哪些航線有最多航空公司搶食市場？色塊寬度代表各航空的航班佔比。</p>
+    <div id="competitiveList"></div>
+    <div class="insight" id="competitiveInsight"></div>
+  </div>
+
+  <!-- Section 5: Longest routes -->
+  <div class="card">
+    <h2>05 / 最長航線排行</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">以平均飛行時間排序，這些是從台灣出發最漫長的旅程。</p>
+    <div id="longestList"></div>
+    <div class="insight" id="longestInsight"></div>
+  </div>
+
+  <div class="bottom-nav"><a href="07_night_ops.html">下一篇：凌晨時段營運 &rarr;</a></div>
+</div>
+
+<script>
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const AIRLINE_COLORS = [
+  '#64aaff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
+  '#14b8a6', '#e879f9', '#facc15', '#fb923c', '#a78bfa'
+];
+
+fetch('data/06_route_network.json')
+  .then(r => r.json())
+  .then(render);
+
+function render(data) {
+  // Stats
+  const intlCountries = data.byCountry.filter(c => c.country !== 'Taiwan');
+  document.getElementById('statCountries').textContent = intlCountries.length;
+  document.getElementById('statDomRoutes').textContent = data.domestic.routes;
+  document.getElementById('statIntlRoutes').textContent = data.international.routes;
+  document.getElementById('statMonopoly').textContent = data.monopolyRoutes.length;
+
+  // Country chart (excluding Taiwan)
+  const top15 = intlCountries.slice(0, 15);
+  const countryCtx = document.getElementById('countryChart').getContext('2d');
+  new Chart(countryCtx, {
+    type: 'bar',
+    data: {
+      labels: top15.map(c => c.country),
+      datasets: [{
+        label: '航班數',
+        data: top15.map(c => c.flights),
+        backgroundColor: top15.map((_, i) => i === 0 ? 'rgba(239,68,68,0.6)' : 'rgba(100,170,255,0.4)'),
+        borderColor: top15.map((_, i) => i === 0 ? '#ef4444' : '#64aaff'),
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            afterLabel: (ctx) => {
+              const c = top15[ctx.dataIndex];
+              return `${c.routes} 條航線`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  if (top15.length > 0) {
+    const jpPct = ((top15[0].flights / data.international.flights) * 100).toFixed(1);
+    document.getElementById('countryInsight').innerHTML =
+      `<strong>觀察：</strong>日本以 ${top15[0].flights.toLocaleString()} 航班穩居第一，佔國際航班的 ${jpPct}%。前五名（日本、香港、中國、韓國、美國）合計佔國際航班超過 70%。台灣的國際航線高度集中於東北亞市場。`;
+  }
+
+  // Domestic vs International donut
+  const donutCtx = document.getElementById('ratioDonut').getContext('2d');
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['國內', '國際'],
+      datasets: [{
+        data: [data.domestic.flights, data.international.flights],
+        backgroundColor: ['rgba(16,185,129,0.5)', 'rgba(100,170,255,0.5)'],
+        borderColor: ['#10b981', '#64aaff'],
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '65%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  document.getElementById('ratioLegend').innerHTML = `
+    <div><span style="color:var(--green); font-size:24px; font-weight:700">${data.domestic.flights.toLocaleString()}</span><br><span style="color:var(--dim)">國內航班（${data.domestic.routes} 條航線）</span></div>
+    <div style="margin-top:12px"><span style="color:var(--accent); font-size:24px; font-weight:700">${data.international.flights.toLocaleString()}</span><br><span style="color:var(--dim)">國際航班（${data.international.routes} 條航線）</span></div>
+  `;
+
+  // Monopoly routes (top 20)
+  const grid = document.getElementById('monopolyGrid');
+  data.monopolyRoutes.slice(0, 20).forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'route-item';
+    div.innerHTML = `
+      <div class="route-header">
+        <span class="route-name">${r.route}</span>
+        <span class="route-count">${r.count} 班</span>
+      </div>
+      <div class="route-airline">獨佔：${r.airline}</div>
+    `;
+    grid.appendChild(div);
+  });
+
+  const uiaCount = data.monopolyRoutes.filter(r => r.airline === 'UIA').length;
+  document.getElementById('monopolyInsight').innerHTML =
+    `<strong>觀察：</strong>共 ${data.monopolyRoutes.length} 條壟斷航線。立榮航空（UIA）獨佔了其中 ${uiaCount} 條，主要是離島航線——這些航線需求量小，只能支撐一家航空經營。`;
+
+  // Competitive routes (top 5)
+  const compList = document.getElementById('competitiveList');
+  data.competitiveRoutes.slice(0, 5).forEach(r => {
+    const total = r.airlines.reduce((s, a) => s + a.count, 0);
+    const div = document.createElement('div');
+    div.className = 'competitive-route';
+
+    const barsHtml = r.airlines.map((a, i) => {
+      const pct = (a.count / total * 100);
+      if (pct < 2) return '';
+      return `<div class="airline-bar" style="width:${pct}%; background:${AIRLINE_COLORS[i % AIRLINE_COLORS.length]}" title="${a.code}: ${a.count}">${pct > 5 ? a.code : ''}</div>`;
+    }).join('');
+
+    const labelHtml = r.airlines.slice(0, 6).map((a, i) =>
+      `<span style="color:${AIRLINE_COLORS[i % AIRLINE_COLORS.length]}; margin-right:10px; font-size:11px">${a.code} ${a.count}</span>`
+    ).join('');
+
+    div.innerHTML = `
+      <div class="cr-header">
+        <span class="cr-name">${r.route}</span>
+        <span class="cr-count">${r.totalAirlines} 家航空</span>
+      </div>
+      <div class="airline-bars">${barsHtml}</div>
+      <div style="margin-top:8px">${labelHtml}${r.airlines.length > 6 ? `<span style="color:var(--dim); font-size:11px">+${r.airlines.length - 6} 家</span>` : ''}</div>
+    `;
+    compList.appendChild(div);
+  });
+
+  document.getElementById('competitiveInsight').innerHTML =
+    `<strong>觀察：</strong>桃園→成田（RCTP-RJAA）是競爭最激烈的航線，多達 ${data.competitiveRoutes[0].totalAirlines} 家航空搶食。高度競爭意味著旅客有更多選擇，也推動更具競爭力的票價。`;
+
+  // Longest routes
+  const longestDiv = document.getElementById('longestList');
+  data.longestRoutes.slice(0, 8).forEach((r, i) => {
+    const hours = Math.floor(r.avgDurationMin / 60);
+    const mins = Math.round(r.avgDurationMin % 60);
+    const div = document.createElement('div');
+    div.className = 'longest-item';
+    div.innerHTML = `
+      <div>
+        <div class="longest-route">${i + 1}. ${r.route}</div>
+        <div class="longest-detail">${r.airline} | ${r.flights || ''} 航班</div>
+      </div>
+      <div style="text-align:right">
+        <div class="longest-time">${hours}h ${mins}m</div>
+        <div class="longest-detail">${Math.round(r.avgDurationMin)} 分鐘</div>
+      </div>
+    `;
+    longestDiv.appendChild(div);
+  });
+
+  const top1 = data.longestRoutes[0];
+  const h1 = Math.floor(top1.avgDurationMin / 60);
+  const m1 = Math.round(top1.avgDurationMin % 60);
+  document.getElementById('longestInsight').innerHTML =
+    `<strong>觀察：</strong>最長航線 ${top1.route} 平均飛行 ${h1} 小時 ${m1} 分鐘。前五名全部由華航（CAL）和長榮（EVA）包辦，目的地集中在歐洲與北美東岸——這是台灣航空公司的超長程主戰場。`;
+}
+</script>
+</body>
+</html>

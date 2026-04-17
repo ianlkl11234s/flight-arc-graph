@@ -1,0 +1,448 @@
+{
+  "topAircraft": [
+    {
+      "reg": "JA84RC",
+      "type": "DH8D",
+      "airline": "JTA",
+      "avgLegsPerDay": 12.0,
+      "totalLegs": 12,
+      "totalDays": 1,
+      "totalFlightHours": 3.3,
+      "routes": [
+        "RORT→ROMY",
+        "ISG 石垣→ROMY",
+        "OKA 那霸→ROMY",
+        "ROMY→ISG 石垣",
+        "ISG 石垣→ROYN"
+      ]
+    },
+    {
+      "reg": "JA225J",
+      "type": "E170",
+      "airline": "JAL",
+      "avgLegsPerDay": 10.0,
+      "totalLegs": 10,
+      "totalDays": 1,
+      "totalFlightHours": 3.6,
+      "routes": [
+        "FUK 福岡→RJOS",
+        "RJOS→FUK 福岡",
+        "MMY 宮古→FUK 福岡",
+        "FUK 福岡→MYJ 松山(日)"
+      ]
+    },
+    {
+      "reg": "JA03JC",
+      "type": "AT46",
+      "airline": "JAC",
+      "avgLegsPerDay": 10.0,
+      "totalLegs": 10,
+      "totalDays": 1,
+      "totalFlightHours": 5.6,
+      "routes": [
+        "RJDA→FUK 福岡",
+        "FUK 福岡→RJDA",
+        "RJDA→KMI 熊本",
+        "KMI 熊本→ITM 伊丹",
+        "ITM 伊丹→KMI 熊本"
+      ]
+    },
+    {
+      "reg": "JA20RC",
+      "type": "AT46",
+      "airline": "ORC",
+      "avgLegsPerDay": 10.0,
+      "totalLegs": 10,
+      "totalDays": 1,
+      "totalFlightHours": 3.4,
+      "routes": [
+        "NGS 長崎→RJDT",
+        "RJDT→NGS 長崎",
+        "NGS 長崎→FUJ 五島",
+        "FUJ 五島→FUK 福岡",
+        "FUK 福岡→FUJ 五島"
+      ]
+    },
+    {
+      "reg": "JA83RC",
+      "type": "DH8D",
+      "airline": "JTA",
+      "avgLegsPerDay": 10.0,
+      "totalLegs": 10,
+      "totalDays": 1,
+      "totalFlightHours": 3.5,
+      "routes": [
+        "ROKJ→OKA 那霸",
+        "OKA 那霸→ROKJ",
+        "OKA 那霸→RORY",
+        "RORY→OKA 那霸"
+      ]
+    },
+    {
+      "reg": "JA04JC",
+      "type": "AT46",
+      "airline": "JAC",
+      "avgLegsPerDay": 10.0,
+      "totalLegs": 10,
+      "totalDays": 1,
+      "totalFlightHours": 5.1,
+      "routes": [
+        "RJKN→ASJ 奄美",
+        "ASJ 奄美→RJKN",
+        "KOJ 鹿兒島→RJKN",
+        "RJKN→RJKB",
+        "RJKB→OKA 那霸"
+      ]
+    },
+    {
+      "reg": "JA05JC",
+      "type": "AT46",
+      "airline": "JAC",
+      "avgLegsPerDay": 10.0,
+      "totalLegs": 10,
+      "totalDays": 1,
+      "totalFlightHours": 4.8,
+      "routes": [
+        "KOJ 鹿兒島→KOJ 鹿兒島",
+        "KOJ 鹿兒島→RJKB",
+        "RJKB→KOJ 鹿兒島",
+        "KOJ 鹿兒島→MYJ 松山(日)",
+        "MYJ 松山(日)→KOJ 鹿兒島"
+      ]
+    },
+    {
+      "reg": "69-6656",
+      "type": "B212",
+      "airline": "RCH",
+      "avgLegsPerDay": 10.0,
+      "totalLegs": 10,
+      "totalDays": 1,
+      "totalFlightHours": 3.2,
+      "routes": [
+        "KADW→KADW",
+        "KADW→KANP"
+      ]
+    },
+    {
+      "reg": "JA10RJ",
+      "type": "CRJ7",
+      "airline": "IBX",
+      "avgLegsPerDay": 9.0,
+      "totalLegs": 9,
+      "totalDays": 1,
+      "totalFlightHours": 7.2,
+      "routes": [
+        "NGO 中部→MYJ 松山(日)",
+        "MYJ 松山(日)→NGO 中部",
+        "NGO 中部→SDJ 仙台",
+        "SDJ 仙台→NGO 中部"
+      ]
+    },
+    {
+      "reg": "JA10JC",
+      "type": "AT46",
+      "airline": "JAC",
+      "avgLegsPerDay": 9.0,
+      "totalLegs": 9,
+      "totalDays": 1,
+      "totalFlightHours": 4.5,
+      "routes": [
+        "ASJ 奄美→RJKI",
+        "RJKI→ASJ 奄美",
+        "KOJ 鹿兒島→ASJ 奄美",
+        "ASJ 奄美→RORY",
+        "RORY→OKA 那霸"
+      ]
+    },
+    {
+      "reg": "B-16866",
+      "type": "AT76",
+      "airline": "MDA",
+      "avgLegsPerDay": 8.51,
+      "totalLegs": 332,
+      "totalDays": 39,
+      "totalFlightHours": 220.6,
+      "routes": [
+        "MZG 馬公→TSA 松山",
+        "KHH 高雄→MZG 馬公",
+        "TSA 松山→MZG 馬公",
+        "MZG 馬公→KHH 高雄",
+        "TSA 松山→KNH 金門"
+      ]
+    },
+    {
+      "reg": "B-16862",
+      "type": "AT76",
+      "airline": "MDA",
+      "avgLegsPerDay": 8.46,
+      "totalLegs": 203,
+      "totalDays": 24,
+      "totalFlightHours": 145.7,
+      "routes": [
+        "MZG 馬公→KHH 高雄",
+        "KHH 高雄→MZG 馬公",
+        "KNH 金門→TSA 松山",
+        "TSA 松山→KNH 金門",
+        "TSA 松山→MZG 馬公"
+      ]
+    },
+    {
+      "reg": "B-16861",
+      "type": "AT76",
+      "airline": "MDA",
+      "avgLegsPerDay": 8.28,
+      "totalLegs": 323,
+      "totalDays": 39,
+      "totalFlightHours": 211.5,
+      "routes": [
+        "MZG 馬公→TSA 松山",
+        "TSA 松山→MZG 馬公",
+        "MZG 馬公→KHH 高雄",
+        "KHH 高雄→MZG 馬公",
+        "TSA 松山→KNH 金門"
+      ]
+    },
+    {
+      "reg": "B-16859",
+      "type": "AT76",
+      "airline": "MDA",
+      "avgLegsPerDay": 8.26,
+      "totalLegs": 322,
+      "totalDays": 39,
+      "totalFlightHours": 189.2,
+      "routes": [
+        "KHH 高雄→MZG 馬公",
+        "MZG 馬公→KHH 高雄",
+        "KNH 金門→KHH 高雄",
+        "KHH 高雄→KNH 金門",
+        "RMQ 臺中→MZG 馬公"
+      ]
+    },
+    {
+      "reg": "B-17009",
+      "type": "AT76",
+      "airline": "UIA",
+      "avgLegsPerDay": 8.21,
+      "totalLegs": 320,
+      "totalDays": 39,
+      "totalFlightHours": 176.9,
+      "routes": [
+        "KHH 高雄→MZG 馬公",
+        "MZG 馬公→KHH 高雄",
+        "KNH 金門→KHH 高雄",
+        "KHH 高雄→KNH 金門",
+        "RMQ 臺中→KNH 金門"
+      ]
+    },
+    {
+      "reg": "B-16860",
+      "type": "AT76",
+      "airline": "MDA",
+      "avgLegsPerDay": 8.16,
+      "totalLegs": 310,
+      "totalDays": 38,
+      "totalFlightHours": 227.8,
+      "routes": [
+        "TSA 松山→KNH 金門",
+        "KNH 金門→TSA 松山",
+        "TSA 松山→MZG 馬公",
+        "MZG 馬公→TSA 松山",
+        "KHH 高雄→MZG 馬公"
+      ]
+    },
+    {
+      "reg": "B-17017",
+      "type": "AT76",
+      "airline": "UIA",
+      "avgLegsPerDay": 8.15,
+      "totalLegs": 318,
+      "totalDays": 39,
+      "totalFlightHours": 181.1,
+      "routes": [
+        "TTT 臺東→KNH 金門",
+        "TSA 松山→MZG 馬公",
+        "KNH 金門→TTT 臺東",
+        "MZG 馬公→TSA 松山",
+        "MZG 馬公→KHH 高雄"
+      ]
+    },
+    {
+      "reg": "B-16863",
+      "type": "AT76",
+      "airline": "MDA",
+      "avgLegsPerDay": 8.14,
+      "totalLegs": 293,
+      "totalDays": 36,
+      "totalFlightHours": 196.4,
+      "routes": [
+        "TSA 松山→MZG 馬公",
+        "MZG 馬公→TSA 松山",
+        "MZG 馬公→KHH 高雄",
+        "KHH 高雄→MZG 馬公",
+        "TSA 松山→KNH 金門"
+      ]
+    },
+    {
+      "reg": "B-17012",
+      "type": "AT76",
+      "airline": "UIA",
+      "avgLegsPerDay": 8.0,
+      "totalLegs": 304,
+      "totalDays": 38,
+      "totalFlightHours": 172.1,
+      "routes": [
+        "TSA 松山→LZN 南竿",
+        "LZN 南竿→TSA 松山",
+        "MZG 馬公→TSA 松山",
+        "TSA 松山→MZG 馬公",
+        "TSA 松山→TNN 臺南"
+      ]
+    },
+    {
+      "reg": "B-17013",
+      "type": "AT76",
+      "airline": "UIA",
+      "avgLegsPerDay": 8.0,
+      "totalLegs": 64,
+      "totalDays": 8,
+      "totalFlightHours": 43.7,
+      "routes": [
+        "TSA 松山→MZG 馬公",
+        "MZG 馬公→TSA 松山",
+        "TSA 松山→LZN 南竿",
+        "LZN 南竿→TSA 松山",
+        "TSA 松山→TNN 臺南"
+      ]
+    }
+  ],
+  "busiestDay": {
+    "reg": "B-16861",
+    "date": "2026-02-22",
+    "legs": 12,
+    "type": "AT76",
+    "airline": "MDA",
+    "flights": [
+      {
+        "callsign": "MDA2341",
+        "flight": "AE2341",
+        "from": "KHH 高雄",
+        "from_icao": "RCKH",
+        "to": "MZG 馬公",
+        "to_icao": "RCQC",
+        "depTime": "06:41",
+        "arrTime": "07:08"
+      },
+      {
+        "callsign": "MDA2342",
+        "flight": "AE2342",
+        "from": "MZG 馬公",
+        "from_icao": "RCQC",
+        "to": "KHH 高雄",
+        "to_icao": "RCKH",
+        "depTime": "08:05",
+        "arrTime": "08:36"
+      },
+      {
+        "callsign": "MDA333",
+        "flight": "AE333",
+        "from": "KHH 高雄",
+        "from_icao": "RCKH",
+        "to": "MZG 馬公",
+        "to_icao": "RCQC",
+        "depTime": "09:29",
+        "arrTime": null
+      },
+      {
+        "callsign": "MDA334",
+        "flight": "AE334",
+        "from": "MZG 馬公",
+        "from_icao": "RCQC",
+        "to": "KHH 高雄",
+        "to_icao": "RCKH",
+        "depTime": "10:36",
+        "arrTime": "11:11"
+      },
+      {
+        "callsign": "MDA337",
+        "flight": "AE337",
+        "from": "KHH 高雄",
+        "from_icao": "RCKH",
+        "to": "MZG 馬公",
+        "to_icao": "RCQC",
+        "depTime": "12:08",
+        "arrTime": "12:33"
+      },
+      {
+        "callsign": "MDA338",
+        "flight": "AE338",
+        "from": "MZG 馬公",
+        "from_icao": "RCQC",
+        "to": "KHH 高雄",
+        "to_icao": "RCKH",
+        "depTime": "13:30",
+        "arrTime": "14:03"
+      },
+      {
+        "callsign": "MDA341",
+        "flight": "AE341",
+        "from": "KHH 高雄",
+        "from_icao": "RCKH",
+        "to": "MZG 馬公",
+        "to_icao": "RCQC",
+        "depTime": "14:47",
+        "arrTime": "15:15"
+      },
+      {
+        "callsign": "MDA342",
+        "flight": "AE342",
+        "from": "MZG 馬公",
+        "from_icao": "RCQC",
+        "to": "KHH 高雄",
+        "to_icao": "RCKH",
+        "depTime": "15:58",
+        "arrTime": "16:32"
+      },
+      {
+        "callsign": "MDA309",
+        "flight": "AE309",
+        "from": "KHH 高雄",
+        "from_icao": "RCKH",
+        "to": "KNH 金門",
+        "to_icao": "RCBS",
+        "depTime": "17:22",
+        "arrTime": "18:13"
+      },
+      {
+        "callsign": "MDA310",
+        "flight": "AE310",
+        "from": "KNH 金門",
+        "from_icao": "RCBS",
+        "to": "KHH 高雄",
+        "to_icao": "RCKH",
+        "depTime": "19:44",
+        "arrTime": "20:30"
+      },
+      {
+        "callsign": "MDA351",
+        "flight": "AE351",
+        "from": "KHH 高雄",
+        "from_icao": "RCKH",
+        "to": "MZG 馬公",
+        "to_icao": "RCQC",
+        "depTime": "21:21",
+        "arrTime": "21:48"
+      },
+      {
+        "callsign": "MDA352",
+        "flight": "AE352",
+        "from": "MZG 馬公",
+        "from_icao": "RCQC",
+        "to": "KHH 高雄",
+        "to_icao": "RCKH",
+        "depTime": "22:27",
+        "arrTime": "22:55"
+      }
+    ]
+  },
+  "totalUniqueAircraft": 3913
+}

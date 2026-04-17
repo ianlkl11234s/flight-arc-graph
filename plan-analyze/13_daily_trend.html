@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>39 天航班量波動 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.hero { text-align: center; padding: 48px 24px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(100,170,255,0.06) 0%, transparent 70%); pointer-events: none; }
+.hero-row { display: flex; justify-content: center; align-items: flex-end; gap: 40px; flex-wrap: wrap; position: relative; }
+.hero-item { text-align: center; }
+.hero-number { font-size: 56px; font-weight: 700; line-height: 1; }
+.hero-label { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.hero-sub-row { display: flex; justify-content: center; gap: 32px; margin-top: 24px; flex-wrap: wrap; }
+.hero-sub-item { text-align: center; }
+.hero-sub-number { font-size: 24px; font-weight: 600; }
+.hero-sub-label { font-size: 11px; color: var(--dim); }
+
+.chart-wrap { position: relative; width: 100%; }
+.chart-tall { height: 400px; }
+.chart-medium { height: 300px; }
+
+/* Anomaly list */
+.anomaly-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.anomaly-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+.anomaly-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.anomaly-date { min-width: 90px; font-weight: 600; }
+.anomaly-val { min-width: 50px; color: var(--accent); font-weight: 600; }
+.anomaly-dev { min-width: 70px; font-weight: 600; }
+.anomaly-note { color: var(--dim); flex: 1; }
+
+/* Trend badge */
+.trend-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+.trend-up { background: rgba(16,185,129,0.12); color: var(--green); }
+.trend-down { background: rgba(239,68,68,0.12); color: var(--red); }
+.trend-stable { background: rgba(100,170,255,0.12); color: var(--accent); }
+
+.insight { background: rgba(100,170,255,0.06); border-left: 3px solid var(--accent); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.bottom-nav { margin-top: 48px; text-align: right; }
+.bottom-nav a { font-size: 14px; }
+
+.day-names { display: flex; justify-content: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.day-chip { padding: 4px 10px; border-radius: 6px; font-size: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>39 天航班量波動</h1>
+  <p class="subtitle">2026 年 2 月中旬到 3 月底，台灣天空每天有多少飛機？波動背後有什麼規律？</p>
+
+  <!-- Section 1: Hero numbers -->
+  <div class="card hero">
+    <div class="hero-row">
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--accent)" id="heroAvg">—</div>
+        <div class="hero-label">日均航班</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--green)" id="heroMax">—</div>
+        <div class="hero-label" id="heroMaxDate">峰值日</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--red)" id="heroMin">—</div>
+        <div class="hero-label" id="heroMinDate">谷值日</div>
+      </div>
+    </div>
+    <div class="hero-sub-row" id="heroTrend"></div>
+  </div>
+
+  <!-- Section 2: Main line chart -->
+  <div class="card">
+    <h2>每日航班量 + 7 日移動平均</h2>
+    <p style="font-size:13px; color:var(--dim); margin-bottom:16px;">藍線為每日實際航班數，橘線為 7 日移動平均 — 看趨勢比看單日更有意義。</p>
+    <div class="chart-wrap chart-tall"><canvas id="dailyChart"></canvas></div>
+    <div class="insight">初期（2/17~2/23）資料量較低可能是採集範圍逐步擴大所致。進入穩定期後，每日航班量在 900~1200 之間波動，節奏清晰。</div>
+  </div>
+
+  <!-- Section 3: Anomalies -->
+  <div class="card">
+    <h2>異常日標記</h2>
+    <p style="font-size:13px; color:var(--dim); margin-bottom:16px;">偏離 7 日移動平均超過 15% 的日子 — 為什麼這些天特別多或特別少？</p>
+    <div class="anomaly-list" id="anomalyList"></div>
+    <div class="insight">異常高峰通常出現在假期前後（旅客集中出行），而異常低谷則可能受天候、機場維護或特殊事件影響。</div>
+  </div>
+
+  <!-- Section 4: Weekly pattern -->
+  <div class="card">
+    <h2>週間模式</h2>
+    <p style="font-size:13px; color:var(--dim); margin-bottom:16px;">週一到週日，哪天飛最多？誤差棒顯示各週之間的變異程度。</p>
+    <div class="chart-wrap chart-medium"><canvas id="weekChart"></canvas></div>
+    <div class="insight">週二是明顯的低谷（但 stddev 極大，暗示包含了資料不完整的首日）。週五和週日是雙峰 — 分別對應商務人士週末前返鄉和旅客收假回程。</div>
+  </div>
+
+  <!-- Section 5: Trend conclusion -->
+  <div class="card" style="border-left: 3px solid var(--green);">
+    <h2 style="color:var(--green);">趨勢結論</h2>
+    <p style="font-size:14px; line-height:1.8;" id="trendConclusion">
+      載入中...
+    </p>
+  </div>
+
+  <!-- Key Insight -->
+  <div class="card" style="border-left: 3px solid var(--orange);">
+    <h2 style="color:var(--orange);">關鍵洞察</h2>
+    <p style="font-size:14px; line-height:1.8;">
+      台灣的航班量呈現明顯的<span style="color:var(--accent);">週間節奏</span>：<br><br>
+      <strong style="color:var(--text);">週五</strong>是一週之巔 — 商務旅客趕在週末前完成差旅，加上假日旅遊的提前出發。<br>
+      <strong style="color:var(--text);">週日</strong>緊隨其後 — 週末旅客的回程潮。<br>
+      <strong style="color:var(--text);">週二</strong>則是最安靜的一天 — 商務需求剛啟動，旅遊需求已消退。<br><br>
+      這種「<span style="color:var(--orange);">商務 + 旅遊</span>」的雙重節奏，在全球航空市場都能觀察到，但台灣因為離島航線的高佔比，讓這個模式更加鮮明 — 離島居民的通勤需求疊加在商旅之上，構成了台灣獨特的航空脈搏。
+    </p>
+  </div>
+
+  <div class="bottom-nav"><a href="index.html">&larr; 返回目錄</a></div>
+</div>
+
+<script>
+const BASE = 'data/';
+const DOW_NAMES = ['週一','週二','週三','週四','週五','週六','週日'];
+
+fetch(BASE + '13_daily_trend.json').then(r=>r.json()).then(data => {
+  const { daily, anomalies, weekPattern, summary } = data;
+
+  // Filter out the very first day if it's clearly incomplete
+  const validDaily = daily.filter(d => d.total > 50);
+
+  // Hero numbers
+  document.getElementById('heroAvg').textContent = summary.avgDaily.toLocaleString();
+  document.getElementById('heroMax').textContent = summary.maxDay.total.toLocaleString();
+  document.getElementById('heroMaxDate').textContent = `峰值日 ${summary.maxDay.date}`;
+  document.getElementById('heroMin').textContent = summary.minDay.total.toLocaleString();
+  document.getElementById('heroMinDate').textContent = `谷值日 ${summary.minDay.date}`;
+
+  // Trend badge
+  const trendEl = document.getElementById('heroTrend');
+  const trendClass = summary.trend === 'increasing' ? 'trend-up' : summary.trend === 'decreasing' ? 'trend-down' : 'trend-stable';
+  const trendIcon = summary.trend === 'increasing' ? '&#9650;' : summary.trend === 'decreasing' ? '&#9660;' : '&#9644;';
+  const trendText = summary.trend === 'increasing' ? '整體趨勢上升' : summary.trend === 'decreasing' ? '整體趨勢下降' : '整體趨勢穩定';
+  trendEl.innerHTML = `<div class="hero-sub-item"><span class="trend-badge ${trendClass}">${trendIcon} ${trendText}</span></div>`;
+
+  // Main daily chart
+  const labels = daily.map(d => d.date.slice(5)); // MM-DD
+  const totals = daily.map(d => d.total);
+  const ma7 = daily.map(d => d.ma7);
+
+  // Anomaly points
+  const anomalyDates = new Set(anomalies.map(a => a.date));
+  const anomalyAbove = daily.map(d => anomalies.find(a => a.date === d.date && a.direction === 'above') ? d.total : null);
+  const anomalyBelow = daily.map(d => anomalies.find(a => a.date === d.date && a.direction === 'below') ? d.total : null);
+
+  const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+  new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '每日航班',
+          data: totals,
+          borderColor: '#64aaff',
+          backgroundColor: 'rgba(100,170,255,0.08)',
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          tension: 0.3,
+          order: 2,
+        },
+        {
+          label: '7 日移動平均',
+          data: ma7,
+          borderColor: '#f59e0b',
+          borderWidth: 2.5,
+          borderDash: [6, 3],
+          pointRadius: 0,
+          tension: 0.4,
+          order: 1,
+        },
+        {
+          label: '異常高',
+          data: anomalyAbove,
+          borderColor: 'transparent',
+          backgroundColor: '#10b981',
+          pointRadius: 7,
+          pointStyle: 'triangle',
+          showLine: false,
+          order: 0,
+        },
+        {
+          label: '異常低',
+          data: anomalyBelow,
+          borderColor: 'transparent',
+          backgroundColor: '#ef4444',
+          pointRadius: 7,
+          pointStyle: 'triangle',
+          pointRotation: 180,
+          showLine: false,
+          order: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#6b7280', font: { family: "'JetBrains Mono'", size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 20 }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#6b7280', font: { family: "'JetBrains Mono'", size: 11 } },
+          beginAtZero: false,
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#e5e7eb', font: { family: "'JetBrains Mono'", size: 11 }, boxWidth: 12, padding: 16, usePointStyle: true }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(10,10,20,0.95)',
+          titleFont: { family: "'JetBrains Mono'" },
+          bodyFont: { family: "'JetBrains Mono'", size: 12 },
+          callbacks: {
+            title: items => {
+              const idx = items[0].dataIndex;
+              const d = daily[idx];
+              return `${d.date} (${DOW_NAMES[d.dayOfWeek] || d.dayName})`;
+            },
+            label: ctx => {
+              if (ctx.parsed.y === null) return null;
+              return ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Anomaly list
+  const anomalyList = document.getElementById('anomalyList');
+  anomalies.forEach(a => {
+    const isAbove = a.direction === 'above';
+    const color = isAbove ? 'var(--green)' : 'var(--red)';
+    const icon = isAbove ? '&#9650;' : '&#9660;';
+    const dayIdx = daily.find(d => d.date === a.date);
+    const dayName = dayIdx ? (DOW_NAMES[dayIdx.dayOfWeek] || dayIdx.dayName) : '';
+
+    let note = '';
+    if (a.date === '2026-02-25') note = '週二異常高，可能為補班日或假期效應';
+    else if (a.date === '2026-02-26') note = '228 連假前夕，旅客提前出發';
+    else if (a.date === '2026-02-27') note = '228 連假期間';
+    else if (a.date === '2026-03-28') note = '週六異常低谷，可能受天候影響';
+    else note = isAbove ? '航班量高於平均' : '航班量低於平均';
+
+    anomalyList.innerHTML += `
+      <div class="anomaly-item">
+        <div class="anomaly-dot" style="background:${color}"></div>
+        <div class="anomaly-date">${a.date.slice(5)}</div>
+        <div style="color:var(--dim);min-width:40px">${dayName}</div>
+        <div class="anomaly-val">${a.total}</div>
+        <div class="anomaly-dev" style="color:${color}">${icon} ${a.deviation}</div>
+        <div class="anomaly-note">${note}</div>
+      </div>
+    `;
+  });
+
+  // Weekly pattern bar chart with error bars
+  const weekCtx = document.getElementById('weekChart').getContext('2d');
+  const weekLabels = weekPattern.map(w => DOW_NAMES[w.day] || w.dayName);
+  const weekAvgs = weekPattern.map(w => w.avg);
+  const weekStds = weekPattern.map(w => w.stddev);
+  const weekColors = weekPattern.map(w => {
+    if (w.avg >= 1120) return '#10b981';
+    if (w.avg >= 1050) return '#64aaff';
+    if (w.avg >= 1000) return '#f59e0b';
+    return '#ef4444';
+  });
+
+  // Custom error bar plugin
+  const errorBarPlugin = {
+    id: 'errorBars',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      const meta = chart.getDatasetMeta(0);
+      meta.data.forEach((bar, i) => {
+        const std = weekStds[i];
+        const x = bar.x;
+        const yTop = chart.scales.y.getPixelForValue(weekAvgs[i] + std);
+        const yBot = chart.scales.y.getPixelForValue(weekAvgs[i] - std);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x, yTop);
+        ctx.lineTo(x, yBot);
+        ctx.stroke();
+        // Caps
+        ctx.beginPath();
+        ctx.moveTo(x - 6, yTop);
+        ctx.lineTo(x + 6, yTop);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x - 6, yBot);
+        ctx.lineTo(x + 6, yBot);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+  };
+
+  new Chart(weekCtx, {
+    type: 'bar',
+    data: {
+      labels: weekLabels,
+      datasets: [{
+        label: '平均航班數',
+        data: weekAvgs,
+        backgroundColor: weekColors.map(c => c + '99'),
+        borderColor: weekColors,
+        borderWidth: 1.5,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#e5e7eb', font: { family: "'JetBrains Mono'", size: 13, weight: '600' } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#6b7280', font: { family: "'JetBrains Mono'", size: 11 } },
+          beginAtZero: false,
+          suggestedMin: 700,
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10,10,20,0.95)',
+          titleFont: { family: "'JetBrains Mono'" },
+          bodyFont: { family: "'JetBrains Mono'", size: 12 },
+          callbacks: {
+            label: ctx => {
+              const i = ctx.dataIndex;
+              return [
+                `平均: ${weekAvgs[i].toFixed(0)} 班`,
+                `標準差: ±${weekStds[i].toFixed(0)}`
+              ];
+            }
+          }
+        }
+      }
+    },
+    plugins: [errorBarPlugin]
+  });
+
+  // Trend conclusion
+  const conclusion = document.getElementById('trendConclusion');
+  const trendWord = summary.trend === 'increasing' ? '上升' : summary.trend === 'decreasing' ? '下降' : '穩定';
+  conclusion.innerHTML = `
+    在這 39 天的觀察期間中，航班量整體呈<span style="color:var(--green);font-weight:700;">緩步${trendWord}</span>趨勢。<br><br>
+    <strong style="color:var(--text);">初始幾天</strong>的低量（2/17 僅 15 班）很可能是資料採集範圍逐步擴大，而非實際航班減少。<br>
+    <strong style="color:var(--text);">穩定期</strong>（2/20 之後）的 7 日移動平均從約 930 逐步爬升至 1100 以上，反映了航班排程的季節性成長。<br>
+    <strong style="color:var(--text);">峰值 ${summary.maxDay.date}</strong> 達到 ${summary.maxDay.total} 班，是觀察期間最繁忙的一天。<br><br>
+    若排除初始採集不完整的影響，台灣每日穩定的航班量約在<span style="color:var(--accent);font-weight:700;"> 1,050~1,150 班</span>之間，這個數字涵蓋了國際、國內、貨運與軍用航班。
+  `;
+});
+</script>
+</body>
+</html>

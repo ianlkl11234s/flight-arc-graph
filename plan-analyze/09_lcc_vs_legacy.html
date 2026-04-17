@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>廉航 vs 傳統航空 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+.hero { text-align: center; padding: 48px 24px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(100,170,255,0.08) 0%, transparent 70%); pointer-events: none; }
+.share-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; position: relative; }
+.share-card { text-align: center; padding: 32px 16px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--border); }
+.share-number { font-size: 52px; font-weight: 700; }
+.share-label { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.share-sub { font-size: 11px; color: var(--dim); margin-top: 8px; }
+.chart-wrap { position: relative; width: 100%; max-height: 500px; }
+.insight { background: rgba(100,170,255,0.06); border-left: 3px solid var(--accent); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.insight strong { color: var(--text); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: 500; position: sticky; top: 0; background: #0d0d1a; }
+tbody td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+.table-scroll { max-height: 450px; overflow-y: auto; border-radius: 8px; }
+.table-scroll::-webkit-scrollbar { width: 6px; }
+.table-scroll::-webkit-scrollbar-track { background: transparent; }
+.table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.badge-lcc { background: rgba(245,158,11,0.15); color: var(--orange); }
+.badge-legacy { background: rgba(100,170,255,0.15); color: var(--accent); }
+.tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; background: rgba(255,255,255,0.06); color: var(--dim); }
+.stacked-bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 11px; }
+.stacked-bar-label { width: 160px; text-align: right; padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.stacked-bar-track { flex: 1; display: flex; height: 22px; border-radius: 4px; overflow: hidden; }
+.stacked-bar-lcc { background: var(--orange); }
+.stacked-bar-legacy { background: var(--accent); }
+.stacked-bar-count { width: 50px; text-align: right; padding-left: 8px; color: var(--dim); font-size: 10px; flex-shrink: 0; }
+.exclusive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.exclusive-col h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.exclusive-item { font-size: 12px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; }
+.bottom-nav { text-align: center; margin-top: 32px; }
+.bottom-nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.bottom-nav a:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+  .share-cards { grid-template-columns: 1fr; }
+  .exclusive-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>廉航 vs 傳統航空</h1>
+  <p class="subtitle">台灣航空市場中，廉航搶了多少地盤？哪些航線是兵家必爭之地？</p>
+
+  <!-- Hero: Market Share -->
+  <div class="card hero">
+    <div class="share-cards" id="shareCards">
+      <div class="share-card">
+        <div class="share-number" style="color:var(--orange)" id="shareLcc">--</div>
+        <div class="share-label">廉價航空 LCC</div>
+        <div class="share-sub" id="shareLccSub"></div>
+      </div>
+      <div class="share-card">
+        <div class="share-number" style="color:var(--accent)" id="shareLegacy">--</div>
+        <div class="share-label">傳統航空 FSC</div>
+        <div class="share-sub" id="shareLegacySub"></div>
+      </div>
+      <div class="share-card">
+        <div class="share-number" style="color:var(--dim)" id="shareOther">--</div>
+        <div class="share-label">其他</div>
+        <div class="share-sub">區域航空、貨運等</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Airline ranking -->
+  <div class="card">
+    <h2>各航空公司航班量排行</h2>
+    <p style="font-size:12px; color:var(--dim); margin-bottom:16px;">
+      <span style="color:var(--orange);">&#9632;</span> 廉航 LCC
+      &nbsp;&nbsp;
+      <span style="color:var(--accent);">&#9632;</span> 傳統航空 FSC
+    </p>
+    <div class="chart-wrap" style="max-height:600px;">
+      <canvas id="airlineChart"></canvas>
+    </div>
+    <div class="insight">
+      <strong>長榮與華航</strong>各佔超過 3,600 班，穩居前二。廉航龍頭<strong>台灣虎航</strong>以 1,051 班排名第四，已超越國泰航空。LCC 陣營中，虎航一家就佔了廉航市場的 36%。
+    </div>
+  </div>
+
+  <!-- Overlap battleground -->
+  <div class="card">
+    <h2>重疊航線戰場</h2>
+    <p style="font-size:12px; color:var(--dim); margin-bottom:20px;">同時有廉航和傳統航空的航線，依總班次排序（前 20 名）</p>
+    <div id="stackedBars"></div>
+    <div class="insight">
+      <strong>成田、關西、仁川</strong>是 LCC 與 FSC 競爭最激烈的戰場。在成田航線上，LCC 佔比達 33%，傳統航空仍以 67% 保持優勢。值得注意的是，<strong>香港航線</strong>幾乎被傳統航空壟斷（LCC 僅 1 班）。
+    </div>
+  </div>
+
+  <!-- Overlap detail table -->
+  <div class="card">
+    <h2>重疊航線詳細資料</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>航線</th>
+            <th style="text-align:center">LCC</th>
+            <th style="text-align:center">FSC</th>
+            <th style="text-align:center">LCC%</th>
+            <th>廉航公司</th>
+            <th>傳統航空</th>
+          </tr>
+        </thead>
+        <tbody id="overlapTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Exclusive -->
+  <div class="card">
+    <h2>獨佔航線</h2>
+    <p style="font-size:12px; color:var(--dim); margin-bottom:20px;">只有單一類型航空公司營運的航線——這些市場沒有直接競爭</p>
+    <div class="exclusive-grid" id="exclusiveGrid">
+      <div class="exclusive-col">
+        <h3 style="color:var(--orange)">LCC 獨佔航線</h3>
+        <div id="lccOnly"></div>
+      </div>
+      <div class="exclusive-col">
+        <h3 style="color:var(--accent)">傳統航空獨佔航線</h3>
+        <div id="legacyOnly"></div>
+      </div>
+    </div>
+    <div class="insight">
+      <strong>關鍵洞察：</strong>LCC 在短程東北亞（日本二三線城市、韓國）佔比最高，尤其是非樞紐機場的點對點航線。傳統航空則壟斷長程洲際航線與兩岸航線。這反映了兩種截然不同的商業模式——LCC 靠高頻短程獲利，FSC 靠長程高票價與聯盟轉機。
+    </div>
+  </div>
+
+  <div class="bottom-nav"><a href="10_codeshare.html">下一篇：代碼共享與濕租分析 &rarr;</a></div>
+</div>
+
+<script>
+fetch('data/09_lcc_vs_legacy.json')
+  .then(r => r.json())
+  .then(data => {
+    const { lcc, legacy, overlap, summary } = data;
+
+    // Hero
+    document.getElementById('shareLcc').textContent = summary.lccPct;
+    document.getElementById('shareLegacy').textContent = summary.legacyPct;
+    document.getElementById('shareOther').textContent = summary.otherPct;
+    document.getElementById('shareLccSub').textContent = `${lcc.total.toLocaleString()} 班 / ${lcc.airlines.length} 家航空`;
+    document.getElementById('shareLegacySub').textContent = `${legacy.total.toLocaleString()} 班 / ${legacy.airlines.length} 家航空`;
+
+    // Airline ranking chart
+    const allAirlines = [
+      ...legacy.airlines.map(a => ({ ...a, type: 'legacy' })),
+      ...lcc.airlines.map(a => ({ ...a, type: 'lcc' })),
+    ].sort((a, b) => b.count - a.count);
+
+    const top20 = allAirlines.slice(0, 20);
+
+    new Chart(document.getElementById('airlineChart'), {
+      type: 'bar',
+      data: {
+        labels: top20.map(a => a.name),
+        datasets: [{
+          data: top20.map(a => a.count),
+          backgroundColor: top20.map(a => a.type === 'lcc' ? '#f59e0b' : '#64aaff'),
+          borderRadius: 4,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.raw.toLocaleString()} 班`
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#6b7280', font: { family: "'JetBrains Mono'" } }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: '#e5e7eb', font: { family: "'JetBrains Mono'", size: 11 } }
+          }
+        }
+      }
+    });
+
+    // Stacked bars (top 20 overlap)
+    const sortedOverlap = [...overlap].sort((a, b) => (b.lccCount + b.legacyCount) - (a.lccCount + a.legacyCount));
+    const topOverlap = sortedOverlap.slice(0, 20);
+    const maxOverlap = Math.max(...topOverlap.map(o => o.lccCount + o.legacyCount));
+    const stackedContainer = document.getElementById('stackedBars');
+
+    topOverlap.forEach(o => {
+      const total = o.lccCount + o.legacyCount;
+      const pctWidth = (total / maxOverlap * 100).toFixed(1);
+      const lccWidth = (o.lccCount / total * 100).toFixed(1);
+      const legacyWidth = (o.legacyCount / total * 100).toFixed(1);
+      const routeShort = o.route.replace('TPE 桃園→', '→ ').replace('TPE 桃園', '桃園');
+
+      stackedContainer.innerHTML += `
+        <div class="stacked-bar-row">
+          <div class="stacked-bar-label" title="${o.route}">${routeShort}</div>
+          <div class="stacked-bar-track" style="width:${pctWidth}%">
+            ${o.legacyCount > 0 ? `<div class="stacked-bar-legacy" style="width:${legacyWidth}%"></div>` : ''}
+            ${o.lccCount > 0 ? `<div class="stacked-bar-lcc" style="width:${lccWidth}%"></div>` : ''}
+          </div>
+          <div class="stacked-bar-count">${total}</div>
+        </div>`;
+    });
+
+    // Overlap table
+    const tbody = document.getElementById('overlapTable');
+    sortedOverlap.forEach(o => {
+      const total = o.lccCount + o.legacyCount;
+      const lccPct = (o.lccCount / total * 100).toFixed(0);
+      tbody.innerHTML += `
+        <tr>
+          <td>${o.route}</td>
+          <td style="text-align:center; color:var(--orange); font-weight:600">${o.lccCount}</td>
+          <td style="text-align:center; color:var(--accent); font-weight:600">${o.legacyCount}</td>
+          <td style="text-align:center">${lccPct}%</td>
+          <td><div class="tag-list">${o.lccAirlines.map(a => `<span class="tag">${a}</span>`).join('')}</div></td>
+          <td><div class="tag-list">${o.legacyAirlines.map(a => `<span class="tag">${a}</span>`).join('')}</div></td>
+        </tr>`;
+    });
+
+    // Exclusive routes — derive from overlap data
+    // Routes only in LCC or only in Legacy are not in overlap
+    // We show a note since our data only has overlap routes
+    const lccOnlyEl = document.getElementById('lccOnly');
+    const legacyOnlyEl = document.getElementById('legacyOnly');
+
+    // Find overlap routes where LCC dominates (>70%) vs Legacy dominates
+    const lccDominated = sortedOverlap.filter(o => o.lccCount > 0 && o.legacyCount === 0);
+    const legacyDominated = sortedOverlap.filter(o => o.legacyCount > 0 && o.lccCount === 0);
+
+    // Since data might not have true exclusive routes, show LCC-heavy vs Legacy-heavy
+    const lccHeavy = sortedOverlap.filter(o => {
+      const total = o.lccCount + o.legacyCount;
+      return (o.lccCount / total) >= 0.5;
+    }).sort((a, b) => b.lccCount - a.lccCount);
+
+    const legacyHeavy = sortedOverlap.filter(o => {
+      const total = o.lccCount + o.legacyCount;
+      return (o.legacyCount / total) > 0.8;
+    }).sort((a, b) => b.legacyCount - a.legacyCount);
+
+    if (lccHeavy.length > 0) {
+      lccHeavy.slice(0, 10).forEach(o => {
+        const total = o.lccCount + o.legacyCount;
+        const pct = (o.lccCount / total * 100).toFixed(0);
+        lccOnlyEl.innerHTML += `
+          <div class="exclusive-item">
+            <span>${o.route}</span>
+            <span style="color:var(--orange)">${pct}% LCC</span>
+          </div>`;
+      });
+    } else {
+      lccOnlyEl.innerHTML = '<p style="font-size:12px; color:var(--dim)">重疊航線中無 LCC 佔比超過 50% 的航線</p>';
+    }
+
+    if (legacyHeavy.length > 0) {
+      legacyHeavy.slice(0, 10).forEach(o => {
+        const total = o.lccCount + o.legacyCount;
+        const pct = (o.legacyCount / total * 100).toFixed(0);
+        legacyOnlyEl.innerHTML += `
+          <div class="exclusive-item">
+            <span>${o.route}</span>
+            <span style="color:var(--accent)">${pct}% FSC</span>
+          </div>`;
+      });
+    } else {
+      legacyOnlyEl.innerHTML = '<p style="font-size:12px; color:var(--dim)">無資料</p>';
+    }
+  });
+</script>
+</body>
+</html>

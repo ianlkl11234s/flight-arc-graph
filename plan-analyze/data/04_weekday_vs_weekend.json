@@ -1,0 +1,247 @@
+{
+  "byDayOfWeek": [
+    {
+      "day": 0,
+      "dayName": "Mon",
+      "count": 3259,
+      "numDays": 5,
+      "avgFlights": 651.8
+    },
+    {
+      "day": 1,
+      "dayName": "Tue",
+      "count": 3197,
+      "numDays": 6,
+      "avgFlights": 532.8
+    },
+    {
+      "day": 2,
+      "dayName": "Wed",
+      "count": 4014,
+      "numDays": 6,
+      "avgFlights": 669.0
+    },
+    {
+      "day": 3,
+      "dayName": "Thu",
+      "count": 4073,
+      "numDays": 6,
+      "avgFlights": 678.8
+    },
+    {
+      "day": 4,
+      "dayName": "Fri",
+      "count": 4173,
+      "numDays": 6,
+      "avgFlights": 695.5
+    },
+    {
+      "day": 5,
+      "dayName": "Sat",
+      "count": 3803,
+      "numDays": 6,
+      "avgFlights": 633.8
+    },
+    {
+      "day": 6,
+      "dayName": "Sun",
+      "count": 3446,
+      "numDays": 5,
+      "avgFlights": 689.2
+    }
+  ],
+  "weekdayAvg": 645.4,
+  "weekendAvg": 659.0,
+  "ratio": 0.98,
+  "weekendOnlyRoutes": [
+    {
+      "route": "RMQ 臺中→NKG 南京",
+      "route_icao": "RCMQ-ZSNJ",
+      "weekendCount": 5
+    },
+    {
+      "route": "RMQ 臺中→VVCR",
+      "route_icao": "RCMQ-VVCR",
+      "weekendCount": 2
+    },
+    {
+      "route": "TSA 松山→SZB 梳邦",
+      "route_icao": "RCSS-WMSA",
+      "weekendCount": 1
+    },
+    {
+      "route": "TTT 臺東→NRT 成田",
+      "route_icao": "RCNN-RJAA",
+      "weekendCount": 1
+    },
+    {
+      "route": "TTT 臺東→HAN 河內",
+      "route_icao": "RCNN-VVNB",
+      "weekendCount": 1
+    },
+    {
+      "route": "RMQ 臺中→RKTU",
+      "route_icao": "RCMQ-RKTU",
+      "weekendCount": 1
+    },
+    {
+      "route": "RMQ 臺中→DMK 曼谷廊曼",
+      "route_icao": "RCMQ-VTBD",
+      "weekendCount": 1
+    },
+    {
+      "route": "HUN 花蓮→WSSL",
+      "route_icao": "RCYU-WSSL",
+      "weekendCount": 1
+    },
+    {
+      "route": "CMJ 七美→CMJ 七美",
+      "route_icao": "RCCM-RCCM",
+      "weekendCount": 1
+    },
+    {
+      "route": "TSA 松山→VDTI",
+      "route_icao": "RCSS-VDTI",
+      "weekendCount": 1
+    },
+    {
+      "route": "TTT 臺東→YPDN",
+      "route_icao": "RCNN-YPDN",
+      "weekendCount": 1
+    }
+  ],
+  "weekdayHeavyRoutes": [
+    {
+      "route": "TPE 桃園→MMY 宮古",
+      "route_icao": "RCTP-RJFM",
+      "weekdayAvg": 0.45,
+      "weekendAvg": 0.09,
+      "ratio": 4.93
+    },
+    {
+      "route": "TSA 松山→TSA 松山",
+      "route_icao": "RCSS-RCSS",
+      "weekdayAvg": 0.48,
+      "weekendAvg": 0.18,
+      "ratio": 2.66
+    },
+    {
+      "route": "TSA 松山→HKG 香港",
+      "route_icao": "RCSS-VHHH",
+      "weekdayAvg": 0.21,
+      "weekendAvg": 0.09,
+      "ratio": 2.28
+    },
+    {
+      "route": "TPE 桃園→HIJ 廣島",
+      "route_icao": "RCTP-RJOA",
+      "weekdayAvg": 0.76,
+      "weekendAvg": 0.36,
+      "ratio": 2.09
+    }
+  ],
+  "airportComparison": [
+    {
+      "airport": "TPE 桃園",
+      "icao": "RCTP",
+      "weekdayAvg": 323.5,
+      "weekendAvg": 328.0
+    },
+    {
+      "airport": "KHH 高雄",
+      "icao": "RCKH",
+      "weekdayAvg": 84.5,
+      "weekendAvg": 87.6
+    },
+    {
+      "airport": "TSA 松山",
+      "icao": "RCSS",
+      "weekdayAvg": 68.6,
+      "weekendAvg": 69.7
+    },
+    {
+      "airport": "MZG 馬公",
+      "icao": "RCQC",
+      "weekdayAvg": 46.4,
+      "weekendAvg": 49.3
+    },
+    {
+      "airport": "KNH 金門",
+      "icao": "RCBS",
+      "weekdayAvg": 39.5,
+      "weekendAvg": 42.5
+    },
+    {
+      "airport": "RMQ 臺中",
+      "icao": "RCMQ",
+      "weekdayAvg": 40.4,
+      "weekendAvg": 39.5
+    },
+    {
+      "airport": "TNN 臺南",
+      "icao": "RCFN",
+      "weekdayAvg": 14.6,
+      "weekendAvg": 13.7
+    },
+    {
+      "airport": "TTT 臺東",
+      "icao": "RCNN",
+      "weekdayAvg": 7.1,
+      "weekendAvg": 6.8
+    },
+    {
+      "airport": "LZN 南竿",
+      "icao": "RCFG",
+      "weekdayAvg": 5.4,
+      "weekendAvg": 6.3
+    },
+    {
+      "airport": "KYD 蘭嶼",
+      "icao": "RCLY",
+      "weekdayAvg": 3.1,
+      "weekendAvg": 3.3
+    },
+    {
+      "airport": "CMJ 七美",
+      "icao": "RCCM",
+      "weekdayAvg": 2.9,
+      "weekendAvg": 3.3
+    },
+    {
+      "airport": "HUN 花蓮",
+      "icao": "RCYU",
+      "weekdayAvg": 2.4,
+      "weekendAvg": 2.6
+    },
+    {
+      "airport": "GNI 綠島",
+      "icao": "RCGI",
+      "weekdayAvg": 2.4,
+      "weekendAvg": 2.3
+    },
+    {
+      "airport": "CYI 嘉義",
+      "icao": "RCKU",
+      "weekdayAvg": 2.3,
+      "weekendAvg": 2.1
+    },
+    {
+      "airport": "MFK 北竿",
+      "icao": "RCMT",
+      "weekdayAvg": 1.7,
+      "weekendAvg": 2.0
+    },
+    {
+      "airport": "WOT 望安",
+      "icao": "RCWA",
+      "weekdayAvg": 0.5,
+      "weekendAvg": 0.0
+    },
+    {
+      "airport": "HCN 恆春",
+      "icao": "RCKW",
+      "weekdayAvg": 0.0,
+      "weekendAvg": 0.0
+    }
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "nightFlights": [
+    {
+      "hour": 0,
+      "dep": 706,
+      "arr": 328
+    },
+    {
+      "hour": 1,
+      "dep": 139,
+      "arr": 207
+    },
+    {
+      "hour": 2,
+      "dep": 332,
+      "arr": 67
+    },
+    {
+      "hour": 3,
+      "dep": 335,
+      "arr": 118
+    },
+    {
+      "hour": 4,
+      "dep": 79,
+      "arr": 395
+    },
+    {
+      "hour": 5,
+      "dep": 46,
+      "arr": 575
+    }
+  ],
+  "byCategory": [
+    {
+      "category": "red-eye",
+      "count": 3269,
+      "pct": "98.9%"
+    },
+    {
+      "category": "cargo",
+      "count": 37,
+      "pct": "1.1%"
+    }
+  ],
+  "byAirport": [
+    {
+      "airport": "TPE 桃園",
+      "icao": "RCTP",
+      "nightDep": 1630,
+      "nightArr": 1685
+    },
+    {
+      "airport": "MZG 馬公",
+      "icao": "RCQC",
+      "nightDep": 2,
+      "nightArr": 3
+    },
+    {
+      "airport": "KNH 金門",
+      "icao": "RCBS",
+      "nightDep": 2,
+      "nightArr": 0
+    },
+    {
+      "airport": "CMJ 七美",
+      "icao": "RCCM",
+      "nightDep": 1,
+      "nightArr": 1
+    },
+    {
+      "airport": "TSA 松山",
+      "icao": "RCSS",
+      "nightDep": 1,
+      "nightArr": 0
+    },
+    {
+      "airport": "KHH 高雄",
+      "icao": "RCKH",
+      "nightDep": 1,
+      "nightArr": 0
+    },
+    {
+      "airport": "RMQ 臺中",
+      "icao": "RCMQ",
+      "nightDep": 0,
+      "nightArr": 1
+    }
+  ],
+  "topNightRoutes": [
+    {
+      "route": "HKG 香港→TPE 桃園",
+      "route_icao": "VHHH-RCTP",
+      "count": 164,
+      "airline": "CPA",
+      "category": "red-eye"
+    },
+    {
+      "route": "SFO 舊金山→TPE 桃園",
+      "route_icao": "KSFO-RCTP",
+      "count": 144,
+      "airline": "SJX",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→LAX 洛杉磯",
+      "route_icao": "RCTP-KLAX",
+      "count": 133,
+      "airline": "CAL",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→PUS 釜山",
+      "route_icao": "RCTP-RKPK",
+      "count": 127,
+      "airline": "JJA",
+      "category": "red-eye"
+    },
+    {
+      "route": "LAX 洛杉磯→TPE 桃園",
+      "route_icao": "KLAX-RCTP",
+      "count": 125,
+      "airline": "SJX",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→SIN 新加坡",
+      "route_icao": "RCTP-WSSS",
+      "count": 120,
+      "airline": "TGW",
+      "category": "red-eye"
+    },
+    {
+      "route": "MNL 馬尼拉→TPE 桃園",
+      "route_icao": "RPLL-RCTP",
+      "count": 116,
+      "airline": "CEB",
+      "category": "red-eye"
+    },
+    {
+      "route": "SEA 西雅圖→TPE 桃園",
+      "route_icao": "KSEA-RCTP",
+      "count": 114,
+      "airline": "SJX",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→MNL 馬尼拉",
+      "route_icao": "RCTP-RPLL",
+      "count": 101,
+      "airline": "APG",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→SFO 舊金山",
+      "route_icao": "RCTP-KSFO",
+      "count": 83,
+      "airline": "SJX",
+      "category": "red-eye"
+    },
+    {
+      "route": "NRT 成田→TPE 桃園",
+      "route_icao": "RJAA-RCTP",
+      "count": 81,
+      "airline": "JJP",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→NRT 成田",
+      "route_icao": "RCTP-RJAA",
+      "count": 78,
+      "airline": "APJ",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→CJU 濟州",
+      "route_icao": "RCTP-RKPC",
+      "count": 73,
+      "airline": "JNA",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→CYVR",
+      "route_icao": "RCTP-CYVR",
+      "count": 72,
+      "airline": "CAL",
+      "category": "red-eye"
+    },
+    {
+      "route": "ICN 仁川→TPE 桃園",
+      "route_icao": "RKSI-RCTP",
+      "count": 71,
+      "airline": "TTW",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→HKG 香港",
+      "route_icao": "RCTP-VHHH",
+      "count": 68,
+      "airline": "HGB",
+      "category": "red-eye"
+    },
+    {
+      "route": "CYVR→TPE 桃園",
+      "route_icao": "CYVR-RCTP",
+      "count": 67,
+      "airline": "EVA",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→SEA 西雅圖",
+      "route_icao": "RCTP-KSEA",
+      "count": 56,
+      "airline": "CAL",
+      "category": "red-eye"
+    },
+    {
+      "route": "TPE 桃園→KIX 關西",
+      "route_icao": "RCTP-RJBB",
+      "count": 51,
+      "airline": "APJ",
+      "category": "red-eye"
+    },
+    {
+      "route": "KIX 關西→TPE 桃園",
+      "route_icao": "RJBB-RCTP",
+      "count": 50,
+      "airline": "JJP",
+      "category": "red-eye"
+    }
+  ],
+  "total": 3306,
+  "pctOfAll": "7.77%"
+}

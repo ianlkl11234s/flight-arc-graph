@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台灣航班時刻表分析 — 2026.02~03</title>
+<style>
+  :root {
+    --bg: #0a0a14;
+    --bg2: #12121e;
+    --card: rgba(255,255,255,0.04);
+    --card-hover: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.18);
+    --text: #e0e0e8;
+    --text-dim: #888899;
+    --accent: #6c8cff;
+    --accent2: #ff6c8c;
+    --accent3: #5cffc8;
+    --font: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+  .container {
+    position: relative; z-index: 1;
+    max-width: 960px; margin: 0 auto;
+    padding: 80px 24px 60px;
+  }
+  header { text-align: center; margin-bottom: 64px; }
+  header h1 {
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+  }
+  header .subtitle {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+  .stats-row {
+    display: flex; justify-content: center; gap: 40px;
+    margin-top: 28px; flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat .num {
+    font-size: 1.8rem; font-weight: 700; color: var(--accent);
+    line-height: 1.1;
+  }
+  .stat .label { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .card:hover {
+    background: var(--card-hover);
+    border-color: var(--border-hover);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+  }
+  .card:hover::before { opacity: 1; }
+  .card .num-badge {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(108,140,255,0.12);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
+  .card h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .card .desc {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 16px;
+    flex: 1;
+  }
+  .card .teaser {
+    font-size: 0.72rem;
+    color: var(--accent3);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 64px;
+    padding: 24px;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 640px) {
+    .container { padding: 48px 16px 40px; }
+    .stats-row { gap: 24px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+  <header>
+    <h1>台灣航班時刻表分析</h1>
+    <div class="subtitle">2026.02 ~ 03</div>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="num">49,633</div>
+        <div class="label">筆航班</div>
+      </div>
+      <div class="stat">
+        <div class="num">39</div>
+        <div class="label">天</div>
+      </div>
+      <div class="stat">
+        <div class="num">22</div>
+        <div class="label">座機場</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="01_cal_vs_eva.html">
+      <div class="num-badge">01</div>
+      <h2>華航 vs 長榮航線重疊分析</h2>
+      <div class="desc">台灣兩大航空巨頭在哪些航線短兵相接？又各自獨佔了哪些航線？</div>
+      <div class="teaser">61 條重疊航線 · 雙雄對決</div>
+    </a>
+
+    <a class="card" href="02_rctp_waves.html">
+      <div class="num-badge">02</div>
+      <h2>桃園機場起降波次</h2>
+      <div class="desc">一天之中，桃園機場的起降節奏如何脈動？揭開 24 小時波次的秘密。</div>
+      <div class="teaser">日均 648 架次 · 7 大波次</div>
+    </a>
+
+    <a class="card" href="03_aircraft_utilization.html">
+      <div class="num-badge">03</div>
+      <h2>同機一日行程追蹤</h2>
+      <div class="desc">一架飛機一天最多能飛幾趟？追蹤「空中勞模」的一日行程。</div>
+      <div class="teaser">最高 12 趟/日 · 3,913 架飛機</div>
+    </a>
+
+    <a class="card" href="04_weekday_vs_weekend.html">
+      <div class="num-badge">04</div>
+      <h2>平日 vs 假日航班差異</h2>
+      <div class="desc">週末和平日的航班分佈有何不同？哪些航線只有假日才有？</div>
+      <div class="teaser">比例 0.98 · 11 條週末限定航線</div>
+    </a>
+
+    <a class="card" href="05_diversions.html">
+      <div class="num-badge">05</div>
+      <h2>轉降與異常航班</h2>
+      <div class="desc">哪些航班未能到達原定目的地？轉降原因與目的地分析。</div>
+      <div class="teaser">59 次轉降 · 0.12% · 13 群聚事件</div>
+    </a>
+
+    <a class="card" href="06_route_network.html">
+      <div class="num-badge">06</div>
+      <h2>航線網路結構</h2>
+      <div class="desc">台灣連結 32 國，但航班分佈極度不均——誰是最大市場？</div>
+      <div class="teaser">32 國 · 287 條航線 · 日本壓倒性第一</div>
+    </a>
+
+    <a class="card" href="07_night_ops.html">
+      <div class="num-badge">07</div>
+      <h2>凌晨時段營運</h2>
+      <div class="desc">午夜到清晨之間，誰還在飛？台灣的天空從不完全沉睡。</div>
+      <div class="teaser">3,306 班 · 佔 7.77% · 7 座機場</div>
+    </a>
+
+    <a class="card" href="08_asymmetric_routes.html">
+      <div class="num-badge">08</div>
+      <h2>不對稱航線分析</h2>
+      <div class="desc">大多數航線是雙向平衡的，但有些航線的去程和回程班次差距懸殊——為什麼？</div>
+      <div class="teaser">272 對航線 · 6 對不對稱 · 最大差距 99 班</div>
+    </a>
+
+    <a class="card" href="09_lcc_vs_legacy.html">
+      <div class="num-badge">09</div>
+      <h2>廉航 vs 傳統航空</h2>
+      <div class="desc">台灣航空市場中，廉航搶了多少地盤？哪些航線是兵家必爭之地？</div>
+      <div class="teaser">LCC 11.3% · 38 條重疊航線 · 虎航領跑</div>
+    </a>
+
+    <a class="card" href="10_codeshare.html">
+      <div class="num-badge">10</div>
+      <h2>代碼共享與濕租分析</h2>
+      <div class="desc">航班號背後的真相——4.6% 的航班由別家航空實際執飛。</div>
+      <div class="teaser">2,247 班 · 42 組配對 · 母子公司為主</div>
+    </a>
+
+    <a class="card" href="11_islands.html">
+      <div class="num-badge">11</div>
+      <h2>離島機場連結度</h2>
+      <div class="desc">金門、馬祖、澎湖、綠島、蘭嶼——離島如何與本島連結？</div>
+      <div class="teaser">8,209 班 · 佔國內線 90.8% · 8 座機場</div>
+    </a>
+
+    <a class="card" href="12_rare_aircraft.html">
+      <div class="num-badge">12</div>
+      <h2>罕見機型出現</h2>
+      <div class="desc">在近 5 萬航班中，有些飛機只出現一兩次——它們是誰？</div>
+      <div class="teaser">436 架次 · 軍用偵察機 · 政府專機</div>
+    </a>
+
+    <a class="card" href="13_daily_trend.html">
+      <div class="num-badge">13</div>
+      <h2>39 天航班量波動</h2>
+      <div class="desc">近 40 天裡，台灣天空的航班量波動背後有什麼規律？</div>
+      <div class="teaser">日均 1,064 班 · 趨勢上升 · 連假效應</div>
+    </a>
+  </div>
+
+  <footer>
+    資料來源：Flightradar24 API · 分析：<a href="#">Flight Arc</a> · 2026
+  </footer>
+</div>
+</body>
+</html>

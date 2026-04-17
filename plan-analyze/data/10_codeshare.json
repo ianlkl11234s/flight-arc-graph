@@ -1,0 +1,868 @@
+{
+  "codeshares": [
+    {
+      "operator": "EVA",
+      "marketer": "UIA",
+      "count": 572,
+      "topRoutes": [
+        {
+          "route": "TSA 松山→KNH 金門",
+          "count": 173
+        },
+        {
+          "route": "KNH 金門→TSA 松山",
+          "count": 164
+        },
+        {
+          "route": "TSA 松山→MZG 馬公",
+          "count": 27
+        },
+        {
+          "route": "MZG 馬公→TSA 松山",
+          "count": 27
+        },
+        {
+          "route": "TPE 桃園→SZX 深圳",
+          "count": 25
+        }
+      ]
+    },
+    {
+      "operator": "CAL",
+      "marketer": "MDA",
+      "count": 491,
+      "topRoutes": [
+        {
+          "route": "KNH 金門→TSA 松山",
+          "count": 61
+        },
+        {
+          "route": "TSA 松山→KNH 金門",
+          "count": 60
+        },
+        {
+          "route": "SGN 胡志明→RMQ 臺中",
+          "count": 39
+        },
+        {
+          "route": "RMQ 臺中→SGN 胡志明",
+          "count": 38
+        },
+        {
+          "route": "RMQ 臺中→KNH 金門",
+          "count": 38
+        }
+      ]
+    },
+    {
+      "operator": "AKX",
+      "marketer": "ANA",
+      "count": 289,
+      "topRoutes": [
+        {
+          "route": "OKA 那霸→FUK 福岡",
+          "count": 9
+        },
+        {
+          "route": "FUK 福岡→OKA 那霸",
+          "count": 8
+        },
+        {
+          "route": "ITM 伊丹→ITM 伊丹",
+          "count": 8
+        },
+        {
+          "route": "MYJ 松山(日)→ITM 伊丹",
+          "count": 7
+        },
+        {
+          "route": "KMI 熊本→ITM 伊丹",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "operator": "AJX",
+      "marketer": "ANA",
+      "count": 262,
+      "topRoutes": [
+        {
+          "route": "HND 羽田→TSA 松山",
+          "count": 78
+        },
+        {
+          "route": "TSA 松山→HND 羽田",
+          "count": 77
+        },
+        {
+          "route": "HND 羽田→FUK 福岡",
+          "count": 5
+        },
+        {
+          "route": "ITM 伊丹→HND 羽田",
+          "count": 5
+        },
+        {
+          "route": "FUK 福岡→HND 羽田",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "operator": "EDV",
+      "marketer": "DAL",
+      "count": 176,
+      "topRoutes": [
+        {
+          "route": "KAGS→ATL 亞特蘭大",
+          "count": 7
+        },
+        {
+          "route": "ATL 亞特蘭大→KMGM",
+          "count": 5
+        },
+        {
+          "route": "ATL 亞特蘭大→KCHA",
+          "count": 4
+        },
+        {
+          "route": "ATL 亞特蘭大→KCHO",
+          "count": 4
+        },
+        {
+          "route": "KLFT→ATL 亞特蘭大",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "operator": "MDA",
+      "marketer": "CAL",
+      "count": 113,
+      "topRoutes": [
+        {
+          "route": "KHH 高雄→MNL 馬尼拉",
+          "count": 21
+        },
+        {
+          "route": "KHH 高雄→BKK 曼谷",
+          "count": 21
+        },
+        {
+          "route": "BKK 曼谷→KHH 高雄",
+          "count": 21
+        },
+        {
+          "route": "MNL 馬尼拉→KHH 高雄",
+          "count": 19
+        },
+        {
+          "route": "SIN 新加坡→KHH 高雄",
+          "count": 15
+        }
+      ]
+    },
+    {
+      "operator": "EJU",
+      "marketer": "EZY",
+      "count": 55,
+      "topRoutes": [
+        {
+          "route": "LPMA→LPPT",
+          "count": 14
+        },
+        {
+          "route": "LPPT→LPMA",
+          "count": 13
+        },
+        {
+          "route": "LPPR→LPMA",
+          "count": 8
+        },
+        {
+          "route": "LPMA→LPPR",
+          "count": 7
+        },
+        {
+          "route": "EDDB→LPMA",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "operator": "CSS",
+      "marketer": "YZR",
+      "count": 40,
+      "topRoutes": [
+        {
+          "route": "CAN 廣州→TPE 桃園",
+          "count": 20
+        },
+        {
+          "route": "TPE 桃園→CAN 廣州",
+          "count": 20
+        }
+      ]
+    },
+    {
+      "operator": "SKW",
+      "marketer": "DAL",
+      "count": 32,
+      "topRoutes": [
+        {
+          "route": "KSHV→ATL 亞特蘭大",
+          "count": 5
+        },
+        {
+          "route": "KSBN→ATL 亞特蘭大",
+          "count": 3
+        },
+        {
+          "route": "KOAJ→ATL 亞特蘭大",
+          "count": 3
+        },
+        {
+          "route": "ATL 亞特蘭大→KSBN",
+          "count": 3
+        },
+        {
+          "route": "ATL 亞特蘭大→KSHV",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "operator": "PGA",
+      "marketer": "TAP",
+      "count": 21,
+      "topRoutes": [
+        {
+          "route": "LPPT→LPMA",
+          "count": 11
+        },
+        {
+          "route": "LPMA→LPPT",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "operator": "NTH",
+      "marketer": "JAL",
+      "count": 20,
+      "topRoutes": [
+        {
+          "route": "RJCO→HKD 函館",
+          "count": 5
+        },
+        {
+          "route": "HKD 函館→RJCO",
+          "count": 5
+        },
+        {
+          "route": "RJCO→RJCK",
+          "count": 2
+        },
+        {
+          "route": "RJCK→RJCO",
+          "count": 2
+        },
+        {
+          "route": "HKD 函館→RJEO",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "JTA",
+      "marketer": "JAL",
+      "count": 19,
+      "topRoutes": [
+        {
+          "route": "ROKJ→OKA 那霸",
+          "count": 4
+        },
+        {
+          "route": "HND 羽田→ISG 石垣",
+          "count": 2
+        },
+        {
+          "route": "ISG 石垣→HND 羽田",
+          "count": 2
+        },
+        {
+          "route": "HND 羽田→KMQ 小松",
+          "count": 2
+        },
+        {
+          "route": "KMQ 小松→HND 羽田",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "operator": "JIA",
+      "marketer": "AAL",
+      "count": 16,
+      "topRoutes": [
+        {
+          "route": "ATL 亞特蘭大→KPHL",
+          "count": 4
+        },
+        {
+          "route": "KPHL→ATL 亞特蘭大",
+          "count": 3
+        },
+        {
+          "route": "KDCA→ATL 亞特蘭大",
+          "count": 3
+        },
+        {
+          "route": "ATL 亞特蘭大→KDCA",
+          "count": 3
+        },
+        {
+          "route": "KCLT→ATL 亞特蘭大",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "operator": "RSC",
+      "marketer": "IBB",
+      "count": 14,
+      "topRoutes": [
+        {
+          "route": "LPMA→LPPS",
+          "count": 6
+        },
+        {
+          "route": "LPPS→LPMA",
+          "count": 6
+        },
+        {
+          "route": "LPMA→GCLP",
+          "count": 1
+        },
+        {
+          "route": "GCXO→LPMA",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "RPA",
+      "marketer": "AAL",
+      "count": 14,
+      "topRoutes": [
+        {
+          "route": "ATL 亞特蘭大→KLGA",
+          "count": 5
+        },
+        {
+          "route": "KLGA→ATL 亞特蘭大",
+          "count": 5
+        },
+        {
+          "route": "ORD 芝加哥→ATL 亞特蘭大",
+          "count": 1
+        },
+        {
+          "route": "KDCA→ATL 亞特蘭大",
+          "count": 1
+        },
+        {
+          "route": "ATL 亞特蘭大→ORD 芝加哥",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "AHK",
+      "marketer": "CPA",
+      "count": 14,
+      "topRoutes": [
+        {
+          "route": "HKG 香港→TPE 桃園",
+          "count": 7
+        },
+        {
+          "route": "TPE 桃園→HKG 香港",
+          "count": 7
+        }
+      ]
+    },
+    {
+      "operator": "WMT",
+      "marketer": "WZZ",
+      "count": 13,
+      "topRoutes": [
+        {
+          "route": "LPMA→EPWA",
+          "count": 2
+        },
+        {
+          "route": "EPKT→LPMA",
+          "count": 2
+        },
+        {
+          "route": "LPMA→EPKT",
+          "count": 2
+        },
+        {
+          "route": "LPMA→LHBP",
+          "count": 2
+        },
+        {
+          "route": "EPWA→LPMA",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "operator": "EFW",
+      "marketer": "BAW",
+      "count": 11,
+      "topRoutes": [
+        {
+          "route": "LGW 蓋威克→LPMA",
+          "count": 6
+        },
+        {
+          "route": "LPMA→LGW 蓋威克",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "operator": "JAC",
+      "marketer": "AHX",
+      "count": 10,
+      "topRoutes": [
+        {
+          "route": "RJDA→FUK 福岡",
+          "count": 3
+        },
+        {
+          "route": "FUK 福岡→RJDA",
+          "count": 3
+        },
+        {
+          "route": "KMI 熊本→ITM 伊丹",
+          "count": 1
+        },
+        {
+          "route": "ITM 伊丹→KMI 熊本",
+          "count": 1
+        },
+        {
+          "route": "RJDA→KMI 熊本",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "ENY",
+      "marketer": "AAL",
+      "count": 8,
+      "topRoutes": [
+        {
+          "route": "ATL 亞特蘭大→ORD 芝加哥",
+          "count": 3
+        },
+        {
+          "route": "ORD 芝加哥→ATL 亞特蘭大",
+          "count": 2
+        },
+        {
+          "route": "ATL 亞特蘭大→KMIA",
+          "count": 1
+        },
+        {
+          "route": "KCLT→ATL 亞特蘭大",
+          "count": 1
+        },
+        {
+          "route": "ATL 亞特蘭大→KCLT",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "EWL",
+      "marketer": "EWG",
+      "count": 6,
+      "topRoutes": [
+        {
+          "route": "EDDK→LPMA",
+          "count": 1
+        },
+        {
+          "route": "LPMA→EDDK",
+          "count": 1
+        },
+        {
+          "route": "PRG 布拉格→LPMA",
+          "count": 1
+        },
+        {
+          "route": "LPMA→PRG 布拉格",
+          "count": 1
+        },
+        {
+          "route": "EDDN→LPMA",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "GTI",
+      "marketer": "NCA",
+      "count": 6,
+      "topRoutes": [
+        {
+          "route": "NRT 成田→TPE 桃園",
+          "count": 3
+        },
+        {
+          "route": "TPE 桃園→NRT 成田",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "operator": "AKX",
+      "marketer": "ORC",
+      "count": 5,
+      "topRoutes": [
+        {
+          "route": "MMY 宮古→FUK 福岡",
+          "count": 2
+        },
+        {
+          "route": "FUK 福岡→NGO 中部",
+          "count": 1
+        },
+        {
+          "route": "NGO 中部→MMY 宮古",
+          "count": 1
+        },
+        {
+          "route": "FUK 福岡→MMY 宮古",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "EZS",
+      "marketer": "EZY",
+      "count": 5,
+      "topRoutes": [
+        {
+          "route": "LSGG→LPMA",
+          "count": 2
+        },
+        {
+          "route": "LPMA→LSGG",
+          "count": 1
+        },
+        {
+          "route": "LFSB→LPMA",
+          "count": 1
+        },
+        {
+          "route": "LPMA→LFSB",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "ADZ",
+      "marketer": "UAE",
+      "count": 4,
+      "topRoutes": [
+        {
+          "route": "OMDW→HKG 香港",
+          "count": 2
+        },
+        {
+          "route": "HKG 香港→OMDW",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "operator": "ASA",
+      "marketer": "HAL",
+      "count": 4,
+      "topRoutes": [
+        {
+          "route": "HNL 檀香山→KIX 關西",
+          "count": 1
+        },
+        {
+          "route": "KIX 關西→HNL 檀香山",
+          "count": 1
+        },
+        {
+          "route": "HND 羽田→HNL 檀香山",
+          "count": 1
+        },
+        {
+          "route": "SEA 西雅圖→NRT 成田",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "JZA",
+      "marketer": "ACA",
+      "count": 4,
+      "topRoutes": [
+        {
+          "route": "ATL 亞特蘭大→CYUL",
+          "count": 1
+        },
+        {
+          "route": "ATL 亞特蘭大→YYZ 多倫多",
+          "count": 1
+        },
+        {
+          "route": "CYUL→ATL 亞特蘭大",
+          "count": 1
+        },
+        {
+          "route": "YYZ 多倫多→ATL 亞特蘭大",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "SZS",
+      "marketer": "SAS",
+      "count": 3,
+      "topRoutes": [
+        {
+          "route": "ESSA→LPMA",
+          "count": 1
+        },
+        {
+          "route": "EKCH→LPMA",
+          "count": 1
+        },
+        {
+          "route": "LPMA→ESSA",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "CAL",
+      "marketer": "GIA",
+      "count": 3,
+      "topRoutes": [
+        {
+          "route": "TPE 桃園→SIN 新加坡",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "operator": "GTI",
+      "marketer": "ETD",
+      "count": 2,
+      "topRoutes": [
+        {
+          "route": "HKG 香港→OMAA",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "operator": "TMG",
+      "marketer": "MYU",
+      "count": 2,
+      "topRoutes": [
+        {
+          "route": "HKG 香港→CGK 雅加達",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "operator": "SAT",
+      "marketer": "RZO",
+      "count": 2,
+      "topRoutes": [
+        {
+          "route": "LPPD→LPMA",
+          "count": 1
+        },
+        {
+          "route": "LPMA→LPPD",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "BER",
+      "marketer": "CFG",
+      "count": 2,
+      "topRoutes": [
+        {
+          "route": "EDDM→LPMA",
+          "count": 1
+        },
+        {
+          "route": "LPMA→EDDM",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "KTC",
+      "marketer": "AXM",
+      "count": 1,
+      "topRoutes": [
+        {
+          "route": "KUL 吉隆坡→KHH 高雄",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "RUN",
+      "marketer": "UAE",
+      "count": 1,
+      "topRoutes": [
+        {
+          "route": "OMDW→HKG 香港",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "PAC",
+      "marketer": "GTI",
+      "count": 1,
+      "topRoutes": [
+        {
+          "route": "HKG 香港→ANC 安克拉治",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "FKH",
+      "marketer": "UZB",
+      "count": 1,
+      "topRoutes": [
+        {
+          "route": "UZTT→HKG 香港",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "GEC",
+      "marketer": "DLH",
+      "count": 1,
+      "topRoutes": [
+        {
+          "route": "FRA 法蘭克福→HKG 香港",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "KZU",
+      "marketer": "THY",
+      "count": 1,
+      "topRoutes": [
+        {
+          "route": "UGTB→HKG 香港",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "CHG",
+      "marketer": "ICL",
+      "count": 1,
+      "topRoutes": [
+        {
+          "route": "EBLG→HKG 香港",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "PLM",
+      "marketer": "ANZ",
+      "count": 1,
+      "topRoutes": [
+        {
+          "route": "NRT 成田→AKL 奧克蘭",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "operator": "TVJ",
+      "marketer": "VJC",
+      "count": 1,
+      "topRoutes": [
+        {
+          "route": "BKK 曼谷→TPE 桃園",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "totalCodeshare": 2247,
+  "pct": "4.58%",
+  "topPairs": [
+    {
+      "pair": "EVA→UIA",
+      "count": 572
+    },
+    {
+      "pair": "CAL→MDA",
+      "count": 491
+    },
+    {
+      "pair": "AKX→ANA",
+      "count": 289
+    },
+    {
+      "pair": "AJX→ANA",
+      "count": 262
+    },
+    {
+      "pair": "EDV→DAL",
+      "count": 176
+    },
+    {
+      "pair": "MDA→CAL",
+      "count": 113
+    },
+    {
+      "pair": "EJU→EZY",
+      "count": 55
+    },
+    {
+      "pair": "CSS→YZR",
+      "count": 40
+    },
+    {
+      "pair": "SKW→DAL",
+      "count": 32
+    },
+    {
+      "pair": "PGA→TAP",
+      "count": 21
+    }
+  ],
+  "callsignMismatch": 46937,
+  "summary": "2247 codeshare flights (4.6% of total), 42 unique operator→marketer pairs, 46937 callsign prefix mismatches"
+}

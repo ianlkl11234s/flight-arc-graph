@@ -1,0 +1,450 @@
+{
+  "daily": [
+    {
+      "date": "2026-02-17",
+      "dayOfWeek": 1,
+      "dayName": "Tue",
+      "total": 15,
+      "dep": 10,
+      "arr": 5,
+      "ma7": null
+    },
+    {
+      "date": "2026-02-18",
+      "dayOfWeek": 2,
+      "dayName": "Wed",
+      "total": 1017,
+      "dep": 640,
+      "arr": 648,
+      "ma7": null
+    },
+    {
+      "date": "2026-02-19",
+      "dayOfWeek": 3,
+      "dayName": "Thu",
+      "total": 874,
+      "dep": 585,
+      "arr": 571,
+      "ma7": null
+    },
+    {
+      "date": "2026-02-20",
+      "dayOfWeek": 4,
+      "dayName": "Fri",
+      "total": 937,
+      "dep": 622,
+      "arr": 612,
+      "ma7": null
+    },
+    {
+      "date": "2026-02-21",
+      "dayOfWeek": 5,
+      "dayName": "Sat",
+      "total": 850,
+      "dep": 546,
+      "arr": 586,
+      "ma7": null
+    },
+    {
+      "date": "2026-02-22",
+      "dayOfWeek": 6,
+      "dayName": "Sun",
+      "total": 968,
+      "dep": 628,
+      "arr": 629,
+      "ma7": null
+    },
+    {
+      "date": "2026-02-23",
+      "dayOfWeek": 0,
+      "dayName": "Mon",
+      "total": 907,
+      "dep": 589,
+      "arr": 580,
+      "ma7": 795.4
+    },
+    {
+      "date": "2026-02-24",
+      "dayOfWeek": 1,
+      "dayName": "Tue",
+      "total": 867,
+      "dep": 542,
+      "arr": 551,
+      "ma7": 917.1
+    },
+    {
+      "date": "2026-02-25",
+      "dayOfWeek": 2,
+      "dayName": "Wed",
+      "total": 1104,
+      "dep": 655,
+      "arr": 661,
+      "ma7": 929.6
+    },
+    {
+      "date": "2026-02-26",
+      "dayOfWeek": 3,
+      "dayName": "Thu",
+      "total": 1190,
+      "dep": 724,
+      "arr": 706,
+      "ma7": 974.7
+    },
+    {
+      "date": "2026-02-27",
+      "dayOfWeek": 4,
+      "dayName": "Fri",
+      "total": 1165,
+      "dep": 701,
+      "arr": 698,
+      "ma7": 1007.3
+    },
+    {
+      "date": "2026-02-28",
+      "dayOfWeek": 5,
+      "dayName": "Sat",
+      "total": 1128,
+      "dep": 673,
+      "arr": 671,
+      "ma7": 1047.0
+    },
+    {
+      "date": "2026-03-01",
+      "dayOfWeek": 6,
+      "dayName": "Sun",
+      "total": 1158,
+      "dep": 702,
+      "arr": 690,
+      "ma7": 1074.1
+    },
+    {
+      "date": "2026-03-02",
+      "dayOfWeek": 0,
+      "dayName": "Mon",
+      "total": 1089,
+      "dep": 646,
+      "arr": 628,
+      "ma7": 1100.1
+    },
+    {
+      "date": "2026-03-03",
+      "dayOfWeek": 1,
+      "dayName": "Tue",
+      "total": 1013,
+      "dep": 609,
+      "arr": 605,
+      "ma7": 1121.0
+    },
+    {
+      "date": "2026-03-04",
+      "dayOfWeek": 2,
+      "dayName": "Wed",
+      "total": 1120,
+      "dep": 670,
+      "arr": 656,
+      "ma7": 1123.3
+    },
+    {
+      "date": "2026-03-05",
+      "dayOfWeek": 3,
+      "dayName": "Thu",
+      "total": 1138,
+      "dep": 680,
+      "arr": 658,
+      "ma7": 1115.9
+    },
+    {
+      "date": "2026-03-06",
+      "dayOfWeek": 4,
+      "dayName": "Fri",
+      "total": 1174,
+      "dep": 701,
+      "arr": 701,
+      "ma7": 1117.1
+    },
+    {
+      "date": "2026-03-07",
+      "dayOfWeek": 5,
+      "dayName": "Sat",
+      "total": 1124,
+      "dep": 674,
+      "arr": 657,
+      "ma7": 1116.6
+    },
+    {
+      "date": "2026-03-08",
+      "dayOfWeek": 6,
+      "dayName": "Sun",
+      "total": 1149,
+      "dep": 684,
+      "arr": 684,
+      "ma7": 1115.3
+    },
+    {
+      "date": "2026-03-09",
+      "dayOfWeek": 0,
+      "dayName": "Mon",
+      "total": 1075,
+      "dep": 660,
+      "arr": 634,
+      "ma7": 1113.3
+    },
+    {
+      "date": "2026-03-10",
+      "dayOfWeek": 1,
+      "dayName": "Tue",
+      "total": 1111,
+      "dep": 665,
+      "arr": 658,
+      "ma7": 1127.3
+    },
+    {
+      "date": "2026-03-11",
+      "dayOfWeek": 2,
+      "dayName": "Wed",
+      "total": 1138,
+      "dep": 684,
+      "arr": 676,
+      "ma7": 1129.9
+    },
+    {
+      "date": "2026-03-12",
+      "dayOfWeek": 3,
+      "dayName": "Thu",
+      "total": 1153,
+      "dep": 690,
+      "arr": 680,
+      "ma7": 1132.0
+    },
+    {
+      "date": "2026-03-13",
+      "dayOfWeek": 4,
+      "dayName": "Fri",
+      "total": 1179,
+      "dep": 707,
+      "arr": 699,
+      "ma7": 1132.7
+    },
+    {
+      "date": "2026-03-14",
+      "dayOfWeek": 5,
+      "dayName": "Sat",
+      "total": 1111,
+      "dep": 673,
+      "arr": 653,
+      "ma7": 1130.9
+    },
+    {
+      "date": "2026-03-15",
+      "dayOfWeek": 6,
+      "dayName": "Sun",
+      "total": 1166,
+      "dep": 709,
+      "arr": 706,
+      "ma7": 1133.3
+    },
+    {
+      "date": "2026-03-16",
+      "dayOfWeek": 0,
+      "dayName": "Mon",
+      "total": 1147,
+      "dep": 702,
+      "arr": 689,
+      "ma7": 1143.6
+    },
+    {
+      "date": "2026-03-17",
+      "dayOfWeek": 1,
+      "dayName": "Tue",
+      "total": 1136,
+      "dep": 690,
+      "arr": 685,
+      "ma7": 1147.1
+    },
+    {
+      "date": "2026-03-18",
+      "dayOfWeek": 2,
+      "dayName": "Wed",
+      "total": 1114,
+      "dep": 676,
+      "arr": 652,
+      "ma7": 1143.7
+    },
+    {
+      "date": "2026-03-19",
+      "dayOfWeek": 3,
+      "dayName": "Thu",
+      "total": 1168,
+      "dep": 702,
+      "arr": 697,
+      "ma7": 1145.9
+    },
+    {
+      "date": "2026-03-20",
+      "dayOfWeek": 4,
+      "dayName": "Fri",
+      "total": 1207,
+      "dep": 730,
+      "arr": 726,
+      "ma7": 1149.9
+    },
+    {
+      "date": "2026-03-21",
+      "dayOfWeek": 5,
+      "dayName": "Sat",
+      "total": 1143,
+      "dep": 693,
+      "arr": 680,
+      "ma7": 1154.4
+    },
+    {
+      "date": "2026-03-22",
+      "dayOfWeek": 6,
+      "dayName": "Sun",
+      "total": 1192,
+      "dep": 723,
+      "arr": 718,
+      "ma7": 1158.1
+    },
+    {
+      "date": "2026-03-23",
+      "dayOfWeek": 0,
+      "dayName": "Mon",
+      "total": 1082,
+      "dep": 662,
+      "arr": 650,
+      "ma7": 1148.9
+    },
+    {
+      "date": "2026-03-24",
+      "dayOfWeek": 1,
+      "dayName": "Tue",
+      "total": 1131,
+      "dep": 681,
+      "arr": 673,
+      "ma7": 1148.1
+    },
+    {
+      "date": "2026-03-25",
+      "dayOfWeek": 2,
+      "dayName": "Wed",
+      "total": 1132,
+      "dep": 689,
+      "arr": 675,
+      "ma7": 1150.7
+    },
+    {
+      "date": "2026-03-26",
+      "dayOfWeek": 3,
+      "dayName": "Thu",
+      "total": 1151,
+      "dep": 692,
+      "arr": 671,
+      "ma7": 1148.3
+    },
+    {
+      "date": "2026-03-27",
+      "dayOfWeek": 4,
+      "dayName": "Fri",
+      "total": 1197,
+      "dep": 712,
+      "arr": 730,
+      "ma7": 1146.9
+    },
+    {
+      "date": "2026-03-28",
+      "dayOfWeek": 5,
+      "dayName": "Sat",
+      "total": 856,
+      "dep": 544,
+      "arr": 503,
+      "ma7": 1105.9
+    }
+  ],
+  "anomalies": [
+    {
+      "date": "2026-02-25",
+      "total": 1104,
+      "ma7": 929.6,
+      "deviation": "+18.8%",
+      "direction": "above"
+    },
+    {
+      "date": "2026-02-26",
+      "total": 1190,
+      "ma7": 974.7,
+      "deviation": "+22.1%",
+      "direction": "above"
+    },
+    {
+      "date": "2026-02-27",
+      "total": 1165,
+      "ma7": 1007.3,
+      "deviation": "+15.7%",
+      "direction": "above"
+    },
+    {
+      "date": "2026-03-28",
+      "total": 856,
+      "ma7": 1105.9,
+      "deviation": "-22.6%",
+      "direction": "below"
+    }
+  ],
+  "weekPattern": [
+    {
+      "day": 0,
+      "dayName": "Mon",
+      "avg": 1060.0,
+      "stddev": 80.7
+    },
+    {
+      "day": 1,
+      "dayName": "Tue",
+      "avg": 878.8,
+      "stddev": 397.5
+    },
+    {
+      "day": 2,
+      "dayName": "Wed",
+      "avg": 1104.2,
+      "stddev": 40.5
+    },
+    {
+      "day": 3,
+      "dayName": "Thu",
+      "avg": 1112.3,
+      "stddev": 107.8
+    },
+    {
+      "day": 4,
+      "dayName": "Fri",
+      "avg": 1143.2,
+      "stddev": 93.3
+    },
+    {
+      "day": 5,
+      "dayName": "Sat",
+      "avg": 1035.3,
+      "stddev": 129.3
+    },
+    {
+      "day": 6,
+      "dayName": "Sun",
+      "avg": 1126.6,
+      "stddev": 80.6
+    }
+  ],
+  "summary": {
+    "avgDaily": 1064.4,
+    "maxDay": {
+      "date": "2026-03-20",
+      "total": 1207
+    },
+    "minDay": {
+      "date": "2026-02-17",
+      "total": 15
+    },
+    "trend": "increasing"
+  }
+}

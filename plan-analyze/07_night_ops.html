@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>凌晨時段營運 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+.hero { text-align: center; padding: 48px 24px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(139,92,246,0.08) 0%, transparent 70%); pointer-events: none; }
+.hero-row { display: flex; justify-content: center; align-items: flex-end; gap: 48px; flex-wrap: wrap; position: relative; }
+.hero-item { text-align: center; }
+.hero-number { font-size: 64px; font-weight: 700; }
+.hero-label { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.hero-sub { font-size: 14px; color: var(--dim); margin-top: 20px; max-width: 550px; margin-left: auto; margin-right: auto; position: relative; }
+.chart-wrap { position: relative; width: 100%; max-height: 400px; }
+.insight { background: rgba(139,92,246,0.06); border-left: 3px solid var(--purple); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.insight strong { color: var(--text); }
+.donut-wrap { display: flex; justify-content: center; align-items: center; gap: 48px; flex-wrap: wrap; }
+.donut-container { width: 240px; height: 240px; }
+.donut-legend { font-size: 14px; }
+.donut-legend div { margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+.donut-legend .dot { width: 14px; height: 14px; border-radius: 4px; display: inline-block; flex-shrink: 0; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: 500; position: sticky; top: 0; background: #0d0d1a; }
+tbody td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+.table-scroll { max-height: 400px; overflow-y: auto; border-radius: 8px; }
+.table-scroll::-webkit-scrollbar { width: 6px; }
+.table-scroll::-webkit-scrollbar-track { background: transparent; }
+.table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+.badge-redeye { background: rgba(139,92,246,0.15); color: var(--purple); }
+.badge-cargo { background: rgba(245,158,11,0.15); color: var(--orange); }
+.moon { font-size: 20px; margin-right: 6px; vertical-align: middle; }
+.bottom-nav { text-align: center; margin-top: 32px; }
+.bottom-nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.bottom-nav a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>凌晨時段營運</h1>
+  <p class="subtitle">當大多數人沉睡時，台灣的天空其實並不安靜。</p>
+
+  <!-- Hero -->
+  <div class="card hero">
+    <div class="hero-row">
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--purple)" id="heroTotal">--</div>
+        <div class="hero-label">凌晨航班總數</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--orange); font-size:48px" id="heroPct">--</div>
+        <div class="hero-label">佔全部航班</div>
+      </div>
+    </div>
+    <div class="hero-sub">每 13 班飛機中就有 1 班在凌晨起降，反映台灣作為亞太航空轉運節點的重要角色。</div>
+  </div>
+
+  <!-- Section 1: Hourly breakdown -->
+  <div class="card">
+    <h2>01 / 凌晨各時段航班量</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">00:00 ~ 05:59 的起飛與降落分佈。深夜出發的紅眼航班、凌晨抵達的越洋航班，各有不同的節奏。</p>
+    <div class="chart-wrap"><canvas id="hourlyChart"></canvas></div>
+    <div class="insight" id="hourlyInsight"></div>
+  </div>
+
+  <!-- Section 2: Category donut -->
+  <div class="card">
+    <h2>02 / 凌晨航班分類</h2>
+    <div class="donut-wrap">
+      <div class="donut-container"><canvas id="categoryDonut"></canvas></div>
+      <div class="donut-legend" id="categoryLegend"></div>
+    </div>
+    <div class="insight" id="categoryInsight"></div>
+  </div>
+
+  <!-- Section 3: Airport breakdown -->
+  <div class="card">
+    <h2>03 / 哪些機場深夜不打烊？</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">凌晨時段各機場的起降數量。桃園機場幾乎壟斷了深夜天空。</p>
+    <div class="chart-wrap"><canvas id="airportChart"></canvas></div>
+    <div class="insight" id="airportInsight"></div>
+  </div>
+
+  <!-- Section 4: Top night routes -->
+  <div class="card">
+    <h2>04 / 熱門凌晨航線</h2>
+    <p style="color:var(--dim); font-size:13px; margin-bottom:16px;">哪些航線最常在深夜起降？這些是紅眼旅客和貨運物流的主要通道。</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>#</th><th>航線</th><th>航空公司</th><th>班次</th><th>類別</th></tr>
+        </thead>
+        <tbody id="routeTable"></tbody>
+      </table>
+    </div>
+    <div class="insight" id="routeInsight"></div>
+  </div>
+
+  <div class="bottom-nav"><a href="08_asymmetric_routes.html">下一篇：不對稱航線分析 &rarr;</a></div>
+</div>
+
+<script>
+Chart.defaults.color = '#9ca3af';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const CATEGORY_LABELS = {
+  'red-eye': '紅眼客機',
+  'cargo': '貨機',
+  'charter': '包機',
+  'other': '其他',
+};
+const CATEGORY_COLORS = {
+  'red-eye': '#8b5cf6',
+  'cargo': '#f59e0b',
+  'charter': '#10b981',
+  'other': '#6b7280',
+};
+
+fetch('data/07_night_ops.json')
+  .then(r => r.json())
+  .then(render);
+
+function render(data) {
+  // Hero
+  document.getElementById('heroTotal').textContent = data.total.toLocaleString();
+  document.getElementById('heroPct').textContent = data.pctOfAll;
+
+  // Hourly chart
+  const hours = data.nightFlights;
+  const hourLabels = hours.map(h => `${String(h.hour).padStart(2, '0')}:00`);
+  const hourCtx = document.getElementById('hourlyChart').getContext('2d');
+  new Chart(hourCtx, {
+    type: 'bar',
+    data: {
+      labels: hourLabels,
+      datasets: [
+        {
+          label: '出發',
+          data: hours.map(h => h.dep),
+          backgroundColor: 'rgba(139,92,246,0.5)',
+          borderColor: '#8b5cf6',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: '抵達',
+          data: hours.map(h => h.arr),
+          backgroundColor: 'rgba(100,170,255,0.5)',
+          borderColor: '#64aaff',
+          borderWidth: 1,
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top', labels: { padding: 20, usePointStyle: true, pointStyle: 'rectRounded' } }
+      },
+      scales: {
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: '航班數', color: '#6b7280' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  const peakDep = hours.reduce((a, b) => a.dep > b.dep ? a : b);
+  const peakArr = hours.reduce((a, b) => a.arr > b.arr ? a : b);
+  document.getElementById('hourlyInsight').innerHTML =
+    `<strong>觀察：</strong>出發高峰在 ${String(peakDep.hour).padStart(2, '0')}:00（${peakDep.dep} 班），抵達高峰在 ${String(peakArr.hour).padStart(2, '0')}:00（${peakArr.arr} 班）。午夜 0 點是出發最密集的時段，而清晨 4-5 點則迎來大量從美洲和歐洲飛來的越洋航班。`;
+
+  // Category donut
+  const catCtx = document.getElementById('categoryDonut').getContext('2d');
+  new Chart(catCtx, {
+    type: 'doughnut',
+    data: {
+      labels: data.byCategory.map(c => CATEGORY_LABELS[c.category] || c.category),
+      datasets: [{
+        data: data.byCategory.map(c => c.count),
+        backgroundColor: data.byCategory.map(c => CATEGORY_COLORS[c.category] || '#6b7280'),
+        borderColor: 'rgba(10,10,20,0.5)',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '65%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  const legend = document.getElementById('categoryLegend');
+  data.byCategory.forEach(c => {
+    const div = document.createElement('div');
+    const color = CATEGORY_COLORS[c.category] || '#6b7280';
+    const label = CATEGORY_LABELS[c.category] || c.category;
+    div.innerHTML = `<span class="dot" style="background:${color}"></span><div><strong style="color:${color}">${c.count.toLocaleString()}</strong> ${label}<br><span style="color:var(--dim); font-size:12px">${c.pct}</span></div>`;
+    legend.appendChild(div);
+  });
+
+  const redEye = data.byCategory.find(c => c.category === 'red-eye');
+  document.getElementById('categoryInsight').innerHTML =
+    `<strong>觀察：</strong>紅眼客機佔凌晨航班的 ${redEye ? redEye.pct : '—'}，絕對主導深夜天空。貨機雖然數量不多（${data.byCategory.find(c => c.category === 'cargo')?.count || 0} 班），但承載著跨國物流供應鏈的關鍵貨物。`;
+
+  // Airport chart
+  const airports = data.byAirport.filter(a => a.nightDep + a.nightArr > 0);
+  const airCtx = document.getElementById('airportChart').getContext('2d');
+  new Chart(airCtx, {
+    type: 'bar',
+    data: {
+      labels: airports.map(a => a.icao),
+      datasets: [
+        {
+          label: '凌晨出發',
+          data: airports.map(a => a.nightDep),
+          backgroundColor: 'rgba(139,92,246,0.5)',
+          borderColor: '#8b5cf6',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: '凌晨抵達',
+          data: airports.map(a => a.nightArr),
+          backgroundColor: 'rgba(100,170,255,0.5)',
+          borderColor: '#64aaff',
+          borderWidth: 1,
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top', labels: { padding: 20, usePointStyle: true, pointStyle: 'rectRounded' } }
+      },
+      scales: {
+        y: { grid: { color: 'rgba(255,255,255,0.04)' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  const rctp = airports.find(a => a.icao === 'RCTP');
+  if (rctp) {
+    const rctpTotal = rctp.nightDep + rctp.nightArr;
+    const rctpPct = ((rctpTotal / data.total) * 100).toFixed(1);
+    document.getElementById('airportInsight').innerHTML =
+      `<strong>觀察：</strong>桃園機場（RCTP）以 ${rctpTotal.toLocaleString()} 班佔凌晨航班的 ${rctpPct}%，幾乎壟斷深夜營運。其他機場僅有零星的凌晨航班，顯示台灣的深夜空運完全集中在桃園。`;
+  }
+
+  // Route table
+  const tbody = document.getElementById('routeTable');
+  data.topNightRoutes.slice(0, 20).forEach((r, i) => {
+    const catLabel = CATEGORY_LABELS[r.category] || r.category;
+    const catClass = r.category === 'cargo' ? 'badge-cargo' : 'badge-redeye';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--dim)">${i + 1}</td>
+      <td style="font-weight:500">${r.route}</td>
+      <td style="color:var(--dim)">${r.airline}</td>
+      <td style="color:var(--orange); font-weight:600">${r.count}</td>
+      <td><span class="badge ${catClass}">${catLabel}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const topRoute = data.topNightRoutes[0];
+  document.getElementById('routeInsight').innerHTML =
+    `<strong>觀察：</strong>最繁忙的凌晨航線是 ${topRoute.route}（${topRoute.airline}，${topRoute.count} 班）。香港和美國西岸航線佔據多個席位，反映時差造就的紅眼航班需求。美國航線因為時區關係，抵達台灣時幾乎都是清晨。`;
+}
+</script>
+</body>
+</html>

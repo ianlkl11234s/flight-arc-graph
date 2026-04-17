@@ -1,0 +1,1309 @@
+{
+  "diversions": [
+    {
+      "date": "2026-02-18",
+      "time": "02:55",
+      "flight": "UO604",
+      "callsign": "HKE604",
+      "airline": "HKE",
+      "orig": "HKG 香港",
+      "orig_icao": "VHHH",
+      "plannedDest": "SZB 梳邦",
+      "plannedDest_icao": "WMSA",
+      "actualDest": "PUS 釜山",
+      "actualDest_icao": "RKPK",
+      "type": "A20N",
+      "reg": "B-LCM"
+    },
+    {
+      "date": "2026-02-18",
+      "time": "06:27",
+      "flight": "CV9022",
+      "callsign": "CLX9022",
+      "airline": "CLX",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "SIN 新加坡",
+      "plannedDest_icao": "WSSS",
+      "actualDest": "BKK 曼谷",
+      "actualDest_icao": "VTBS",
+      "type": "B748",
+      "reg": "LX-VCN"
+    },
+    {
+      "date": "2026-02-18",
+      "time": "08:04",
+      "flight": "CG401",
+      "callsign": "TOK401",
+      "airline": "TOK",
+      "orig": "KIJ 新潟",
+      "orig_icao": "RJSN",
+      "plannedDest": "NGO 中部",
+      "plannedDest_icao": "RJGG",
+      "actualDest": "KIJ 新潟",
+      "actualDest_icao": "RJSN",
+      "type": "AT76",
+      "reg": "JA02QQ"
+    },
+    {
+      "date": "2026-02-18",
+      "time": "10:59",
+      "flight": "DL2472",
+      "callsign": "DAL2472",
+      "airline": "DAL",
+      "orig": "ATL 亞特蘭大",
+      "orig_icao": "KATL",
+      "plannedDest": "KROC",
+      "plannedDest_icao": "KROC",
+      "actualDest": "KDTW",
+      "actualDest_icao": "KDTW",
+      "type": "A320",
+      "reg": "N357NW"
+    },
+    {
+      "date": "2026-02-18",
+      "time": "11:54",
+      "flight": "DL1268",
+      "callsign": "DAL1268",
+      "airline": "DAL",
+      "orig": "ATL 亞特蘭大",
+      "orig_icao": "KATL",
+      "plannedDest": "KMKE",
+      "plannedDest_icao": "KMKE",
+      "actualDest": "KIND",
+      "actualDest_icao": "KIND",
+      "type": "B739",
+      "reg": "N915DU"
+    },
+    {
+      "date": "2026-02-18",
+      "time": "15:45",
+      "flight": "NH297",
+      "callsign": "ANA297",
+      "airline": "AKX",
+      "orig": "HND 羽田",
+      "orig_icao": "RJTT",
+      "plannedDest": "RJOR",
+      "plannedDest_icao": "RJOR",
+      "actualDest": "HND 羽田",
+      "actualDest_icao": "RJTT",
+      "type": "B738",
+      "reg": "JA51AN"
+    },
+    {
+      "date": "2026-02-18",
+      "time": "19:26",
+      "flight": "DL2557",
+      "callsign": "DAL2557",
+      "airline": "DAL",
+      "orig": "KHOU",
+      "orig_icao": "KHOU",
+      "plannedDest": "ATL 亞特蘭大",
+      "plannedDest_icao": "KATL",
+      "actualDest": "KHOU",
+      "actualDest_icao": "KHOU",
+      "type": "B712",
+      "reg": "N935AT"
+    },
+    {
+      "date": "2026-02-18",
+      "time": "22:53",
+      "flight": "DL387",
+      "callsign": "DAL387",
+      "airline": "DAL",
+      "orig": "ATL 亞特蘭大",
+      "orig_icao": "KATL",
+      "plannedDest": "KSLC",
+      "plannedDest_icao": "KSLC",
+      "actualDest": "KBOI",
+      "actualDest_icao": "KBOI",
+      "type": "A21N",
+      "reg": "N598DN"
+    },
+    {
+      "date": "2026-02-18",
+      "time": "23:04",
+      "flight": "DL349",
+      "callsign": "DAL349",
+      "airline": "DAL",
+      "orig": "ATL 亞特蘭大",
+      "orig_icao": "KATL",
+      "plannedDest": "KPSP",
+      "plannedDest_icao": "KPSP",
+      "actualDest": "KPHX",
+      "actualDest_icao": "KPHX",
+      "type": "B739",
+      "reg": "N853DN"
+    },
+    {
+      "date": "2026-02-19",
+      "time": "04:08",
+      "flight": "TH3508",
+      "callsign": "RMY3508",
+      "airline": "RMY",
+      "orig": "HKG 香港",
+      "orig_icao": "VHHH",
+      "plannedDest": "SZB 梳邦",
+      "plannedDest_icao": "WMSA",
+      "actualDest": "KUL 吉隆坡",
+      "actualDest_icao": "WMKK",
+      "type": "A321",
+      "reg": "9M-BZC"
+    },
+    {
+      "date": "2026-02-19",
+      "time": "23:51",
+      "flight": "CI63",
+      "callsign": "CAL063",
+      "airline": "CAL",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "VIE 維也納",
+      "plannedDest_icao": "LOWW",
+      "actualDest": "PRG 布拉格",
+      "actualDest_icao": "LKPR",
+      "type": "A359",
+      "reg": "B-18903"
+    },
+    {
+      "date": "2026-02-23",
+      "time": "08:27",
+      "flight": "AK170",
+      "callsign": "KTC170",
+      "airline": "KTC",
+      "orig": "KUL 吉隆坡",
+      "orig_icao": "WMKK",
+      "plannedDest": "KHH 高雄",
+      "plannedDest_icao": "RCKH",
+      "actualDest": "VDSA",
+      "actualDest_icao": "VDSA",
+      "type": "A320",
+      "reg": "XU-819"
+    },
+    {
+      "date": "2026-02-24",
+      "time": "14:11",
+      "flight": "B78819",
+      "callsign": "UIA8819",
+      "airline": "UIA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "AT76",
+      "reg": "B-17013"
+    },
+    {
+      "date": "2026-02-24",
+      "time": "14:16",
+      "flight": "B78921",
+      "callsign": "UIA8921",
+      "airline": "UIA",
+      "orig": "KHH 高雄",
+      "orig_icao": "RCKH",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "KHH 高雄",
+      "actualDest_icao": "RCKH",
+      "type": "AT76",
+      "reg": "B-17015"
+    },
+    {
+      "date": "2026-02-24",
+      "time": "14:25",
+      "flight": "AE767",
+      "callsign": "MDA767",
+      "airline": "MDA",
+      "orig": "RMQ 臺中",
+      "orig_icao": "RCMQ",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "RMQ 臺中",
+      "actualDest_icao": "RCMQ",
+      "type": "AT76",
+      "reg": "B-16856"
+    },
+    {
+      "date": "2026-02-24",
+      "time": "14:29",
+      "flight": "B78961",
+      "callsign": "UIA8961",
+      "airline": "UIA",
+      "orig": "RMQ 臺中",
+      "orig_icao": "RCMQ",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "RMQ 臺中",
+      "actualDest_icao": "RCMQ",
+      "type": "AT76",
+      "reg": "B-17006"
+    },
+    {
+      "date": "2026-02-24",
+      "time": "14:40",
+      "flight": "AE1271",
+      "callsign": "MDA1271",
+      "airline": "MDA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "AT76",
+      "reg": "B-16859"
+    },
+    {
+      "date": "2026-02-24",
+      "time": "14:49",
+      "flight": "B78821",
+      "callsign": "UIA8821",
+      "airline": "EVA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "A321",
+      "reg": "B-16209"
+    },
+    {
+      "date": "2026-02-24",
+      "time": "15:06",
+      "flight": "AE1273",
+      "callsign": "MDA1273",
+      "airline": "MDA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "AT76",
+      "reg": "B-16858"
+    },
+    {
+      "date": "2026-02-26",
+      "time": "00:21",
+      "flight": "CV9363",
+      "callsign": "CLX9363",
+      "airline": "CLX",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "ELLX",
+      "plannedDest_icao": "ELLX",
+      "actualDest": "OMDW",
+      "actualDest_icao": "OMDW",
+      "type": "B748",
+      "reg": "LX-VCM"
+    },
+    {
+      "date": "2026-02-28",
+      "time": "01:48",
+      "flight": "CV9365",
+      "callsign": "CLX9365",
+      "airline": "CLX",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "ELLX",
+      "plannedDest_icao": "ELLX",
+      "actualDest": "OMDW",
+      "actualDest_icao": "OMDW",
+      "type": "B748",
+      "reg": "LX-VCJ"
+    },
+    {
+      "date": "2026-03-02",
+      "time": "16:28",
+      "flight": "B79209",
+      "callsign": "UIA9209",
+      "airline": "EVA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "A321",
+      "reg": "B-16209"
+    },
+    {
+      "date": "2026-03-02",
+      "time": "16:47",
+      "flight": "B78925",
+      "callsign": "UIA8925",
+      "airline": "UIA",
+      "orig": "KHH 高雄",
+      "orig_icao": "RCKH",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "KHH 高雄",
+      "actualDest_icao": "RCKH",
+      "type": "AT76",
+      "reg": "B-17017"
+    },
+    {
+      "date": "2026-03-02",
+      "time": "20:26",
+      "flight": "AE349",
+      "callsign": "MDA350",
+      "airline": "MDA",
+      "orig": "KHH 高雄",
+      "orig_icao": "RCKH",
+      "plannedDest": "MZG 馬公",
+      "plannedDest_icao": "RCQC",
+      "actualDest": "KHH 高雄",
+      "actualDest_icao": "RCKH",
+      "type": "AT76",
+      "reg": "B-16859"
+    },
+    {
+      "date": "2026-03-05",
+      "time": "19:12",
+      "flight": "B78966",
+      "callsign": "UIA8966",
+      "airline": "UIA",
+      "orig": "KNH 金門",
+      "orig_icao": "RCBS",
+      "plannedDest": "RMQ 臺中",
+      "plannedDest_icao": "RCMQ",
+      "actualDest": "TTT 臺東",
+      "actualDest_icao": "RCNN",
+      "type": "AT76",
+      "reg": "B-17008"
+    },
+    {
+      "date": "2026-03-06",
+      "time": "09:37",
+      "flight": "B78609",
+      "callsign": "UIA8609",
+      "airline": "UIA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "LZN 南竿",
+      "plannedDest_icao": "RCFG",
+      "actualDest": "MZG 馬公",
+      "actualDest_icao": "RCQC",
+      "type": "AT76",
+      "reg": "B-17012"
+    },
+    {
+      "date": "2026-03-06",
+      "time": "19:51",
+      "flight": "TK6261",
+      "callsign": "THY6261",
+      "airline": "THY",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "IST 伊斯坦堡",
+      "plannedDest_icao": "LTFM",
+      "actualDest": "ZLLL",
+      "actualDest_icao": "ZLLL",
+      "type": "B77L",
+      "reg": "TC-LJU"
+    },
+    {
+      "date": "2026-03-07",
+      "time": "02:00",
+      "flight": "CV9365",
+      "callsign": "CLX9365",
+      "airline": "CLX",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "ELLX",
+      "plannedDest_icao": "ELLX",
+      "actualDest": "UBBB",
+      "actualDest_icao": "UBBB",
+      "type": "B748",
+      "reg": "LX-VCH"
+    },
+    {
+      "date": "2026-03-07",
+      "time": "09:55",
+      "flight": "CI761",
+      "callsign": "CAL761",
+      "airline": "CAL",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "CGK 雅加達",
+      "plannedDest_icao": "WIII",
+      "actualDest": "WARR",
+      "actualDest_icao": "WARR",
+      "type": "A359",
+      "reg": "B-18908"
+    },
+    {
+      "date": "2026-03-09",
+      "time": "03:15",
+      "flight": "5J311",
+      "callsign": "CEB311",
+      "airline": "CEB",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "MNL 馬尼拉",
+      "plannedDest_icao": "RPLL",
+      "actualDest": "RPLC",
+      "actualDest_icao": "RPLC",
+      "type": "A339",
+      "reg": "RP-C3912"
+    },
+    {
+      "date": "2026-03-10",
+      "time": "01:00",
+      "flight": "EK387",
+      "callsign": "UAE387",
+      "airline": "UAE",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "DXB 杜拜",
+      "plannedDest_icao": "OMDB",
+      "actualDest": "OMDW",
+      "actualDest_icao": "OMDW",
+      "type": "A388",
+      "reg": "A6-EDX"
+    },
+    {
+      "date": "2026-03-10",
+      "time": "11:09",
+      "flight": "B78731",
+      "callsign": "UIA8731",
+      "airline": "UIA",
+      "orig": "RMQ 臺中",
+      "orig_icao": "RCMQ",
+      "plannedDest": "LZN 南竿",
+      "plannedDest_icao": "RCFG",
+      "actualDest": "MFK 北竿",
+      "actualDest_icao": "RCMT",
+      "type": "AT76",
+      "reg": "B-17006"
+    },
+    {
+      "date": "2026-03-10",
+      "time": "20:35",
+      "flight": "BR56",
+      "callsign": "EVA056",
+      "airline": "EVA",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "ORD 芝加哥",
+      "plannedDest_icao": "KORD",
+      "actualDest": "KMSP",
+      "actualDest_icao": "KMSP",
+      "type": "B77W",
+      "reg": "B-16721"
+    },
+    {
+      "date": "2026-03-12",
+      "time": "20:04",
+      "flight": "C85094",
+      "callsign": "ICV5094",
+      "airline": "ICV",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "DFW 達拉斯",
+      "plannedDest_icao": "KDFW",
+      "actualDest": "ANC 安克拉治",
+      "actualDest_icao": "PANC",
+      "type": "B744",
+      "reg": "LX-VCV"
+    },
+    {
+      "date": "2026-03-14",
+      "time": "02:24",
+      "flight": "BR630",
+      "callsign": "EVA630",
+      "airline": "EVA",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "LAX 洛杉磯",
+      "plannedDest_icao": "KLAX",
+      "actualDest": "SFO 舊金山",
+      "actualDest_icao": "KSFO",
+      "type": "B77L",
+      "reg": "B-16786"
+    },
+    {
+      "date": "2026-03-15",
+      "time": "08:11",
+      "flight": "DL69",
+      "callsign": "DAL69",
+      "airline": "DAL",
+      "orig": "SEA 西雅圖",
+      "orig_icao": "KSEA",
+      "plannedDest": "TPE 桃園",
+      "plannedDest_icao": "RCTP",
+      "actualDest": "ANC 安克拉治",
+      "actualDest_icao": "PANC",
+      "type": "A359",
+      "reg": "N512DN"
+    },
+    {
+      "date": "2026-03-15",
+      "time": "16:37",
+      "flight": "C85097",
+      "callsign": "ICV5097",
+      "airline": "ICV",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "KIAH",
+      "plannedDest_icao": "KIAH",
+      "actualDest": "ANC 安克拉治",
+      "actualDest_icao": "PANC",
+      "type": "B744",
+      "reg": "LX-VCV"
+    },
+    {
+      "date": "2026-03-15",
+      "time": "16:51",
+      "flight": "B78789",
+      "callsign": "UIA8790",
+      "airline": "UIA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "MFK 北竿",
+      "plannedDest_icao": "RCMT",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "AT76",
+      "reg": "B-17012"
+    },
+    {
+      "date": "2026-03-15",
+      "time": "23:06",
+      "flight": "EK367",
+      "callsign": "UAE367",
+      "airline": "UAE",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "DXB 杜拜",
+      "plannedDest_icao": "OMDB",
+      "actualDest": "OMDW",
+      "actualDest_icao": "OMDW",
+      "type": "A388",
+      "reg": "A6-EDZ"
+    },
+    {
+      "date": "2026-03-17",
+      "time": "12:38",
+      "flight": "B78759",
+      "callsign": "UIA8759",
+      "airline": "UIA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "LZN 南竿",
+      "plannedDest_icao": "RCFG",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "AT76",
+      "reg": "B-17012"
+    },
+    {
+      "date": "2026-03-17",
+      "time": "15:46",
+      "flight": "CI5117",
+      "callsign": "CAL5117",
+      "airline": "CAL",
+      "orig": "LAX 洛杉磯",
+      "orig_icao": "KLAX",
+      "plannedDest": "TPE 桃園",
+      "plannedDest_icao": "RCTP",
+      "actualDest": "KHH 高雄",
+      "actualDest_icao": "RCKH",
+      "type": "B77L",
+      "reg": "B-18772"
+    },
+    {
+      "date": "2026-03-17",
+      "time": "21:20",
+      "flight": "CI54",
+      "callsign": "CAL054",
+      "airline": "CAL",
+      "orig": "BNE 布里斯班",
+      "orig_icao": "YBBN",
+      "plannedDest": "TPE 桃園",
+      "plannedDest_icao": "RCTP",
+      "actualDest": "KHH 高雄",
+      "actualDest_icao": "RCKH",
+      "type": "A359",
+      "reg": "B-18915"
+    },
+    {
+      "date": "2026-03-18",
+      "time": "03:10",
+      "flight": "VZ566",
+      "callsign": "TVJ566",
+      "airline": "TVJ",
+      "orig": "BKK 曼谷",
+      "orig_icao": "VTBS",
+      "plannedDest": "TPE 桃園",
+      "plannedDest_icao": "RCTP",
+      "actualDest": "KHH 高雄",
+      "actualDest_icao": "RCKH",
+      "type": "A321",
+      "reg": "HS-VKG"
+    },
+    {
+      "date": "2026-03-18",
+      "time": "06:53",
+      "flight": "AE1261",
+      "callsign": "MDA1261",
+      "airline": "MDA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "AT76",
+      "reg": "B-16863"
+    },
+    {
+      "date": "2026-03-18",
+      "time": "07:11",
+      "flight": "B78801",
+      "callsign": "UIA8801",
+      "airline": "EVA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "A321",
+      "reg": "B-16220"
+    },
+    {
+      "date": "2026-03-18",
+      "time": "07:24",
+      "flight": "B78951",
+      "callsign": "UIA8951",
+      "airline": "UIA",
+      "orig": "RMQ 臺中",
+      "orig_icao": "RCMQ",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "RMQ 臺中",
+      "actualDest_icao": "RCMQ",
+      "type": "AT76",
+      "reg": "B-17007"
+    },
+    {
+      "date": "2026-03-18",
+      "time": "07:25",
+      "flight": "AE301",
+      "callsign": "MDA301",
+      "airline": "MDA",
+      "orig": "KHH 高雄",
+      "orig_icao": "RCKH",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "KHH 高雄",
+      "actualDest_icao": "RCKH",
+      "type": "AT76",
+      "reg": "B-16866"
+    },
+    {
+      "date": "2026-03-18",
+      "time": "07:36",
+      "flight": "AE761",
+      "callsign": "MDA761",
+      "airline": "MDA",
+      "orig": "RMQ 臺中",
+      "orig_icao": "RCMQ",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "RMQ 臺中",
+      "actualDest_icao": "RCMQ",
+      "type": "AT76",
+      "reg": "B-16855"
+    },
+    {
+      "date": "2026-03-18",
+      "time": "07:54",
+      "flight": "B78911",
+      "callsign": "UIA8911",
+      "airline": "UIA",
+      "orig": "KHH 高雄",
+      "orig_icao": "RCKH",
+      "plannedDest": "KNH 金門",
+      "plannedDest_icao": "RCBS",
+      "actualDest": "KHH 高雄",
+      "actualDest_icao": "RCKH",
+      "type": "AT76",
+      "reg": "B-17009"
+    },
+    {
+      "date": "2026-03-19",
+      "time": "01:18",
+      "flight": "CV9363",
+      "callsign": "CLX9363",
+      "airline": "CLX",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "ELLX",
+      "plannedDest_icao": "ELLX",
+      "actualDest": "UBBB",
+      "actualDest_icao": "UBBB",
+      "type": "B748",
+      "reg": "LX-VCN"
+    },
+    {
+      "date": "2026-03-19",
+      "time": "10:50",
+      "flight": "B78755",
+      "callsign": "UIA8755",
+      "airline": "UIA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "LZN 南竿",
+      "plannedDest_icao": "RCFG",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "AT76",
+      "reg": "B-17012"
+    },
+    {
+      "date": "2026-03-20",
+      "time": "20:20",
+      "flight": "BR18",
+      "callsign": "EVA018",
+      "airline": "EVA",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "SFO 舊金山",
+      "plannedDest_icao": "KSFO",
+      "actualDest": "TPE 桃園",
+      "actualDest_icao": "RCTP",
+      "type": "B77W",
+      "reg": "B-16731"
+    },
+    {
+      "date": "2026-03-22",
+      "time": "14:52",
+      "flight": "C85097",
+      "callsign": "ICV5097",
+      "airline": "ICV",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "KIAH",
+      "plannedDest_icao": "KIAH",
+      "actualDest": "ANC 安克拉治",
+      "actualDest_icao": "PANC",
+      "type": "B744",
+      "reg": "LX-YCV"
+    },
+    {
+      "date": "2026-03-23",
+      "time": "11:15",
+      "flight": "VJ825",
+      "callsign": "VJC825",
+      "airline": "VJC",
+      "orig": "SGN 胡志明",
+      "orig_icao": "VVTS",
+      "plannedDest": "RMQ 臺中",
+      "plannedDest_icao": "RCMQ",
+      "actualDest": "KUL 吉隆坡",
+      "actualDest_icao": "WMKK",
+      "type": "A21N",
+      "reg": "VN-A674"
+    },
+    {
+      "date": "2026-03-23",
+      "time": "15:05",
+      "flight": "IT720",
+      "callsign": "TTW720",
+      "airline": "TTW",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "FUK 福岡",
+      "plannedDest_icao": "RJFF",
+      "actualDest": "KIX 關西",
+      "actualDest_icao": "RJBB",
+      "type": "A320",
+      "reg": "B-50008"
+    },
+    {
+      "date": "2026-03-24",
+      "time": "15:33",
+      "flight": "B78789",
+      "callsign": "UIA8789",
+      "airline": "UIA",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "MFK 北竿",
+      "plannedDest_icao": "RCMT",
+      "actualDest": "TSA 松山",
+      "actualDest_icao": "RCSS",
+      "type": "AT76",
+      "reg": "B-17003"
+    },
+    {
+      "date": "2026-03-25",
+      "time": "07:51",
+      "flight": "AE211",
+      "callsign": "MDA211",
+      "airline": "CAL",
+      "orig": "TSA 松山",
+      "orig_icao": "RCSS",
+      "plannedDest": "FOC 福州",
+      "plannedDest_icao": "ZSFZ",
+      "actualDest": "XMN 廈門",
+      "actualDest_icao": "ZSAM",
+      "type": "B738",
+      "reg": "B-18661"
+    },
+    {
+      "date": "2026-03-25",
+      "time": "19:47",
+      "flight": "BR36",
+      "callsign": "EVA036",
+      "airline": "EVA",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "YYZ 多倫多",
+      "plannedDest_icao": "CYYZ",
+      "actualDest": "ANC 安克拉治",
+      "actualDest_icao": "PANC",
+      "type": "B77W",
+      "reg": "B-16725"
+    },
+    {
+      "date": "2026-03-26",
+      "time": "20:41",
+      "flight": "C85094",
+      "callsign": "ICV5094",
+      "airline": "ICV",
+      "orig": "TPE 桃園",
+      "orig_icao": "RCTP",
+      "plannedDest": "DFW 達拉斯",
+      "plannedDest_icao": "KDFW",
+      "actualDest": "ANC 安克拉治",
+      "actualDest_icao": "PANC",
+      "type": "B744",
+      "reg": "LX-YCV"
+    }
+  ],
+  "byActualDest": [
+    {
+      "airport": "TSA 松山",
+      "icao": "RCSS",
+      "count": 11,
+      "flights": [
+        "B78819",
+        "AE1271",
+        "B78821",
+        "AE1273",
+        "B79209",
+        "B78789",
+        "B78759",
+        "AE1261",
+        "B78801",
+        "B78755"
+      ]
+    },
+    {
+      "airport": "KHH 高雄",
+      "icao": "RCKH",
+      "count": 8,
+      "flights": [
+        "B78921",
+        "B78925",
+        "AE349",
+        "CI5117",
+        "CI54",
+        "VZ566",
+        "AE301",
+        "B78911"
+      ]
+    },
+    {
+      "airport": "ANC 安克拉治",
+      "icao": "PANC",
+      "count": 6,
+      "flights": [
+        "C85094",
+        "DL69",
+        "C85097",
+        "C85097",
+        "BR36",
+        "C85094"
+      ]
+    },
+    {
+      "airport": "RMQ 臺中",
+      "icao": "RCMQ",
+      "count": 4,
+      "flights": [
+        "AE767",
+        "B78961",
+        "B78951",
+        "AE761"
+      ]
+    },
+    {
+      "airport": "OMDW",
+      "icao": "OMDW",
+      "count": 4,
+      "flights": [
+        "CV9363",
+        "CV9365",
+        "EK387",
+        "EK367"
+      ]
+    },
+    {
+      "airport": "KUL 吉隆坡",
+      "icao": "WMKK",
+      "count": 2,
+      "flights": [
+        "TH3508",
+        "VJ825"
+      ]
+    },
+    {
+      "airport": "UBBB",
+      "icao": "UBBB",
+      "count": 2,
+      "flights": [
+        "CV9365",
+        "CV9363"
+      ]
+    },
+    {
+      "airport": "PUS 釜山",
+      "icao": "RKPK",
+      "count": 1,
+      "flights": [
+        "UO604"
+      ]
+    },
+    {
+      "airport": "BKK 曼谷",
+      "icao": "VTBS",
+      "count": 1,
+      "flights": [
+        "CV9022"
+      ]
+    },
+    {
+      "airport": "KIJ 新潟",
+      "icao": "RJSN",
+      "count": 1,
+      "flights": [
+        "CG401"
+      ]
+    },
+    {
+      "airport": "KDTW",
+      "icao": "KDTW",
+      "count": 1,
+      "flights": [
+        "DL2472"
+      ]
+    },
+    {
+      "airport": "KIND",
+      "icao": "KIND",
+      "count": 1,
+      "flights": [
+        "DL1268"
+      ]
+    },
+    {
+      "airport": "HND 羽田",
+      "icao": "RJTT",
+      "count": 1,
+      "flights": [
+        "NH297"
+      ]
+    },
+    {
+      "airport": "KHOU",
+      "icao": "KHOU",
+      "count": 1,
+      "flights": [
+        "DL2557"
+      ]
+    },
+    {
+      "airport": "KBOI",
+      "icao": "KBOI",
+      "count": 1,
+      "flights": [
+        "DL387"
+      ]
+    },
+    {
+      "airport": "KPHX",
+      "icao": "KPHX",
+      "count": 1,
+      "flights": [
+        "DL349"
+      ]
+    },
+    {
+      "airport": "PRG 布拉格",
+      "icao": "LKPR",
+      "count": 1,
+      "flights": [
+        "CI63"
+      ]
+    },
+    {
+      "airport": "VDSA",
+      "icao": "VDSA",
+      "count": 1,
+      "flights": [
+        "AK170"
+      ]
+    },
+    {
+      "airport": "TTT 臺東",
+      "icao": "RCNN",
+      "count": 1,
+      "flights": [
+        "B78966"
+      ]
+    },
+    {
+      "airport": "MZG 馬公",
+      "icao": "RCQC",
+      "count": 1,
+      "flights": [
+        "B78609"
+      ]
+    },
+    {
+      "airport": "ZLLL",
+      "icao": "ZLLL",
+      "count": 1,
+      "flights": [
+        "TK6261"
+      ]
+    },
+    {
+      "airport": "WARR",
+      "icao": "WARR",
+      "count": 1,
+      "flights": [
+        "CI761"
+      ]
+    },
+    {
+      "airport": "RPLC",
+      "icao": "RPLC",
+      "count": 1,
+      "flights": [
+        "5J311"
+      ]
+    },
+    {
+      "airport": "MFK 北竿",
+      "icao": "RCMT",
+      "count": 1,
+      "flights": [
+        "B78731"
+      ]
+    },
+    {
+      "airport": "KMSP",
+      "icao": "KMSP",
+      "count": 1,
+      "flights": [
+        "BR56"
+      ]
+    },
+    {
+      "airport": "SFO 舊金山",
+      "icao": "KSFO",
+      "count": 1,
+      "flights": [
+        "BR630"
+      ]
+    },
+    {
+      "airport": "TPE 桃園",
+      "icao": "RCTP",
+      "count": 1,
+      "flights": [
+        "BR18"
+      ]
+    },
+    {
+      "airport": "KIX 關西",
+      "icao": "RJBB",
+      "count": 1,
+      "flights": [
+        "IT720"
+      ]
+    },
+    {
+      "airport": "XMN 廈門",
+      "icao": "ZSAM",
+      "count": 1,
+      "flights": [
+        "AE211"
+      ]
+    }
+  ],
+  "byCause": [
+    {
+      "date": "2026-02-18",
+      "count": 9,
+      "commonDest": "PUS 釜山",
+      "commonDest_icao": "RKPK",
+      "flights": [
+        "UO604",
+        "CV9022",
+        "CG401",
+        "DL2472",
+        "DL1268",
+        "NH297",
+        "DL2557",
+        "DL387",
+        "DL349"
+      ]
+    },
+    {
+      "date": "2026-02-24",
+      "count": 7,
+      "commonDest": "TSA 松山",
+      "commonDest_icao": "RCSS",
+      "flights": [
+        "B78819",
+        "B78921",
+        "AE767",
+        "B78961",
+        "AE1271",
+        "B78821",
+        "AE1273"
+      ]
+    },
+    {
+      "date": "2026-03-18",
+      "count": 7,
+      "commonDest": "KHH 高雄",
+      "commonDest_icao": "RCKH",
+      "flights": [
+        "VZ566",
+        "AE1261",
+        "B78801",
+        "B78951",
+        "AE301",
+        "AE761",
+        "B78911"
+      ]
+    },
+    {
+      "date": "2026-03-15",
+      "count": 4,
+      "commonDest": "ANC 安克拉治",
+      "commonDest_icao": "PANC",
+      "flights": [
+        "DL69",
+        "C85097",
+        "B78789",
+        "EK367"
+      ]
+    },
+    {
+      "date": "2026-03-02",
+      "count": 3,
+      "commonDest": "KHH 高雄",
+      "commonDest_icao": "RCKH",
+      "flights": [
+        "B79209",
+        "B78925",
+        "AE349"
+      ]
+    },
+    {
+      "date": "2026-03-10",
+      "count": 3,
+      "commonDest": "OMDW",
+      "commonDest_icao": "OMDW",
+      "flights": [
+        "EK387",
+        "B78731",
+        "BR56"
+      ]
+    },
+    {
+      "date": "2026-03-17",
+      "count": 3,
+      "commonDest": "KHH 高雄",
+      "commonDest_icao": "RCKH",
+      "flights": [
+        "B78759",
+        "CI5117",
+        "CI54"
+      ]
+    },
+    {
+      "date": "2026-02-19",
+      "count": 2,
+      "commonDest": "KUL 吉隆坡",
+      "commonDest_icao": "WMKK",
+      "flights": [
+        "TH3508",
+        "CI63"
+      ]
+    },
+    {
+      "date": "2026-03-06",
+      "count": 2,
+      "commonDest": "MZG 馬公",
+      "commonDest_icao": "RCQC",
+      "flights": [
+        "B78609",
+        "TK6261"
+      ]
+    },
+    {
+      "date": "2026-03-07",
+      "count": 2,
+      "commonDest": "UBBB",
+      "commonDest_icao": "UBBB",
+      "flights": [
+        "CV9365",
+        "CI761"
+      ]
+    },
+    {
+      "date": "2026-03-19",
+      "count": 2,
+      "commonDest": "UBBB",
+      "commonDest_icao": "UBBB",
+      "flights": [
+        "CV9363",
+        "B78755"
+      ]
+    },
+    {
+      "date": "2026-03-23",
+      "count": 2,
+      "commonDest": "KUL 吉隆坡",
+      "commonDest_icao": "WMKK",
+      "flights": [
+        "VJ825",
+        "IT720"
+      ]
+    },
+    {
+      "date": "2026-03-25",
+      "count": 2,
+      "commonDest": "XMN 廈門",
+      "commonDest_icao": "ZSAM",
+      "flights": [
+        "AE211",
+        "BR36"
+      ]
+    }
+  ],
+  "total": 59,
+  "rate": "0.12%",
+  "totalFlightsAnalyzed": 49082
+}

@@ -1,0 +1,758 @@
+{
+  "lcc": {
+    "total": 2929,
+    "pct": "11.3%",
+    "airlines": [
+      {
+        "code": "TTW",
+        "name": "虎航",
+        "count": 1051
+      },
+      {
+        "code": "APJ",
+        "name": "樂桃",
+        "count": 432
+      },
+      {
+        "code": "VJC",
+        "name": "越捷",
+        "count": 314
+      },
+      {
+        "code": "TGW",
+        "name": "酷航",
+        "count": 280
+      },
+      {
+        "code": "TWB",
+        "name": "德威",
+        "count": 213
+      },
+      {
+        "code": "JNA",
+        "name": "真航",
+        "count": 180
+      },
+      {
+        "code": "ESR",
+        "name": "易斯達",
+        "count": 149
+      },
+      {
+        "code": "ABL",
+        "name": "釜山",
+        "count": 131
+      },
+      {
+        "code": "AXM",
+        "name": "亞航",
+        "count": 91
+      },
+      {
+        "code": "CEB",
+        "name": "宿霧太平洋",
+        "count": 87
+      },
+      {
+        "code": "JST",
+        "name": "捷星",
+        "count": 1
+      }
+    ],
+    "topRoutes": [
+      {
+        "route": "TPE 桃園→NRT 成田",
+        "count": 245
+      },
+      {
+        "route": "TPE 桃園→PUS 釜山",
+        "count": 199
+      },
+      {
+        "route": "TPE 桃園→KIX 關西",
+        "count": 189
+      },
+      {
+        "route": "TPE 桃園→OKA 那霸",
+        "count": 175
+      },
+      {
+        "route": "TPE 桃園→SIN 新加坡",
+        "count": 143
+      },
+      {
+        "route": "TPE 桃園→CJU 濟州",
+        "count": 140
+      },
+      {
+        "route": "TPE 桃園→ICN 仁川",
+        "count": 127
+      },
+      {
+        "route": "RMQ 臺中→ICN 仁川",
+        "count": 110
+      },
+      {
+        "route": "TPE 桃園→FUK 福岡",
+        "count": 78
+      },
+      {
+        "route": "KHH 高雄→KIX 關西",
+        "count": 77
+      },
+      {
+        "route": "TPE 桃園→HND 羽田",
+        "count": 72
+      },
+      {
+        "route": "TPE 桃園→MNL 馬尼拉",
+        "count": 70
+      },
+      {
+        "route": "TPE 桃園→CTS 新千歲",
+        "count": 70
+      },
+      {
+        "route": "TPE 桃園→HAN 河內",
+        "count": 68
+      },
+      {
+        "route": "TPE 桃園→NGO 中部",
+        "count": 65
+      }
+    ]
+  },
+  "legacy": {
+    "total": 10828,
+    "pct": "41.7%",
+    "airlines": [
+      {
+        "code": "EVA",
+        "name": "長榮",
+        "count": 3763
+      },
+      {
+        "code": "CAL",
+        "name": "華航",
+        "count": 3692
+      },
+      {
+        "code": "SJX",
+        "name": "星宇",
+        "count": 1358
+      },
+      {
+        "code": "CPA",
+        "name": "國泰",
+        "count": 698
+      },
+      {
+        "code": "CES",
+        "name": "東航",
+        "count": 217
+      },
+      {
+        "code": "CCA",
+        "name": "國航",
+        "count": 193
+      },
+      {
+        "code": "JAL",
+        "name": "日航",
+        "count": 189
+      },
+      {
+        "code": "CSN",
+        "name": "南航",
+        "count": 150
+      },
+      {
+        "code": "THA",
+        "name": "泰航",
+        "count": 140
+      },
+      {
+        "code": "KAL",
+        "name": "大韓",
+        "count": 136
+      },
+      {
+        "code": "SIA",
+        "name": "新航",
+        "count": 94
+      },
+      {
+        "code": "AAR",
+        "name": "韓亞",
+        "count": 69
+      },
+      {
+        "code": "PAL",
+        "name": "菲律賓航空",
+        "count": 68
+      },
+      {
+        "code": "MAS",
+        "name": "馬航",
+        "count": 33
+      },
+      {
+        "code": "ANA",
+        "name": "全日空",
+        "count": 28
+      }
+    ],
+    "topRoutes": [
+      {
+        "route": "TPE 桃園→HKG 香港",
+        "count": 1068
+      },
+      {
+        "route": "TPE 桃園→BKK 曼谷",
+        "count": 499
+      },
+      {
+        "route": "TPE 桃園→NRT 成田",
+        "count": 491
+      },
+      {
+        "route": "TPE 桃園→SIN 新加坡",
+        "count": 331
+      },
+      {
+        "route": "TPE 桃園→KIX 關西",
+        "count": 327
+      },
+      {
+        "route": "TPE 桃園→PVG 浦東",
+        "count": 318
+      },
+      {
+        "route": "TPE 桃園→MNL 馬尼拉",
+        "count": 302
+      },
+      {
+        "route": "TPE 桃園→ICN 仁川",
+        "count": 291
+      },
+      {
+        "route": "KHH 高雄→HKG 香港",
+        "count": 285
+      },
+      {
+        "route": "TPE 桃園→LAX 洛杉磯",
+        "count": 258
+      },
+      {
+        "route": "TPE 桃園→SGN 胡志明",
+        "count": 247
+      },
+      {
+        "route": "TSA 松山→KNH 金門",
+        "count": 233
+      },
+      {
+        "route": "TSA 松山→HND 羽田",
+        "count": 228
+      },
+      {
+        "route": "KNH 金門→TSA 松山",
+        "count": 227
+      },
+      {
+        "route": "TPE 桃園→NGO 中部",
+        "count": 219
+      }
+    ]
+  },
+  "overlap": [
+    {
+      "route": "TPE 桃園→HKG 香港",
+      "lccCount": 1,
+      "legacyCount": 1068,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "華航",
+        "國泰",
+        "星宇"
+      ]
+    },
+    {
+      "route": "TPE 桃園→NRT 成田",
+      "lccCount": 245,
+      "legacyCount": 491,
+      "lccAirlines": [
+        "樂桃",
+        "虎航",
+        "酷航"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "華航",
+        "國泰",
+        "日航",
+        "星宇",
+        "全日空"
+      ]
+    },
+    {
+      "route": "TPE 桃園→KIX 關西",
+      "lccCount": 189,
+      "legacyCount": 327,
+      "lccAirlines": [
+        "樂桃",
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "長榮",
+        "星宇",
+        "國泰"
+      ]
+    },
+    {
+      "route": "TPE 桃園→SIN 新加坡",
+      "lccCount": 143,
+      "legacyCount": 331,
+      "lccAirlines": [
+        "酷航"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "新航",
+        "華航",
+        "星宇"
+      ]
+    },
+    {
+      "route": "TPE 桃園→ICN 仁川",
+      "lccCount": 127,
+      "legacyCount": 291,
+      "lccAirlines": [
+        "易斯達",
+        "真航",
+        "酷航",
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "華航",
+        "大韓",
+        "韓亞"
+      ]
+    },
+    {
+      "route": "TPE 桃園→MNL 馬尼拉",
+      "lccCount": 70,
+      "legacyCount": 302,
+      "lccAirlines": [
+        "宿霧太平洋"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "菲律賓航空",
+        "長榮",
+        "星宇"
+      ]
+    },
+    {
+      "route": "TPE 桃園→PUS 釜山",
+      "lccCount": 199,
+      "legacyCount": 150,
+      "lccAirlines": [
+        "易斯達",
+        "真航",
+        "釜山",
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "長榮",
+        "大韓"
+      ]
+    },
+    {
+      "route": "TPE 桃園→OKA 那霸",
+      "lccCount": 175,
+      "legacyCount": 174,
+      "lccAirlines": [
+        "虎航",
+        "樂桃"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "星宇",
+        "華航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→SGN 胡志明",
+      "lccCount": 43,
+      "legacyCount": 247,
+      "lccAirlines": [
+        "越捷"
+      ],
+      "legacyAirlines": [
+        "星宇",
+        "長榮",
+        "華航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→NGO 中部",
+      "lccCount": 65,
+      "legacyCount": 219,
+      "lccAirlines": [
+        "樂桃",
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "國泰",
+        "星宇",
+        "日航",
+        "新航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→FUK 福岡",
+      "lccCount": 78,
+      "legacyCount": 196,
+      "lccAirlines": [
+        "虎航",
+        "亞航"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "星宇",
+        "華航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→HAN 河內",
+      "lccCount": 68,
+      "legacyCount": 183,
+      "lccAirlines": [
+        "越捷"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "長榮",
+        "星宇"
+      ]
+    },
+    {
+      "route": "TPE 桃園→CTS 新千歲",
+      "lccCount": 70,
+      "legacyCount": 147,
+      "lccAirlines": [
+        "虎航",
+        "酷航"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "星宇",
+        "華航"
+      ]
+    },
+    {
+      "route": "KHH 高雄→KIX 關西",
+      "lccCount": 77,
+      "legacyCount": 112,
+      "lccAirlines": [
+        "虎航",
+        "樂桃"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "長榮"
+      ]
+    },
+    {
+      "route": "RMQ 臺中→ICN 仁川",
+      "lccCount": 110,
+      "legacyCount": 35,
+      "lccAirlines": [
+        "真航",
+        "德威"
+      ],
+      "legacyAirlines": [
+        "大韓"
+      ]
+    },
+    {
+      "route": "KHH 高雄→NRT 成田",
+      "lccCount": 36,
+      "legacyCount": 104,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "華航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→VVDN",
+      "lccCount": 27,
+      "legacyCount": 104,
+      "lccAirlines": [
+        "虎航",
+        "越捷"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "長榮",
+        "星宇"
+      ]
+    },
+    {
+      "route": "KHH 高雄→ICN 仁川",
+      "lccCount": 38,
+      "legacyCount": 75,
+      "lccAirlines": [
+        "德威"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "華航"
+      ]
+    },
+    {
+      "route": "RMQ 臺中→SGN 胡志明",
+      "lccCount": 39,
+      "legacyCount": 38,
+      "lccAirlines": [
+        "越捷"
+      ],
+      "legacyAirlines": [
+        "華航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→SDJ 仙台",
+      "lccCount": 10,
+      "legacyCount": 67,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "星宇"
+      ]
+    },
+    {
+      "route": "TPE 桃園→HND 羽田",
+      "lccCount": 72,
+      "legacyCount": 2,
+      "lccAirlines": [
+        "樂桃",
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "全日空"
+      ]
+    },
+    {
+      "route": "TSA 松山→GMP 金浦",
+      "lccCount": 39,
+      "legacyCount": 35,
+      "lccAirlines": [
+        "德威",
+        "易斯達"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "長榮"
+      ]
+    },
+    {
+      "route": "KHH 高雄→OKA 那霸",
+      "lccCount": 36,
+      "legacyCount": 33,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "華航"
+      ]
+    },
+    {
+      "route": "KHH 高雄→FUK 福岡",
+      "lccCount": 11,
+      "legacyCount": 45,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "長榮",
+        "華航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→HKD 函館",
+      "lccCount": 28,
+      "legacyCount": 22,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "星宇"
+      ]
+    },
+    {
+      "route": "RMQ 臺中→MFM 澳門",
+      "lccCount": 11,
+      "legacyCount": 39,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "星宇"
+      ]
+    },
+    {
+      "route": "KHH 高雄→MFM 澳門",
+      "lccCount": 11,
+      "legacyCount": 38,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "長榮"
+      ]
+    },
+    {
+      "route": "TPE 桃園→KMQ 小松",
+      "lccCount": 10,
+      "legacyCount": 38,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "長榮"
+      ]
+    },
+    {
+      "route": "TPE 桃園→WBKK",
+      "lccCount": 35,
+      "legacyCount": 1,
+      "lccAirlines": [
+        "亞航"
+      ],
+      "legacyAirlines": [
+        "馬航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→VVPQ",
+      "lccCount": 15,
+      "legacyCount": 19,
+      "lccAirlines": [
+        "越捷"
+      ],
+      "legacyAirlines": [
+        "星宇"
+      ]
+    },
+    {
+      "route": "KHH 高雄→KMI 熊本",
+      "lccCount": 10,
+      "legacyCount": 20,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "華航"
+      ]
+    },
+    {
+      "route": "KHH 高雄→MNL 馬尼拉",
+      "lccCount": 17,
+      "legacyCount": 1,
+      "lccAirlines": [
+        "宿霧太平洋"
+      ],
+      "legacyAirlines": [
+        "華航"
+      ]
+    },
+    {
+      "route": "KHH 高雄→TPE 桃園",
+      "lccCount": 1,
+      "legacyCount": 16,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "長榮"
+      ]
+    },
+    {
+      "route": "TPE 桃園→MMY 宮古",
+      "lccCount": 11,
+      "legacyCount": 3,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "華航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→ISG 石垣",
+      "lccCount": 10,
+      "legacyCount": 1,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "華航"
+      ]
+    },
+    {
+      "route": "TPE 桃園→KHH 高雄",
+      "lccCount": 1,
+      "legacyCount": 10,
+      "lccAirlines": [
+        "虎航"
+      ],
+      "legacyAirlines": [
+        "華航",
+        "長榮"
+      ]
+    },
+    {
+      "route": "RMQ 臺中→VVDN",
+      "lccCount": 10,
+      "legacyCount": 1,
+      "lccAirlines": [
+        "越捷"
+      ],
+      "legacyAirlines": [
+        "星宇"
+      ]
+    },
+    {
+      "route": "RMQ 臺中→VVPQ",
+      "lccCount": 1,
+      "legacyCount": 10,
+      "lccAirlines": [
+        "越捷"
+      ],
+      "legacyAirlines": [
+        "星宇"
+      ]
+    }
+  ],
+  "summary": {
+    "lccPct": "11.3%",
+    "legacyPct": "41.7%",
+    "otherPct": "47.0%",
+    "overlapRoutes": 38
+  }
+}

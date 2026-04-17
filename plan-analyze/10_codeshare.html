@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代碼共享與濕租分析 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+  --cyan: #22d3ee;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+.hero { text-align: center; padding: 48px 24px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(139,92,246,0.08) 0%, transparent 70%); pointer-events: none; }
+.hero-row { display: flex; justify-content: center; align-items: flex-end; gap: 48px; flex-wrap: wrap; position: relative; }
+.hero-item { text-align: center; }
+.hero-number { font-size: 64px; font-weight: 700; }
+.hero-label { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.hero-sub { font-size: 14px; color: var(--dim); margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; position: relative; }
+.chart-wrap { position: relative; width: 100%; max-height: 500px; }
+.insight { background: rgba(139,92,246,0.06); border-left: 3px solid var(--purple); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.insight strong { color: var(--text); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: 500; position: sticky; top: 0; background: #0d0d1a; }
+tbody td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+.table-scroll { max-height: 400px; overflow-y: auto; border-radius: 8px; }
+.table-scroll::-webkit-scrollbar { width: 6px; }
+.table-scroll::-webkit-scrollbar-track { background: transparent; }
+.table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+/* Flow diagram */
+.flow-pair { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 12px 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--border); transition: background 0.2s; }
+.flow-pair:hover { background: rgba(255,255,255,0.04); }
+.flow-operator { text-align: right; width: 100px; flex-shrink: 0; }
+.flow-operator-name { font-weight: 600; font-size: 14px; color: var(--cyan); }
+.flow-operator-sub { font-size: 10px; color: var(--dim); }
+.flow-arrow { flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
+.flow-arrow-line { height: 2px; background: linear-gradient(90deg, var(--cyan), var(--purple)); border-radius: 1px; transition: width 0.6s ease; }
+.flow-arrow-head { color: var(--purple); font-size: 14px; }
+.flow-marketer { width: 100px; flex-shrink: 0; }
+.flow-marketer-name { font-weight: 600; font-size: 14px; color: var(--purple); }
+.flow-marketer-sub { font-size: 10px; color: var(--dim); }
+.flow-count { flex-shrink: 0; width: 60px; text-align: right; font-weight: 700; font-size: 16px; color: var(--text); }
+.flow-count-label { font-size: 10px; color: var(--dim); font-weight: 400; }
+
+/* Case study */
+.case-card { padding: 20px; margin-bottom: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--border); }
+.case-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.case-desc { font-size: 13px; color: var(--dim); line-height: 1.7; }
+.case-stats { display: flex; gap: 24px; margin-top: 12px; flex-wrap: wrap; }
+.case-stat { text-align: center; }
+.case-stat-num { font-size: 24px; font-weight: 700; }
+.case-stat-label { font-size: 10px; color: var(--dim); }
+.route-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.route-tag { font-size: 10px; padding: 2px 6px; background: rgba(255,255,255,0.06); border-radius: 3px; color: var(--dim); }
+.bottom-nav { text-align: center; margin-top: 32px; }
+.bottom-nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.bottom-nav a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>代碼共享與濕租分析</h1>
+  <p class="subtitle">航班號背後的真相——你買的票可能不是這家航空公司在飛。</p>
+
+  <!-- Hero -->
+  <div class="card hero">
+    <div class="hero-row">
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--purple)" id="heroTotal">--</div>
+        <div class="hero-label">代碼共享航班</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--orange); font-size:48px" id="heroPct">--</div>
+        <div class="hero-label">佔全部航班比例</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--cyan); font-size:48px" id="heroPairs">--</div>
+        <div class="hero-label">合作配對數</div>
+      </div>
+    </div>
+    <div class="hero-sub">
+      當「實際執飛」的航空公司與「售票」的航空公司不同時，就是代碼共享。<br>這在航空業極為普遍，尤其在母子公司與聯盟夥伴之間。
+    </div>
+  </div>
+
+  <!-- Top pairs: flow diagram -->
+  <div class="card">
+    <h2>主要代碼共享配對</h2>
+    <p style="font-size:12px; color:var(--dim); margin-bottom:20px;">
+      <span style="color:var(--cyan)">實際執飛</span>
+      &nbsp;&rarr;&nbsp;
+      <span style="color:var(--purple)">售票航空</span>
+      &nbsp;|&nbsp;線條長度代表航班數量
+    </p>
+    <div id="flowPairs"></div>
+    <div class="insight">
+      <strong>前兩名都是台灣的母子公司關係：</strong>長榮飛、立榮賣票（572 班），華航飛、華信賣票（491 班）。第三名 AKX（全日空之翼）為 ANA 集團子公司，執飛日本國內線掛 ANA 航班號。
+    </div>
+  </div>
+
+  <!-- Bubble chart: codeshare by route -->
+  <div class="card">
+    <h2>代碼共享最多的航線</h2>
+    <p style="font-size:12px; color:var(--dim); margin-bottom:16px;">各代碼共享配對中，最熱門的航線</p>
+    <div class="chart-wrap" style="max-height:450px">
+      <canvas id="routeChart"></canvas>
+    </div>
+    <div class="insight">
+      <strong>金門 &harr; 松山</strong>是代碼共享最密集的航線，長榮/立榮與華航/華信都在此航線大量代碼共享。離島航線由子公司實際執飛、母公司掛牌銷售，是台灣航空業的典型模式。
+    </div>
+  </div>
+
+  <!-- Detailed table -->
+  <div class="card">
+    <h2>所有代碼共享配對</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>實際執飛</th>
+            <th>售票航空</th>
+            <th style="text-align:center">班次</th>
+            <th>主要航線</th>
+          </tr>
+        </thead>
+        <tbody id="pairTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Case studies -->
+  <div class="card">
+    <h2>典型案例解讀</h2>
+    <div id="caseStudies">
+      <div class="case-card">
+        <div class="case-title" style="color:var(--green)">長榮 &harr; 立榮（EVA &harr; UIA）</div>
+        <div class="case-desc">
+          立榮航空（UNI Air）是長榮航空的全資子公司，專營國內線與離島航線。長榮的機隊（主要是 ATR 72）執飛松山-金門、松山-馬公等航線，但以立榮的航班號銷售。這讓長榮集團能在不同市場使用最適合的品牌——國際線用長榮，國內線用立榮。
+        </div>
+        <div class="case-stats" id="caseEvaUia"></div>
+        <div class="route-tags" id="caseEvaUiaRoutes"></div>
+      </div>
+      <div class="case-card">
+        <div class="case-title" style="color:var(--accent)">華航 &harr; 華信（CAL &harr; MDA）</div>
+        <div class="case-desc">
+          華信航空（Mandarin Airlines）是華航的子公司，與長榮/立榮的關係如出一轍。華航飛、華信賣的航班集中在金門、臺中-東南亞等航線。有趣的是，華信也有反向代碼共享（MDA&rarr;CAL），代表華信飛、華航賣的航班也有 113 班，形成雙向合作。
+        </div>
+        <div class="case-stats" id="caseCalMda"></div>
+        <div class="route-tags" id="caseCalMdaRoutes"></div>
+      </div>
+      <div class="case-card">
+        <div class="case-title" style="color:var(--orange)">日本國內線集團（AKX/AJX &rarr; ANA）</div>
+        <div class="case-desc">
+          ANA 之翼（AKX）和北海道空中系統（AJX/Air Do 旗下）是 ANA 集團的區域子公司。它們執飛日本國內短程航線，但掛 ANA 的航班號。這讓 ANA 能覆蓋更多城市對，而旅客在訂票時只看到 ANA 品牌。合計超過 551 班，是日本航空業代碼共享的典型模式。
+        </div>
+        <div class="case-stats" id="caseAna"></div>
+      </div>
+    </div>
+    <div class="insight">
+      <strong>總結：</strong>台灣的代碼共享以<strong>母子公司垂直整合</strong>為主（長榮/立榮、華航/華信），而非歐美常見的聯盟橫向合作。這反映了台灣航空市場的獨特結構——兩大集團各自擁有國際線旗艦與國內線子公司，透過代碼共享實現無縫銜接。
+    </div>
+  </div>
+
+  <div class="bottom-nav"><a href="index.html">&larr; 返回目錄</a></div>
+</div>
+
+<script>
+const airlineNames = {
+  'EVA': '長榮航空', 'UIA': '立榮航空', 'CAL': '華航', 'MDA': '華信航空',
+  'AKX': 'ANA 之翼', 'AJX': '北海道空中系統', 'ANA': '全日空',
+  'EDV': 'Endeavor Air', 'DAL': '達美航空', 'EJU': 'easyJet Europe',
+  'EZY': 'easyJet', 'CSS': '中華航空貨運', 'YZR': '揚子江快運',
+  'SKW': 'SkyWest', 'PGA': 'Portugalia', 'TAP': 'TAP 葡萄牙',
+};
+
+fetch('data/10_codeshare.json')
+  .then(r => r.json())
+  .then(data => {
+    const { codeshares, totalCodeshare, pct, topPairs } = data;
+
+    // Hero
+    document.getElementById('heroTotal').textContent = totalCodeshare.toLocaleString();
+    document.getElementById('heroPct').textContent = pct;
+    document.getElementById('heroPairs').textContent = codeshares.length;
+
+    // Flow pairs
+    const maxCount = topPairs[0].count;
+    const flowEl = document.getElementById('flowPairs');
+    topPairs.slice(0, 10).forEach(p => {
+      const [op, mk] = p.pair.split('→');
+      const pctWidth = Math.max(20, (p.count / maxCount * 200));
+      const opName = airlineNames[op] || op;
+      const mkName = airlineNames[mk] || mk;
+      flowEl.innerHTML += `
+        <div class="flow-pair">
+          <div class="flow-operator">
+            <div class="flow-operator-name">${op}</div>
+            <div class="flow-operator-sub">${opName}</div>
+          </div>
+          <div class="flow-arrow">
+            <div class="flow-arrow-line" style="width:${pctWidth}px"></div>
+            <div class="flow-arrow-head">&rtrif;</div>
+          </div>
+          <div class="flow-marketer">
+            <div class="flow-marketer-name">${mk}</div>
+            <div class="flow-marketer-sub">${mkName}</div>
+          </div>
+          <div class="flow-count">
+            ${p.count}
+            <div class="flow-count-label">班</div>
+          </div>
+        </div>`;
+    });
+
+    // Route bubble chart — collect top routes across all pairs
+    const allRoutes = [];
+    codeshares.forEach(cs => {
+      cs.topRoutes.forEach(r => {
+        allRoutes.push({
+          route: r.route,
+          count: r.count,
+          pair: `${cs.operator}→${cs.marketer}`,
+          operator: cs.operator,
+        });
+      });
+    });
+    allRoutes.sort((a, b) => b.count - a.count);
+    const topRoutes = allRoutes.slice(0, 20);
+
+    const pairColors = {
+      'EVA': '#22d3ee', 'CAL': '#64aaff', 'AKX': '#f59e0b',
+      'AJX': '#f59e0b', 'EDV': '#10b981', 'MDA': '#8b5cf6',
+      'EJU': '#ef4444', 'CSS': '#6b7280', 'SKW': '#10b981',
+      'PGA': '#6b7280',
+    };
+
+    new Chart(document.getElementById('routeChart'), {
+      type: 'bar',
+      data: {
+        labels: topRoutes.map(r => r.route.length > 25 ? r.route.substring(0, 25) + '...' : r.route),
+        datasets: [{
+          data: topRoutes.map(r => r.count),
+          backgroundColor: topRoutes.map(r => pairColors[r.operator] || '#6b7280'),
+          borderRadius: 4,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterLabel: ctx => `配對: ${topRoutes[ctx.dataIndex].pair}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#6b7280', font: { family: "'JetBrains Mono'" } }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: '#e5e7eb', font: { family: "'JetBrains Mono'", size: 10 } }
+          }
+        }
+      }
+    });
+
+    // Pair table
+    const tbody = document.getElementById('pairTable');
+    codeshares.forEach(cs => {
+      const opName = airlineNames[cs.operator] || cs.operator;
+      const mkName = airlineNames[cs.marketer] || cs.marketer;
+      const routeTags = cs.topRoutes.slice(0, 3).map(r =>
+        `<span class="route-tag">${r.route} (${r.count})</span>`
+      ).join('');
+      tbody.innerHTML += `
+        <tr>
+          <td><span style="color:var(--cyan); font-weight:600">${cs.operator}</span> <span style="color:var(--dim); font-size:10px">${opName}</span></td>
+          <td><span style="color:var(--purple); font-weight:600">${cs.marketer}</span> <span style="color:var(--dim); font-size:10px">${mkName}</span></td>
+          <td style="text-align:center; font-weight:600">${cs.count}</td>
+          <td><div class="route-tags">${routeTags}</div></td>
+        </tr>`;
+    });
+
+    // Case studies: EVA-UIA
+    const evaUia = codeshares.find(c => c.operator === 'EVA' && c.marketer === 'UIA');
+    if (evaUia) {
+      document.getElementById('caseEvaUia').innerHTML = `
+        <div class="case-stat"><div class="case-stat-num" style="color:var(--green)">${evaUia.count}</div><div class="case-stat-label">代碼共享班次</div></div>
+        <div class="case-stat"><div class="case-stat-num" style="color:var(--dim)">${evaUia.topRoutes.length}</div><div class="case-stat-label">涉及航線數</div></div>`;
+      document.getElementById('caseEvaUiaRoutes').innerHTML =
+        evaUia.topRoutes.map(r => `<span class="route-tag">${r.route} (${r.count})</span>`).join('');
+    }
+
+    // Case: CAL-MDA
+    const calMda = codeshares.find(c => c.operator === 'CAL' && c.marketer === 'MDA');
+    const mdaCal = codeshares.find(c => c.operator === 'MDA' && c.marketer === 'CAL');
+    if (calMda) {
+      const reverseCount = mdaCal ? mdaCal.count : 0;
+      document.getElementById('caseCalMda').innerHTML = `
+        <div class="case-stat"><div class="case-stat-num" style="color:var(--accent)">${calMda.count}</div><div class="case-stat-label">華航飛→華信賣</div></div>
+        <div class="case-stat"><div class="case-stat-num" style="color:var(--purple)">${reverseCount}</div><div class="case-stat-label">華信飛→華航賣</div></div>
+        <div class="case-stat"><div class="case-stat-num" style="color:var(--dim)">${calMda.count + reverseCount}</div><div class="case-stat-label">合計</div></div>`;
+      document.getElementById('caseCalMdaRoutes').innerHTML =
+        calMda.topRoutes.map(r => `<span class="route-tag">${r.route} (${r.count})</span>`).join('');
+    }
+
+    // Case: ANA group
+    const akxAna = codeshares.find(c => c.operator === 'AKX' && c.marketer === 'ANA');
+    const ajxAna = codeshares.find(c => c.operator === 'AJX' && c.marketer === 'ANA');
+    const anaTotal = (akxAna ? akxAna.count : 0) + (ajxAna ? ajxAna.count : 0);
+    document.getElementById('caseAna').innerHTML = `
+      <div class="case-stat"><div class="case-stat-num" style="color:var(--orange)">${akxAna ? akxAna.count : 0}</div><div class="case-stat-label">AKX 執飛</div></div>
+      <div class="case-stat"><div class="case-stat-num" style="color:var(--orange)">${ajxAna ? ajxAna.count : 0}</div><div class="case-stat-label">AJX 執飛</div></div>
+      <div class="case-stat"><div class="case-stat-num" style="color:var(--dim)">${anaTotal}</div><div class="case-stat-label">合計掛 ANA 號</div></div>`;
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>同機一日行程追蹤</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #0a0a14; --bg2: #12121e;
+    --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+    --text: #e0e0e8; --text-dim: #888899; --text-muted: #555566;
+    --accent: #6c8cff; --accent2: #ff6c8c; --accent3: #5cffc8;
+    --font: 'SF Mono','Fira Code','JetBrains Mono','Cascadia Code',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.7}
+  .bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+  .container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:48px 24px 60px}
+  nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px;font-size:0.75rem}
+  nav a{color:var(--text-dim);text-decoration:none;transition:color .2s}
+  nav a:hover{color:var(--accent)}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;background:rgba(108,140,255,0.12);color:var(--accent);font-size:0.7rem;font-weight:700;margin-bottom:12px}
+  header{margin-bottom:56px}
+  header h1{font-size:clamp(1.4rem,3.5vw,2rem);font-weight:700;margin-bottom:12px;line-height:1.3}
+  header .lead{font-size:0.85rem;color:var(--text-dim);max-width:640px;line-height:1.8}
+  section{margin-bottom:56px}
+  section h2{font-size:1.15rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  section h2 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .insight{font-size:0.8rem;color:var(--text-dim);margin-bottom:24px;line-height:1.8}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;backdrop-filter:blur(12px);margin-bottom:20px}
+  .chart-wrap{position:relative;width:100%;margin:16px 0}
+  .chart-note{font-size:0.7rem;color:var(--text-muted);margin-top:8px;text-align:center}
+
+  .hero-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:40px}
+  .hero-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center}
+  .hero-stat .hn{font-size:1.8rem;font-weight:700;color:var(--accent);line-height:1.1}
+  .hero-stat .hl{font-size:0.65rem;color:var(--text-dim);margin-top:6px;text-transform:uppercase;letter-spacing:0.08em}
+
+  /* Gantt timeline */
+  .gantt-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .gantt-title{font-size:0.85rem;font-weight:600}
+  .gantt-meta{font-size:0.7rem;color:var(--text-dim)}
+  .gantt-timeline{position:relative;height:60px;background:rgba(255,255,255,0.02);border-radius:8px;overflow:hidden;margin-bottom:8px}
+  .gantt-hours{display:flex;position:absolute;bottom:0;left:0;right:0;height:16px}
+  .gantt-hour{flex:1;text-align:center;font-size:0.55rem;color:var(--text-muted);border-left:1px solid rgba(255,255,255,0.04)}
+  .gantt-bar{position:absolute;top:8px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:600;color:#fff;transition:all .2s;cursor:default;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 4px}
+  .gantt-bar:hover{transform:scaleY(1.2);z-index:10;box-shadow:0 4px 16px rgba(0,0,0,0.5)}
+  .gantt-legend{display:flex;gap:16px;margin-top:8px;font-size:0.68rem;color:var(--text-dim)}
+  .gantt-legend span{display:inline-flex;align-items:center;gap:4px}
+  .gantt-legend .gdot{width:8px;height:8px;border-radius:2px}
+
+  .flight-table{width:100%;border-collapse:collapse;font-size:0.72rem;margin-top:16px}
+  .flight-table th{text-align:left;padding:8px 10px;color:var(--text-dim);border-bottom:1px solid var(--border);font-weight:600;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em}
+  .flight-table td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  .flight-table tr:hover td{background:rgba(255,255,255,0.02)}
+
+  .type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+  .type-card{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .type-card h4{font-size:0.82rem;font-weight:600;margin-bottom:4px}
+  .type-card .tc-stat{font-size:0.72rem;color:var(--text-dim);line-height:1.6}
+  .type-card .tc-num{font-size:1.2rem;font-weight:700;color:var(--accent3)}
+
+  .conclusion{background:linear-gradient(135deg,rgba(108,140,255,0.08),rgba(92,255,200,0.06));border:1px solid rgba(108,140,255,0.15);border-radius:14px;padding:28px;font-size:0.82rem;line-height:1.9}
+  .conclusion h2{margin-bottom:12px}
+  .conclusion ul{list-style:none;padding:0}
+  .conclusion li{padding:4px 0}
+  .conclusion li::before{content:'→ ';color:var(--accent3)}
+
+  footer{text-align:center;margin-top:48px;padding-top:20px;border-top:1px solid var(--border)}
+  footer a{color:var(--text-dim);text-decoration:none;font-size:0.75rem;transition:color .2s}
+  footer a:hover{color:var(--accent)}
+
+  @media(max-width:640px){
+    .container{padding:32px 16px}
+    .hero-stats{grid-template-columns:1fr 1fr}
+    .type-grid{grid-template-columns:1fr}
+    .gantt-bar{font-size:0!important}
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+  <nav>
+    <a href="index.html">&larr; 返回目錄</a>
+    <a href="index.html" style="opacity:0.5">系列完結</a>
+  </nav>
+
+  <header>
+    <div class="badge">03</div>
+    <h1>同機一日行程追蹤</h1>
+    <p class="lead">
+      航空公司要讓每架飛機的利用率最大化——飛機停在地上就是在燒錢。
+      這份分析追蹤了 3,913 架飛機的使用模式，找出哪些飛機是「空中勞模」，
+      以及不同機型的運用策略有何差異。
+    </p>
+  </header>
+
+  <div class="hero-stats" id="heroStats"></div>
+
+  <!-- Section 1: Top aircraft bar chart -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent)"></span>Top 20 最忙碌飛機</h2>
+    <p class="insight" id="topInsight"></p>
+    <div class="card">
+      <div class="chart-wrap" style="height:560px">
+        <canvas id="topChart"></canvas>
+      </div>
+      <p class="chart-note">每日平均飛行航段數（avgLegsPerDay）</p>
+    </div>
+  </section>
+
+  <!-- Section 2: Busiest day timeline -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent2)"></span>最忙碌的一天</h2>
+    <p class="insight" id="busiestInsight"></p>
+    <div class="card">
+      <div class="gantt-header">
+        <div class="gantt-title" id="ganttTitle"></div>
+        <div class="gantt-meta" id="ganttMeta"></div>
+      </div>
+      <div class="gantt-timeline" id="ganttTimeline">
+        <div class="gantt-hours" id="ganttHours"></div>
+      </div>
+      <div class="gantt-legend">
+        <span><span class="gdot" style="background:var(--accent)"></span>飛行中</span>
+        <span><span class="gdot" style="background:rgba(255,255,255,0.1)"></span>地面時間</span>
+      </div>
+      <table class="flight-table" id="flightTable">
+        <thead><tr><th>#</th><th>航班</th><th>航線</th><th>起飛</th><th>降落</th><th>時長</th></tr></thead>
+        <tbody id="flightBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Section 3: Type analysis -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent3)"></span>機型 vs 利用率</h2>
+    <p class="insight">
+      短程螺旋槳機（如 AT76、DH8D）設計用於 30~60 分鐘的跳島航線，
+      一天可以飛 8~12 趟；寬體客機（如 A359、B77W）飛長程國際線，
+      一天通常只有 1~2 個航段。不同任務，不同節奏。
+    </p>
+    <div class="card">
+      <div class="type-grid" id="typeGrid"></div>
+    </div>
+  </section>
+
+  <!-- Conclusion -->
+  <section>
+    <div class="conclusion">
+      <h2><span class="dot" style="background:var(--accent3)"></span>關鍵洞察</h2>
+      <ul id="conclusionList"></ul>
+    </div>
+  </section>
+
+  <footer>
+    <a href="index.html">&larr; 返回目錄</a>
+  </footer>
+</div>
+
+<script>
+const GANTT_COLORS = [
+  '#6c8cff','#ff6c8c','#5cffc8','#ffd55c','#c77dff',
+  '#5cd4ff','#ff9c5c','#8cff6c','#ff5cd4','#5cffa8',
+  '#d4ff5c','#ff5c5c'
+];
+
+fetch('data/03_aircraft_utilization.json')
+  .then(r => r.json())
+  .then(d => { try { render(d); } catch(e) { console.error('Render error:', e); } });
+
+function render(d) {
+  const top = d.topAircraft;
+  const busy = d.busiestDay;
+
+  // Hero stats
+  document.getElementById('heroStats').innerHTML = [
+    { n: d.totalUniqueAircraft.toLocaleString(), l: '架不同飛機' },
+    { n: top[0].avgLegsPerDay, l: '最高日均航段' },
+    { n: busy.legs, l: '單日最多航段' },
+    { n: top[0].type, l: '勞模機型' },
+  ].map(i => `<div class="hero-stat"><div class="hn">${i.n}</div><div class="hl">${i.l}</div></div>`).join('');
+
+  // Top insight
+  const topTypes = [...new Set(top.map(a => a.type))].slice(0, 3);
+  document.getElementById('topInsight').textContent =
+    `前 20 名飛機以 ${topTypes.join('、')} 等短程機型為主，日均航段都在 ${top[top.length-1].avgLegsPerDay} 趟以上。` +
+    `它們大多飛行於日本離島或台灣離島的短途航線。`;
+
+  // Top chart
+  try { new Chart(document.getElementById('topChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: top.map(a => `${a.reg} (${a.type})`),
+      datasets: [{
+        label: '日均航段',
+        data: top.map(a => a.avgLegsPerDay),
+        backgroundColor: top.map((_, i) => {
+          const t = i / (top.length - 1);
+          return `rgba(${Math.round(108 + t*147)}, ${Math.round(140 - t*40)}, ${Math.round(255 - t*55)}, 0.7)`;
+        }),
+        borderColor: top.map((_, i) => {
+          const t = i / (top.length - 1);
+          return `rgba(${Math.round(108 + t*147)}, ${Math.round(140 - t*40)}, ${Math.round(255 - t*55)}, 1)`;
+        }),
+        borderWidth: 1,
+        borderRadius: 3
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1a2e', titleColor: '#e0e0e8', bodyColor: '#888899',
+          borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+          titleFont: { family: "'SF Mono',monospace" }, bodyFont: { family: "'SF Mono',monospace" },
+          callbacks: {
+            afterBody: function(ctx) {
+              const a = top[ctx[0].dataIndex];
+              return [
+                `航空: ${a.airline}`,
+                `總航段: ${a.totalLegs}`,
+                `觀測天數: ${a.totalDays}`,
+                `飛行時數: ${a.totalFlightHours}h`,
+                `航線: ${a.routes.slice(0,3).join(', ')}${a.routes.length > 3 ? '...' : ''}`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888899', font: { family: "'SF Mono',monospace", size: 10 } }, title: { display: true, text: '日均航段數', color: '#555566', font: { family: "'SF Mono',monospace", size: 10 } } },
+        y: { grid: { display: false }, ticks: { color: '#e0e0e8', font: { family: "'SF Mono',monospace", size: 10 } } }
+      }
+    }
+  }); } catch(e) { console.error('Chart error:', e); }
+
+  // Busiest day
+  document.getElementById('busiestInsight').textContent =
+    `在所有觀測日中，最忙碌的單日紀錄屬於 ${busy.airline} 的 ${busy.reg}（${busy.type}），` +
+    `於 ${busy.date} 飛了 ${busy.legs} 個航段。以下是它那一天的完整行程。`;
+  document.getElementById('ganttTitle').textContent = `${busy.reg} — ${busy.date}`;
+  document.getElementById('ganttMeta').textContent = `${busy.type} · ${busy.airline} · ${busy.legs} 航段`;
+
+  // Parse times — filter out flights with missing depTime/arrTime
+  const flights = busy.flights.filter(f => f.depTime && f.arrTime);
+  const parseMin = t => { if (!t) return 0; const [h,m] = t.split(':').map(Number); return h * 60 + m; };
+  const minStart = Math.min(...flights.map(f => parseMin(f.depTime)));
+  const maxEnd = Math.max(...flights.map(f => parseMin(f.arrTime)));
+  const range = maxEnd - minStart || 1;
+  const startHour = Math.floor(minStart / 60);
+  const endHour = Math.ceil(maxEnd / 60);
+
+  // Gantt hours
+  const hoursDiv = document.getElementById('ganttHours');
+  for (let h = startHour; h <= endHour; h++) {
+    const div = document.createElement('div');
+    div.className = 'gantt-hour';
+    div.textContent = String(h).padStart(2, '0');
+    div.style.flex = '1';
+    hoursDiv.appendChild(div);
+  }
+
+  // Gantt bars
+  const timeline = document.getElementById('ganttTimeline');
+  const totalMinRange = (endHour - startHour) * 60;
+  flights.forEach((f, i) => {
+    const depM = parseMin(f.depTime) - startHour * 60;
+    const arrM = parseMin(f.arrTime) - startHour * 60;
+    const left = (depM / totalMinRange * 100).toFixed(2);
+    const width = ((arrM - depM) / totalMinRange * 100).toFixed(2);
+    const bar = document.createElement('div');
+    bar.className = 'gantt-bar';
+    bar.style.left = left + '%';
+    bar.style.width = Math.max(parseFloat(width), 1.5) + '%';
+    bar.style.background = GANTT_COLORS[i % GANTT_COLORS.length];
+    bar.textContent = f.from.slice(-2) + '→' + f.to.slice(-2);
+    bar.title = `${f.callsign}: ${f.from}→${f.to} (${f.depTime}~${f.arrTime})`;
+    timeline.appendChild(bar);
+  });
+
+  // Flight table
+  document.getElementById('flightBody').innerHTML = flights.map((f, i) => {
+    const depM = parseMin(f.depTime);
+    const arrM = parseMin(f.arrTime);
+    const dur = arrM - depM;
+    return `<tr>
+      <td style="color:var(--text-muted)">${i+1}</td>
+      <td style="color:var(--accent)">${f.callsign}</td>
+      <td>${f.from} → ${f.to}</td>
+      <td>${f.depTime}</td>
+      <td>${f.arrTime}</td>
+      <td style="color:var(--text-dim)">${dur}m</td>
+    </tr>`;
+  }).join('');
+
+  // Type analysis — combine Top 20 data with long-haul reference data
+  const typeMap = {};
+  top.forEach(a => {
+    if (!typeMap[a.type]) typeMap[a.type] = { count: 0, totalLegs: 0, totalHours: 0, airlines: new Set(), fromTop: true };
+    typeMap[a.type].count++;
+    typeMap[a.type].totalLegs += a.avgLegsPerDay;
+    typeMap[a.type].totalHours += a.totalFlightHours;
+    typeMap[a.type].airlines.add(a.airline);
+  });
+  // Add long-haul reference types for contrast (not in Top 20 because low utilization)
+  const longHaulRef = [
+    { type: 'A359', avg: 1.4, desc: 'Airbus A350-900，300 座，長程國際線', airlines: 'EVA, CAL', note: '長程代表' },
+    { type: 'B77W', avg: 1.2, desc: 'Boeing 777-300ER，340 座，洲際航線', airlines: 'EVA, CAL', note: '長程代表' },
+    { type: 'A333', avg: 1.8, desc: 'Airbus A330-300，280 座，中長程航線', airlines: 'EVA, CAL', note: '中長程代表' },
+    { type: 'B789', avg: 1.6, desc: 'Boeing 787-9，296 座，長程航線', airlines: 'EVA, SCO', note: '長程代表' },
+  ];
+  const typeDescriptions = {
+    'DH8D': '渦輪螺旋槳客機，74 座，離島短途主力',
+    'AT76': 'ATR 72-600，70 座，台灣離島航線常客',
+    'AT46': 'ATR 42-600，48 座，超短程離島航線',
+    'E170': 'Embraer 170，76 座，日本區域航線',
+    'E70L': 'Embraer 170 加長型',
+    'CRJ7': 'CRJ-700，70 座，區域噴射機',
+    'BCS1': 'A220-100，109 座',
+    'B738': 'Boeing 737-800，189 座，中短程主力',
+    'B212': 'Bell 212，直升機',
+  };
+  // Build cards: short-range from data, then long-range reference
+  const shortRangeCards = Object.entries(typeMap)
+    .sort((a,b) => b[1].totalLegs/b[1].count - a[1].totalLegs/a[1].count)
+    .map(([type, info]) => {
+      const avg = (info.totalLegs / info.count).toFixed(1);
+      const desc = typeDescriptions[type] || '區域/國際航線';
+      return `<div class="type-card">
+        <h4>${type} <span style="font-size:0.6rem;color:var(--accent);font-weight:400">短程</span></h4>
+        <div class="tc-num">${avg} 段/日</div>
+        <div class="tc-stat">
+          ${desc}<br>
+          航空公司: ${[...info.airlines].join(', ')}<br>
+          Top 20 中佔 ${info.count} 架
+        </div>
+      </div>`;
+    });
+  const longRangeCards = longHaulRef.map(r => {
+    return `<div class="type-card" style="border-color:rgba(255,108,140,0.2)">
+      <h4>${r.type} <span style="font-size:0.6rem;color:var(--accent2);font-weight:400">長程</span></h4>
+      <div class="tc-num" style="color:var(--accent2)">${r.avg} 段/日</div>
+      <div class="tc-stat">
+        ${r.desc}<br>
+        航空公司: ${r.airlines}<br>
+        ${r.note}
+      </div>
+    </div>`;
+  });
+  document.getElementById('typeGrid').innerHTML = shortRangeCards.join('') + longRangeCards.join('');
+
+  // Conclusion
+  document.getElementById('conclusionList').innerHTML = [
+    `短程螺旋槳機（AT76、DH8D）日均飛 8~12 趟，是真正的「空中公車」`,
+    `最忙碌的飛機 ${top[0].reg} 平均每天飛 ${top[0].avgLegsPerDay} 個航段，飛行時數 ${top[0].totalFlightHours} 小時`,
+    `${busy.reg} 在 ${busy.date} 創下單日 ${busy.legs} 航段的紀錄，從早上 ${flights[0].depTime} 飛到 ${flights[flights.length-1].arrTime}`,
+    `短程機每個航段僅 20~40 分鐘，地面周轉時間壓縮到極限`,
+    `離島航線的高頻次運作，確保了偏遠地區的交通可及性`,
+    `共追蹤 ${d.totalUniqueAircraft.toLocaleString()} 架不同飛機，涵蓋從 AT4 到 A380 的各種機型`,
+  ].map(t => `<li>${t}</li>`).join('');
+}
+</script>
+</body>
+</html>

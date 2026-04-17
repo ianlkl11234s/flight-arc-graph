@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>離島機場連結度 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+h3 { font-size: 15px; font-weight: 600; margin: 0 0 8px 0; color: var(--text); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Hero */
+.hero { text-align: center; padding: 48px 24px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(100,170,255,0.08) 0%, transparent 70%); pointer-events: none; }
+.hero-row { display: flex; justify-content: center; align-items: flex-end; gap: 48px; flex-wrap: wrap; position: relative; }
+.hero-item { text-align: center; }
+.hero-number { font-size: 64px; font-weight: 700; line-height: 1; }
+.hero-label { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.hero-sub { font-size: 14px; color: var(--dim); margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+/* Donut chart container */
+.donut-wrap { display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 24px; }
+.donut-chart { width: 220px; height: 220px; }
+.donut-legend { font-size: 13px; color: var(--dim); }
+.donut-legend div { margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.donut-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+/* Island cards */
+.island-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.island-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 20px; transition: border-color 0.2s, background 0.2s; }
+.island-card:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
+.island-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.island-icao { font-size: 12px; color: var(--dim); margin-bottom: 12px; }
+.island-stat { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.island-stat:last-child { border-bottom: none; }
+.island-stat .label { color: var(--dim); }
+.island-stat .value { font-weight: 600; }
+
+/* Chart */
+.chart-wrap { position: relative; width: 100%; max-height: 500px; }
+
+/* Cross routes */
+.cross-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cross-table th { text-align: left; color: var(--dim); font-weight: 500; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.cross-table td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.cross-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+.insight { background: rgba(100,170,255,0.06); border-left: 3px solid var(--accent); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.bottom-nav { margin-top: 48px; text-align: right; }
+.bottom-nav a { font-size: 14px; }
+
+.bar-color { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>離島機場連結度</h1>
+  <p class="subtitle">金門、馬祖、澎湖、綠島、蘭嶼 — 海洋彼端的航空生命線</p>
+
+  <!-- Section 1: Hero + Donut -->
+  <div class="card hero" id="hero-section">
+    <div class="hero-row">
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--accent)" id="hero-flights">—</div>
+        <div class="hero-label">離島航班總數</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--orange)" id="hero-pct">—</div>
+        <div class="hero-label">佔國內線比例</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--green)" id="hero-islands">8</div>
+        <div class="hero-label">離島機場</div>
+      </div>
+    </div>
+    <p class="hero-sub">台灣的離島航線是國內航空的絕對主力 — 超過九成的國內航班，都是飛往這些海峽與太平洋上的島嶼。</p>
+    <div class="donut-wrap">
+      <div class="donut-chart"><canvas id="donutChart"></canvas></div>
+      <div class="donut-legend" id="donutLegend"></div>
+    </div>
+  </div>
+
+  <!-- Section 2: Island cards -->
+  <div class="card">
+    <h2>各離島機場概覽</h2>
+    <div class="island-grid" id="islandGrid"></div>
+  </div>
+
+  <!-- Section 3: Connection bar chart -->
+  <div class="card">
+    <h2>各離島航線連結</h2>
+    <p style="font-size:13px; color:var(--dim); margin-bottom:16px;">每座離島機場飛往哪些本島城市？航班數量一目了然。</p>
+    <div class="chart-wrap"><canvas id="connectionChart"></canvas></div>
+    <div class="insight">馬公與金門是離島雙雄，合計佔離島航班近 85%。兩者皆以松山為最大對口，但馬公的高雄航線比例更高，反映了地理距離的影響。</div>
+  </div>
+
+  <!-- Section 4: Cross-island routes -->
+  <div class="card">
+    <h2>島際航線 — 離島之間的直飛</h2>
+    <p style="font-size:13px; color:var(--dim); margin-bottom:16px;">不經本島，離島之間是否有直接聯繫？</p>
+    <table class="cross-table" id="crossTable">
+      <thead><tr><th>航線</th><th>航班數</th><th>備註</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="insight">七美↔馬公是最繁忙的島際航線（60 班），反映了七美居民高度依賴馬公作為轉運中心。金門↔馬公僅 4 班，更像是偶發的特殊包機或轉降。</div>
+  </div>
+
+  <!-- Key Insight -->
+  <div class="card" style="border-left: 3px solid var(--orange);">
+    <h2 style="color:var(--orange);">關鍵洞察</h2>
+    <p style="font-size:14px; line-height:1.8;">
+      金門與馬公是離島中最繁忙的兩座機場，但它們的航空生態截然不同。<br><br>
+      <strong style="color:var(--text);">馬公</strong>是五家航空都搶的甜蜜航線 — 華航、長榮、華信、立榮皆有飛，競爭激烈。<br>
+      <strong style="color:var(--text);">金門</strong>同樣如此，但金門多了獨有的嘉義與臺南零星航班。<br>
+      <strong style="color:var(--text);">綠島與蘭嶼</strong>則完全是德安航空的天下 — 小型螺旋槳機獨佔，每天僅 4~6 班。<br>
+      <strong style="color:var(--text);">北竿</strong>日均 3.6 班，是台灣最孤立的有定期航班機場。<br><br>
+      離島航空不只是交通工具，更是一條條連接台灣本島與海洋前線的<span style="color:var(--accent);">生命線</span>。
+    </p>
+  </div>
+
+  <div class="bottom-nav"><a href="12_rare_aircraft.html">下一篇：罕見機型出現 &rarr;</a></div>
+</div>
+
+<script>
+const BASE = 'data/';
+const COLORS = ['#64aaff','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#f472b6','#a3e635'];
+const AIRLINE_MAP = {
+  'CAL':'華航','EVA':'長榮','UIA':'立榮','MDA':'華信','CSS':'復興','':'德安/其他'
+};
+
+fetch(BASE + '11_islands.json').then(r=>r.json()).then(data => {
+  // Hero
+  document.getElementById('hero-flights').textContent = data.summary.totalIslandFlights.toLocaleString();
+  document.getElementById('hero-pct').textContent = data.summary.pctOfDomestic;
+
+  // Sort islands by totalFlights desc
+  const islands = [...data.islands].sort((a,b) => b.totalFlights - a.totalFlights);
+
+  // Donut: top islands share
+  const donutLabels = islands.map(i => i.airport.split(' ')[1] || i.airport);
+  const donutData = islands.map(i => i.totalFlights);
+  const donutCtx = document.getElementById('donutChart').getContext('2d');
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: donutLabels,
+      datasets: [{ data: donutData, backgroundColor: COLORS, borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: {
+      cutout: '62%',
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10,10,20,0.95)',
+          titleFont: { family: "'JetBrains Mono'" },
+          bodyFont: { family: "'JetBrains Mono'", size: 12 },
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.toLocaleString()} 班 (${(ctx.parsed/data.summary.totalIslandFlights*100).toFixed(1)}%)`
+          }
+        }
+      }
+    }
+  });
+  // Donut legend
+  const legendEl = document.getElementById('donutLegend');
+  islands.forEach((isl, i) => {
+    const pct = (isl.totalFlights / data.summary.totalIslandFlights * 100).toFixed(1);
+    legendEl.innerHTML += `<div><span class="dot" style="background:${COLORS[i]}"></span>${donutLabels[i]}　${isl.totalFlights.toLocaleString()} 班 (${pct}%)</div>`;
+  });
+
+  // Island cards
+  const grid = document.getElementById('islandGrid');
+  islands.forEach((isl, i) => {
+    const validConns = isl.connections.filter(c => c.destName);
+    const topAirlines = [...new Set(isl.connections.flatMap(c => c.airlines))].filter(a => a).map(a => AIRLINE_MAP[a] || a);
+    const card = document.createElement('div');
+    card.className = 'island-card';
+    card.style.borderTopColor = COLORS[i];
+    card.style.borderTopWidth = '2px';
+    card.innerHTML = `
+      <div class="island-name" style="color:${COLORS[i]}">${isl.airport.split(' ').pop()}</div>
+      <div class="island-icao">${isl.icao} / ${isl.airport.split(' ')[0]}</div>
+      <div class="island-stat"><span class="label">總航班</span><span class="value">${isl.totalFlights.toLocaleString()}</span></div>
+      <div class="island-stat"><span class="label">日均航班</span><span class="value">${isl.avgDaily}</span></div>
+      <div class="island-stat"><span class="label">連結城市</span><span class="value">${validConns.length}</span></div>
+      <div class="island-stat"><span class="label">主力航空</span><span class="value" style="font-size:11px">${topAirlines.length ? topAirlines.join('、') : '德安'}</span></div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Horizontal bar chart — connections
+  // Build dataset: for each island, list connections
+  const topIslands = islands.filter(i => i.totalFlights > 100);
+  const allDests = [...new Set(topIslands.flatMap(i => i.connections.filter(c=>c.destName).map(c=>c.destName.split(' ').pop())))].filter(Boolean);
+
+  const datasets = topIslands.map((isl, idx) => {
+    const connMap = {};
+    isl.connections.filter(c=>c.destName).forEach(c => { connMap[c.destName.split(' ').pop()] = c.count; });
+    return {
+      label: isl.airport.split(' ').pop(),
+      data: allDests.map(d => connMap[d] || 0),
+      backgroundColor: COLORS[idx] + 'cc',
+      borderRadius: 3,
+    };
+  });
+
+  const connCtx = document.getElementById('connectionChart').getContext('2d');
+  new Chart(connCtx, {
+    type: 'bar',
+    data: { labels: allDests, datasets },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#6b7280', font: { family: "'JetBrains Mono'", size: 11 } }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#e5e7eb', font: { family: "'JetBrains Mono'", size: 12 } }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#e5e7eb', font: { family: "'JetBrains Mono'", size: 11 }, boxWidth: 12, padding: 16 }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(10,10,20,0.95)',
+          titleFont: { family: "'JetBrains Mono'" },
+          bodyFont: { family: "'JetBrains Mono'", size: 12 },
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.x} 班` }
+        }
+      }
+    }
+  });
+  document.getElementById('connectionChart').parentElement.style.height = (allDests.length * 50 + 80) + 'px';
+
+  // Cross-island table
+  const tbody = document.querySelector('#crossTable tbody');
+  data.crossIsland.forEach(r => {
+    const note = r.route.includes('七美↔馬公') ? '七美居民轉運需求'
+               : r.route.includes('金門↔馬公') ? '偶發特殊航班'
+               : r.route.includes('望安') ? '小型離島接駁'
+               : r.route.includes('南竿↔南竿') ? '訓練/測試航班'
+               : r.route.includes('北竿') ? '馬祖內部接駁'
+               : r.route.includes('七美↔七美') ? '訓練/測試航班'
+               : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.route}</td><td style="font-weight:600;color:var(--accent)">${r.count}</td><td style="color:var(--dim)">${note}</td>`;
+    tbody.appendChild(tr);
+  });
+});
+</script>
+</body>
+</html>

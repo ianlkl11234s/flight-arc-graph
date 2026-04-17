@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>罕見機型出現 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --military: #ef4444;
+  --gov: #f59e0b;
+  --charter: #8b5cf6;
+  --commercial: #10b981;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.hero { text-align: center; padding: 48px 24px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(239,68,68,0.06) 0%, transparent 70%); pointer-events: none; }
+.hero-row { display: flex; justify-content: center; align-items: flex-end; gap: 48px; flex-wrap: wrap; position: relative; }
+.hero-item { text-align: center; }
+.hero-number { font-size: 64px; font-weight: 700; line-height: 1; }
+.hero-label { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.hero-sub { font-size: 14px; color: var(--dim); margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+.donut-wrap { display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 24px; }
+.donut-chart { width: 220px; height: 220px; }
+.donut-legend { font-size: 13px; color: var(--dim); }
+.donut-legend div { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.donut-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+.cat-label { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.cat-military { background: rgba(239,68,68,0.15); color: var(--red); }
+.cat-government { background: rgba(245,158,11,0.15); color: var(--orange); }
+.cat-charter { background: rgba(139,92,246,0.15); color: var(--purple); }
+.cat-commercial { background: rgba(16,185,129,0.15); color: var(--green); }
+
+/* Flight card list */
+.type-list { display: flex; flex-direction: column; gap: 12px; }
+.type-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; gap: 16px; align-items: flex-start; transition: border-color 0.2s; }
+.type-card:hover { border-color: rgba(255,255,255,0.18); }
+.type-badge { font-size: 20px; font-weight: 700; min-width: 56px; text-align: center; padding: 4px 0; border-radius: 6px; }
+.type-info { flex: 1; }
+.type-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.type-meta { font-size: 12px; color: var(--dim); }
+.type-flights { font-size: 12px; color: var(--dim); margin-top: 6px; }
+.type-flights .flight-line { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.type-flights .flight-line:last-child { border-bottom: none; }
+
+/* Full table */
+.full-table-wrap { max-height: 500px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+.full-table-wrap::-webkit-scrollbar { width: 6px; }
+.full-table-wrap::-webkit-scrollbar-track { background: transparent; }
+.full-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.full-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.full-table th { text-align: left; color: var(--dim); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: #0f0f1a; z-index: 1; }
+.full-table td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.full-table tr:hover td { background: rgba(255,255,255,0.03); }
+.full-table .count { font-weight: 600; color: var(--accent); }
+
+.insight { background: rgba(100,170,255,0.06); border-left: 3px solid var(--accent); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.bottom-nav { margin-top: 48px; text-align: right; }
+.bottom-nav a { font-size: 14px; }
+
+.toggle-btn { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--accent); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 13px; margin-bottom: 16px; }
+.toggle-btn:hover { background: rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>罕見機型出現</h1>
+  <p class="subtitle">在數萬個航班中，有些飛機只出現了一兩次 — 它們是誰？來幹什麼的？</p>
+
+  <!-- Section 1: Hero + Category donut -->
+  <div class="card hero">
+    <div class="hero-row">
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--red)" id="hero-total">—</div>
+        <div class="hero-label">罕見航班總數</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--purple)" id="hero-types">—</div>
+        <div class="hero-label">獨特機型數</div>
+      </div>
+    </div>
+    <p class="hero-sub">從軍用偵察機到私人噴射機，從波音 Dreamlifter 到只出現一次的直升機 — 台灣天空的過客們。</p>
+    <div class="donut-wrap">
+      <div class="donut-chart"><canvas id="catDonut"></canvas></div>
+      <div class="donut-legend" id="catLegend"></div>
+    </div>
+  </div>
+
+  <!-- Section 2: Military -->
+  <div class="card" id="militarySection">
+    <h2><span style="color:var(--red);">&#9733;</span> 軍用機型</h2>
+    <p style="font-size:13px; color:var(--dim); margin-bottom:16px;">偵察、運輸、無人機 — 從呼號就能讀出任務性質。</p>
+    <div class="type-list" id="militaryList"></div>
+    <div class="insight">P-3 獵戶座海上巡邏機和 C-130 運輸機是最常出現的軍用機型。無人機（DRON）的出現記錄顯示軍方在東部海域的偵察活動。呼號如 CORAX、MOJO 等皆為美軍典型呼號系列。</div>
+  </div>
+
+  <!-- Section 3: Rare commercial -->
+  <div class="card" id="rareSection">
+    <h2><span style="color:var(--green);">&#9830;</span> 罕見商用與特殊機型</h2>
+    <p style="font-size:13px; color:var(--dim); margin-bottom:16px;">在台灣天空中難得一見的飛機們 — 每一筆都有故事。</p>
+    <div class="type-list" id="rareList"></div>
+  </div>
+
+  <!-- Section 4: Full table -->
+  <div class="card">
+    <h2>完整機型清單</h2>
+    <button class="toggle-btn" id="toggleTable">展開完整列表 &#9660;</button>
+    <div class="full-table-wrap" id="tableWrap" style="display:none;">
+      <table class="full-table">
+        <thead><tr><th>機型代碼</th><th>類別</th><th>出現次數</th><th>首次日期</th><th>呼號/航線</th></tr></thead>
+        <tbody id="fullTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Key Insight -->
+  <div class="card" style="border-left: 3px solid var(--red);">
+    <h2 style="color:var(--red);">關鍵洞察</h2>
+    <p style="font-size:14px; line-height:1.8;">
+      軍用偵察機的身影暗示著台灣海峽的地緣政治張力。<br><br>
+      <strong style="color:var(--text);">P-3 獵戶座</strong>是經典的海上巡邏/反潛機，它們的出現代表著對周邊海域的持續監控。<br>
+      <strong style="color:var(--text);">C-17 環球霸王</strong>則是美軍重型運輸機，8 架次的記錄可能與軍事物資運補有關。<br>
+      <strong style="color:var(--text);">BLCF（Boeing Dreamlifter）</strong>是全球僅 4 架的超大型貨機，專門運送 787 機身部件 — 它途經台灣桃園，是工業物流的壯觀一幕。<br><br>
+      而 <strong style="color:var(--text);">Falcon 7X</strong>（M-SUNY）從新加坡飛抵松山再折返，很可能是一趟<span style="color:var(--orange);">私人 VIP 行程</span>。<br><br>
+      這些罕見訪客，讓台灣的天空遠比日常航班所呈現的更加豐富多彩。
+    </p>
+  </div>
+
+  <div class="bottom-nav"><a href="13_daily_trend.html">下一篇：39 天航班量波動 &rarr;</a></div>
+</div>
+
+<script>
+const BASE = 'data/';
+const CAT_COLORS = { 'military': '#ef4444', 'government/VIP': '#f59e0b', 'charter/test': '#8b5cf6', 'unusual commercial': '#10b981' };
+const CAT_LABELS = { 'military': '軍用', 'government/VIP': '政府/VIP', 'charter/test': '包機/測試', 'unusual commercial': '罕見商用' };
+const CAT_CSS = { 'military': 'cat-military', 'government/VIP': 'cat-government', 'charter/test': 'cat-charter', 'unusual commercial': 'cat-commercial' };
+
+const TYPE_NAMES = {
+  'P3': 'P-3 獵戶座 海上巡邏機', 'C130': 'C-130 力士 運輸機', 'C17': 'C-17 環球霸王 運輸機',
+  'C30J': 'C-130J 超級力士', 'BE20': 'Beechcraft Super King Air 偵察型',
+  'DRON': '無人偵察機', 'B762': 'Boeing 767-200 (空自)', 'C56X': 'Citation Excel',
+  'BLCF': 'Boeing 747 Dreamlifter', 'B732': 'Boeing 737-200',
+  'FA7X': 'Dassault Falcon 7X', 'FA8X': 'Dassault Falcon 8X', 'G280': 'Gulfstream G280',
+  'B39M': 'Boeing 737 MAX 9', 'A318': 'Airbus A318', 'A306': 'Airbus A300-600',
+  'B753': 'Boeing 757-300', 'B764': 'Boeing 767-400',
+  'E195': 'Embraer E195', 'AT75': 'ATR 72-500',
+  'GA7C': 'Gulfstream G700', 'CL35': 'Bombardier Challenger 350',
+  'C25M': 'Citation CJ3+', 'ASTR': 'IAI Astra SPX',
+  'EC75': 'Airbus H175', 'B733': 'Boeing 737-300',
+  'A19N': 'Airbus A319neo',
+};
+
+function formatFlight(f) {
+  const parts = [];
+  if (f.date) parts.push(f.date);
+  if (f.callsign) parts.push(`<span style="color:var(--accent)">${f.callsign}</span>`);
+  if (f.route) parts.push(f.route);
+  if (f.reg) parts.push(`<span style="color:var(--dim)">${f.reg}</span>`);
+  return parts.join(' ');
+}
+
+function buildTypeCard(t, accentColor) {
+  const name = TYPE_NAMES[t.type] || t.type;
+  const catClass = CAT_CSS[t.category] || 'cat-commercial';
+  const flightLines = t.flights.slice(0, 4).map(f => `<div class="flight-line">${formatFlight(f)}</div>`).join('');
+  const more = t.flights.length > 4 ? `<div style="color:var(--dim);font-size:11px;margin-top:4px;">...還有 ${t.flights.length - 4} 筆記錄</div>` : '';
+  return `
+    <div class="type-card">
+      <div class="type-badge" style="background:${accentColor}15;color:${accentColor}">${t.count}</div>
+      <div class="type-info">
+        <div class="type-name">${name} <span class="cat-label ${catClass}">${CAT_LABELS[t.category]}</span></div>
+        <div class="type-meta">ICAO 代碼: ${t.type}　|　${t.count} 架次</div>
+        <div class="type-flights">${flightLines}${more}</div>
+      </div>
+    </div>
+  `;
+}
+
+fetch(BASE + '12_rare_aircraft.json').then(r=>r.json()).then(data => {
+  // Hero
+  document.getElementById('hero-total').textContent = data.summary.totalRareFlights;
+  document.getElementById('hero-types').textContent = data.rareTypes.length;
+
+  // Category donut
+  const cats = data.summary.categories;
+  const catColors = cats.map(c => CAT_COLORS[c.category]);
+  const donutCtx = document.getElementById('catDonut').getContext('2d');
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: cats.map(c => CAT_LABELS[c.category]),
+      datasets: [{ data: cats.map(c => c.count), backgroundColor: catColors, borderWidth: 0, hoverOffset: 8 }]
+    },
+    options: {
+      cutout: '62%', responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10,10,20,0.95)',
+          titleFont: { family: "'JetBrains Mono'" },
+          bodyFont: { family: "'JetBrains Mono'", size: 12 },
+          callbacks: { label: ctx => ` ${ctx.parsed} 架次 (${(ctx.parsed/data.summary.totalRareFlights*100).toFixed(1)}%)` }
+        }
+      }
+    }
+  });
+  const legendEl = document.getElementById('catLegend');
+  cats.forEach((c, i) => {
+    const pct = (c.count / data.summary.totalRareFlights * 100).toFixed(1);
+    legendEl.innerHTML += `<div><span class="dot" style="background:${catColors[i]}"></span>${CAT_LABELS[c.category]}　${c.count} 架次 (${pct}%)</div>`;
+  });
+
+  // Military list
+  const military = data.rareTypes.filter(t => t.category === 'military').sort((a,b) => b.count - a.count);
+  document.getElementById('militaryList').innerHTML = military.map(t => buildTypeCard(t, '#ef4444')).join('');
+
+  // Rare commercial + charter + gov (pick interesting ones)
+  const interesting = data.rareTypes
+    .filter(t => t.category !== 'military')
+    .filter(t => {
+      // Show ones with routes or known names
+      return t.flights.some(f => f.route || f.callsign) || TYPE_NAMES[t.type];
+    })
+    .sort((a,b) => a.count - b.count)
+    .slice(0, 15);
+  document.getElementById('rareList').innerHTML = interesting.map(t => {
+    const color = CAT_COLORS[t.category];
+    return buildTypeCard(t, color);
+  }).join('');
+
+  // Full table
+  const tbody = document.getElementById('fullTableBody');
+  const allTypes = [...data.rareTypes].sort((a,b) => a.count - b.count);
+  allTypes.forEach(t => {
+    const catClass = CAT_CSS[t.category];
+    const firstFlight = t.flights[0] || {};
+    const routeInfo = [firstFlight.callsign, firstFlight.route].filter(Boolean).join(' ') || '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-weight:600">${t.type}</td>
+      <td><span class="cat-label ${catClass}">${CAT_LABELS[t.category]}</span></td>
+      <td class="count">${t.count}</td>
+      <td>${firstFlight.date || '—'}</td>
+      <td style="font-size:11px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${routeInfo}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Toggle table
+  const toggleBtn = document.getElementById('toggleTable');
+  const tableWrap = document.getElementById('tableWrap');
+  toggleBtn.addEventListener('click', () => {
+    const isHidden = tableWrap.style.display === 'none';
+    tableWrap.style.display = isHidden ? 'block' : 'none';
+    toggleBtn.innerHTML = isHidden ? '收合列表 &#9650;' : '展開完整列表 &#9660;';
+  });
+});
+</script>
+</body>
+</html>

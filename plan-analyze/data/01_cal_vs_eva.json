@@ -1,0 +1,3238 @@
+{
+  "dateRange": "2026-02-17 ~ 2026-03-28",
+  "numDays": 40,
+  "calRoutes": [
+    {
+      "route": "TPE 桃園→HKG 香港",
+      "route_icao": "RCTP-VHHH",
+      "dest": "HKG 香港",
+      "dest_icao": "VHHH",
+      "count": 289,
+      "avgPerDay": 7.22
+    },
+    {
+      "route": "TPE 桃園→NRT 成田",
+      "route_icao": "RCTP-RJAA",
+      "dest": "NRT 成田",
+      "dest_icao": "RJAA",
+      "count": 162,
+      "avgPerDay": 4.05
+    },
+    {
+      "route": "TPE 桃園→BKK 曼谷",
+      "route_icao": "RCTP-VTBS",
+      "dest": "BKK 曼谷",
+      "dest_icao": "VTBS",
+      "count": 154,
+      "avgPerDay": 3.85
+    },
+    {
+      "route": "TPE 桃園→KIX 關西",
+      "route_icao": "RCTP-RJBB",
+      "dest": "KIX 關西",
+      "dest_icao": "RJBB",
+      "count": 116,
+      "avgPerDay": 2.9
+    },
+    {
+      "route": "TPE 桃園→SIN 新加坡",
+      "route_icao": "RCTP-WSSS",
+      "dest": "SIN 新加坡",
+      "dest_icao": "WSSS",
+      "count": 113,
+      "avgPerDay": 2.83
+    },
+    {
+      "route": "TPE 桃園→NGO 中部",
+      "route_icao": "RCTP-RJGG",
+      "dest": "NGO 中部",
+      "dest_icao": "RJGG",
+      "count": 96,
+      "avgPerDay": 2.4
+    },
+    {
+      "route": "TPE 桃園→MNL 馬尼拉",
+      "route_icao": "RCTP-RPLL",
+      "dest": "MNL 馬尼拉",
+      "dest_icao": "RPLL",
+      "count": 95,
+      "avgPerDay": 2.38
+    },
+    {
+      "route": "TPE 桃園→LAX 洛杉磯",
+      "route_icao": "RCTP-KLAX",
+      "dest": "LAX 洛杉磯",
+      "dest_icao": "KLAX",
+      "count": 94,
+      "avgPerDay": 2.35
+    },
+    {
+      "route": "TPE 桃園→PVG 浦東",
+      "route_icao": "RCTP-ZSPD",
+      "dest": "PVG 浦東",
+      "dest_icao": "ZSPD",
+      "count": 90,
+      "avgPerDay": 2.25
+    },
+    {
+      "route": "TPE 桃園→ANC 安克拉治",
+      "route_icao": "RCTP-PANC",
+      "dest": "ANC 安克拉治",
+      "dest_icao": "PANC",
+      "count": 87,
+      "avgPerDay": 2.17
+    },
+    {
+      "route": "TPE 桃園→FUK 福岡",
+      "route_icao": "RCTP-RJFF",
+      "dest": "FUK 福岡",
+      "dest_icao": "RJFF",
+      "count": 77,
+      "avgPerDay": 1.93
+    },
+    {
+      "route": "TSA 松山→HND 羽田",
+      "route_icao": "RCSS-RJTT",
+      "dest": "HND 羽田",
+      "dest_icao": "RJTT",
+      "count": 77,
+      "avgPerDay": 1.93
+    },
+    {
+      "route": "TPE 桃園→HAN 河內",
+      "route_icao": "RCTP-VVNB",
+      "dest": "HAN 河內",
+      "dest_icao": "VVNB",
+      "count": 74,
+      "avgPerDay": 1.85
+    },
+    {
+      "route": "TPE 桃園→OKA 那霸",
+      "route_icao": "RCTP-ROAH",
+      "dest": "OKA 那霸",
+      "dest_icao": "ROAH",
+      "count": 73,
+      "avgPerDay": 1.82
+    },
+    {
+      "route": "TPE 桃園→SGN 胡志明",
+      "route_icao": "RCTP-VVTS",
+      "dest": "SGN 胡志明",
+      "dest_icao": "VVTS",
+      "count": 71,
+      "avgPerDay": 1.77
+    },
+    {
+      "route": "KHH 高雄→NRT 成田",
+      "route_icao": "RCKH-RJAA",
+      "dest": "NRT 成田",
+      "dest_icao": "RJAA",
+      "count": 70,
+      "avgPerDay": 1.75
+    },
+    {
+      "route": "TPE 桃園→PUS 釜山",
+      "route_icao": "RCTP-RKPK",
+      "dest": "PUS 釜山",
+      "dest_icao": "RKPK",
+      "count": 66,
+      "avgPerDay": 1.65
+    },
+    {
+      "route": "TPE 桃園→ICN 仁川",
+      "route_icao": "RCTP-RKSI",
+      "dest": "ICN 仁川",
+      "dest_icao": "RKSI",
+      "count": 65,
+      "avgPerDay": 1.62
+    },
+    {
+      "route": "TPE 桃園→CGK 雅加達",
+      "route_icao": "RCTP-WIII",
+      "dest": "CGK 雅加達",
+      "dest_icao": "WIII",
+      "count": 62,
+      "avgPerDay": 1.55
+    },
+    {
+      "route": "KNH 金門→TSA 松山",
+      "route_icao": "RCBS-RCSS",
+      "dest": "TSA 松山",
+      "dest_icao": "RCSS",
+      "count": 61,
+      "avgPerDay": 1.52
+    },
+    {
+      "route": "TSA 松山→KNH 金門",
+      "route_icao": "RCSS-RCBS",
+      "dest": "KNH 金門",
+      "dest_icao": "RCBS",
+      "count": 60,
+      "avgPerDay": 1.5
+    },
+    {
+      "route": "KHH 高雄→HKG 香港",
+      "route_icao": "RCKH-VHHH",
+      "dest": "HKG 香港",
+      "dest_icao": "VHHH",
+      "count": 59,
+      "avgPerDay": 1.48
+    },
+    {
+      "route": "TPE 桃園→WMKP",
+      "route_icao": "RCTP-WMKP",
+      "dest": "WMKP",
+      "dest_icao": "WMKP",
+      "count": 57,
+      "avgPerDay": 1.43
+    },
+    {
+      "route": "TPE 桃園→SFO 舊金山",
+      "route_icao": "RCTP-KSFO",
+      "dest": "SFO 舊金山",
+      "dest_icao": "KSFO",
+      "count": 56,
+      "avgPerDay": 1.4
+    },
+    {
+      "route": "KHH 高雄→KIX 關西",
+      "route_icao": "RCKH-RJBB",
+      "dest": "KIX 關西",
+      "dest_icao": "RJBB",
+      "count": 54,
+      "avgPerDay": 1.35
+    },
+    {
+      "route": "TPE 桃園→FRA 法蘭克福",
+      "route_icao": "RCTP-EDDF",
+      "dest": "FRA 法蘭克福",
+      "dest_icao": "EDDF",
+      "count": 47,
+      "avgPerDay": 1.18
+    },
+    {
+      "route": "TPE 桃園→CAN 廣州",
+      "route_icao": "RCTP-ZGGG",
+      "dest": "CAN 廣州",
+      "dest_icao": "ZGGG",
+      "count": 43,
+      "avgPerDay": 1.07
+    },
+    {
+      "route": "TPE 桃園→KUL 吉隆坡",
+      "route_icao": "RCTP-WMKK",
+      "dest": "KUL 吉隆坡",
+      "dest_icao": "WMKK",
+      "count": 40,
+      "avgPerDay": 1.0
+    },
+    {
+      "route": "TPE 桃園→CTS 新千歲",
+      "route_icao": "RCTP-RJCC",
+      "dest": "CTS 新千歲",
+      "dest_icao": "RJCC",
+      "count": 39,
+      "avgPerDay": 0.97
+    },
+    {
+      "route": "TPE 桃園→SZX 深圳",
+      "route_icao": "RCTP-ZGSZ",
+      "dest": "SZX 深圳",
+      "dest_icao": "ZGSZ",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "TPE 桃園→XMN 廈門",
+      "route_icao": "RCTP-ZSAM",
+      "dest": "XMN 廈門",
+      "dest_icao": "ZSAM",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "RMQ 臺中→SGN 胡志明",
+      "route_icao": "RCMQ-VVTS",
+      "dest": "SGN 胡志明",
+      "dest_icao": "VVTS",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "RMQ 臺中→KNH 金門",
+      "route_icao": "RCMQ-RCBS",
+      "dest": "KNH 金門",
+      "dest_icao": "RCBS",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "TPE 桃園→KONT",
+      "route_icao": "RCTP-KONT",
+      "dest": "KONT",
+      "dest_icao": "KONT",
+      "count": 37,
+      "avgPerDay": 0.93
+    },
+    {
+      "route": "TPE 桃園→CYVR",
+      "route_icao": "RCTP-CYVR",
+      "dest": "CYVR",
+      "dest_icao": "CYVR",
+      "count": 37,
+      "avgPerDay": 0.93
+    },
+    {
+      "route": "KHH 高雄→ICN 仁川",
+      "route_icao": "RCKH-RKSI",
+      "dest": "ICN 仁川",
+      "dest_icao": "RKSI",
+      "count": 37,
+      "avgPerDay": 0.93
+    },
+    {
+      "route": "KNH 金門→RMQ 臺中",
+      "route_icao": "RCBS-RCMQ",
+      "dest": "RMQ 臺中",
+      "dest_icao": "RCMQ",
+      "count": 37,
+      "avgPerDay": 0.93
+    },
+    {
+      "route": "TPE 桃園→DPS 峇里島",
+      "route_icao": "RCTP-WADD",
+      "dest": "DPS 峇里島",
+      "dest_icao": "WADD",
+      "count": 35,
+      "avgPerDay": 0.88
+    },
+    {
+      "route": "TPE 桃園→TAK 高松",
+      "route_icao": "RCTP-RJOT",
+      "dest": "TAK 高松",
+      "dest_icao": "RJOT",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "TPE 桃園→VVDN",
+      "route_icao": "RCTP-VVDN",
+      "dest": "VVDN",
+      "dest_icao": "VVDN",
+      "count": 33,
+      "avgPerDay": 0.82
+    },
+    {
+      "route": "TPE 桃園→PEK 北京首都",
+      "route_icao": "RCTP-ZBAA",
+      "dest": "PEK 北京首都",
+      "dest_icao": "ZBAA",
+      "count": 33,
+      "avgPerDay": 0.82
+    },
+    {
+      "route": "TSA 松山→SHA 虹橋",
+      "route_icao": "RCSS-ZSSS",
+      "dest": "SHA 虹橋",
+      "dest_icao": "ZSSS",
+      "count": 33,
+      "avgPerDay": 0.82
+    },
+    {
+      "route": "KHH 高雄→OKA 那霸",
+      "route_icao": "RCKH-ROAH",
+      "dest": "OKA 那霸",
+      "dest_icao": "ROAH",
+      "count": 33,
+      "avgPerDay": 0.82
+    },
+    {
+      "route": "TPE 桃園→VTCC",
+      "route_icao": "RCTP-VTCC",
+      "dest": "VTCC",
+      "dest_icao": "VTCC",
+      "count": 33,
+      "avgPerDay": 0.82
+    },
+    {
+      "route": "TPE 桃園→BNE 布里斯班",
+      "route_icao": "RCTP-YBBN",
+      "dest": "BNE 布里斯班",
+      "dest_icao": "YBBN",
+      "count": 27,
+      "avgPerDay": 0.68
+    },
+    {
+      "route": "TPE 桃園→MEL 墨爾本",
+      "route_icao": "RCTP-YMML",
+      "dest": "MEL 墨爾本",
+      "dest_icao": "YMML",
+      "count": 26,
+      "avgPerDay": 0.65
+    },
+    {
+      "route": "TPE 桃園→HIJ 廣島",
+      "route_icao": "RCTP-RJOA",
+      "dest": "HIJ 廣島",
+      "dest_icao": "RJOA",
+      "count": 26,
+      "avgPerDay": 0.65
+    },
+    {
+      "route": "TPE 桃園→SEA 西雅圖",
+      "route_icao": "RCTP-KSEA",
+      "dest": "SEA 西雅圖",
+      "dest_icao": "KSEA",
+      "count": 25,
+      "avgPerDay": 0.62
+    },
+    {
+      "route": "TPE 桃園→SYD 雪梨",
+      "route_icao": "RCTP-YSSY",
+      "dest": "SYD 雪梨",
+      "dest_icao": "YSSY",
+      "count": 24,
+      "avgPerDay": 0.6
+    },
+    {
+      "route": "TPE 桃園→VDTI",
+      "route_icao": "RCTP-VDTI",
+      "dest": "VDTI",
+      "dest_icao": "VDTI",
+      "count": 24,
+      "avgPerDay": 0.6
+    },
+    {
+      "route": "KHH 高雄→PVG 浦東",
+      "route_icao": "RCKH-ZSPD",
+      "dest": "PVG 浦東",
+      "dest_icao": "ZSPD",
+      "count": 24,
+      "avgPerDay": 0.6
+    },
+    {
+      "route": "TPE 桃園→AMS 阿姆斯特丹",
+      "route_icao": "RCTP-EHAM",
+      "dest": "AMS 阿姆斯特丹",
+      "dest_icao": "EHAM",
+      "count": 23,
+      "avgPerDay": 0.57
+    },
+    {
+      "route": "TPE 桃園→LHR 倫敦",
+      "route_icao": "RCTP-EGLL",
+      "dest": "LHR 倫敦",
+      "dest_icao": "EGLL",
+      "count": 23,
+      "avgPerDay": 0.57
+    },
+    {
+      "route": "TPE 桃園→VIE 維也納",
+      "route_icao": "RCTP-LOWW",
+      "dest": "VIE 維也納",
+      "dest_icao": "LOWW",
+      "count": 23,
+      "avgPerDay": 0.57
+    },
+    {
+      "route": "TPE 桃園→CEB 宿霧",
+      "route_icao": "RCTP-RPVM",
+      "dest": "CEB 宿霧",
+      "dest_icao": "RPVM",
+      "count": 22,
+      "avgPerDay": 0.55
+    },
+    {
+      "route": "TPE 桃園→PTRO",
+      "route_icao": "RCTP-PTRO",
+      "dest": "PTRO",
+      "dest_icao": "PTRO",
+      "count": 21,
+      "avgPerDay": 0.53
+    },
+    {
+      "route": "TPE 桃園→KMI 熊本",
+      "route_icao": "RCTP-RJFT",
+      "dest": "KMI 熊本",
+      "dest_icao": "RJFT",
+      "count": 21,
+      "avgPerDay": 0.53
+    },
+    {
+      "route": "KHH 高雄→KMI 熊本",
+      "route_icao": "RCKH-RJFT",
+      "dest": "KMI 熊本",
+      "dest_icao": "RJFT",
+      "count": 20,
+      "avgPerDay": 0.5
+    },
+    {
+      "route": "TPE 桃園→JFK 紐約",
+      "route_icao": "RCTP-KJFK",
+      "dest": "JFK 紐約",
+      "dest_icao": "KJFK",
+      "count": 19,
+      "avgPerDay": 0.47
+    },
+    {
+      "route": "TPE 桃園→DEL 新德里",
+      "route_icao": "RCTP-VIDP",
+      "dest": "DEL 新德里",
+      "dest_icao": "VIDP",
+      "count": 18,
+      "avgPerDay": 0.45
+    },
+    {
+      "route": "KHH 高雄→BKK 曼谷",
+      "route_icao": "RCKH-VTBS",
+      "dest": "BKK 曼谷",
+      "dest_icao": "VTBS",
+      "count": 18,
+      "avgPerDay": 0.45
+    },
+    {
+      "route": "TPE 桃園→KPHX",
+      "route_icao": "RCTP-KPHX",
+      "dest": "KPHX",
+      "dest_icao": "KPHX",
+      "count": 17,
+      "avgPerDay": 0.42
+    },
+    {
+      "route": "TSA 松山→FOC 福州",
+      "route_icao": "RCSS-ZSFZ",
+      "dest": "FOC 福州",
+      "dest_icao": "ZSFZ",
+      "count": 17,
+      "avgPerDay": 0.42
+    },
+    {
+      "route": "KHH 高雄→FUK 福岡",
+      "route_icao": "RCKH-RJFF",
+      "dest": "FUK 福岡",
+      "dest_icao": "RJFF",
+      "count": 17,
+      "avgPerDay": 0.42
+    },
+    {
+      "route": "TPE 桃園→KOJ 鹿兒島",
+      "route_icao": "RCTP-RJFK",
+      "dest": "KOJ 鹿兒島",
+      "dest_icao": "RJFK",
+      "count": 15,
+      "avgPerDay": 0.38
+    },
+    {
+      "route": "TSA 松山→TPE 桃園",
+      "route_icao": "RCSS-RCTP",
+      "dest": "TPE 桃園",
+      "dest_icao": "RCTP",
+      "count": 15,
+      "avgPerDay": 0.38
+    },
+    {
+      "route": "KHH 高雄→XMN 廈門",
+      "route_icao": "RCKH-ZSAM",
+      "dest": "XMN 廈門",
+      "dest_icao": "ZSAM",
+      "count": 15,
+      "avgPerDay": 0.38
+    },
+    {
+      "route": "TSA 松山→GMP 金浦",
+      "route_icao": "RCSS-RKSS",
+      "dest": "GMP 金浦",
+      "dest_icao": "RKSS",
+      "count": 14,
+      "avgPerDay": 0.35
+    },
+    {
+      "route": "KHH 高雄→TPE 桃園",
+      "route_icao": "RCKH-RCTP",
+      "dest": "TPE 桃園",
+      "dest_icao": "RCTP",
+      "count": 13,
+      "avgPerDay": 0.33
+    },
+    {
+      "route": "TPE 桃園→TSA 松山",
+      "route_icao": "RCTP-RCSS",
+      "dest": "TSA 松山",
+      "dest_icao": "RCSS",
+      "count": 12,
+      "avgPerDay": 0.3
+    },
+    {
+      "route": "TSA 松山→ZHHH",
+      "route_icao": "RCSS-ZHHH",
+      "dest": "ZHHH",
+      "dest_icao": "ZHHH",
+      "count": 12,
+      "avgPerDay": 0.3
+    },
+    {
+      "route": "TPE 桃園→FCO 羅馬",
+      "route_icao": "RCTP-LIRF",
+      "dest": "FCO 羅馬",
+      "dest_icao": "LIRF",
+      "count": 11,
+      "avgPerDay": 0.28
+    },
+    {
+      "route": "TSA 松山→MZG 馬公",
+      "route_icao": "RCSS-RCQC",
+      "dest": "MZG 馬公",
+      "dest_icao": "RCQC",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "MZG 馬公→TSA 松山",
+      "route_icao": "RCQC-RCSS",
+      "dest": "TSA 松山",
+      "dest_icao": "RCSS",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "RMQ 臺中→MZG 馬公",
+      "route_icao": "RCMQ-RCQC",
+      "dest": "MZG 馬公",
+      "dest_icao": "RCQC",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "MZG 馬公→RMQ 臺中",
+      "route_icao": "RCQC-RCMQ",
+      "dest": "RMQ 臺中",
+      "dest_icao": "RCMQ",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "KHH 高雄→SZX 深圳",
+      "route_icao": "RCKH-ZGSZ",
+      "dest": "SZX 深圳",
+      "dest_icao": "ZGSZ",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "TPE 桃園→PRG 布拉格",
+      "route_icao": "RCTP-LKPR",
+      "dest": "PRG 布拉格",
+      "dest_icao": "LKPR",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "TPE 桃園→CKG 重慶",
+      "route_icao": "RCTP-ZUCK",
+      "dest": "CKG 重慶",
+      "dest_icao": "ZUCK",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "TPE 桃園→VABB",
+      "route_icao": "RCTP-VABB",
+      "dest": "VABB",
+      "dest_icao": "VABB",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "TPE 桃園→TPE 桃園",
+      "route_icao": "RCTP-RCTP",
+      "dest": "TPE 桃園",
+      "dest_icao": "RCTP",
+      "count": 9,
+      "avgPerDay": 0.23
+    },
+    {
+      "route": "TPE 桃園→KHH 高雄",
+      "route_icao": "RCTP-RCKH",
+      "dest": "KHH 高雄",
+      "dest_icao": "RCKH",
+      "count": 8,
+      "avgPerDay": 0.2
+    },
+    {
+      "route": "TPE 桃園→ZUTF",
+      "route_icao": "RCTP-ZUTF",
+      "dest": "ZUTF",
+      "dest_icao": "ZUTF",
+      "count": 8,
+      "avgPerDay": 0.2
+    },
+    {
+      "route": "KHH 高雄→CKG 重慶",
+      "route_icao": "RCKH-ZUCK",
+      "dest": "CKG 重慶",
+      "dest_icao": "ZUCK",
+      "count": 6,
+      "avgPerDay": 0.15
+    },
+    {
+      "route": "TPE 桃園→RMQ 臺中",
+      "route_icao": "RCTP-RCMQ",
+      "dest": "RMQ 臺中",
+      "dest_icao": "RCMQ",
+      "count": 5,
+      "avgPerDay": 0.12
+    },
+    {
+      "route": "KHH 高雄→MZG 馬公",
+      "route_icao": "RCKH-RCQC",
+      "dest": "MZG 馬公",
+      "dest_icao": "RCQC",
+      "count": 5,
+      "avgPerDay": 0.12
+    },
+    {
+      "route": "TPE 桃園→OMDW",
+      "route_icao": "RCTP-OMDW",
+      "dest": "OMDW",
+      "dest_icao": "OMDW",
+      "count": 4,
+      "avgPerDay": 0.1
+    },
+    {
+      "route": "MZG 馬公→KHH 高雄",
+      "route_icao": "RCQC-RCKH",
+      "dest": "KHH 高雄",
+      "dest_icao": "RCKH",
+      "count": 4,
+      "avgPerDay": 0.1
+    },
+    {
+      "route": "RMQ 臺中→TPE 桃園",
+      "route_icao": "RCMQ-RCTP",
+      "dest": "TPE 桃園",
+      "dest_icao": "RCTP",
+      "count": 4,
+      "avgPerDay": 0.1
+    },
+    {
+      "route": "TPE 桃園→RJNT",
+      "route_icao": "RCTP-RJNT",
+      "dest": "RJNT",
+      "dest_icao": "RJNT",
+      "count": 4,
+      "avgPerDay": 0.1
+    },
+    {
+      "route": "TPE 桃園→RGN 仰光",
+      "route_icao": "RCTP-VYYY",
+      "dest": "RGN 仰光",
+      "dest_icao": "VYYY",
+      "count": 4,
+      "avgPerDay": 0.1
+    },
+    {
+      "route": "TPE 桃園→MMY 宮古",
+      "route_icao": "RCTP-RJFM",
+      "dest": "MMY 宮古",
+      "dest_icao": "RJFM",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "TSA 松山→PIF 屏東",
+      "route_icao": "RCSS-RCDC",
+      "dest": "PIF 屏東",
+      "dest_icao": "RCDC",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "KHH 高雄→KHH 高雄",
+      "route_icao": "RCKH-RCKH",
+      "dest": "KHH 高雄",
+      "dest_icao": "RCKH",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "KHH 高雄→SIN 新加坡",
+      "route_icao": "RCKH-WSSS",
+      "dest": "SIN 新加坡",
+      "dest_icao": "WSSS",
+      "count": 2,
+      "avgPerDay": 0.05
+    },
+    {
+      "route": "TPE 桃園→ISG 石垣",
+      "route_icao": "RCTP-ROIG",
+      "dest": "ISG 石垣",
+      "dest_icao": "ROIG",
+      "count": 1,
+      "avgPerDay": 0.03
+    },
+    {
+      "route": "KHH 高雄→PIF 屏東",
+      "route_icao": "RCKH-RCDC",
+      "dest": "PIF 屏東",
+      "dest_icao": "RCDC",
+      "count": 1,
+      "avgPerDay": 0.03
+    },
+    {
+      "route": "KHH 高雄→MNL 馬尼拉",
+      "route_icao": "RCKH-RPLL",
+      "dest": "MNL 馬尼拉",
+      "dest_icao": "RPLL",
+      "count": 1,
+      "avgPerDay": 0.03
+    },
+    {
+      "route": "RMQ 臺中→RMQ 臺中",
+      "route_icao": "RCMQ-RCMQ",
+      "dest": "RMQ 臺中",
+      "dest_icao": "RCMQ",
+      "count": 1,
+      "avgPerDay": 0.03
+    }
+  ],
+  "evaRoutes": [
+    {
+      "route": "TPE 桃園→HKG 香港",
+      "route_icao": "RCTP-VHHH",
+      "dest": "HKG 香港",
+      "dest_icao": "VHHH",
+      "count": 263,
+      "avgPerDay": 6.58
+    },
+    {
+      "route": "TSA 松山→KNH 金門",
+      "route_icao": "RCSS-RCBS",
+      "dest": "KNH 金門",
+      "dest_icao": "RCBS",
+      "count": 173,
+      "avgPerDay": 4.33
+    },
+    {
+      "route": "TPE 桃園→BKK 曼谷",
+      "route_icao": "RCTP-VTBS",
+      "dest": "BKK 曼谷",
+      "dest_icao": "VTBS",
+      "count": 171,
+      "avgPerDay": 4.28
+    },
+    {
+      "route": "KNH 金門→TSA 松山",
+      "route_icao": "RCBS-RCSS",
+      "dest": "TSA 松山",
+      "dest_icao": "RCSS",
+      "count": 166,
+      "avgPerDay": 4.15
+    },
+    {
+      "route": "TPE 桃園→LAX 洛杉磯",
+      "route_icao": "RCTP-KLAX",
+      "dest": "LAX 洛杉磯",
+      "dest_icao": "KLAX",
+      "count": 127,
+      "avgPerDay": 3.17
+    },
+    {
+      "route": "TPE 桃園→KIX 關西",
+      "route_icao": "RCTP-RJBB",
+      "dest": "KIX 關西",
+      "dest_icao": "RJBB",
+      "count": 109,
+      "avgPerDay": 2.73
+    },
+    {
+      "route": "TPE 桃園→SGN 胡志明",
+      "route_icao": "RCTP-VVTS",
+      "dest": "SGN 胡志明",
+      "dest_icao": "VVTS",
+      "count": 108,
+      "avgPerDay": 2.7
+    },
+    {
+      "route": "TPE 桃園→MNL 馬尼拉",
+      "route_icao": "RCTP-RPLL",
+      "dest": "MNL 馬尼拉",
+      "dest_icao": "RPLL",
+      "count": 105,
+      "avgPerDay": 2.62
+    },
+    {
+      "route": "TPE 桃園→NRT 成田",
+      "route_icao": "RCTP-RJAA",
+      "dest": "NRT 成田",
+      "dest_icao": "RJAA",
+      "count": 102,
+      "avgPerDay": 2.55
+    },
+    {
+      "route": "TPE 桃園→SFO 舊金山",
+      "route_icao": "RCTP-KSFO",
+      "dest": "SFO 舊金山",
+      "dest_icao": "KSFO",
+      "count": 101,
+      "avgPerDay": 2.52
+    },
+    {
+      "route": "TPE 桃園→ANC 安克拉治",
+      "route_icao": "RCTP-PANC",
+      "dest": "ANC 安克拉治",
+      "dest_icao": "PANC",
+      "count": 100,
+      "avgPerDay": 2.5
+    },
+    {
+      "route": "TPE 桃園→PVG 浦東",
+      "route_icao": "RCTP-ZSPD",
+      "dest": "PVG 浦東",
+      "dest_icao": "ZSPD",
+      "count": 98,
+      "avgPerDay": 2.45
+    },
+    {
+      "route": "TPE 桃園→SIN 新加坡",
+      "route_icao": "RCTP-WSSS",
+      "dest": "SIN 新加坡",
+      "dest_icao": "WSSS",
+      "count": 93,
+      "avgPerDay": 2.33
+    },
+    {
+      "route": "TPE 桃園→ICN 仁川",
+      "route_icao": "RCTP-RKSI",
+      "dest": "ICN 仁川",
+      "dest_icao": "RKSI",
+      "count": 91,
+      "avgPerDay": 2.27
+    },
+    {
+      "route": "TPE 桃園→FUK 福岡",
+      "route_icao": "RCTP-RJFF",
+      "dest": "FUK 福岡",
+      "dest_icao": "RJFF",
+      "count": 83,
+      "avgPerDay": 2.08
+    },
+    {
+      "route": "TSA 松山→HND 羽田",
+      "route_icao": "RCSS-RJTT",
+      "dest": "HND 羽田",
+      "dest_icao": "RJTT",
+      "count": 76,
+      "avgPerDay": 1.9
+    },
+    {
+      "route": "KHH 高雄→HKG 香港",
+      "route_icao": "RCKH-VHHH",
+      "dest": "HKG 香港",
+      "dest_icao": "VHHH",
+      "count": 76,
+      "avgPerDay": 1.9
+    },
+    {
+      "route": "TPE 桃園→HAN 河內",
+      "route_icao": "RCTP-VVNB",
+      "dest": "HAN 河內",
+      "dest_icao": "VVNB",
+      "count": 75,
+      "avgPerDay": 1.88
+    },
+    {
+      "route": "TPE 桃園→CTS 新千歲",
+      "route_icao": "RCTP-RJCC",
+      "dest": "CTS 新千歲",
+      "dest_icao": "RJCC",
+      "count": 72,
+      "avgPerDay": 1.8
+    },
+    {
+      "route": "TPE 桃園→MFM 澳門",
+      "route_icao": "RCTP-VMMC",
+      "dest": "MFM 澳門",
+      "dest_icao": "VMMC",
+      "count": 69,
+      "avgPerDay": 1.73
+    },
+    {
+      "route": "TPE 桃園→OKA 那霸",
+      "route_icao": "RCTP-ROAH",
+      "dest": "OKA 那霸",
+      "dest_icao": "ROAH",
+      "count": 67,
+      "avgPerDay": 1.68
+    },
+    {
+      "route": "KHH 高雄→KIX 關西",
+      "route_icao": "RCKH-RJBB",
+      "dest": "KIX 關西",
+      "dest_icao": "RJBB",
+      "count": 58,
+      "avgPerDay": 1.45
+    },
+    {
+      "route": "TPE 桃園→SEA 西雅圖",
+      "route_icao": "RCTP-KSEA",
+      "dest": "SEA 西雅圖",
+      "dest_icao": "KSEA",
+      "count": 54,
+      "avgPerDay": 1.35
+    },
+    {
+      "route": "TPE 桃園→PUS 釜山",
+      "route_icao": "RCTP-RKPK",
+      "dest": "PUS 釜山",
+      "dest_icao": "RKPK",
+      "count": 49,
+      "avgPerDay": 1.23
+    },
+    {
+      "route": "TPE 桃園→VVDN",
+      "route_icao": "RCTP-VVDN",
+      "dest": "VVDN",
+      "dest_icao": "VVDN",
+      "count": 46,
+      "avgPerDay": 1.15
+    },
+    {
+      "route": "TPE 桃園→CDG 巴黎",
+      "route_icao": "RCTP-LFPG",
+      "dest": "CDG 巴黎",
+      "dest_icao": "LFPG",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "TPE 桃園→KMQ 小松",
+      "route_icao": "RCTP-RJNK",
+      "dest": "KMQ 小松",
+      "dest_icao": "RJNK",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "KHH 高雄→ICN 仁川",
+      "route_icao": "RCKH-RKSI",
+      "dest": "ICN 仁川",
+      "dest_icao": "RKSI",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "KHH 高雄→MFM 澳門",
+      "route_icao": "RCKH-VMMC",
+      "dest": "MFM 澳門",
+      "dest_icao": "VMMC",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "TPE 桃園→KUL 吉隆坡",
+      "route_icao": "RCTP-WMKK",
+      "dest": "KUL 吉隆坡",
+      "dest_icao": "WMKK",
+      "count": 37,
+      "avgPerDay": 0.93
+    },
+    {
+      "route": "TPE 桃園→LIMC",
+      "route_icao": "RCTP-LIMC",
+      "dest": "LIMC",
+      "dest_icao": "LIMC",
+      "count": 36,
+      "avgPerDay": 0.9
+    },
+    {
+      "route": "TPE 桃園→SZX 深圳",
+      "route_icao": "RCTP-ZGSZ",
+      "dest": "SZX 深圳",
+      "dest_icao": "ZGSZ",
+      "count": 36,
+      "avgPerDay": 0.9
+    },
+    {
+      "route": "TPE 桃園→KIAH",
+      "route_icao": "RCTP-KIAH",
+      "dest": "KIAH",
+      "dest_icao": "KIAH",
+      "count": 36,
+      "avgPerDay": 0.9
+    },
+    {
+      "route": "TPE 桃園→RPLC",
+      "route_icao": "RCTP-RPLC",
+      "dest": "RPLC",
+      "dest_icao": "RPLC",
+      "count": 35,
+      "avgPerDay": 0.88
+    },
+    {
+      "route": "TPE 桃園→YYZ 多倫多",
+      "route_icao": "RCTP-CYYZ",
+      "dest": "YYZ 多倫多",
+      "dest_icao": "CYYZ",
+      "count": 35,
+      "avgPerDay": 0.88
+    },
+    {
+      "route": "TPE 桃園→CEB 宿霧",
+      "route_icao": "RCTP-RPVM",
+      "dest": "CEB 宿霧",
+      "dest_icao": "RPVM",
+      "count": 35,
+      "avgPerDay": 0.88
+    },
+    {
+      "route": "TPE 桃園→CYVR",
+      "route_icao": "RCTP-CYVR",
+      "dest": "CYVR",
+      "dest_icao": "CYVR",
+      "count": 35,
+      "avgPerDay": 0.88
+    },
+    {
+      "route": "TPE 桃園→PEK 北京首都",
+      "route_icao": "RCTP-ZBAA",
+      "dest": "PEK 北京首都",
+      "dest_icao": "ZBAA",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "TPE 桃園→DFW 達拉斯",
+      "route_icao": "RCTP-KDFW",
+      "dest": "DFW 達拉斯",
+      "dest_icao": "KDFW",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "TPE 桃園→CGK 雅加達",
+      "route_icao": "RCTP-WIII",
+      "dest": "CGK 雅加達",
+      "dest_icao": "WIII",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "TPE 桃園→ORD 芝加哥",
+      "route_icao": "RCTP-KORD",
+      "dest": "ORD 芝加哥",
+      "dest_icao": "KORD",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "TSA 松山→SHA 虹橋",
+      "route_icao": "RCSS-ZSSS",
+      "dest": "SHA 虹橋",
+      "dest_icao": "ZSSS",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "KHH 高雄→NRT 成田",
+      "route_icao": "RCKH-RJAA",
+      "dest": "NRT 成田",
+      "dest_icao": "RJAA",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "TPE 桃園→SDJ 仙台",
+      "route_icao": "RCTP-RJSS",
+      "dest": "SDJ 仙台",
+      "dest_icao": "RJSS",
+      "count": 33,
+      "avgPerDay": 0.82
+    },
+    {
+      "route": "TPE 桃園→VDTI",
+      "route_icao": "RCTP-VDTI",
+      "dest": "VDTI",
+      "dest_icao": "VDTI",
+      "count": 32,
+      "avgPerDay": 0.8
+    },
+    {
+      "route": "TPE 桃園→DPS 峇里島",
+      "route_icao": "RCTP-WADD",
+      "dest": "DPS 峇里島",
+      "dest_icao": "WADD",
+      "count": 31,
+      "avgPerDay": 0.78
+    },
+    {
+      "route": "TPE 桃園→JFK 紐約",
+      "route_icao": "RCTP-KJFK",
+      "dest": "JFK 紐約",
+      "dest_icao": "KJFK",
+      "count": 31,
+      "avgPerDay": 0.78
+    },
+    {
+      "route": "TPE 桃園→VTCC",
+      "route_icao": "RCTP-VTCC",
+      "dest": "VTCC",
+      "dest_icao": "VTCC",
+      "count": 31,
+      "avgPerDay": 0.78
+    },
+    {
+      "route": "KHH 高雄→FUK 福岡",
+      "route_icao": "RCKH-RJFF",
+      "dest": "FUK 福岡",
+      "dest_icao": "RJFF",
+      "count": 28,
+      "avgPerDay": 0.7
+    },
+    {
+      "route": "TSA 松山→MZG 馬公",
+      "route_icao": "RCSS-RCQC",
+      "dest": "MZG 馬公",
+      "dest_icao": "RCQC",
+      "count": 27,
+      "avgPerDay": 0.68
+    },
+    {
+      "route": "MZG 馬公→TSA 松山",
+      "route_icao": "RCQC-RCSS",
+      "dest": "TSA 松山",
+      "dest_icao": "RCSS",
+      "count": 27,
+      "avgPerDay": 0.68
+    },
+    {
+      "route": "KHH 高雄→PVG 浦東",
+      "route_icao": "RCKH-ZSPD",
+      "dest": "PVG 浦東",
+      "dest_icao": "ZSPD",
+      "count": 26,
+      "avgPerDay": 0.65
+    },
+    {
+      "route": "TPE 桃園→CAN 廣州",
+      "route_icao": "RCTP-ZGGG",
+      "dest": "CAN 廣州",
+      "dest_icao": "ZGGG",
+      "count": 22,
+      "avgPerDay": 0.55
+    },
+    {
+      "route": "TPE 桃園→MYJ 松山(日)",
+      "route_icao": "RCTP-RJOM",
+      "dest": "MYJ 松山(日)",
+      "dest_icao": "RJOM",
+      "count": 21,
+      "avgPerDay": 0.53
+    },
+    {
+      "route": "TSA 松山→GMP 金浦",
+      "route_icao": "RCSS-RKSS",
+      "dest": "GMP 金浦",
+      "dest_icao": "RKSS",
+      "count": 21,
+      "avgPerDay": 0.53
+    },
+    {
+      "route": "TPE 桃園→EDDM",
+      "route_icao": "RCTP-EDDM",
+      "dest": "EDDM",
+      "dest_icao": "EDDM",
+      "count": 20,
+      "avgPerDay": 0.5
+    },
+    {
+      "route": "TPE 桃園→RJBE",
+      "route_icao": "RCTP-RJBE",
+      "dest": "RJBE",
+      "dest_icao": "RJBE",
+      "count": 16,
+      "avgPerDay": 0.4
+    },
+    {
+      "route": "TPE 桃園→VIE 維也納",
+      "route_icao": "RCTP-LOWW",
+      "dest": "VIE 維也納",
+      "dest_icao": "LOWW",
+      "count": 16,
+      "avgPerDay": 0.4
+    },
+    {
+      "route": "TSA 松山→XMN 廈門",
+      "route_icao": "RCSS-ZSAM",
+      "dest": "XMN 廈門",
+      "dest_icao": "ZSAM",
+      "count": 16,
+      "avgPerDay": 0.4
+    },
+    {
+      "route": "TSA 松山→PVG 浦東",
+      "route_icao": "RCSS-ZSPD",
+      "dest": "PVG 浦東",
+      "dest_icao": "ZSPD",
+      "count": 16,
+      "avgPerDay": 0.4
+    },
+    {
+      "route": "TPE 桃園→BNE 布里斯班",
+      "route_icao": "RCTP-YBBN",
+      "dest": "BNE 布里斯班",
+      "dest_icao": "YBBN",
+      "count": 16,
+      "avgPerDay": 0.4
+    },
+    {
+      "route": "TPE 桃園→HGH 杭州",
+      "route_icao": "RCTP-ZSHC",
+      "dest": "HGH 杭州",
+      "dest_icao": "ZSHC",
+      "count": 14,
+      "avgPerDay": 0.35
+    },
+    {
+      "route": "MZG 馬公→KHH 高雄",
+      "route_icao": "RCQC-RCKH",
+      "dest": "KHH 高雄",
+      "dest_icao": "RCKH",
+      "count": 13,
+      "avgPerDay": 0.33
+    },
+    {
+      "route": "KHH 高雄→MZG 馬公",
+      "route_icao": "RCKH-RCQC",
+      "dest": "MZG 馬公",
+      "dest_icao": "RCQC",
+      "count": 13,
+      "avgPerDay": 0.33
+    },
+    {
+      "route": "TPE 桃園→RJSA",
+      "route_icao": "RCTP-RJSA",
+      "dest": "RJSA",
+      "dest_icao": "RJSA",
+      "count": 13,
+      "avgPerDay": 0.33
+    },
+    {
+      "route": "TPE 桃園→WMKP",
+      "route_icao": "RCTP-WMKP",
+      "dest": "WMKP",
+      "dest_icao": "WMKP",
+      "count": 9,
+      "avgPerDay": 0.23
+    },
+    {
+      "route": "TPE 桃園→ZUTF",
+      "route_icao": "RCTP-ZUTF",
+      "dest": "ZUTF",
+      "dest_icao": "ZUTF",
+      "count": 9,
+      "avgPerDay": 0.23
+    },
+    {
+      "route": "TSA 松山→TPE 桃園",
+      "route_icao": "RCSS-RCTP",
+      "dest": "TPE 桃園",
+      "dest_icao": "RCTP",
+      "count": 8,
+      "avgPerDay": 0.2
+    },
+    {
+      "route": "TPE 桃園→TSA 松山",
+      "route_icao": "RCTP-RCSS",
+      "dest": "TSA 松山",
+      "dest_icao": "RCSS",
+      "count": 8,
+      "avgPerDay": 0.2
+    },
+    {
+      "route": "TPE 桃園→XMN 廈門",
+      "route_icao": "RCTP-ZSAM",
+      "dest": "XMN 廈門",
+      "dest_icao": "ZSAM",
+      "count": 8,
+      "avgPerDay": 0.2
+    },
+    {
+      "route": "MZG 馬公→RMQ 臺中",
+      "route_icao": "RCQC-RCMQ",
+      "dest": "RMQ 臺中",
+      "dest_icao": "RCMQ",
+      "count": 6,
+      "avgPerDay": 0.15
+    },
+    {
+      "route": "KNH 金門→RMQ 臺中",
+      "route_icao": "RCBS-RCMQ",
+      "dest": "RMQ 臺中",
+      "dest_icao": "RCMQ",
+      "count": 6,
+      "avgPerDay": 0.15
+    },
+    {
+      "route": "RMQ 臺中→KNH 金門",
+      "route_icao": "RCMQ-RCBS",
+      "dest": "KNH 金門",
+      "dest_icao": "RCBS",
+      "count": 6,
+      "avgPerDay": 0.15
+    },
+    {
+      "route": "RMQ 臺中→MZG 馬公",
+      "route_icao": "RCMQ-RCQC",
+      "dest": "MZG 馬公",
+      "dest_icao": "RCQC",
+      "count": 6,
+      "avgPerDay": 0.15
+    },
+    {
+      "route": "TPE 桃園→TPE 桃園",
+      "route_icao": "RCTP-RCTP",
+      "dest": "TPE 桃園",
+      "dest_icao": "RCTP",
+      "count": 6,
+      "avgPerDay": 0.15
+    },
+    {
+      "route": "KNH 金門→KHH 高雄",
+      "route_icao": "RCBS-RCKH",
+      "dest": "KHH 高雄",
+      "dest_icao": "RCKH",
+      "count": 5,
+      "avgPerDay": 0.12
+    },
+    {
+      "route": "KHH 高雄→KNH 金門",
+      "route_icao": "RCKH-RCBS",
+      "dest": "KNH 金門",
+      "dest_icao": "RCBS",
+      "count": 5,
+      "avgPerDay": 0.12
+    },
+    {
+      "route": "TPE 桃園→CKG 重慶",
+      "route_icao": "RCTP-ZUCK",
+      "dest": "CKG 重慶",
+      "dest_icao": "ZUCK",
+      "count": 5,
+      "avgPerDay": 0.12
+    },
+    {
+      "route": "KHH 高雄→TPE 桃園",
+      "route_icao": "RCKH-RCTP",
+      "dest": "TPE 桃園",
+      "dest_icao": "RCTP",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "KNH 金門→TNN 臺南",
+      "route_icao": "RCBS-RCFN",
+      "dest": "TNN 臺南",
+      "dest_icao": "RCFN",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "TNN 臺南→KNH 金門",
+      "route_icao": "RCFN-RCBS",
+      "dest": "KNH 金門",
+      "dest_icao": "RCBS",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "TPE 桃園→KHH 高雄",
+      "route_icao": "RCTP-RCKH",
+      "dest": "KHH 高雄",
+      "dest_icao": "RCKH",
+      "count": 2,
+      "avgPerDay": 0.05
+    },
+    {
+      "route": "RMQ 臺中→RMQ 臺中",
+      "route_icao": "RCMQ-RCMQ",
+      "dest": "RMQ 臺中",
+      "dest_icao": "RCMQ",
+      "count": 1,
+      "avgPerDay": 0.03
+    }
+  ],
+  "overlap": [
+    {
+      "route": "TPE 桃園→HKG 香港",
+      "route_icao": "RCTP-VHHH",
+      "calCount": 289,
+      "evaCount": 263,
+      "ratio": 1.1,
+      "otherAirlines": [
+        {
+          "code": "CPA",
+          "count": 448
+        },
+        {
+          "code": "HKE",
+          "count": 136
+        },
+        {
+          "code": "CRK",
+          "count": 133
+        },
+        {
+          "code": "HGB",
+          "count": 82
+        },
+        {
+          "code": "SJX",
+          "count": 68
+        },
+        {
+          "code": "AHK",
+          "count": 38
+        },
+        {
+          "code": "HKC",
+          "count": 28
+        },
+        {
+          "code": "UPS",
+          "count": 4
+        },
+        {
+          "code": "TTW",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→BKK 曼谷",
+      "route_icao": "RCTP-VTBS",
+      "calCount": 154,
+      "evaCount": 171,
+      "ratio": 0.9,
+      "otherAirlines": [
+        {
+          "code": "TVJ",
+          "count": 104
+        },
+        {
+          "code": "THA",
+          "count": 103
+        },
+        {
+          "code": "SJX",
+          "count": 71
+        },
+        {
+          "code": "CLX",
+          "count": 3
+        },
+        {
+          "code": "BOX",
+          "count": 2
+        },
+        {
+          "code": "AUA",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→NRT 成田",
+      "route_icao": "RCTP-RJAA",
+      "calCount": 162,
+      "evaCount": 102,
+      "ratio": 1.59,
+      "otherAirlines": [
+        {
+          "code": "APJ",
+          "count": 105
+        },
+        {
+          "code": "SJX",
+          "count": 102
+        },
+        {
+          "code": "TTW",
+          "count": 71
+        },
+        {
+          "code": "JJP",
+          "count": 69
+        },
+        {
+          "code": "TGW",
+          "count": 69
+        },
+        {
+          "code": "JAL",
+          "count": 64
+        },
+        {
+          "code": "CPA",
+          "count": 35
+        },
+        {
+          "code": "TLM",
+          "count": 31
+        },
+        {
+          "code": "ANA",
+          "count": 26
+        },
+        {
+          "code": "NCA",
+          "count": 11
+        },
+        {
+          "code": "GTI",
+          "count": 4
+        },
+        {
+          "code": "TZP",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "route": "TSA 松山→KNH 金門",
+      "route_icao": "RCSS-RCBS",
+      "calCount": 60,
+      "evaCount": 173,
+      "ratio": 0.35,
+      "otherAirlines": [
+        {
+          "code": "MDA",
+          "count": 328
+        },
+        {
+          "code": "UIA",
+          "count": 109
+        },
+        {
+          "code": "",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "route": "KNH 金門→TSA 松山",
+      "route_icao": "RCBS-RCSS",
+      "calCount": 61,
+      "evaCount": 166,
+      "ratio": 0.37,
+      "otherAirlines": [
+        {
+          "code": "MDA",
+          "count": 327
+        },
+        {
+          "code": "UIA",
+          "count": 110
+        },
+        {
+          "code": "",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→KIX 關西",
+      "route_icao": "RCTP-RJBB",
+      "calCount": 116,
+      "evaCount": 109,
+      "ratio": 1.06,
+      "otherAirlines": [
+        {
+          "code": "APJ",
+          "count": 119
+        },
+        {
+          "code": "SJX",
+          "count": 72
+        },
+        {
+          "code": "TTW",
+          "count": 70
+        },
+        {
+          "code": "JJP",
+          "count": 70
+        },
+        {
+          "code": "FDX",
+          "count": 33
+        },
+        {
+          "code": "TVJ",
+          "count": 31
+        },
+        {
+          "code": "XAX",
+          "count": 31
+        },
+        {
+          "code": "CPA",
+          "count": 30
+        },
+        {
+          "code": "TLM",
+          "count": 19
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→LAX 洛杉磯",
+      "route_icao": "RCTP-KLAX",
+      "calCount": 94,
+      "evaCount": 127,
+      "ratio": 0.74,
+      "otherAirlines": [
+        {
+          "code": "SJX",
+          "count": 37
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→SIN 新加坡",
+      "route_icao": "RCTP-WSSS",
+      "calCount": 113,
+      "evaCount": 93,
+      "ratio": 1.22,
+      "otherAirlines": [
+        {
+          "code": "TGW",
+          "count": 143
+        },
+        {
+          "code": "SIA",
+          "count": 90
+        },
+        {
+          "code": "SJX",
+          "count": 35
+        },
+        {
+          "code": "CLX",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→MNL 馬尼拉",
+      "route_icao": "RCTP-RPLL",
+      "calCount": 95,
+      "evaCount": 105,
+      "ratio": 0.9,
+      "otherAirlines": [
+        {
+          "code": "APG",
+          "count": 94
+        },
+        {
+          "code": "CEB",
+          "count": 70
+        },
+        {
+          "code": "PAL",
+          "count": 68
+        },
+        {
+          "code": "SJX",
+          "count": 34
+        },
+        {
+          "code": "KLM",
+          "count": 17
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→PVG 浦東",
+      "route_icao": "RCTP-ZSPD",
+      "calCount": 90,
+      "evaCount": 98,
+      "ratio": 0.92,
+      "otherAirlines": [
+        {
+          "code": "CES",
+          "count": 62
+        },
+        {
+          "code": "CCA",
+          "count": 34
+        },
+        {
+          "code": "CSN",
+          "count": 34
+        },
+        {
+          "code": "DKH",
+          "count": 25
+        },
+        {
+          "code": "CQH",
+          "count": 23
+        },
+        {
+          "code": "CKK",
+          "count": 21
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→ANC 安克拉治",
+      "route_icao": "RCTP-PANC",
+      "calCount": 87,
+      "evaCount": 100,
+      "ratio": 0.87,
+      "otherAirlines": [
+        {
+          "code": "UPS",
+          "count": 29
+        },
+        {
+          "code": "GTI",
+          "count": 22
+        },
+        {
+          "code": "ICV",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→SGN 胡志明",
+      "route_icao": "RCTP-VVTS",
+      "calCount": 71,
+      "evaCount": 108,
+      "ratio": 0.66,
+      "otherAirlines": [
+        {
+          "code": "SJX",
+          "count": 68
+        },
+        {
+          "code": "VJC",
+          "count": 43
+        },
+        {
+          "code": "HVN",
+          "count": 32
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→FUK 福岡",
+      "route_icao": "RCTP-RJFF",
+      "calCount": 77,
+      "evaCount": 83,
+      "ratio": 0.93,
+      "otherAirlines": [
+        {
+          "code": "TTW",
+          "count": 43
+        },
+        {
+          "code": "SJX",
+          "count": 36
+        },
+        {
+          "code": "AXM",
+          "count": 35
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→SFO 舊金山",
+      "route_icao": "RCTP-KSFO",
+      "calCount": 56,
+      "evaCount": 101,
+      "ratio": 0.55,
+      "otherAirlines": [
+        {
+          "code": "UAL",
+          "count": 67
+        },
+        {
+          "code": "SJX",
+          "count": 37
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→ICN 仁川",
+      "route_icao": "RCTP-RKSI",
+      "calCount": 65,
+      "evaCount": 91,
+      "ratio": 0.71,
+      "otherAirlines": [
+        {
+          "code": "AAR",
+          "count": 69
+        },
+        {
+          "code": "KAL",
+          "count": 66
+        },
+        {
+          "code": "JNA",
+          "count": 36
+        },
+        {
+          "code": "JJA",
+          "count": 36
+        },
+        {
+          "code": "TGW",
+          "count": 36
+        },
+        {
+          "code": "FDX",
+          "count": 35
+        },
+        {
+          "code": "TTW",
+          "count": 33
+        },
+        {
+          "code": "ESR",
+          "count": 22
+        },
+        {
+          "code": "CKS",
+          "count": 6
+        },
+        {
+          "code": "GTI",
+          "count": 3
+        },
+        {
+          "code": "UPS",
+          "count": 2
+        },
+        {
+          "code": "AIH",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "route": "TSA 松山→HND 羽田",
+      "route_icao": "RCSS-RJTT",
+      "calCount": 77,
+      "evaCount": 76,
+      "ratio": 1.01,
+      "otherAirlines": [
+        {
+          "code": "AJX",
+          "count": 77
+        },
+        {
+          "code": "JAL",
+          "count": 75
+        },
+        {
+          "code": "VJT",
+          "count": 4
+        },
+        {
+          "code": "",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→HAN 河內",
+      "route_icao": "RCTP-VVNB",
+      "calCount": 74,
+      "evaCount": 75,
+      "ratio": 0.99,
+      "otherAirlines": [
+        {
+          "code": "VJC",
+          "count": 68
+        },
+        {
+          "code": "SJX",
+          "count": 34
+        },
+        {
+          "code": "HVN",
+          "count": 33
+        },
+        {
+          "code": "UAE",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→OKA 那霸",
+      "route_icao": "RCTP-ROAH",
+      "calCount": 73,
+      "evaCount": 67,
+      "ratio": 1.09,
+      "otherAirlines": [
+        {
+          "code": "APJ",
+          "count": 101
+        },
+        {
+          "code": "TTW",
+          "count": 74
+        },
+        {
+          "code": "AIQ",
+          "count": 36
+        },
+        {
+          "code": "SJX",
+          "count": 34
+        },
+        {
+          "code": "JTA",
+          "count": 33
+        },
+        {
+          "code": "MXD",
+          "count": 31
+        },
+        {
+          "code": "TVJ",
+          "count": 30
+        }
+      ]
+    },
+    {
+      "route": "KHH 高雄→HKG 香港",
+      "route_icao": "RCKH-VHHH",
+      "calCount": 59,
+      "evaCount": 76,
+      "ratio": 0.78,
+      "otherAirlines": [
+        {
+          "code": "CPA",
+          "count": 150
+        },
+        {
+          "code": "HKE",
+          "count": 103
+        },
+        {
+          "code": "MDA",
+          "count": 16
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→PUS 釜山",
+      "route_icao": "RCTP-RKPK",
+      "calCount": 66,
+      "evaCount": 49,
+      "ratio": 1.35,
+      "otherAirlines": [
+        {
+          "code": "ABL",
+          "count": 93
+        },
+        {
+          "code": "JJA",
+          "count": 62
+        },
+        {
+          "code": "ESR",
+          "count": 38
+        },
+        {
+          "code": "KAL",
+          "count": 35
+        },
+        {
+          "code": "JNA",
+          "count": 34
+        },
+        {
+          "code": "TTW",
+          "count": 34
+        }
+      ]
+    },
+    {
+      "route": "KHH 高雄→KIX 關西",
+      "route_icao": "RCKH-RJBB",
+      "calCount": 54,
+      "evaCount": 58,
+      "ratio": 0.93,
+      "otherAirlines": [
+        {
+          "code": "APJ",
+          "count": 39
+        },
+        {
+          "code": "TTW",
+          "count": 38
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→CTS 新千歲",
+      "route_icao": "RCTP-RJCC",
+      "calCount": 39,
+      "evaCount": 72,
+      "ratio": 0.54,
+      "otherAirlines": [
+        {
+          "code": "TTW",
+          "count": 38
+        },
+        {
+          "code": "SJX",
+          "count": 36
+        },
+        {
+          "code": "TVJ",
+          "count": 35
+        },
+        {
+          "code": "AIQ",
+          "count": 34
+        },
+        {
+          "code": "TGW",
+          "count": 32
+        }
+      ]
+    },
+    {
+      "route": "KHH 高雄→NRT 成田",
+      "route_icao": "RCKH-RJAA",
+      "calCount": 70,
+      "evaCount": 34,
+      "ratio": 2.06,
+      "otherAirlines": [
+        {
+          "code": "JJP",
+          "count": 39
+        },
+        {
+          "code": "AIQ",
+          "count": 37
+        },
+        {
+          "code": "TTW",
+          "count": 36
+        },
+        {
+          "code": "UAL",
+          "count": 34
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→CGK 雅加達",
+      "route_icao": "RCTP-WIII",
+      "calCount": 62,
+      "evaCount": 34,
+      "ratio": 1.82,
+      "otherAirlines": [
+        {
+          "code": "SJX",
+          "count": 24
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→SEA 西雅圖",
+      "route_icao": "RCTP-KSEA",
+      "calCount": 25,
+      "evaCount": 54,
+      "ratio": 0.46,
+      "otherAirlines": [
+        {
+          "code": "SJX",
+          "count": 37
+        },
+        {
+          "code": "DAL",
+          "count": 36
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→VVDN",
+      "route_icao": "RCTP-VVDN",
+      "calCount": 33,
+      "evaCount": 46,
+      "ratio": 0.72,
+      "otherAirlines": [
+        {
+          "code": "TTW",
+          "count": 25
+        },
+        {
+          "code": "SJX",
+          "count": 25
+        },
+        {
+          "code": "BAV",
+          "count": 9
+        },
+        {
+          "code": "VJC",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→KUL 吉隆坡",
+      "route_icao": "RCTP-WMKK",
+      "calCount": 40,
+      "evaCount": 37,
+      "ratio": 1.08,
+      "otherAirlines": [
+        {
+          "code": "XAX",
+          "count": 41
+        },
+        {
+          "code": "MAS",
+          "count": 32
+        },
+        {
+          "code": "MXD",
+          "count": 29
+        },
+        {
+          "code": "SJX",
+          "count": 24
+        }
+      ]
+    },
+    {
+      "route": "KHH 高雄→ICN 仁川",
+      "route_icao": "RCKH-RKSI",
+      "calCount": 37,
+      "evaCount": 38,
+      "ratio": 0.97,
+      "otherAirlines": [
+        {
+          "code": "TWB",
+          "count": 38
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→SZX 深圳",
+      "route_icao": "RCTP-ZGSZ",
+      "calCount": 38,
+      "evaCount": 36,
+      "ratio": 1.06,
+      "otherAirlines": [
+        {
+          "code": "CSZ",
+          "count": 39
+        },
+        {
+          "code": "CSN",
+          "count": 34
+        },
+        {
+          "code": "CSS",
+          "count": 23
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→CYVR",
+      "route_icao": "RCTP-CYVR",
+      "calCount": 37,
+      "evaCount": 35,
+      "ratio": 1.06,
+      "otherAirlines": []
+    },
+    {
+      "route": "TSA 松山→SHA 虹橋",
+      "route_icao": "RCSS-ZSSS",
+      "calCount": 33,
+      "evaCount": 34,
+      "ratio": 0.97,
+      "otherAirlines": [
+        {
+          "code": "CES",
+          "count": 37
+        },
+        {
+          "code": "CCA",
+          "count": 22
+        },
+        {
+          "code": "CSH",
+          "count": 16
+        },
+        {
+          "code": "",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→PEK 北京首都",
+      "route_icao": "RCTP-ZBAA",
+      "calCount": 33,
+      "evaCount": 34,
+      "ratio": 0.97,
+      "otherAirlines": [
+        {
+          "code": "CCA",
+          "count": 54
+        },
+        {
+          "code": "CHH",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→DPS 峇里島",
+      "route_icao": "RCTP-WADD",
+      "calCount": 35,
+      "evaCount": 31,
+      "ratio": 1.13,
+      "otherAirlines": []
+    },
+    {
+      "route": "TPE 桃園→WMKP",
+      "route_icao": "RCTP-WMKP",
+      "calCount": 57,
+      "evaCount": 9,
+      "ratio": 6.33,
+      "otherAirlines": []
+    },
+    {
+      "route": "TPE 桃園→CAN 廣州",
+      "route_icao": "RCTP-ZGGG",
+      "calCount": 43,
+      "evaCount": 22,
+      "ratio": 1.95,
+      "otherAirlines": [
+        {
+          "code": "CSN",
+          "count": 31
+        },
+        {
+          "code": "CSS",
+          "count": 20
+        },
+        {
+          "code": "CHH",
+          "count": 16
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→VTCC",
+      "route_icao": "RCTP-VTCC",
+      "calCount": 33,
+      "evaCount": 31,
+      "ratio": 1.06,
+      "otherAirlines": [
+        {
+          "code": "AIQ",
+          "count": 29
+        },
+        {
+          "code": "SJX",
+          "count": 16
+        },
+        {
+          "code": "TLM",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→CEB 宿霧",
+      "route_icao": "RCTP-RPVM",
+      "calCount": 22,
+      "evaCount": 35,
+      "ratio": 0.63,
+      "otherAirlines": [
+        {
+          "code": "SJX",
+          "count": 33
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→VDTI",
+      "route_icao": "RCTP-VDTI",
+      "calCount": 24,
+      "evaCount": 32,
+      "ratio": 0.75,
+      "otherAirlines": []
+    },
+    {
+      "route": "KHH 高雄→PVG 浦東",
+      "route_icao": "RCKH-ZSPD",
+      "calCount": 24,
+      "evaCount": 26,
+      "ratio": 0.92,
+      "otherAirlines": [
+        {
+          "code": "DKH",
+          "count": 17
+        },
+        {
+          "code": "CQH",
+          "count": 16
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→JFK 紐約",
+      "route_icao": "RCTP-KJFK",
+      "calCount": 19,
+      "evaCount": 31,
+      "ratio": 0.61,
+      "otherAirlines": []
+    },
+    {
+      "route": "TPE 桃園→XMN 廈門",
+      "route_icao": "RCTP-ZSAM",
+      "calCount": 38,
+      "evaCount": 8,
+      "ratio": 4.75,
+      "otherAirlines": [
+        {
+          "code": "CXA",
+          "count": 34
+        }
+      ]
+    },
+    {
+      "route": "KHH 高雄→FUK 福岡",
+      "route_icao": "RCKH-RJFF",
+      "calCount": 17,
+      "evaCount": 28,
+      "ratio": 0.61,
+      "otherAirlines": [
+        {
+          "code": "TTW",
+          "count": 11
+        }
+      ]
+    },
+    {
+      "route": "RMQ 臺中→KNH 金門",
+      "route_icao": "RCMQ-RCBS",
+      "calCount": 38,
+      "evaCount": 6,
+      "ratio": 6.33,
+      "otherAirlines": [
+        {
+          "code": "UIA",
+          "count": 231
+        },
+        {
+          "code": "MDA",
+          "count": 132
+        }
+      ]
+    },
+    {
+      "route": "KNH 金門→RMQ 臺中",
+      "route_icao": "RCBS-RCMQ",
+      "calCount": 37,
+      "evaCount": 6,
+      "ratio": 6.17,
+      "otherAirlines": [
+        {
+          "code": "UIA",
+          "count": 231
+        },
+        {
+          "code": "MDA",
+          "count": 131
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→BNE 布里斯班",
+      "route_icao": "RCTP-YBBN",
+      "calCount": 27,
+      "evaCount": 16,
+      "ratio": 1.69,
+      "otherAirlines": []
+    },
+    {
+      "route": "TPE 桃園→VIE 維也納",
+      "route_icao": "RCTP-LOWW",
+      "calCount": 23,
+      "evaCount": 16,
+      "ratio": 1.44,
+      "otherAirlines": []
+    },
+    {
+      "route": "MZG 馬公→TSA 松山",
+      "route_icao": "RCQC-RCSS",
+      "calCount": 10,
+      "evaCount": 27,
+      "ratio": 0.37,
+      "otherAirlines": [
+        {
+          "code": "MDA",
+          "count": 345
+        },
+        {
+          "code": "UIA",
+          "count": 299
+        },
+        {
+          "code": "",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "route": "TSA 松山→MZG 馬公",
+      "route_icao": "RCSS-RCQC",
+      "calCount": 10,
+      "evaCount": 27,
+      "ratio": 0.37,
+      "otherAirlines": [
+        {
+          "code": "MDA",
+          "count": 347
+        },
+        {
+          "code": "UIA",
+          "count": 298
+        },
+        {
+          "code": "",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "route": "TSA 松山→GMP 金浦",
+      "route_icao": "RCSS-RKSS",
+      "calCount": 14,
+      "evaCount": 21,
+      "ratio": 0.67,
+      "otherAirlines": [
+        {
+          "code": "TWB",
+          "count": 22
+        },
+        {
+          "code": "ESR",
+          "count": 17
+        }
+      ]
+    },
+    {
+      "route": "TSA 松山→TPE 桃園",
+      "route_icao": "RCSS-RCTP",
+      "calCount": 15,
+      "evaCount": 8,
+      "ratio": 1.88,
+      "otherAirlines": [
+        {
+          "code": "",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→TSA 松山",
+      "route_icao": "RCTP-RCSS",
+      "calCount": 12,
+      "evaCount": 8,
+      "ratio": 1.5,
+      "otherAirlines": []
+    },
+    {
+      "route": "KHH 高雄→MZG 馬公",
+      "route_icao": "RCKH-RCQC",
+      "calCount": 5,
+      "evaCount": 13,
+      "ratio": 0.38,
+      "otherAirlines": [
+        {
+          "code": "MDA",
+          "count": 336
+        },
+        {
+          "code": "UIA",
+          "count": 275
+        },
+        {
+          "code": "",
+          "count": 9
+        }
+      ]
+    },
+    {
+      "route": "MZG 馬公→KHH 高雄",
+      "route_icao": "RCQC-RCKH",
+      "calCount": 4,
+      "evaCount": 13,
+      "ratio": 0.31,
+      "otherAirlines": [
+        {
+          "code": "MDA",
+          "count": 337
+        },
+        {
+          "code": "UIA",
+          "count": 275
+        },
+        {
+          "code": "",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→ZUTF",
+      "route_icao": "RCTP-ZUTF",
+      "calCount": 8,
+      "evaCount": 9,
+      "ratio": 0.89,
+      "otherAirlines": [
+        {
+          "code": "CCA",
+          "count": 20
+        }
+      ]
+    },
+    {
+      "route": "KHH 高雄→TPE 桃園",
+      "route_icao": "RCKH-RCTP",
+      "calCount": 13,
+      "evaCount": 3,
+      "ratio": 4.33,
+      "otherAirlines": [
+        {
+          "code": "TTW",
+          "count": 1
+        },
+        {
+          "code": "MDA",
+          "count": 1
+        },
+        {
+          "code": "TVJ",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "route": "RMQ 臺中→MZG 馬公",
+      "route_icao": "RCMQ-RCQC",
+      "calCount": 10,
+      "evaCount": 6,
+      "ratio": 1.67,
+      "otherAirlines": [
+        {
+          "code": "MDA",
+          "count": 192
+        },
+        {
+          "code": "UIA",
+          "count": 154
+        },
+        {
+          "code": "",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "route": "MZG 馬公→RMQ 臺中",
+      "route_icao": "RCQC-RCMQ",
+      "calCount": 10,
+      "evaCount": 6,
+      "ratio": 1.67,
+      "otherAirlines": [
+        {
+          "code": "MDA",
+          "count": 191
+        },
+        {
+          "code": "UIA",
+          "count": 154
+        },
+        {
+          "code": "",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→TPE 桃園",
+      "route_icao": "RCTP-RCTP",
+      "calCount": 9,
+      "evaCount": 6,
+      "ratio": 1.5,
+      "otherAirlines": [
+        {
+          "code": "SJX",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→CKG 重慶",
+      "route_icao": "RCTP-ZUCK",
+      "calCount": 10,
+      "evaCount": 5,
+      "ratio": 2.0,
+      "otherAirlines": [
+        {
+          "code": "CCA",
+          "count": 24
+        }
+      ]
+    },
+    {
+      "route": "TPE 桃園→KHH 高雄",
+      "route_icao": "RCTP-RCKH",
+      "calCount": 8,
+      "evaCount": 2,
+      "ratio": 4.0,
+      "otherAirlines": [
+        {
+          "code": "TTW",
+          "count": 1
+        },
+        {
+          "code": "MDA",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "route": "RMQ 臺中→RMQ 臺中",
+      "route_icao": "RCMQ-RCMQ",
+      "calCount": 1,
+      "evaCount": 1,
+      "ratio": 1.0,
+      "otherAirlines": [
+        {
+          "code": "HSO",
+          "count": 8
+        },
+        {
+          "code": "",
+          "count": 4
+        },
+        {
+          "code": "MDA",
+          "count": 1
+        },
+        {
+          "code": "UIA",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "calOnly": [
+    {
+      "route": "TPE 桃園→NGO 中部",
+      "route_icao": "RCTP-RJGG",
+      "dest": "NGO 中部",
+      "dest_icao": "RJGG",
+      "count": 96,
+      "avgPerDay": 2.4
+    },
+    {
+      "route": "TPE 桃園→FRA 法蘭克福",
+      "route_icao": "RCTP-EDDF",
+      "dest": "FRA 法蘭克福",
+      "dest_icao": "EDDF",
+      "count": 47,
+      "avgPerDay": 1.18
+    },
+    {
+      "route": "RMQ 臺中→SGN 胡志明",
+      "route_icao": "RCMQ-VVTS",
+      "dest": "SGN 胡志明",
+      "dest_icao": "VVTS",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "TPE 桃園→KONT",
+      "route_icao": "RCTP-KONT",
+      "dest": "KONT",
+      "dest_icao": "KONT",
+      "count": 37,
+      "avgPerDay": 0.93
+    },
+    {
+      "route": "TPE 桃園→TAK 高松",
+      "route_icao": "RCTP-RJOT",
+      "dest": "TAK 高松",
+      "dest_icao": "RJOT",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "KHH 高雄→OKA 那霸",
+      "route_icao": "RCKH-ROAH",
+      "dest": "OKA 那霸",
+      "dest_icao": "ROAH",
+      "count": 33,
+      "avgPerDay": 0.82
+    },
+    {
+      "route": "TPE 桃園→HIJ 廣島",
+      "route_icao": "RCTP-RJOA",
+      "dest": "HIJ 廣島",
+      "dest_icao": "RJOA",
+      "count": 26,
+      "avgPerDay": 0.65
+    },
+    {
+      "route": "TPE 桃園→MEL 墨爾本",
+      "route_icao": "RCTP-YMML",
+      "dest": "MEL 墨爾本",
+      "dest_icao": "YMML",
+      "count": 26,
+      "avgPerDay": 0.65
+    },
+    {
+      "route": "TPE 桃園→SYD 雪梨",
+      "route_icao": "RCTP-YSSY",
+      "dest": "SYD 雪梨",
+      "dest_icao": "YSSY",
+      "count": 24,
+      "avgPerDay": 0.6
+    },
+    {
+      "route": "TPE 桃園→LHR 倫敦",
+      "route_icao": "RCTP-EGLL",
+      "dest": "LHR 倫敦",
+      "dest_icao": "EGLL",
+      "count": 23,
+      "avgPerDay": 0.57
+    },
+    {
+      "route": "TPE 桃園→AMS 阿姆斯特丹",
+      "route_icao": "RCTP-EHAM",
+      "dest": "AMS 阿姆斯特丹",
+      "dest_icao": "EHAM",
+      "count": 23,
+      "avgPerDay": 0.57
+    },
+    {
+      "route": "TPE 桃園→PTRO",
+      "route_icao": "RCTP-PTRO",
+      "dest": "PTRO",
+      "dest_icao": "PTRO",
+      "count": 21,
+      "avgPerDay": 0.53
+    },
+    {
+      "route": "TPE 桃園→KMI 熊本",
+      "route_icao": "RCTP-RJFT",
+      "dest": "KMI 熊本",
+      "dest_icao": "RJFT",
+      "count": 21,
+      "avgPerDay": 0.53
+    },
+    {
+      "route": "KHH 高雄→KMI 熊本",
+      "route_icao": "RCKH-RJFT",
+      "dest": "KMI 熊本",
+      "dest_icao": "RJFT",
+      "count": 20,
+      "avgPerDay": 0.5
+    },
+    {
+      "route": "TPE 桃園→DEL 新德里",
+      "route_icao": "RCTP-VIDP",
+      "dest": "DEL 新德里",
+      "dest_icao": "VIDP",
+      "count": 18,
+      "avgPerDay": 0.45
+    },
+    {
+      "route": "KHH 高雄→BKK 曼谷",
+      "route_icao": "RCKH-VTBS",
+      "dest": "BKK 曼谷",
+      "dest_icao": "VTBS",
+      "count": 18,
+      "avgPerDay": 0.45
+    },
+    {
+      "route": "TSA 松山→FOC 福州",
+      "route_icao": "RCSS-ZSFZ",
+      "dest": "FOC 福州",
+      "dest_icao": "ZSFZ",
+      "count": 17,
+      "avgPerDay": 0.42
+    },
+    {
+      "route": "TPE 桃園→KPHX",
+      "route_icao": "RCTP-KPHX",
+      "dest": "KPHX",
+      "dest_icao": "KPHX",
+      "count": 17,
+      "avgPerDay": 0.42
+    },
+    {
+      "route": "KHH 高雄→XMN 廈門",
+      "route_icao": "RCKH-ZSAM",
+      "dest": "XMN 廈門",
+      "dest_icao": "ZSAM",
+      "count": 15,
+      "avgPerDay": 0.38
+    },
+    {
+      "route": "TPE 桃園→KOJ 鹿兒島",
+      "route_icao": "RCTP-RJFK",
+      "dest": "KOJ 鹿兒島",
+      "dest_icao": "RJFK",
+      "count": 15,
+      "avgPerDay": 0.38
+    },
+    {
+      "route": "TSA 松山→ZHHH",
+      "route_icao": "RCSS-ZHHH",
+      "dest": "ZHHH",
+      "dest_icao": "ZHHH",
+      "count": 12,
+      "avgPerDay": 0.3
+    },
+    {
+      "route": "TPE 桃園→FCO 羅馬",
+      "route_icao": "RCTP-LIRF",
+      "dest": "FCO 羅馬",
+      "dest_icao": "LIRF",
+      "count": 11,
+      "avgPerDay": 0.28
+    },
+    {
+      "route": "TPE 桃園→PRG 布拉格",
+      "route_icao": "RCTP-LKPR",
+      "dest": "PRG 布拉格",
+      "dest_icao": "LKPR",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "TPE 桃園→VABB",
+      "route_icao": "RCTP-VABB",
+      "dest": "VABB",
+      "dest_icao": "VABB",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "KHH 高雄→SZX 深圳",
+      "route_icao": "RCKH-ZGSZ",
+      "dest": "SZX 深圳",
+      "dest_icao": "ZGSZ",
+      "count": 10,
+      "avgPerDay": 0.25
+    },
+    {
+      "route": "KHH 高雄→CKG 重慶",
+      "route_icao": "RCKH-ZUCK",
+      "dest": "CKG 重慶",
+      "dest_icao": "ZUCK",
+      "count": 6,
+      "avgPerDay": 0.15
+    },
+    {
+      "route": "TPE 桃園→RMQ 臺中",
+      "route_icao": "RCTP-RCMQ",
+      "dest": "RMQ 臺中",
+      "dest_icao": "RCMQ",
+      "count": 5,
+      "avgPerDay": 0.12
+    },
+    {
+      "route": "RMQ 臺中→TPE 桃園",
+      "route_icao": "RCMQ-RCTP",
+      "dest": "TPE 桃園",
+      "dest_icao": "RCTP",
+      "count": 4,
+      "avgPerDay": 0.1
+    },
+    {
+      "route": "TPE 桃園→RGN 仰光",
+      "route_icao": "RCTP-VYYY",
+      "dest": "RGN 仰光",
+      "dest_icao": "VYYY",
+      "count": 4,
+      "avgPerDay": 0.1
+    },
+    {
+      "route": "TPE 桃園→OMDW",
+      "route_icao": "RCTP-OMDW",
+      "dest": "OMDW",
+      "dest_icao": "OMDW",
+      "count": 4,
+      "avgPerDay": 0.1
+    },
+    {
+      "route": "TPE 桃園→RJNT",
+      "route_icao": "RCTP-RJNT",
+      "dest": "RJNT",
+      "dest_icao": "RJNT",
+      "count": 4,
+      "avgPerDay": 0.1
+    },
+    {
+      "route": "KHH 高雄→KHH 高雄",
+      "route_icao": "RCKH-RCKH",
+      "dest": "KHH 高雄",
+      "dest_icao": "RCKH",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "TSA 松山→PIF 屏東",
+      "route_icao": "RCSS-RCDC",
+      "dest": "PIF 屏東",
+      "dest_icao": "RCDC",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "TPE 桃園→MMY 宮古",
+      "route_icao": "RCTP-RJFM",
+      "dest": "MMY 宮古",
+      "dest_icao": "RJFM",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "KHH 高雄→SIN 新加坡",
+      "route_icao": "RCKH-WSSS",
+      "dest": "SIN 新加坡",
+      "dest_icao": "WSSS",
+      "count": 2,
+      "avgPerDay": 0.05
+    },
+    {
+      "route": "KHH 高雄→PIF 屏東",
+      "route_icao": "RCKH-RCDC",
+      "dest": "PIF 屏東",
+      "dest_icao": "RCDC",
+      "count": 1,
+      "avgPerDay": 0.03
+    },
+    {
+      "route": "TPE 桃園→ISG 石垣",
+      "route_icao": "RCTP-ROIG",
+      "dest": "ISG 石垣",
+      "dest_icao": "ROIG",
+      "count": 1,
+      "avgPerDay": 0.03
+    },
+    {
+      "route": "KHH 高雄→MNL 馬尼拉",
+      "route_icao": "RCKH-RPLL",
+      "dest": "MNL 馬尼拉",
+      "dest_icao": "RPLL",
+      "count": 1,
+      "avgPerDay": 0.03
+    }
+  ],
+  "evaOnly": [
+    {
+      "route": "TPE 桃園→MFM 澳門",
+      "route_icao": "RCTP-VMMC",
+      "dest": "MFM 澳門",
+      "dest_icao": "VMMC",
+      "count": 69,
+      "avgPerDay": 1.73
+    },
+    {
+      "route": "KHH 高雄→MFM 澳門",
+      "route_icao": "RCKH-VMMC",
+      "dest": "MFM 澳門",
+      "dest_icao": "VMMC",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "TPE 桃園→KMQ 小松",
+      "route_icao": "RCTP-RJNK",
+      "dest": "KMQ 小松",
+      "dest_icao": "RJNK",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "TPE 桃園→CDG 巴黎",
+      "route_icao": "RCTP-LFPG",
+      "dest": "CDG 巴黎",
+      "dest_icao": "LFPG",
+      "count": 38,
+      "avgPerDay": 0.95
+    },
+    {
+      "route": "TPE 桃園→KIAH",
+      "route_icao": "RCTP-KIAH",
+      "dest": "KIAH",
+      "dest_icao": "KIAH",
+      "count": 36,
+      "avgPerDay": 0.9
+    },
+    {
+      "route": "TPE 桃園→LIMC",
+      "route_icao": "RCTP-LIMC",
+      "dest": "LIMC",
+      "dest_icao": "LIMC",
+      "count": 36,
+      "avgPerDay": 0.9
+    },
+    {
+      "route": "TPE 桃園→RPLC",
+      "route_icao": "RCTP-RPLC",
+      "dest": "RPLC",
+      "dest_icao": "RPLC",
+      "count": 35,
+      "avgPerDay": 0.88
+    },
+    {
+      "route": "TPE 桃園→YYZ 多倫多",
+      "route_icao": "RCTP-CYYZ",
+      "dest": "YYZ 多倫多",
+      "dest_icao": "CYYZ",
+      "count": 35,
+      "avgPerDay": 0.88
+    },
+    {
+      "route": "TPE 桃園→ORD 芝加哥",
+      "route_icao": "RCTP-KORD",
+      "dest": "ORD 芝加哥",
+      "dest_icao": "KORD",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "TPE 桃園→DFW 達拉斯",
+      "route_icao": "RCTP-KDFW",
+      "dest": "DFW 達拉斯",
+      "dest_icao": "KDFW",
+      "count": 34,
+      "avgPerDay": 0.85
+    },
+    {
+      "route": "TPE 桃園→SDJ 仙台",
+      "route_icao": "RCTP-RJSS",
+      "dest": "SDJ 仙台",
+      "dest_icao": "RJSS",
+      "count": 33,
+      "avgPerDay": 0.82
+    },
+    {
+      "route": "TPE 桃園→MYJ 松山(日)",
+      "route_icao": "RCTP-RJOM",
+      "dest": "MYJ 松山(日)",
+      "dest_icao": "RJOM",
+      "count": 21,
+      "avgPerDay": 0.53
+    },
+    {
+      "route": "TPE 桃園→EDDM",
+      "route_icao": "RCTP-EDDM",
+      "dest": "EDDM",
+      "dest_icao": "EDDM",
+      "count": 20,
+      "avgPerDay": 0.5
+    },
+    {
+      "route": "TSA 松山→XMN 廈門",
+      "route_icao": "RCSS-ZSAM",
+      "dest": "XMN 廈門",
+      "dest_icao": "ZSAM",
+      "count": 16,
+      "avgPerDay": 0.4
+    },
+    {
+      "route": "TSA 松山→PVG 浦東",
+      "route_icao": "RCSS-ZSPD",
+      "dest": "PVG 浦東",
+      "dest_icao": "ZSPD",
+      "count": 16,
+      "avgPerDay": 0.4
+    },
+    {
+      "route": "TPE 桃園→RJBE",
+      "route_icao": "RCTP-RJBE",
+      "dest": "RJBE",
+      "dest_icao": "RJBE",
+      "count": 16,
+      "avgPerDay": 0.4
+    },
+    {
+      "route": "TPE 桃園→HGH 杭州",
+      "route_icao": "RCTP-ZSHC",
+      "dest": "HGH 杭州",
+      "dest_icao": "ZSHC",
+      "count": 14,
+      "avgPerDay": 0.35
+    },
+    {
+      "route": "TPE 桃園→RJSA",
+      "route_icao": "RCTP-RJSA",
+      "dest": "RJSA",
+      "dest_icao": "RJSA",
+      "count": 13,
+      "avgPerDay": 0.33
+    },
+    {
+      "route": "KHH 高雄→KNH 金門",
+      "route_icao": "RCKH-RCBS",
+      "dest": "KNH 金門",
+      "dest_icao": "RCBS",
+      "count": 5,
+      "avgPerDay": 0.12
+    },
+    {
+      "route": "KNH 金門→KHH 高雄",
+      "route_icao": "RCBS-RCKH",
+      "dest": "KHH 高雄",
+      "dest_icao": "RCKH",
+      "count": 5,
+      "avgPerDay": 0.12
+    },
+    {
+      "route": "TNN 臺南→KNH 金門",
+      "route_icao": "RCFN-RCBS",
+      "dest": "KNH 金門",
+      "dest_icao": "RCBS",
+      "count": 3,
+      "avgPerDay": 0.07
+    },
+    {
+      "route": "KNH 金門→TNN 臺南",
+      "route_icao": "RCBS-RCFN",
+      "dest": "TNN 臺南",
+      "dest_icao": "RCFN",
+      "count": 3,
+      "avgPerDay": 0.07
+    }
+  ],
+  "summary": {
+    "calTotal": 3679,
+    "evaTotal": 3755,
+    "overlapCount": 61,
+    "calOnlyCount": 38,
+    "evaOnlyCount": 22
+  }
+}

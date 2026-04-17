@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>不對稱航線分析 — 台灣航班分析</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0a0a14;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --dim: #6b7280;
+  --accent: #64aaff;
+  --orange: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; margin: 0; padding: 20px; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(8px); }
+.nav { margin-bottom: 32px; }
+.nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.nav a:hover { text-decoration: underline; }
+h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: var(--accent); }
+.subtitle { color: var(--dim); font-size: 14px; margin-bottom: 32px; }
+.hero { text-align: center; padding: 48px 24px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(100,170,255,0.08) 0%, transparent 70%); pointer-events: none; }
+.hero-row { display: flex; justify-content: center; align-items: flex-end; gap: 48px; flex-wrap: wrap; position: relative; }
+.hero-item { text-align: center; }
+.hero-number { font-size: 64px; font-weight: 700; }
+.hero-label { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.hero-sub { font-size: 14px; color: var(--dim); margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; position: relative; }
+.chart-wrap { position: relative; width: 100%; }
+.insight { background: rgba(100,170,255,0.06); border-left: 3px solid var(--accent); padding: 12px 16px; margin-top: 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--dim); }
+.insight strong { color: var(--text); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); color: var(--dim); font-weight: 500; position: sticky; top: 0; background: #0d0d1a; }
+tbody td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+.table-scroll { max-height: 400px; overflow-y: auto; border-radius: 8px; }
+.table-scroll::-webkit-scrollbar { width: 6px; }
+.table-scroll::-webkit-scrollbar-track { background: transparent; }
+.table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.bar-pair { display: flex; align-items: center; gap: 4px; margin-bottom: 14px; font-size: 12px; }
+.bar-left-wrap { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
+.bar-right-wrap { flex: 1; display: flex; justify-content: flex-start; align-items: center; gap: 6px; }
+.bar-left { height: 28px; background: linear-gradient(90deg, transparent, var(--accent)); border-radius: 4px 0 0 4px; transition: width 0.6s ease; }
+.bar-right { height: 28px; background: linear-gradient(90deg, var(--orange), transparent); border-radius: 0 4px 4px 0; transition: width 0.6s ease; }
+.bar-center { width: 120px; text-align: center; flex-shrink: 0; font-size: 11px; color: var(--text); line-height: 1.3; }
+.bar-count { font-size: 11px; font-weight: 600; min-width: 30px; }
+.bar-count-left { text-align: right; color: var(--accent); }
+.bar-count-right { text-align: left; color: var(--orange); }
+.reason-card { display: grid; grid-template-columns: 48px 1fr; gap: 12px; align-items: start; padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--border); }
+.reason-icon { font-size: 28px; text-align: center; }
+.reason-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.reason-desc { font-size: 12px; color: var(--dim); }
+.diff-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+.diff-high { background: rgba(239,68,68,0.15); color: var(--red); }
+.diff-med { background: rgba(245,158,11,0.15); color: var(--orange); }
+.diff-low { background: rgba(16,185,129,0.15); color: var(--green); }
+.bottom-nav { text-align: center; margin-top: 32px; }
+.bottom-nav a { color: var(--accent); text-decoration: none; font-size: 14px; }
+.bottom-nav a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav"><a href="index.html">&larr; 返回目錄</a></div>
+
+  <h1>不對稱航線分析</h1>
+  <p class="subtitle">大多數航線是雙向平衡的，但有些航線的去程和回程班次差距懸殊——背後有什麼故事？</p>
+
+  <!-- Hero -->
+  <div class="card hero">
+    <div class="hero-row">
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--accent)" id="heroTotal">--</div>
+        <div class="hero-label">航線配對總數</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--red); font-size:48px" id="heroAsym">--</div>
+        <div class="hero-label">不對稱航線</div>
+      </div>
+      <div class="hero-item">
+        <div class="hero-number" style="color:var(--orange); font-size:48px" id="heroPct">--</div>
+        <div class="hero-label">不對稱比例</div>
+      </div>
+    </div>
+    <div class="hero-sub" id="heroSub"></div>
+  </div>
+
+  <!-- Diverging Bar -->
+  <div class="card">
+    <h2>最不對稱的航線</h2>
+    <p style="font-size:12px; color:var(--dim); margin-bottom:20px;">
+      <span style="color:var(--accent);">&#9632;</span> A &rarr; B 方向
+      &nbsp;&nbsp;
+      <span style="color:var(--orange);">&#9632;</span> B &rarr; A 方向
+      &nbsp;&nbsp;|&nbsp;&nbsp;差距越大，不對稱越嚴重
+    </p>
+    <div id="divergingBars"></div>
+    <div class="insight" id="insightBar"></div>
+  </div>
+
+  <!-- Reasons -->
+  <div class="card">
+    <h2>為什麼會不對稱？</h2>
+    <p style="font-size:13px; color:var(--dim); margin-bottom:20px;">航線不對稱並非錯誤，通常反映了航空業的營運邏輯與經濟現實。</p>
+    <div id="reasons"></div>
+    <div class="insight">
+      <strong>小結：</strong>絕大多數航線（97.8%）是對稱的，只有少數航線因貨運需求、技術限制或跨國樞紐轉機結構而呈現不對稱。這些「例外」恰恰是航空網路最有趣的故事。
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <h2>所有不對稱航線一覽</h2>
+    <p style="font-size:12px; color:var(--dim); margin-bottom:16px;">按差異量排序，比率 = 差異 / (A&rarr;B + B&rarr;A)</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>A &rarr; B</th>
+            <th style="text-align:center">班次</th>
+            <th>B &rarr; A</th>
+            <th style="text-align:center">班次</th>
+            <th style="text-align:center">差距</th>
+            <th style="text-align:center">比率</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bottom-nav"><a href="09_lcc_vs_legacy.html">下一篇：廉航 vs 傳統航空 &rarr;</a></div>
+</div>
+
+<script>
+fetch('data/08_asymmetric_routes.json')
+  .then(r => r.json())
+  .then(data => {
+    const { routes, summary } = data;
+
+    // Hero
+    document.getElementById('heroTotal').textContent = summary.totalPairs;
+    document.getElementById('heroAsym').textContent = summary.asymmetricCount;
+    const pct = ((summary.asymmetricCount / summary.totalPairs) * 100).toFixed(1);
+    document.getElementById('heroPct').textContent = pct + '%';
+    document.getElementById('heroSub').innerHTML =
+      `在 ${summary.totalPairs} 對航線中，有 ${summary.asymmetricCount} 對存在明顯的去回程班次差異。<br>最大差距：<strong style="color:var(--red)">${summary.mostAsymmetric}</strong>`;
+
+    // Diverging bars
+    const maxVal = Math.max(...routes.map(r => Math.max(r.aToB, r.bToA)));
+    const container = document.getElementById('divergingBars');
+    routes.forEach(r => {
+      const leftPct = (r.aToB / maxVal * 100).toFixed(1);
+      const rightPct = (r.bToA / maxVal * 100).toFixed(1);
+      // Extract short names
+      const nameA = r.routeA.split('→')[0].trim();
+      const nameB = r.routeA.split('→')[1]?.trim() || '';
+      container.innerHTML += `
+        <div class="bar-pair">
+          <div class="bar-left-wrap">
+            <span class="bar-count bar-count-left">${r.aToB}</span>
+            <div class="bar-left" style="width:${leftPct}%"></div>
+          </div>
+          <div class="bar-center">${nameA}<br>&harr;<br>${nameB}</div>
+          <div class="bar-right-wrap">
+            <div class="bar-right" style="width:${rightPct}%"></div>
+            <span class="bar-count bar-count-right">${r.bToA}</span>
+          </div>
+        </div>`;
+    });
+
+    document.getElementById('insightBar').innerHTML =
+      `<strong>安克拉治 &harr; 桃園</strong>是差距最大的航線，去程 143 班 vs 回程 242 班，差了 99 班。安克拉治是北太平洋貨運樞紐，大量貨機經此中轉，單向貨運需求造成明顯不對稱。`;
+
+    // Reasons
+    const reasons = [
+      { icon: '&#128230;', title: '貨運單向需求', desc: '如安克拉治航線，ANC 是全球第四大貨運機場，台灣出口的電子零組件經此轉運北美，但回程載貨量較低，航班配置自然不對稱。' },
+      { icon: '&#9992;&#65039;', title: '技術經停與燃油策略', desc: '部分長程航線因風向（噴射氣流）差異，去程與回程飛行時間不同。航空公司可能在一個方向增加技術經停，導致班次計算差異。' },
+      { icon: '&#127963;&#65039;', title: '樞紐轉機結構', desc: '芝加哥（ORD）作為美國中部樞紐，旅客可能從不同城市經芝加哥飛台灣，但回程選擇直飛或其他樞紐，造成單向班次偏多。' },
+      { icon: '&#128197;', title: '季節性包機', desc: '部分觀光航線在旺季增加單向包機或加班機，例如離島航線在連假前「疏運」方向班次較多。' },
+      { icon: '&#127758;', title: '跨國協議限制', desc: '航權協議規定的班次上限不同方向可能有不同限制，新德里、阿布達比等航線受此影響較大。' },
+    ];
+    const reasonsEl = document.getElementById('reasons');
+    reasons.forEach(r => {
+      reasonsEl.innerHTML += `
+        <div class="reason-card">
+          <div class="reason-icon">${r.icon}</div>
+          <div>
+            <div class="reason-title">${r.title}</div>
+            <div class="reason-desc">${r.desc}</div>
+          </div>
+        </div>`;
+    });
+
+    // Table
+    const tbody = document.getElementById('tableBody');
+    routes.forEach(r => {
+      const diffClass = r.diff >= 50 ? 'diff-high' : r.diff >= 10 ? 'diff-med' : 'diff-low';
+      tbody.innerHTML += `
+        <tr>
+          <td>${r.routeA}</td>
+          <td style="text-align:center; font-weight:600; color:var(--accent)">${r.aToB}</td>
+          <td>${r.routeB}</td>
+          <td style="text-align:center; font-weight:600; color:var(--orange)">${r.bToA}</td>
+          <td style="text-align:center"><span class="diff-badge ${diffClass}">&Delta;${r.diff}</span></td>
+          <td style="text-align:center; color:var(--dim)">${(r.ratio * 100).toFixed(1)}%</td>
+        </tr>`;
+    });
+  });
+</script>
+</body>
+</html>

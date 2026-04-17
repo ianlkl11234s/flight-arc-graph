@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>華航 vs 長榮航線重疊分析</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #0a0a14; --bg2: #12121e;
+    --card: rgba(255,255,255,0.04); --card-hover: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.08); --border-hover: rgba(255,255,255,0.18);
+    --text: #e0e0e8; --text-dim: #888899; --text-muted: #555566;
+    --accent: #6c8cff; --accent2: #ff6c8c; --accent3: #5cffc8;
+    --cal: #e84855; --eva: #48b860;
+    --font: 'SF Mono','Fira Code','JetBrains Mono','Cascadia Code',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.7}
+  .bg-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+  .container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:48px 24px 60px}
+  nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px;font-size:0.75rem}
+  nav a{color:var(--text-dim);text-decoration:none;transition:color .2s}
+  nav a:hover{color:var(--accent)}
+  .badge{display:inline-block;padding:2px 10px;border-radius:20px;background:rgba(108,140,255,0.12);color:var(--accent);font-size:0.7rem;font-weight:700;margin-bottom:12px}
+  header{margin-bottom:56px}
+  header h1{font-size:clamp(1.4rem,3.5vw,2rem);font-weight:700;margin-bottom:12px;line-height:1.3}
+  header .lead{font-size:0.85rem;color:var(--text-dim);max-width:640px;line-height:1.8}
+  section{margin-bottom:56px}
+  section h2{font-size:1.15rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  section h2 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .insight{font-size:0.8rem;color:var(--text-dim);margin-bottom:24px;line-height:1.8}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;backdrop-filter:blur(12px);margin-bottom:20px}
+
+  /* Venn */
+  .venn-wrap{display:flex;justify-content:center;align-items:center;padding:32px 0;position:relative}
+  .venn-circle{width:220px;height:220px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:1}
+  .venn-cal{background:rgba(232,72,85,0.18);border:2px solid rgba(232,72,85,0.5);margin-right:-60px}
+  .venn-eva{background:rgba(72,184,96,0.18);border:2px solid rgba(72,184,96,0.5);margin-left:-60px}
+  .venn-mid{position:absolute;z-index:2;text-align:center}
+  .venn-circle .vnum{font-size:1.8rem;font-weight:700}
+  .venn-circle .vlbl{font-size:0.65rem;color:var(--text-dim);margin-top:2px}
+  .venn-cal .vnum{color:var(--cal)}
+  .venn-eva .vnum{color:var(--eva)}
+  .venn-mid .vnum{font-size:1.5rem;font-weight:700;color:var(--accent3)}
+  .venn-mid .vlbl{font-size:0.6rem;color:var(--text-dim)}
+
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+  .summary-item{text-align:center;padding:16px 12px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--border)}
+  .summary-item .snum{font-size:1.4rem;font-weight:700;color:var(--accent)}
+  .summary-item .slbl{font-size:0.65rem;color:var(--text-dim);margin-top:4px}
+
+  .chart-wrap{position:relative;width:100%;margin:16px 0}
+  .chart-wrap canvas{width:100%!important}
+  .chart-note{font-size:0.7rem;color:var(--text-muted);margin-top:8px;text-align:center}
+
+  /* Exclusive routes */
+  .excl-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .excl-col h3{font-size:0.85rem;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid}
+  .excl-col.cal-col h3{border-color:var(--cal);color:var(--cal)}
+  .excl-col.eva-col h3{border-color:var(--eva);color:var(--eva)}
+  .excl-list{list-style:none}
+  .excl-list li{font-size:0.75rem;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between}
+  .excl-list .route-name{color:var(--text)}
+  .excl-list .route-count{color:var(--text-dim)}
+  .excl-more{font-size:0.7rem;color:var(--text-muted);margin-top:8px;cursor:pointer;text-decoration:underline}
+
+  .conclusion{background:linear-gradient(135deg,rgba(108,140,255,0.08),rgba(92,255,200,0.06));border:1px solid rgba(108,140,255,0.15);border-radius:14px;padding:28px;font-size:0.82rem;line-height:1.9}
+  .conclusion h2{margin-bottom:12px}
+  .conclusion ul{list-style:none;padding:0}
+  .conclusion li{padding:4px 0}
+  .conclusion li::before{content:'→ ';color:var(--accent3)}
+
+  footer{text-align:center;margin-top:48px;padding-top:20px;border-top:1px solid var(--border)}
+  footer a{color:var(--text-dim);text-decoration:none;font-size:0.75rem;transition:color .2s}
+  footer a:hover{color:var(--accent)}
+
+  @media(max-width:640px){
+    .container{padding:32px 16px}
+    .venn-circle{width:160px;height:160px}
+    .venn-circle .vnum{font-size:1.3rem}
+    .excl-grid{grid-template-columns:1fr}
+    .summary-grid{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+  <nav>
+    <a href="index.html">&larr; 返回目錄</a>
+    <a href="02_rctp_waves.html">下一篇 &rarr;</a>
+  </nav>
+
+  <header>
+    <div class="badge">01</div>
+    <h1>華航 vs 長榮<br>航線重疊分析</h1>
+    <p class="lead">
+      中華航空與長榮航空是台灣民航的兩大支柱。這份分析比較了兩家在 40 天內的航線佈局，
+      看看它們在哪些航線上短兵相接、又各自守護了哪些獨佔市場。
+    </p>
+  </header>
+
+  <!-- Section 1: Overview -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent)"></span>總覽</h2>
+    <p class="insight">40 天觀測期間，華航飛 99 條航線、長榮飛 83 條航線，其中有 61 條航線兩家都在飛。</p>
+
+    <div class="card">
+      <div class="venn-wrap" id="vennWrap">
+        <div class="venn-circle venn-cal">
+          <div class="vnum" id="calOnlyNum">—</div>
+          <div class="vlbl">華航獨佔</div>
+        </div>
+        <div class="venn-mid">
+          <div class="vnum" id="overlapNum">—</div>
+          <div class="vlbl">重疊</div>
+        </div>
+        <div class="venn-circle venn-eva">
+          <div class="vnum" id="evaOnlyNum">—</div>
+          <div class="vlbl">長榮獨佔</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid" id="summaryGrid"></div>
+  </section>
+
+  <!-- Section 2: Overlap bar chart -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent2)"></span>重疊航線班次對比</h2>
+    <p class="insight">
+      以下是兩家航空在同一航線上的班次數量比較。紅色為華航、綠色為長榮。
+      部分航線兩家班次幾乎一樣多，競爭十分激烈。
+    </p>
+    <div class="card">
+      <div class="chart-wrap" style="height:600px">
+        <canvas id="overlapChart"></canvas>
+      </div>
+      <p class="chart-note">圖表顯示前 25 條重疊航線（依總班次排序）</p>
+    </div>
+  </section>
+
+  <!-- Section 3: Exclusive routes -->
+  <section>
+    <h2><span class="dot" style="background:var(--accent3)"></span>獨佔航線</h2>
+    <p class="insight">
+      獨佔航線反映了兩家航空的差異化策略。華航在區域航線佈局更廣，
+      長榮則在特定市場有獨到的眼光。
+    </p>
+    <div class="card">
+      <div class="excl-grid" id="exclGrid">
+        <div class="excl-col cal-col">
+          <h3>華航獨飛 <span id="calOnlyCount"></span> 條</h3>
+          <ul class="excl-list" id="calOnlyList"></ul>
+          <div class="excl-more" id="calMore" style="display:none" onclick="showAll('cal')">顯示全部...</div>
+        </div>
+        <div class="excl-col eva-col">
+          <h3>長榮獨飛 <span id="evaOnlyCount"></span> 條</h3>
+          <ul class="excl-list" id="evaOnlyList"></ul>
+          <div class="excl-more" id="evaMore" style="display:none" onclick="showAll('eva')">顯示全部...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Conclusion -->
+  <section>
+    <div class="conclusion" id="conclusion">
+      <h2><span class="dot" style="background:var(--accent3)"></span>競爭格局分析</h2>
+      <ul id="conclusionList"></ul>
+    </div>
+  </section>
+
+  <footer>
+    <a href="02_rctp_waves.html">下一篇：桃園機場起降波次 &rarr;</a>
+  </footer>
+</div>
+
+<script>
+let allData = null;
+let calAllShown = false, evaAllShown = false;
+
+fetch('data/01_cal_vs_eva.json')
+  .then(r => r.json())
+  .then(data => { allData = data; render(data); });
+
+function render(d) {
+  const s = d.summary;
+
+  // Venn numbers
+  document.getElementById('calOnlyNum').textContent = s.calOnlyCount;
+  document.getElementById('overlapNum').textContent = s.overlapCount;
+  document.getElementById('evaOnlyNum').textContent = s.evaOnlyCount;
+
+  // Summary grid
+  const items = [
+    { num: s.calTotal.toLocaleString(), label: '華航總班次' },
+    { num: s.evaTotal.toLocaleString(), label: '長榮總班次' },
+    { num: d.calRoutes.length, label: '華航航線數' },
+    { num: d.evaRoutes.length, label: '長榮航線數' },
+    { num: Math.round(s.overlapCount / d.calRoutes.length * 100) + '%', label: '華航航線重疊率' },
+    { num: Math.round(s.overlapCount / d.evaRoutes.length * 100) + '%', label: '長榮航線重疊率' },
+  ];
+  document.getElementById('summaryGrid').innerHTML = items.map(i =>
+    `<div class="summary-item"><div class="snum">${i.num}</div><div class="slbl">${i.label}</div></div>`
+  ).join('');
+
+  // Overlap chart
+  const top = d.overlap.sort((a,b) => (b.calCount+b.evaCount) - (a.calCount+a.evaCount)).slice(0, 25);
+  const ctx = document.getElementById('overlapChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: top.map(r => r.route),
+      datasets: [
+        { label: '華航', data: top.map(r => r.calCount), backgroundColor: 'rgba(232,72,85,0.7)', borderColor: 'rgba(232,72,85,1)', borderWidth: 1, borderRadius: 3 },
+        { label: '長榮', data: top.map(r => r.evaCount), backgroundColor: 'rgba(72,184,96,0.7)', borderColor: 'rgba(72,184,96,1)', borderWidth: 1, borderRadius: 3 },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { color: '#888899', font: { family: "'SF Mono',monospace", size: 11 }, boxWidth: 12, padding: 16 } },
+        tooltip: {
+          backgroundColor: '#1a1a2e',
+          titleColor: '#e0e0e8',
+          bodyColor: '#888899',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleFont: { family: "'SF Mono',monospace" },
+          bodyFont: { family: "'SF Mono',monospace" },
+          callbacks: {
+            afterBody: function(ctx) {
+              const route = top[ctx[0].dataIndex];
+              if (route.otherAirlines && route.otherAirlines.length) {
+                return '其他航空: ' + route.otherAirlines.map(a => a.code).join(', ');
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#888899', font: { family: "'SF Mono',monospace", size: 10 } } },
+        y: { grid: { display: false }, ticks: { color: '#e0e0e8', font: { family: "'SF Mono',monospace", size: 10 } } }
+      }
+    }
+  });
+
+  // Exclusive routes
+  document.getElementById('calOnlyCount').textContent = s.calOnlyCount;
+  document.getElementById('evaOnlyCount').textContent = s.evaOnlyCount;
+  renderExclList('calOnlyList', d.calOnly, 'calMore', 10);
+  renderExclList('evaOnlyList', d.evaOnly, 'evaMore', 10);
+
+  // Conclusion
+  const overlapRate = Math.round(s.overlapCount / Math.min(d.calRoutes.length, d.evaRoutes.length) * 100);
+  const topOverlap = top.slice(0, 3).map(r => r.route.replace('RCTP-', '')).join('、');
+  const conclusionItems = [
+    `兩家航空在 ${s.overlapCount} 條航線上直接競爭，重疊率高達 ${overlapRate}%（以長榮航線為分母）`,
+    `最激烈的戰場集中在 ${topOverlap} 等熱門國際航線`,
+    `華航獨佔 ${s.calOnlyCount} 條航線，網路覆蓋更廣；長榮獨佔 ${s.evaOnlyCount} 條，走精選路線策略`,
+    `華航 ${s.calTotal.toLocaleString()} 班 vs 長榮 ${s.evaTotal.toLocaleString()} 班，總班次旗鼓相當`,
+    `高重疊率意味著旅客在多數熱門航線上有充分的選擇空間`,
+  ];
+  document.getElementById('conclusionList').innerHTML = conclusionItems.map(t => `<li>${t}</li>`).join('');
+}
+
+function renderExclList(id, data, moreId, limit) {
+  const el = document.getElementById(id);
+  const show = data.slice(0, limit);
+  el.innerHTML = show.map(r =>
+    `<li><span class="route-name">${r.route}</span><span class="route-count">${r.count} 班 · ${r.avgPerDay}/日</span></li>`
+  ).join('');
+  if (data.length > limit) document.getElementById(moreId).style.display = 'block';
+}
+
+function showAll(type) {
+  const data = type === 'cal' ? allData.calOnly : allData.evaOnly;
+  const id = type === 'cal' ? 'calOnlyList' : 'evaOnlyList';
+  const el = document.getElementById(id);
+  el.innerHTML = data.map(r =>
+    `<li><span class="route-name">${r.route}</span><span class="route-count">${r.count} 班 · ${r.avgPerDay}/日</span></li>`
+  ).join('');
+  document.getElementById(type + 'More').style.display = 'none';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,3201 @@
+{
+  "rareTypes": [
+    {
+      "type": "GA5C",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "AS32",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "TBM7",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA17DA",
+          "route": "KOJ 鹿兒島→FUK 福岡",
+          "reg": "JA17DA"
+        }
+      ]
+    },
+    {
+      "type": "H160",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "US2",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "RJBE→RJBE",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "Q9",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA481A",
+          "route": "",
+          "reg": "JA481A"
+        }
+      ]
+    },
+    {
+      "type": "T206",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "P28U",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "NKM 名古屋小牧→NKM 名古屋小牧",
+          "reg": "JA201M"
+        }
+      ]
+    },
+    {
+      "type": "LJ45",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-03-14",
+          "callsign": "UNI137",
+          "route": "EDDK→LPMA",
+          "reg": "D-CUNI"
+        }
+      ]
+    },
+    {
+      "type": "FA8X",
+      "count": 1,
+      "category": "government/VIP",
+      "flights": [
+        {
+          "date": "2026-03-14",
+          "callsign": "HAI489",
+          "route": "VQPR→HAN 河內",
+          "reg": "VN-A489"
+        }
+      ]
+    },
+    {
+      "type": "MD60",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "N507CC",
+          "route": "",
+          "reg": "N507CC"
+        }
+      ]
+    },
+    {
+      "type": "LJ31",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "N731GA",
+          "route": "ATL 亞特蘭大→KMLB",
+          "reg": "N731GA"
+        }
+      ]
+    },
+    {
+      "type": "C56X",
+      "count": 1,
+      "category": "military",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "EJA575",
+          "route": "KPDK→ATL 亞特蘭大",
+          "reg": "N575QS"
+        }
+      ]
+    },
+    {
+      "type": "G150",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "PC12",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "N167AR",
+          "route": "ATL 亞特蘭大→KGMU",
+          "reg": "N167AR"
+        }
+      ]
+    },
+    {
+      "type": "PRM1",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "P32R",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "N5340M",
+          "route": "KGMU→ATL 亞特蘭大",
+          "reg": "N5340M"
+        }
+      ]
+    },
+    {
+      "type": "E545",
+      "count": 1,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "G280",
+      "count": 2,
+      "category": "government/VIP",
+      "flights": [
+        {
+          "date": "2026-02-19",
+          "callsign": "N3688",
+          "route": "WMKJ→HUN 花蓮",
+          "reg": "N3688"
+        },
+        {
+          "date": "2026-02-20",
+          "callsign": "N3688",
+          "route": "HUN 花蓮→SZB 梳邦",
+          "reg": "N3688"
+        }
+      ]
+    },
+    {
+      "type": "B732",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-23",
+          "callsign": "SL",
+          "route": "RPLC→TPE 桃園",
+          "reg": "ZS-PVU"
+        },
+        {
+          "date": "2026-02-23",
+          "callsign": "SL",
+          "route": "TPE 桃園→RPLC",
+          "reg": "ZS-PVU"
+        }
+      ]
+    },
+    {
+      "type": "BLCF",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "GTI4531",
+          "route": "NGO 中部→KPAE",
+          "reg": "N780BA"
+        },
+        {
+          "date": "2026-03-21",
+          "callsign": "GTI4366",
+          "route": "NGO 中部→TPE 桃園",
+          "reg": "N718BA"
+        }
+      ]
+    },
+    {
+      "type": "PA34",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA123E",
+          "route": "",
+          "reg": "JA123E"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "RODN→RORY",
+          "reg": "JA123E"
+        }
+      ]
+    },
+    {
+      "type": "C25A",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "JA359C"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "PAV631",
+          "route": "LEMG→LPMA",
+          "reg": "D-IMFE"
+        }
+      ]
+    },
+    {
+      "type": "B412",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "NKM 名古屋小牧→NKM 名古屋小牧",
+          "reg": "JA23AR"
+        }
+      ]
+    },
+    {
+      "type": "B190",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "MOJO66",
+          "route": "RJTY→IWK 岩國",
+          "reg": "86-0081"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "MOJO66",
+          "route": "IWK 岩國→RODN",
+          "reg": "86-0081"
+        }
+      ]
+    },
+    {
+      "type": "A189",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA24HB",
+          "route": "",
+          "reg": "JA24HB"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA24HB",
+          "route": "",
+          "reg": "JA24HB"
+        }
+      ]
+    },
+    {
+      "type": "B753",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL549",
+          "route": "ATL 亞特蘭大→KLAS",
+          "reg": "N595NW"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL545",
+          "route": "KLAS→ATL 亞特蘭大",
+          "reg": "N587NW"
+        }
+      ]
+    },
+    {
+      "type": "C68A",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "EJA503",
+          "route": "KAVL→ATL 亞特蘭大",
+          "reg": "N503QS"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "EJA503",
+          "route": "ATL 亞特蘭大→KSGJ",
+          "reg": "N503QS"
+        }
+      ]
+    },
+    {
+      "type": "AEST",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "LJ35",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "SPAR175",
+          "route": "KSKF→KADW",
+          "reg": "84-0071"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "SPAR175",
+          "route": "KADW→KBLV",
+          "reg": "84-0071"
+        }
+      ]
+    },
+    {
+      "type": "FA7X",
+      "count": 2,
+      "category": "government/VIP",
+      "flights": [
+        {
+          "date": "2026-03-14",
+          "callsign": "MSUNY",
+          "route": "WSSL→TSA 松山",
+          "reg": "M-SUNY"
+        },
+        {
+          "date": "2026-03-15",
+          "callsign": "MSUNY",
+          "route": "TSA 松山→WSSL",
+          "reg": "M-SUNY"
+        }
+      ]
+    },
+    {
+      "type": "GA8C",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-03-24",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-25",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "A19N",
+      "count": 2,
+      "category": "charter/test",
+      "flights": [
+        {
+          "date": "2026-03-25",
+          "callsign": "T71177",
+          "route": "RPLC→RMQ 臺中",
+          "reg": "T7-1177"
+        },
+        {
+          "date": "2026-03-26",
+          "callsign": "T71177",
+          "route": "RMQ 臺中→NZCH",
+          "reg": "T7-1177"
+        }
+      ]
+    },
+    {
+      "type": "C510",
+      "count": 3,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA303G",
+          "route": "NRT 成田→NKM 名古屋小牧",
+          "reg": "JA303G"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA303G",
+          "route": "NKM 名古屋小牧→RJBE",
+          "reg": "JA303G"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA303G",
+          "route": "RJBE→FUK 福岡",
+          "reg": "JA303G"
+        }
+      ]
+    },
+    {
+      "type": "S76",
+      "count": 3,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "F2TH",
+      "count": 3,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA16AC",
+          "route": "SHZ 靜岡→NKM 名古屋小牧",
+          "reg": "JA16AC"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA16AC",
+          "route": "NKM 名古屋小牧→SHZ 靜岡",
+          "reg": "JA16AC"
+        }
+      ]
+    },
+    {
+      "type": "H25B",
+      "count": 3,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N984CE",
+          "route": "KISM→ATL 亞特蘭大",
+          "reg": "N984CE"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N984CE",
+          "route": "ATL 亞特蘭大→KPTK",
+          "reg": "N984CE"
+        }
+      ]
+    },
+    {
+      "type": "DRON",
+      "count": 3,
+      "category": "military",
+      "flights": [
+        {
+          "date": "2026-03-24",
+          "callsign": "TU502",
+          "route": "",
+          "reg": "90-15801"
+        },
+        {
+          "date": "2026-03-25",
+          "callsign": "TU501",
+          "route": "HUN 花蓮→HUN 花蓮",
+          "reg": "90-15801"
+        },
+        {
+          "date": "2026-03-26",
+          "callsign": "TU501",
+          "route": "HUN 花蓮→HUN 花蓮",
+          "reg": "90-15801"
+        }
+      ]
+    },
+    {
+      "type": "B762",
+      "count": 4,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "CORAX51",
+          "route": "MYJ 松山(日)→MYJ 松山(日)",
+          "reg": "54-3615"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "CORAX52",
+          "route": "MYJ 松山(日)→MYJ 松山(日)",
+          "reg": "44-3614"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "CORAX53",
+          "route": "MYJ 松山(日)→MYJ 松山(日)",
+          "reg": "44-3613"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "RMY3092",
+          "route": "WMKP→HKG 香港",
+          "reg": "9M-RXD"
+        }
+      ]
+    },
+    {
+      "type": "BE20",
+      "count": 4,
+      "category": "military",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "TITUS87",
+          "route": "",
+          "reg": "83-0494"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "CNV7392",
+          "route": "RJSM→IWK 岩國",
+          "reg": "163556"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "CNV7392",
+          "route": "IWK 岩國→RJTA",
+          "reg": "163556"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "AS65",
+      "count": 4,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "JA758A"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "C700",
+      "count": 4,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA701G",
+          "route": "",
+          "reg": "JA701G"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA701G",
+          "route": "ROMY→RORS",
+          "reg": "JA701G"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA701G",
+          "route": "",
+          "reg": "JA701G"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA701G",
+          "route": "",
+          "reg": "JA701G"
+        }
+      ]
+    },
+    {
+      "type": "H500",
+      "count": 4,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "N369PD",
+          "route": "ATL 亞特蘭大→ATL 亞特蘭大",
+          "reg": "N369PD"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N369PD",
+          "route": "",
+          "reg": "N369PD"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N369PD",
+          "route": "ATL 亞特蘭大→65GA",
+          "reg": "N369PD"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N369PD",
+          "route": "",
+          "reg": "N369PD"
+        }
+      ]
+    },
+    {
+      "type": "R22",
+      "count": 5,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA311H",
+          "route": "RJBE→RJBE",
+          "reg": "JA311H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA311H",
+          "route": "",
+          "reg": "JA311H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA311H",
+          "route": "",
+          "reg": "JA311H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA311H",
+          "route": "",
+          "reg": "JA311H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA311H",
+          "route": "",
+          "reg": "JA311H"
+        }
+      ]
+    },
+    {
+      "type": "HDJT",
+      "count": 5,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA20YA",
+          "route": "RORS→RORS",
+          "reg": "JA20YA"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "C30J",
+      "count": 5,
+      "category": "military",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "167982"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "169227"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "IWK 岩國→RODN",
+          "reg": "168065"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "169227"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "169227"
+        }
+      ]
+    },
+    {
+      "type": "B06",
+      "count": 5,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-26",
+          "callsign": "",
+          "route": "",
+          "reg": "230"
+        },
+        {
+          "date": "2026-03-06",
+          "callsign": "",
+          "route": "",
+          "reg": "223"
+        },
+        {
+          "date": "2026-03-09",
+          "callsign": "TH67225",
+          "route": "",
+          "reg": "225"
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "B96198",
+          "route": "",
+          "reg": "B-96198"
+        },
+        {
+          "date": "2026-03-23",
+          "callsign": "TH67225",
+          "route": "",
+          "reg": "225"
+        }
+      ]
+    },
+    {
+      "type": "C680",
+      "count": 6,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "B505",
+      "count": 6,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA184A",
+          "route": "",
+          "reg": "JA184A"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA183A",
+          "route": "SDJ 仙台→SDJ 仙台",
+          "reg": "JA183A"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N",
+          "route": "SDJ 仙台→SDJ 仙台",
+          "reg": "JA181A"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA183A",
+          "route": "SDJ 仙台→SDJ 仙台",
+          "reg": "JA183A"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA183A",
+          "route": "SDJ 仙台→SDJ 仙台",
+          "reg": "JA183A"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA183A",
+          "route": "",
+          "reg": "JA183A"
+        }
+      ]
+    },
+    {
+      "type": "KC2",
+      "count": 6,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "COSMO19",
+          "route": "",
+          "reg": "58-1219"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "COMET17",
+          "route": "MYJ 松山(日)→MYJ 松山(日)",
+          "reg": "38-1217"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "COMET17",
+          "route": "MYJ 松山(日)→MYJ 松山(日)",
+          "reg": "38-1217"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "COMET16",
+          "route": "MYJ 松山(日)→MYJ 松山(日)",
+          "reg": "28-1216"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "COMET16",
+          "route": "MYJ 松山(日)→MYJ 松山(日)",
+          "reg": "28-1216"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "COMET17",
+          "route": "MYJ 松山(日)→MYJ 松山(日)",
+          "reg": "38-1217"
+        }
+      ]
+    },
+    {
+      "type": "EC25",
+      "count": 6,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "PC24",
+      "count": 6,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "DRK303",
+          "route": "VGHS→VQPR",
+          "reg": "A5-JUW"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "CNS25",
+          "route": "KCRP→ATL 亞特蘭大",
+          "reg": "N556AF"
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "DRK022",
+          "route": "",
+          "reg": "A5-JUW"
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "DRK023",
+          "route": "VQGP→VQPR",
+          "reg": "A5-JUW"
+        },
+        {
+          "date": "2026-03-16",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-17",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "A306",
+      "count": 6,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "UPS2308",
+          "route": "DFW 達拉斯→ATL 亞特蘭大",
+          "reg": "N152UP"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "FDX1605",
+          "route": "ATL 亞特蘭大→KIND",
+          "reg": "N671FE"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "UPS1307",
+          "route": "ATL 亞特蘭大→KSDF",
+          "reg": "N152UP"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "FDX1703",
+          "route": "KIND→ATL 亞特蘭大",
+          "reg": "N671FE"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "UPS1308",
+          "route": "KPHL→ATL 亞特蘭大",
+          "reg": "N148UP"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "UPS2307",
+          "route": "ATL 亞特蘭大→DFW 達拉斯",
+          "reg": "N148UP"
+        }
+      ]
+    },
+    {
+      "type": "A318",
+      "count": 6,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-03-01",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-02",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-02",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-05",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-08",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-16",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "P3",
+      "count": 6,
+      "category": "military",
+      "flights": [
+        {
+          "date": "2026-03-04",
+          "callsign": "XXXXXXXX",
+          "route": "",
+          "reg": "3306"
+        },
+        {
+          "date": "2026-03-04",
+          "callsign": "CAL935",
+          "route": "",
+          "reg": "3311"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "CAL583",
+          "route": "KHH 高雄→PIF 屏東",
+          "reg": "3307"
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "XXXXXXXX",
+          "route": "",
+          "reg": "3308"
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "XXXXXXXX",
+          "route": "KHH 高雄→PIF 屏東",
+          "reg": "3308"
+        },
+        {
+          "date": "2026-03-26",
+          "callsign": "CAL583",
+          "route": "",
+          "reg": "3307"
+        }
+      ]
+    },
+    {
+      "type": "AS50",
+      "count": 7,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA506E",
+          "route": "",
+          "reg": "JA506E"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "A5HBA",
+          "route": "",
+          "reg": "A5-HBA"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "A5HBA",
+          "route": "",
+          "reg": "A5-HBA"
+        }
+      ]
+    },
+    {
+      "type": "B407",
+      "count": 8,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-24",
+          "callsign": "GRA21",
+          "route": "",
+          "reg": "B-58901"
+        },
+        {
+          "date": "2026-03-04",
+          "callsign": "GRA11",
+          "route": "",
+          "reg": "B-58901"
+        },
+        {
+          "date": "2026-03-04",
+          "callsign": "GRA11",
+          "route": "HCN 恆春→KHH 高雄",
+          "reg": "B-58901"
+        },
+        {
+          "date": "2026-03-05",
+          "callsign": "GRA71",
+          "route": "KHH 高雄→KHH 高雄",
+          "reg": "B-58901"
+        },
+        {
+          "date": "2026-03-17",
+          "callsign": "GRA21",
+          "route": "",
+          "reg": "B-58901"
+        }
+      ]
+    },
+    {
+      "type": "EC75",
+      "count": 8,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "BLVE",
+          "route": "",
+          "reg": "B-LVE"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "BLVE",
+          "route": "",
+          "reg": "B-LVE"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "BLVE",
+          "route": "",
+          "reg": "B-LVE"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "BLVE",
+          "route": "HKG 香港→HKG 香港",
+          "reg": "B-LVE"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "BLVE",
+          "route": "",
+          "reg": "B-LVE"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "BLVE",
+          "route": "",
+          "reg": "B-LVE"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "BLVH",
+          "route": "",
+          "reg": "B-LVH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "BLVH",
+          "route": "",
+          "reg": "B-LVH"
+        }
+      ]
+    },
+    {
+      "type": "GA6C",
+      "count": 8,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-08",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-08",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-10",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-11",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-22",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-23",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "B733",
+      "count": 8,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-26",
+          "callsign": "",
+          "route": "",
+          "reg": "B-2958"
+        },
+        {
+          "date": "2026-03-01",
+          "callsign": "",
+          "route": "",
+          "reg": "B-2958"
+        },
+        {
+          "date": "2026-03-09",
+          "callsign": "SGD300",
+          "route": "RPLC→TPE 桃園",
+          "reg": "RP-C3753"
+        },
+        {
+          "date": "2026-03-09",
+          "callsign": "SGD301",
+          "route": "TPE 桃園→RPLC",
+          "reg": "RP-C3753"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "CSS265",
+          "route": "NGB 寧波→TPE 桃園",
+          "reg": "B-2941"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "CSS266",
+          "route": "TPE 桃園→NGB 寧波",
+          "reg": "B-2941"
+        },
+        {
+          "date": "2026-03-16",
+          "callsign": "SGD300",
+          "route": "RPLC→TPE 桃園",
+          "reg": "RP-C3753"
+        },
+        {
+          "date": "2026-03-16",
+          "callsign": "SGD301",
+          "route": "TPE 桃園→RPLC",
+          "reg": "RP-C3753"
+        }
+      ]
+    },
+    {
+      "type": "C130",
+      "count": 8,
+      "category": "military",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "NKM 名古屋小牧→NKM 名古屋小牧",
+          "reg": "75-1076"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "NKM 名古屋小牧→NKM 名古屋小牧",
+          "reg": "05-1084"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "CAMEL80",
+          "route": "",
+          "reg": "85-1080"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "CAMEL73",
+          "route": "",
+          "reg": "45-1073"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "CAMEL77",
+          "route": "",
+          "reg": "75-1077"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "CAMEL79",
+          "route": "NKM 名古屋小牧→NKM 名古屋小牧",
+          "reg": "85-1079"
+        },
+        {
+          "date": "2026-03-02",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-02",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "C17",
+      "count": 8,
+      "category": "military",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "RCH801",
+          "route": "KCHS→KADW",
+          "reg": "07-7183"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "RCH851",
+          "route": "",
+          "reg": "08-8195"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "RCH801",
+          "route": "KADW→ETAR",
+          "reg": "07-7183"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "RCH4136",
+          "route": "JFK 紐約→KADW",
+          "reg": "10-0216"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "RCH4136",
+          "route": "",
+          "reg": "10-0216"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "RCH1815",
+          "route": "EGAA→KADW",
+          "reg": "07-7182"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "TEDDY30",
+          "route": "KWRI→KADW",
+          "reg": "04-4134"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "TEDDY30",
+          "route": "",
+          "reg": "04-4134"
+        }
+      ]
+    },
+    {
+      "type": "GA7C",
+      "count": 9,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-20",
+          "callsign": "N125YU",
+          "route": "VVDN→TSA 松山",
+          "reg": "N125YU"
+        },
+        {
+          "date": "2026-02-20",
+          "callsign": "N125YU",
+          "route": "TSA 松山→RMQ 臺中",
+          "reg": "N125YU"
+        },
+        {
+          "date": "2026-02-20",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-15",
+          "callsign": "N125YU",
+          "route": "RMQ 臺中→TSA 松山",
+          "reg": "N125YU"
+        },
+        {
+          "date": "2026-03-15",
+          "callsign": "N125YU",
+          "route": "TSA 松山→FUK 福岡",
+          "reg": "N125YU"
+        },
+        {
+          "date": "2026-03-19",
+          "callsign": "N125YU",
+          "route": "FUK 福岡→TSA 松山",
+          "reg": "N125YU"
+        },
+        {
+          "date": "2026-03-19",
+          "callsign": "N125YU",
+          "route": "TSA 松山→RMQ 臺中",
+          "reg": "N125YU"
+        }
+      ]
+    },
+    {
+      "type": "C560",
+      "count": 9,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "FORGE31",
+          "route": "KADW→KSAT",
+          "reg": "01-00301"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "VM714",
+          "route": "KSGJ→KADW",
+          "reg": "166714"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "FORGE53",
+          "route": "KADW→KGRK",
+          "reg": "00-01053"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "VM767",
+          "route": "KADW→KAPF",
+          "reg": "166767"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "VM767",
+          "route": "KAPF→KADW",
+          "reg": "166767"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "NINJA90",
+          "route": "RJTA→IWK 岩國",
+          "reg": "96-00109"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "NINJA90",
+          "route": "IWK 岩國→RODN",
+          "reg": "96-00109"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "VM714",
+          "route": "KADW→KPNS",
+          "reg": "166714"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "VM767",
+          "route": "KADW→KPQL",
+          "reg": "166767"
+        }
+      ]
+    },
+    {
+      "type": "E195",
+      "count": 9,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "TAP93MA",
+          "route": "LPPT→LPMA",
+          "reg": "CS-TTW"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "TAP94KM",
+          "route": "LPMA→LPPT",
+          "reg": "CS-TTW"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "TAP1685",
+          "route": "LPPT→LPMA",
+          "reg": "CS-TTY"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "TAP68JP",
+          "route": "LPMA→LPPT",
+          "reg": "CS-TTY"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "TAP91SR",
+          "route": "LPPT→LPMA",
+          "reg": "CS-TAY"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "TAP93MA",
+          "route": "LPPT→LPMA",
+          "reg": "CS-TAY"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "TAP94KM",
+          "route": "LPMA→LPPT",
+          "reg": "CS-TAY"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "TAP1687",
+          "route": "LPPT→LPMA",
+          "reg": "CS-TAX"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "TAP88TM",
+          "route": "LPMA→LPPT",
+          "reg": "CS-TAX"
+        }
+      ]
+    },
+    {
+      "type": "A109",
+      "count": 10,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA88AR",
+          "route": "KOJ 鹿兒島→NGS 長崎",
+          "reg": "JA88AR"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA15AC",
+          "route": "SHZ 靜岡→NKM 名古屋小牧",
+          "reg": "JA15AC"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA88AR",
+          "route": "NGS 長崎→KOJ 鹿兒島",
+          "reg": "JA88AR"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA15AC",
+          "route": "NKM 名古屋小牧→SHZ 靜岡",
+          "reg": "JA15AC"
+        }
+      ]
+    },
+    {
+      "type": "AT75",
+      "count": 10,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "SWT130",
+          "route": "LPPT→LPMA",
+          "reg": "EC-MAF"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "SWT131",
+          "route": "LPMA→LPPT",
+          "reg": "EC-MAF"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "SWT130",
+          "route": "LPPT→LPMA",
+          "reg": "EC-MAF"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "SWT131",
+          "route": "LPMA→LPPT",
+          "reg": "EC-MAF"
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "SWT130",
+          "route": "LPPT→LPMA",
+          "reg": "EC-MAF"
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "SWT131",
+          "route": "LPMA→LPPT",
+          "reg": "EC-MAF"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "SWT132",
+          "route": "LPPT→LPMA",
+          "reg": "EC-MAF"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "SWT133",
+          "route": "LPMA→LPPT",
+          "reg": "EC-MAF"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "SWT130",
+          "route": "LPPT→LPMA",
+          "reg": "EC-MAF"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "SWT131",
+          "route": "LPMA→LPPT",
+          "reg": "EC-MAF"
+        }
+      ]
+    },
+    {
+      "type": "EC30",
+      "count": 11,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "A5BHV",
+          "route": "",
+          "reg": "A5-BHV"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "A5BHV",
+          "route": "",
+          "reg": "A5-BHV"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N222SH",
+          "route": "KGMU→ATL 亞特蘭大",
+          "reg": "N222SH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "A5BHV",
+          "route": "",
+          "reg": "A5-BHV"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "A5BHV",
+          "route": "",
+          "reg": "A5-BHV"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "A5BHU",
+          "route": "",
+          "reg": "A5-BHU"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "A5BHV",
+          "route": "VQPR→VQPR",
+          "reg": "A5-BHV"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "A5BHU",
+          "route": "",
+          "reg": "A5-BHU"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "A5BHU",
+          "route": "VQPR→VQPR",
+          "reg": "A5-BHU"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "A5BHU",
+          "route": "",
+          "reg": "A5-BHU"
+        },
+        {
+          "date": "2026-03-14",
+          "callsign": "A5BHU",
+          "route": "",
+          "reg": "A5-BHU"
+        }
+      ]
+    },
+    {
+      "type": "C25M",
+      "count": 12,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-19",
+          "callsign": "B88999A",
+          "route": "RMQ 臺中→TSA 松山",
+          "reg": "B-88999"
+        },
+        {
+          "date": "2026-02-19",
+          "callsign": "B88999B",
+          "route": "TSA 松山→OKA 那霸",
+          "reg": "B-88999"
+        },
+        {
+          "date": "2026-02-19",
+          "callsign": "B88999C",
+          "route": "OKA 那霸→TSA 松山",
+          "reg": "B-88999"
+        },
+        {
+          "date": "2026-02-26",
+          "callsign": "B88999",
+          "route": "TSA 松山→KOJ 鹿兒島",
+          "reg": "B-88999"
+        },
+        {
+          "date": "2026-02-28",
+          "callsign": "HL8219",
+          "route": "CJU 濟州→KHH 高雄",
+          "reg": "HL8219"
+        },
+        {
+          "date": "2026-02-28",
+          "callsign": "HL8219",
+          "route": "KHH 高雄→VVDN",
+          "reg": "HL8219"
+        },
+        {
+          "date": "2026-03-01",
+          "callsign": "B88999B",
+          "route": "OKA 那霸→TSA 松山",
+          "reg": "B-88999"
+        },
+        {
+          "date": "2026-03-11",
+          "callsign": "B88999",
+          "route": "TSA 松山→TTT 臺東",
+          "reg": "B-88999"
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "B88999",
+          "route": "TTT 臺東→TSA 松山",
+          "reg": "B-88999"
+        },
+        {
+          "date": "2026-03-23",
+          "callsign": "B88999A",
+          "route": "TSA 松山→TSA 松山",
+          "reg": "B-88999"
+        },
+        {
+          "date": "2026-03-24",
+          "callsign": "B88999A",
+          "route": "TSA 松山→TNN 臺南",
+          "reg": "B-88999"
+        },
+        {
+          "date": "2026-03-24",
+          "callsign": "B88999B",
+          "route": "TNN 臺南→TSA 松山",
+          "reg": "B-88999"
+        }
+      ]
+    },
+    {
+      "type": "B39M",
+      "count": 12,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "HGB008",
+          "route": "HKG 香港→CTS 新千歲",
+          "reg": "B-KWA"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "UAL1287",
+          "route": "KEWR→ATL 亞特蘭大",
+          "reg": "N37577"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "HGB2500",
+          "route": "HKG 香港→VRMM",
+          "reg": "B-KWB"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "HGB009",
+          "route": "CTS 新千歲→HKG 香港",
+          "reg": "B-KWA"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "UAL299",
+          "route": "ATL 亞特蘭大→KEWR",
+          "reg": "N37577"
+        },
+        {
+          "date": "2026-02-19",
+          "callsign": "ASA334",
+          "route": "SEA 西雅圖→ATL 亞特蘭大",
+          "reg": "N946AK"
+        },
+        {
+          "date": "2026-02-19",
+          "callsign": "HGB2366",
+          "route": "HKG 香港→FUK 福岡",
+          "reg": "B-KWA"
+        },
+        {
+          "date": "2026-02-19",
+          "callsign": "HGB2367",
+          "route": "FUK 福岡→HKG 香港",
+          "reg": "B-KWA"
+        },
+        {
+          "date": "2026-02-27",
+          "callsign": "HGB708",
+          "route": "HKG 香港→TPE 桃園",
+          "reg": "B-KWB"
+        },
+        {
+          "date": "2026-02-28",
+          "callsign": "HGB709",
+          "route": "TPE 桃園→HKG 香港",
+          "reg": "B-KWB"
+        },
+        {
+          "date": "2026-03-08",
+          "callsign": "HGB702",
+          "route": "HKG 香港→TPE 桃園",
+          "reg": "B-KWA"
+        },
+        {
+          "date": "2026-03-08",
+          "callsign": "HGB703",
+          "route": "TPE 桃園→HKG 香港",
+          "reg": "B-KWA"
+        }
+      ]
+    },
+    {
+      "type": "C25C",
+      "count": 12,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA010G",
+          "route": "CTS 新千歲→RJCM",
+          "reg": "JA010G"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA010G",
+          "route": "RJCM→HND 羽田",
+          "reg": "JA010G"
+        },
+        {
+          "date": "2026-03-01",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-02",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-03",
+          "callsign": "JA77KC",
+          "route": "OKA 那霸→TPE 桃園",
+          "reg": "JA77KC"
+        },
+        {
+          "date": "2026-03-03",
+          "callsign": "JA77KC",
+          "route": "TPE 桃園→ISG 石垣",
+          "reg": "JA77KC"
+        },
+        {
+          "date": "2026-03-09",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-09",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-16",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-16",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-27",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-27",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "BE58",
+      "count": 13,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA5806",
+          "route": "",
+          "reg": "JA5806"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA17DF",
+          "route": "SDJ 仙台→RJSI",
+          "reg": "JA17DF"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "JA5808"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA52HA",
+          "route": "",
+          "reg": "JA52HA"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA17DF",
+          "route": "RJSI→SDJ 仙台",
+          "reg": "JA17DF"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA5812",
+          "route": "SDJ 仙台→KIJ 新潟",
+          "reg": "JA5812"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "JA5808"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA215H",
+          "route": "RJBE→RJOK",
+          "reg": "JA215H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA5806",
+          "route": "",
+          "reg": "JA5806"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA17DF",
+          "route": "",
+          "reg": "JA17DF"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA5812",
+          "route": "KIJ 新潟→SDJ 仙台",
+          "reg": "JA5812"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA215H",
+          "route": "RJOK→RJBE",
+          "reg": "JA215H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA17DF",
+          "route": "RJSF→SDJ 仙台",
+          "reg": "JA17DF"
+        }
+      ]
+    },
+    {
+      "type": "GL5T",
+      "count": 14,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "T73338",
+          "route": "VDTI→HKG 香港",
+          "reg": "T7-3338"
+        },
+        {
+          "date": "2026-02-19",
+          "callsign": "9MLSB",
+          "route": "SZB 梳邦→HUN 花蓮",
+          "reg": "9M-LSB"
+        },
+        {
+          "date": "2026-02-20",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-20",
+          "callsign": "9MLSB",
+          "route": "HUN 花蓮→SZB 梳邦",
+          "reg": "9M-LSB"
+        },
+        {
+          "date": "2026-02-22",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-27",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-04",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-04",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-06",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-07",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-07",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-27",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "0000",
+      "count": 14,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "HM11",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "ID",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-02",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-06",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-11",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-16",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-17",
+          "callsign": "",
+          "route": "CYI 嘉義→CYI 嘉義",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-18",
+          "callsign": "",
+          "route": "CYI 嘉義→RMQ 臺中",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-23",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-24",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-25",
+          "callsign": "",
+          "route": "RMQ 臺中→RMQ 臺中",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-26",
+          "callsign": "",
+          "route": "RMQ 臺中→RMQ 臺中",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "A139",
+      "count": 15,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "ENRGY14",
+          "route": "KADW→KADW",
+          "reg": "N2314"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "ENRGY14",
+          "route": "",
+          "reg": "N2314"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "ENRGY14",
+          "route": "KADW→KADW",
+          "reg": "N2314"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA893K",
+          "route": "",
+          "reg": "JA893K"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA06FD",
+          "route": "",
+          "reg": "JA06FD"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA15AR",
+          "route": "KIJ 新潟→KIJ 新潟",
+          "reg": "JA15AR"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA139R",
+          "route": "SHZ 靜岡→SHZ 靜岡",
+          "reg": "JA139R"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA06FD",
+          "route": "",
+          "reg": "JA06FD"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA06FD",
+          "route": "RJOK→RJOK",
+          "reg": "JA06FD"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA31TA",
+          "route": "RJOR→RJOR",
+          "reg": "JA31TA"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA139R",
+          "route": "SHZ 靜岡→SHZ 靜岡",
+          "reg": "JA139R"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA89HA",
+          "route": "",
+          "reg": "JA89HA"
+        }
+      ]
+    },
+    {
+      "type": "B764",
+      "count": 15,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL1510",
+          "route": "KMIA→ATL 亞特蘭大",
+          "reg": "N836MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL403",
+          "route": "JFK 紐約→ATL 亞特蘭大",
+          "reg": "N845MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL446",
+          "route": "LAX 洛杉磯→ATL 亞特蘭大",
+          "reg": "N825MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL2398",
+          "route": "ATL 亞特蘭大→JFK 紐約",
+          "reg": "N835MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL130",
+          "route": "ATL 亞特蘭大→EDDM",
+          "reg": "N832MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL194",
+          "route": "ATL 亞特蘭大→LEBL",
+          "reg": "N836MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL174",
+          "route": "ATL 亞特蘭大→LIMC",
+          "reg": "N830MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL36",
+          "route": "ATL 亞特蘭大→LHR 倫敦",
+          "reg": "N845MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL187",
+          "route": "GMMX→ATL 亞特蘭大",
+          "reg": "N833MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL175",
+          "route": "LIMC→ATL 亞特蘭大",
+          "reg": "N830MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL195",
+          "route": "LEBL→ATL 亞特蘭大",
+          "reg": "N836MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL131",
+          "route": "EDDM→ATL 亞特蘭大",
+          "reg": "N832MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL31",
+          "route": "LHR 倫敦→ATL 亞特蘭大",
+          "reg": "N843MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL898",
+          "route": "ATL 亞特蘭大→LAX 洛杉磯",
+          "reg": "N825MH"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "DAL1510",
+          "route": "ATL 亞特蘭大→KMIA",
+          "reg": "N841MH"
+        }
+      ]
+    },
+    {
+      "type": "CL35",
+      "count": 16,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-20",
+          "callsign": "VJT486",
+          "route": "HND 羽田→TSA 松山",
+          "reg": "9H-VCF"
+        },
+        {
+          "date": "2026-02-20",
+          "callsign": "VJT486",
+          "route": "TSA 松山→MNL 馬尼拉",
+          "reg": "9H-VCF"
+        },
+        {
+          "date": "2026-02-25",
+          "callsign": "VJT474",
+          "route": "NRT 成田→TSA 松山",
+          "reg": "9H-VCE"
+        },
+        {
+          "date": "2026-02-25",
+          "callsign": "VJT486",
+          "route": "MNL 馬尼拉→TSA 松山",
+          "reg": "9H-VCF"
+        },
+        {
+          "date": "2026-02-26",
+          "callsign": "VJT486",
+          "route": "TSA 松山→HND 羽田",
+          "reg": "9H-VCF"
+        },
+        {
+          "date": "2026-02-26",
+          "callsign": "VJT443",
+          "route": "HKG 香港→TSA 松山",
+          "reg": "9H-VCX"
+        },
+        {
+          "date": "2026-02-27",
+          "callsign": "VJT443",
+          "route": "TSA 松山→OKA 那霸",
+          "reg": "9H-VCX"
+        },
+        {
+          "date": "2026-02-27",
+          "callsign": "VJT474",
+          "route": "TSA 松山→NRT 成田",
+          "reg": "9H-VCE"
+        },
+        {
+          "date": "2026-02-28",
+          "callsign": "VJT443",
+          "route": "OKA 那霸→TSA 松山",
+          "reg": "9H-VCX"
+        },
+        {
+          "date": "2026-03-01",
+          "callsign": "VJT443",
+          "route": "TSA 松山→WSSL",
+          "reg": "9H-VCX"
+        },
+        {
+          "date": "2026-03-07",
+          "callsign": "VJT486",
+          "route": "HND 羽田→TSA 松山",
+          "reg": "9H-VCF"
+        },
+        {
+          "date": "2026-03-08",
+          "callsign": "VJT486",
+          "route": "TSA 松山→HND 羽田",
+          "reg": "9H-VCF"
+        },
+        {
+          "date": "2026-03-09",
+          "callsign": "VJT486",
+          "route": "HND 羽田→TSA 松山",
+          "reg": "9H-VCF"
+        },
+        {
+          "date": "2026-03-09",
+          "callsign": "VJT486",
+          "route": "TSA 松山→HKG 香港",
+          "reg": "9H-VCF"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "VJT423",
+          "route": "LPPT→LPMA",
+          "reg": "9H-VCR"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "VJT423",
+          "route": "LPMA→LPFR",
+          "reg": "9H-VCR"
+        }
+      ]
+    },
+    {
+      "type": "ASTR",
+      "count": 16,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-24",
+          "callsign": "MDA304",
+          "route": "RMQ 臺中→RMQ 臺中",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-10",
+          "callsign": "",
+          "route": "",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-10",
+          "callsign": "",
+          "route": "HND 羽田→RMQ 臺中",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "EVA802",
+          "route": "RMQ 臺中→RMQ 臺中",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "N974MT",
+          "route": "CTS 新千歲→RMQ 臺中",
+          "reg": "N974MT"
+        },
+        {
+          "date": "2026-03-12",
+          "callsign": "EVA802",
+          "route": "",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-13",
+          "callsign": "N974MT",
+          "route": "RMQ 臺中→WSSL",
+          "reg": "N974MT"
+        },
+        {
+          "date": "2026-03-16",
+          "callsign": "UIA8958",
+          "route": "RMQ 臺中→RMQ 臺中",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-18",
+          "callsign": "",
+          "route": "RMQ 臺中→RMQ 臺中",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-19",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-19",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-19",
+          "callsign": "CAL852",
+          "route": "RMQ 臺中→RMQ 臺中",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-19",
+          "callsign": "CAL852",
+          "route": "",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-20",
+          "callsign": "",
+          "route": "",
+          "reg": "B-20001"
+        },
+        {
+          "date": "2026-03-20",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-03-21",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        }
+      ]
+    },
+    {
+      "type": "EC35",
+      "count": 16,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "JA851H",
+          "route": "MYJ 松山(日)→MYJ 松山(日)",
+          "reg": "JA851H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA02MK",
+          "route": "",
+          "reg": "JA02MK"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "JA135H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "RJBE→RJBE",
+          "reg": "JA824H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "JA135H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": ""
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "RJBE→RJBE",
+          "reg": "JA824H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "JA824H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA851H",
+          "route": "",
+          "reg": "JA851H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA35RQ",
+          "route": "OKA 那霸→OKA 那霸",
+          "reg": "JA35RQ"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA35RQ",
+          "route": "OKA 那霸→OKA 那霸",
+          "reg": "JA35RQ"
+        }
+      ]
+    },
+    {
+      "type": "C172",
+      "count": 17,
+      "category": "unusual commercial",
+      "flights": [
+        {
+          "date": "2026-02-18",
+          "callsign": "N4454R",
+          "route": "ATL 亞特蘭大→KAHN",
+          "reg": "N4454R"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N62244",
+          "route": "",
+          "reg": "N62244"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N",
+          "route": "KMI 熊本→RJDA",
+          "reg": "JA31UK"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N",
+          "route": "",
+          "reg": "JA48UK"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA46UK",
+          "route": "",
+          "reg": "JA46UK"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA38HA",
+          "route": "OIT 大分→OIT 大分",
+          "reg": "JA38HA"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA111H",
+          "route": "RJBE→RJBT",
+          "reg": "JA111H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N",
+          "route": "RJFS→RJDA",
+          "reg": "JA45UK"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA107H",
+          "route": "KMI 熊本→KMI 熊本",
+          "reg": "JA107H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA116H",
+          "route": "RJBE→RJBE",
+          "reg": "JA116H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA111H",
+          "route": "RJBT→RJBE",
+          "reg": "JA111H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N",
+          "route": "",
+          "reg": "JA31UK"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA38HA",
+          "route": "OIT 大分→OIT 大分",
+          "reg": "JA38HA"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "",
+          "route": "",
+          "reg": "JA34UK"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA111H",
+          "route": "RJBE→RJBD",
+          "reg": "JA111H"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "N",
+          "route": "KMI 熊本→KMI 熊本",
+          "reg": "JA48UK"
+        },
+        {
+          "date": "2026-02-18",
+          "callsign": "JA111H",
+          "route": "RJBD→RJBE",
+          "reg": "JA111H"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalRareFlights": 436,
+    "categories": [
+      {
+        "category": "unusual commercial",
+        "count": 354
+      },
+      {
+        "category": "charter/test",
+        "count": 42
+      },
+      {
+        "category": "military",
+        "count": 35
+      },
+      {
+        "category": "government/VIP",
+        "count": 5
+      }
+    ]
+  }
+}

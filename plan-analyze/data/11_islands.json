@@ -1,0 +1,521 @@
+{
+  "islands": [
+    {
+      "icao": "RCBS",
+      "airport": "KNH 金門",
+      "totalFlights": 3243,
+      "avgDaily": 81.1,
+      "connections": [
+        {
+          "dest": "RCSS",
+          "destName": "TSA 松山",
+          "count": 1340,
+          "airlines": [
+            "",
+            "CAL",
+            "EVA",
+            "MDA",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCMQ",
+          "destName": "RMQ 臺中",
+          "count": 812,
+          "airlines": [
+            "CAL",
+            "EVA",
+            "MDA",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCKH",
+          "destName": "KHH 高雄",
+          "count": 774,
+          "airlines": [
+            "EVA",
+            "MDA",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCNN",
+          "destName": "TTT 臺東",
+          "count": 229,
+          "airlines": [
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCKU",
+          "destName": "CYI 嘉義",
+          "count": 76,
+          "airlines": [
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCFN",
+          "destName": "TNN 臺南",
+          "count": 6,
+          "airlines": [
+            "EVA"
+          ]
+        },
+        {
+          "dest": "RCQC",
+          "destName": "MZG 馬公",
+          "count": 4,
+          "airlines": [
+            "UIA"
+          ]
+        },
+        {
+          "dest": "",
+          "destName": "",
+          "count": 2,
+          "airlines": [
+            "CSS"
+          ]
+        }
+      ],
+      "peakHour": 15,
+      "airlines": [
+        {
+          "code": "UIA",
+          "count": 1424
+        },
+        {
+          "code": "MDA",
+          "count": 1248
+        },
+        {
+          "code": "EVA",
+          "count": 367
+        },
+        {
+          "code": "CAL",
+          "count": 196
+        },
+        {
+          "code": "",
+          "count": 6
+        },
+        {
+          "code": "CSS",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "icao": "RCCM",
+      "airport": "CMJ 七美",
+      "totalFlights": 236,
+      "avgDaily": 5.9,
+      "connections": [
+        {
+          "dest": "RCKH",
+          "destName": "KHH 高雄",
+          "count": 167,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "RCQC",
+          "destName": "MZG 馬公",
+          "count": 60,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "",
+          "destName": "",
+          "count": 8,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "RCCM",
+          "destName": "CMJ 七美",
+          "count": 1,
+          "airlines": [
+            ""
+          ]
+        }
+      ],
+      "peakHour": 11,
+      "airlines": [
+        {
+          "code": "",
+          "count": 236
+        }
+      ]
+    },
+    {
+      "icao": "RCFG",
+      "airport": "LZN 南竿",
+      "totalFlights": 438,
+      "avgDaily": 10.9,
+      "connections": [
+        {
+          "dest": "RCSS",
+          "destName": "TSA 松山",
+          "count": 346,
+          "airlines": [
+            "",
+            "MDA",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCMQ",
+          "destName": "RMQ 臺中",
+          "count": 64,
+          "airlines": [
+            "UIA"
+          ]
+        },
+        {
+          "dest": "",
+          "destName": "",
+          "count": 13,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "RCKH",
+          "destName": "KHH 高雄",
+          "count": 10,
+          "airlines": [
+            "MDA"
+          ]
+        },
+        {
+          "dest": "RCFG",
+          "destName": "LZN 南竿",
+          "count": 4,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "RCMT",
+          "destName": "MFK 北竿",
+          "count": 1,
+          "airlines": [
+            ""
+          ]
+        }
+      ],
+      "peakHour": 12,
+      "airlines": [
+        {
+          "code": "UIA",
+          "count": 339
+        },
+        {
+          "code": "MDA",
+          "count": 74
+        },
+        {
+          "code": "",
+          "count": 25
+        }
+      ]
+    },
+    {
+      "icao": "RCGI",
+      "airport": "GNI 綠島",
+      "totalFlights": 182,
+      "avgDaily": 4.5,
+      "connections": [
+        {
+          "dest": "RCFN",
+          "destName": "TNN 臺南",
+          "count": 178,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "",
+          "destName": "",
+          "count": 4,
+          "airlines": [
+            ""
+          ]
+        }
+      ],
+      "peakHour": 12,
+      "airlines": [
+        {
+          "code": "",
+          "count": 182
+        }
+      ]
+    },
+    {
+      "icao": "RCLY",
+      "airport": "KYD 蘭嶼",
+      "totalFlights": 243,
+      "avgDaily": 6.1,
+      "connections": [
+        {
+          "dest": "RCFN",
+          "destName": "TNN 臺南",
+          "count": 242,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "",
+          "destName": "",
+          "count": 1,
+          "airlines": [
+            ""
+          ]
+        }
+      ],
+      "peakHour": 13,
+      "airlines": [
+        {
+          "code": "",
+          "count": 243
+        }
+      ]
+    },
+    {
+      "icao": "RCMT",
+      "airport": "MFK 北竿",
+      "totalFlights": 145,
+      "avgDaily": 3.6,
+      "connections": [
+        {
+          "dest": "RCSS",
+          "destName": "TSA 松山",
+          "count": 144,
+          "airlines": [
+            "",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCFG",
+          "destName": "LZN 南竿",
+          "count": 1,
+          "airlines": [
+            ""
+          ]
+        }
+      ],
+      "peakHour": 16,
+      "airlines": [
+        {
+          "code": "UIA",
+          "count": 143
+        },
+        {
+          "code": "",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "icao": "RCQC",
+      "airport": "MZG 馬公",
+      "totalFlights": 3763,
+      "avgDaily": 94.1,
+      "connections": [
+        {
+          "dest": "RCSS",
+          "destName": "TSA 松山",
+          "count": 1368,
+          "airlines": [
+            "",
+            "CAL",
+            "EVA",
+            "MDA",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCKH",
+          "destName": "KHH 高雄",
+          "count": 1277,
+          "airlines": [
+            "",
+            "CAL",
+            "EVA",
+            "MDA",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCMQ",
+          "destName": "RMQ 臺中",
+          "count": 725,
+          "airlines": [
+            "",
+            "CAL",
+            "EVA",
+            "MDA",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCNN",
+          "destName": "TTT 臺東",
+          "count": 246,
+          "airlines": [
+            "",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCKU",
+          "destName": "CYI 嘉義",
+          "count": 77,
+          "airlines": [
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCCM",
+          "destName": "CMJ 七美",
+          "count": 60,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "RCBS",
+          "destName": "KNH 金門",
+          "count": 4,
+          "airlines": [
+            "UIA"
+          ]
+        },
+        {
+          "dest": "RCWA",
+          "destName": "WOT 望安",
+          "count": 3,
+          "airlines": [
+            "",
+            "UIA"
+          ]
+        },
+        {
+          "dest": "",
+          "destName": "",
+          "count": 3,
+          "airlines": [
+            ""
+          ]
+        }
+      ],
+      "peakHour": 8,
+      "airlines": [
+        {
+          "code": "UIA",
+          "count": 1781
+        },
+        {
+          "code": "MDA",
+          "count": 1748
+        },
+        {
+          "code": "",
+          "count": 93
+        },
+        {
+          "code": "EVA",
+          "count": 92
+        },
+        {
+          "code": "CAL",
+          "count": 49
+        }
+      ]
+    },
+    {
+      "icao": "RCWA",
+      "airport": "WOT 望安",
+      "totalFlights": 27,
+      "avgDaily": 0.7,
+      "connections": [
+        {
+          "dest": "RCKH",
+          "destName": "KHH 高雄",
+          "count": 20,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "",
+          "destName": "",
+          "count": 4,
+          "airlines": [
+            ""
+          ]
+        },
+        {
+          "dest": "RCQC",
+          "destName": "MZG 馬公",
+          "count": 3,
+          "airlines": [
+            "",
+            "UIA"
+          ]
+        }
+      ],
+      "peakHour": 11,
+      "airlines": [
+        {
+          "code": "",
+          "count": 26
+        },
+        {
+          "code": "UIA",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "crossIsland": [
+    {
+      "route": "CMJ 七美↔MZG 馬公",
+      "count": 60
+    },
+    {
+      "route": "KNH 金門↔MZG 馬公",
+      "count": 4
+    },
+    {
+      "route": "MZG 馬公↔WOT 望安",
+      "count": 3
+    },
+    {
+      "route": "LZN 南竿↔LZN 南竿",
+      "count": 2
+    },
+    {
+      "route": "LZN 南竿↔MFK 北竿",
+      "count": 1
+    },
+    {
+      "route": "CMJ 七美↔CMJ 七美",
+      "count": 1
+    }
+  ],
+  "summary": {
+    "totalIslandFlights": 8209,
+    "pctOfDomestic": "90.8%"
+  }
+}
