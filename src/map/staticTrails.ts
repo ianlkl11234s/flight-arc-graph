@@ -48,7 +48,11 @@ export function setMapTrailColors(hexA: string, hexB: string) {
 /**
  * 將航班路徑轉為 GeoJSON FeatureCollection
  */
-function flightsToGeoJSON(flights: Flight[], isDark = true): GeoJSON.FeatureCollection {
+function flightsToGeoJSON(
+  flights: Flight[],
+  isDark = true,
+  compareColorMap?: Map<string, string>,
+): GeoJSON.FeatureCollection {
   const lerpColor = isDark ? (customLerpDark ?? lerpColorDark) : lerpColorLight;
   return {
     type: "FeatureCollection",
@@ -60,7 +64,7 @@ function flightsToGeoJSON(flights: Flight[], isDark = true): GeoJSON.FeatureColl
           callsign: f.callsign,
           origin: f.origin_iata,
           dest: f.dest_iata,
-          color: lerpColor(hashToUnit(f.fr24_id)),
+          color: compareColorMap?.get(f.fr24_id) ?? lerpColor(hashToUnit(f.fr24_id)),
         },
         geometry: {
           type: "LineString" as const,
@@ -74,9 +78,16 @@ function flightsToGeoJSON(flights: Flight[], isDark = true): GeoJSON.FeatureColl
 /**
  * 新增或更新靜態軌跡圖層
  * @param background - 3D 模式下作為背景路線，降低透明度
+ * @param compareColorMap - Compare 模式下，fr24_id → 日期色對應表
  */
-export function updateStaticTrails(map: MapboxMap, flights: Flight[], isDark = true, background = false) {
-  const geojson = flightsToGeoJSON(flights, isDark);
+export function updateStaticTrails(
+  map: MapboxMap,
+  flights: Flight[],
+  isDark = true,
+  background = false,
+  compareColorMap?: Map<string, string>,
+) {
+  const geojson = flightsToGeoJSON(flights, isDark, compareColorMap);
 
   const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
 

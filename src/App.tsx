@@ -402,6 +402,22 @@ export default function App() {
       timeline.windowStart, timeline.windowEnd,
       timeline.isMultiDateMode, timeline.dateWindowStarts, timeline.dateWindowEnds]);
 
+  // Compare 模式：每個日期對應一個固定顏色，產生 fr24_id → hex Map
+  const COMPARE_COLORS = ["#4488ff", "#ff4444", "#f5a623", "#44cc88"];
+  const compareColorMap = useMemo((): Map<string, string> | undefined => {
+    if (!timeline.isMultiDateMode || timeline.dateWindowStarts.length === 0) return undefined;
+    const map = new Map<string, string>();
+    for (const f of displayedFlights) {
+      const t = f.dep_time || f.path[0]?.[3];
+      if (!t) continue;
+      const idx = timeline.dateWindowStarts.findIndex(
+        (start, i) => t >= start && t <= timeline.dateWindowEnds[i]!,
+      );
+      if (idx >= 0) map.set(f.fr24_id, COMPARE_COLORS[idx % COMPARE_COLORS.length]!);
+    }
+    return map;
+  }, [timeline.isMultiDateMode, timeline.dateWindowStarts, timeline.dateWindowEnds, displayedFlights]);
+
   // Aircraft type filter
   const typeFilteredFlights = useMemo(
     () => filterByAircraftType(displayedFlights, aircraftFilter),
@@ -706,6 +722,7 @@ export default function App() {
         airportGlow={airportGlow}
         isDarkTheme={isDarkTheme}
         showTrails={showTrails}
+        compareColorMap={compareColorMap}
         onMapReady={handleMapReady}
       />
 

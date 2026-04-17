@@ -54,12 +54,12 @@ export function useFlightData(
       setAllAirports(getManifestAirports(m));
       // 各 region 日期
       const rdm: Record<string, string[]> = {};
-      for (const r of ["TW", "JP", "HK", "US", "world"]) {
+      for (const r of ["TW", "JP", "HK", "US", "UK", "world"]) {
         rdm[r] = getRegionDates(m, r);
       }
       setRegionDatesMap(rdm);
       const rfdm: Record<string, string[]> = {};
-      for (const r of ["TW", "JP", "HK", "US", "world"]) {
+      for (const r of ["TW", "JP", "HK", "US", "UK", "world"]) {
         rfdm[r] = getRegionFullDates(m, r);
       }
       setRegionFullDatesMap(rfdm);
@@ -85,7 +85,7 @@ export function useFlightData(
     } else {
       // region: 加總所有匹配機場的航班數
       const REGION_PREFIX: Record<string, string[]> = {
-        TW: ["RC"], JP: ["RJ", "RO"], HK: ["VH"], US: ["K"], world: [], all: [],
+        TW: ["RC"], JP: ["RJ", "RO"], HK: ["VH"], US: ["K"], UK: ["EG"], world: [], all: [],
       };
       const prefixes = REGION_PREFIX[region] ?? [];
       if (prefixes.length > 0 && manifest) {

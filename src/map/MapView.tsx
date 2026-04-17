@@ -13,6 +13,7 @@ interface MapViewProps {
   airportGlow: number;
   isDarkTheme?: boolean;
   showTrails?: boolean;
+  compareColorMap?: Map<string, string>;
   onMapReady?: (map: mapboxgl.Map) => void;
 }
 
@@ -129,7 +130,7 @@ function setupTerrain(map: mapboxgl.Map) {
   map.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
 }
 
-export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity, airportGlow, isDarkTheme = true, showTrails = true, onMapReady }: MapViewProps) {
+export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity, airportGlow, isDarkTheme = true, showTrails = true, compareColorMap, onMapReady }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const readyRef = useRef(false);
@@ -143,6 +144,7 @@ export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity,
   const flightsRef = useRef(flights);
   const isDarkThemeRef = useRef(isDarkTheme);
   const showTrailsRef = useRef(showTrails);
+  const compareColorMapRef = useRef(compareColorMap);
 
   onMapReadyRef.current = onMapReady;
   presetRef.current = preset;
@@ -152,6 +154,7 @@ export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity,
   flightsRef.current = flights;
   isDarkThemeRef.current = isDarkTheme;
   showTrailsRef.current = showTrails;
+  compareColorMapRef.current = compareColorMap;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -176,7 +179,7 @@ export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity,
 
       // 永遠保留 Mapbox 原生靜態軌跡
       const is3d = renderModeRef.current === "3d";
-      updateStaticTrails(map, flightsRef.current, isDarkThemeRef.current, is3d);
+      updateStaticTrails(map, flightsRef.current, isDarkThemeRef.current, is3d, compareColorMapRef.current);
       // 3D 模式：根據當前 zoom 設定 2D 軌跡透明度
       if (is3d) {
         const { line, glow } = calc2dTrailOpacity(map.getZoom(), isDarkThemeRef.current);
@@ -236,12 +239,12 @@ export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity,
     if (!map || !readyRef.current || !map.isStyleLoaded()) return;
 
     const is3d = renderMode === "3d";
-    updateStaticTrails(map, flights, isDarkTheme, is3d);
+    updateStaticTrails(map, flights, isDarkTheme, is3d, compareColorMap);
     if (is3d) {
       const { line, glow } = calc2dTrailOpacity(map.getZoom(), isDarkTheme);
       setStaticTrailsOpacity(map, line, glow);
     }
-  }, [renderMode, flights, isDarkTheme]);
+  }, [renderMode, flights, isDarkTheme, compareColorMap]);
 
   // 3D 模式：zoom 驅動 2D 軌跡 crossfade（近看隱藏 2D，拉遠顯示 2D）
   useEffect(() => {
