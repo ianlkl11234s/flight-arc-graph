@@ -14,6 +14,10 @@ interface UseTimelineReturn {
   rangeDays: number;
   windowStart: number;
   windowEnd: number;
+  selectedDates: string[];
+  isMultiDateMode: boolean;
+  dateWindowStarts: number[];
+  dateWindowEnds: number[];
   play: () => void;
   pause: () => void;
   toggle: () => void;
@@ -25,6 +29,8 @@ interface UseTimelineReturn {
   setSelectedDate: (d: string | null) => void;
   shiftDate: (delta: number) => void;
   setRangeDays: (n: number) => void;
+  toggleMultiDate: (date: string) => void;
+  clearMultiDates: () => void;
 }
 
 export function useTimeline({
@@ -40,21 +46,48 @@ export function useTimeline({
 
   const [selectedDate, setSelectedDateRaw] = useState(initialDate);
   const [rangeDays, setRangeDaysRaw] = useState(1);
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(60);
   const rafRef = useRef<number>(0);
   const lastFrameRef = useRef<number>(0);
 
-  // 計算 windowStart / windowEnd
-  const windowStart = useMemo(() => dateToUnixTW(selectedDate), [selectedDate]);
-  const windowEnd = useMemo(
-    () => {
-      const [y, m, d] = selectedDate.split("-").map(Number);
-      const endDate = new Date(Date.UTC(y!, m! - 1, d! + rangeDays, 0, 0, 0) - 8 * 3600_000 - 1000);
-      return Math.floor(endDate.getTime() / 1000);
-    },
-    [selectedDate, rangeDays],
-  );
+  const isMultiDateMode = selectedDates.length > 0;
+
+  // 計算單一日期的 windowEnd
+  const computeWindowEnd = (date: string, days: number) => {
+    const [y, m, d] = date.split("-").map(Number);
+    const endDate = new Date(Date.UTC(y!, m! - 1, d! + days, 0, 0, 0) - 8 * 3600_000 - 1000);
+    return Math.floor(endDate.getTime() / 1000);
+  };
+
+  // 計算 windowStart / windowEnd（多日期模式下取最早/最晚）
+  const windowStart = useMemo(() => {
+    if (isMultiDateMode) {
+      const sorted = [...selectedDates].sort();
+      return dateToUnixTW(sorted[0]!);
+    }
+    return dateToUnixTW(selectedDate);
+  }, [selectedDate, selectedDates, isMultiDateMode]);
+
+  const windowEnd = useMemo(() => {
+    if (isMultiDateMode) {
+      const sorted = [...selectedDates].sort();
+      return computeWindowEnd(sorted[sorted.length - 1]!, 1);
+    }
+    return computeWindowEnd(selectedDate, rangeDays);
+  }, [selectedDate, rangeDays, selectedDates, isMultiDateMode]);
+
+  // 多日期模式下各日期的個別時間窗口（用於 displayedFlights 篩選）
+  const dateWindowStarts = useMemo(() => {
+    if (!isMultiDateMode) return [];
+    return selectedDates.map((d) => dateToUnixTW(d));
+  }, [isMultiDateMode, selectedDates]);
+
+  const dateWindowEnds = useMemo(() => {
+    if (!isMultiDateMode) return [];
+    return selectedDates.map((d) => computeWindowEnd(d, 1));
+  }, [isMultiDateMode, selectedDates]);
 
   const [currentTime, setCurrentTime] = useState(windowStart);
   const pendingSeekRef = useRef<number | null>(null);
@@ -158,6 +191,16 @@ export function useTimeline({
     setRangeDaysRaw(n);
   }, []);
 
+  const toggleMultiDate = useCallback((date: string) => {
+    setSelectedDates((prev) =>
+      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date],
+    );
+  }, []);
+
+  const clearMultiDates = useCallback(() => {
+    setSelectedDates([]);
+  }, []);
+
   return {
     currentTime,
     playing,
@@ -177,5 +220,11 @@ export function useTimeline({
     setSelectedDate,
     shiftDate,
     setRangeDays,
+    selectedDates,
+    isMultiDateMode,
+    dateWindowStarts,
+    dateWindowEnds,
+    toggleMultiDate,
+    clearMultiDates,
   };
 }

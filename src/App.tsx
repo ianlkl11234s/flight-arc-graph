@@ -152,7 +152,7 @@ export default function App() {
   const { isMobile, isLandscape } = useIsMobile();
 
   // Region 相關 helper
-  const KNOWN_REGIONS = ["RC", "RJ", "RO", "VH", "K"];
+  const KNOWN_REGIONS = ["RC", "RJ", "RO", "VH", "K", "EG"];
   const isKnownRegion = (icao: string) => KNOWN_REGIONS.some((p) => icao.startsWith(p));
 
   type RegionCfg = {
@@ -202,6 +202,15 @@ export default function App() {
       camera: { center: [-84.4277, 33.6407], zoom: 10.5, pitch: 55, bearing: 0 },
       regionCamera: { center: [-98.5795, 39.8283], zoom: 4.0, pitch: 25, bearing: 0 },
       defaultAirport: "KATL",
+      defaultDate: "2026-02-18",
+    },
+    UK: {
+      title: "UK Flight Arc",
+      label: "UK",
+      icaoMatch: (icao) => icao.startsWith("EG"),
+      camera: { center: [-0.4614, 51.4700], zoom: 11, pitch: 55, bearing: -10 },
+      regionCamera: { center: [-0.1, 51.6], zoom: 9, pitch: 40, bearing: 0 },
+      defaultAirport: "EGLL",
       defaultDate: "2026-02-18",
     },
     world: {
@@ -371,16 +380,27 @@ export default function App() {
   const displayedFlights = useMemo(() => {
     let base = allFlights;
     // 日期範圍篩選
-    base = base.filter((f) => {
-      const t = f.dep_time || f.path[0]?.[3];
-      return t && t >= timeline.windowStart && t <= timeline.windowEnd;
-    });
+    if (timeline.isMultiDateMode && timeline.dateWindowStarts.length > 0) {
+      base = base.filter((f) => {
+        const t = f.dep_time || f.path[0]?.[3];
+        if (!t) return false;
+        return timeline.dateWindowStarts.some(
+          (start, i) => t >= start && t <= timeline.dateWindowEnds[i]!,
+        );
+      });
+    } else {
+      base = base.filter((f) => {
+        const t = f.dep_time || f.path[0]?.[3];
+        return t && t >= timeline.windowStart && t <= timeline.windowEnd;
+      });
+    }
     if (trackMode === "single" && selectedFlightId) {
       return base.filter((f) => f.fr24_id === selectedFlightId);
     }
     return base;
   }, [allFlights, trackMode, selectedFlightId,
-      timeline.windowStart, timeline.windowEnd]);
+      timeline.windowStart, timeline.windowEnd,
+      timeline.isMultiDateMode, timeline.dateWindowStarts, timeline.dateWindowEnds]);
 
   // Aircraft type filter
   const typeFilteredFlights = useMemo(
@@ -1087,7 +1107,7 @@ export default function App() {
             </div>
             {/* Region Pills */}
             <div style={{ display: "flex", gap: 4 }}>
-              {(["TW", "JP", "HK", "US", "world", "all"] as Region[]).map((r) => {
+              {(["TW", "JP", "HK", "US", "UK", "world", "all"] as Region[]).map((r) => {
                 const isActive = region === r;
                 return (
                   <button
@@ -1133,12 +1153,17 @@ export default function App() {
             windowEnd={timeline.windowEnd}
             selectedDate={timeline.selectedDate}
             rangeDays={timeline.rangeDays}
+            availableDates={availableDates}
+            selectedDates={timeline.selectedDates}
+            isMultiDateMode={timeline.isMultiDateMode}
             isDarkTheme={isDarkTheme}
             onToggle={timeline.toggle}
             onSpeedChange={timeline.setSpeed}
             onSeekByProgress={timeline.seekByProgress}
             onDateShift={timeline.shiftDate}
             onRangeDaysChange={timeline.setRangeDays}
+            onToggleMultiDate={timeline.toggleMultiDate}
+            onClearMultiDates={timeline.clearMultiDates}
           />
 
           {/* 右上角按鈕群 */}
@@ -1372,6 +1397,9 @@ export default function App() {
               windowEnd={timeline.windowEnd}
               selectedDate={timeline.selectedDate}
               rangeDays={timeline.rangeDays}
+              availableDates={availableDates}
+              selectedDates={timeline.selectedDates}
+              isMultiDateMode={timeline.isMultiDateMode}
               isDarkTheme={true}
               isMobile={true}
               onToggle={timeline.toggle}
@@ -1379,6 +1407,8 @@ export default function App() {
               onSeekByProgress={timeline.seekByProgress}
               onDateShift={timeline.shiftDate}
               onRangeDaysChange={timeline.setRangeDays}
+              onToggleMultiDate={timeline.toggleMultiDate}
+              onClearMultiDates={timeline.clearMultiDates}
             />
           </div>
 

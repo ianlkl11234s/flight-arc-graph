@@ -7,6 +7,9 @@ interface Props {
   windowEnd: number;
   selectedDate: string;
   rangeDays: number;
+  availableDates?: string[];
+  selectedDates?: string[];
+  isMultiDateMode?: boolean;
   isDarkTheme?: boolean;
   isMobile?: boolean;
   onToggle: () => void;
@@ -14,6 +17,8 @@ interface Props {
   onSeekByProgress: (p: number) => void;
   onDateShift: (delta: number) => void;
   onRangeDaysChange: (n: number) => void;
+  onToggleMultiDate?: (date: string) => void;
+  onClearMultiDates?: () => void;
 }
 
 const getBtnStyle = (dark: boolean): React.CSSProperties => ({
@@ -78,6 +83,9 @@ export function TimelineControls({
   windowEnd,
   selectedDate,
   rangeDays,
+  availableDates = [],
+  selectedDates = [],
+  isMultiDateMode = false,
   isDarkTheme = true,
   isMobile = false,
   onToggle,
@@ -85,6 +93,8 @@ export function TimelineControls({
   onSeekByProgress,
   onDateShift,
   onRangeDaysChange,
+  onToggleMultiDate,
+  onClearMultiDates,
 }: Props) {
   return (
     <div
@@ -138,16 +148,62 @@ export function TimelineControls({
         >
           ▶
         </button>
-        <select
-          value={rangeDays}
-          onChange={(e) => onRangeDaysChange(Number(e.target.value))}
-          style={getSelectStyle(isDarkTheme)}
-        >
-          <option value={1}>1d</option>
-          <option value={3}>3d</option>
-          <option value={7}>7d</option>
-        </select>
+        {!isMultiDateMode && (
+          <select
+            value={rangeDays}
+            onChange={(e) => onRangeDaysChange(Number(e.target.value))}
+            style={getSelectStyle(isDarkTheme)}
+          >
+            <option value={1}>1d</option>
+            <option value={3}>3d</option>
+            <option value={7}>7d</option>
+          </select>
+        )}
+        {availableDates.length > 1 && onToggleMultiDate && (
+          <button
+            onClick={isMultiDateMode ? onClearMultiDates : () => onToggleMultiDate(selectedDate)}
+            style={{
+              ...getBtnStyle(isDarkTheme),
+              padding: "4px 8px",
+              fontSize: 12,
+              opacity: isMultiDateMode ? 1 : 0.65,
+              background: isMultiDateMode
+                ? (isDarkTheme ? "rgba(99,102,241,0.5)" : "rgba(99,102,241,0.7)")
+                : (isDarkTheme ? "rgba(120,120,120,0.35)" : "rgba(50,50,50,0.75)"),
+              borderColor: isMultiDateMode ? "rgba(99,102,241,0.8)" : undefined,
+            }}
+          >
+            {isMultiDateMode ? `Compare (${selectedDates.length})` : "Compare"}
+          </button>
+        )}
       </div>
+
+      {/* Multi-date 日期選擇器 */}
+      {isMultiDateMode && availableDates.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
+          {availableDates.map((d) => {
+            const active = selectedDates.includes(d);
+            return (
+              <button
+                key={d}
+                onClick={() => onToggleMultiDate?.(d)}
+                style={{
+                  ...getBtnStyle(isDarkTheme),
+                  padding: "3px 7px",
+                  fontSize: 11,
+                  background: active
+                    ? (isDarkTheme ? "rgba(99,102,241,0.6)" : "rgba(99,102,241,0.8)")
+                    : (isDarkTheme ? "rgba(80,80,80,0.3)" : "rgba(30,30,30,0.5)"),
+                  borderColor: active ? "rgba(99,102,241,0.9)" : undefined,
+                  opacity: active ? 1 : 0.55,
+                }}
+              >
+                {formatDateLabel(d)}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* 控制按鈕列 */}
       <div
