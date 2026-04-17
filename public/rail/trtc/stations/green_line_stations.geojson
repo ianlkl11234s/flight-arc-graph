@@ -1,0 +1,325 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G01",
+        "name_zh": "新店",
+        "name_en": "Xindian",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.53767492801856,
+          24.958188958211352
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G02",
+        "name_zh": "新店區公所",
+        "name_en": "Xindian District Office",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5413,
+          24.96744
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G03",
+        "name_zh": "七張",
+        "name_en": "Qizhang",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.54291027946367,
+          24.975035653366334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G04",
+        "name_zh": "大坪林",
+        "name_en": "Dapinglin",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.54136708959695,
+          24.9827246563209
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G05",
+        "name_zh": "景美",
+        "name_en": "Jingmei",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.540697,
+          24.992824
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G06",
+        "name_zh": "萬隆",
+        "name_en": "Wanlong",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.539008,
+          25.001978
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G07",
+        "name_zh": "公館",
+        "name_en": "Gongguan",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.53432797397139,
+          25.014749694630808
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G08",
+        "name_zh": "台電大樓",
+        "name_en": "Taipower Building",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.528143,
+          25.020733
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G09",
+        "name_zh": "古亭",
+        "name_en": "Guting",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.52298022777431,
+          25.026455212769086
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G10",
+        "name_zh": "中正紀念堂",
+        "name_en": "Chiang Kai-Shek Memorial Hall",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.51817708305215,
+          25.03269546824196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G11",
+        "name_zh": "小南門",
+        "name_en": "Xiaonanmen",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.510798,
+          25.035619
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G12",
+        "name_zh": "西門",
+        "name_en": "Ximen",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.50862700557768,
+          25.042240462928042
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G13",
+        "name_zh": "北門",
+        "name_en": "Beimen",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.51030692591863,
+          25.049526559932673
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G14",
+        "name_zh": "中山",
+        "name_en": "Zhongshan",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.52037671375655,
+          25.052676949323235
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G15",
+        "name_zh": "松江南京",
+        "name_en": "Songjiang Nanjing",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5330129274658,
+          25.052057341960822
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G16",
+        "name_zh": "南京復興",
+        "name_en": "Nanjing Fuxing",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.54430324070799,
+          25.051875732792485
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G17",
+        "name_zh": "台北小巨蛋",
+        "name_en": "Taipei Arena",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.552549,
+          25.05152
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G18",
+        "name_zh": "南京三民",
+        "name_en": "Nanjing Sanmin",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.56470570179336,
+          25.051391378602005
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G19",
+        "name_zh": "松山",
+        "name_en": "Songshan",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.57770703858456,
+          25.050068951301185
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": "G03A",
+        "name_zh": "小碧潭",
+        "name_en": "Xiaobitan",
+        "line_id": "G"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.529776,
+          24.972208
+        ]
+      }
+    }
+  ]
+}
