@@ -1,6 +1,7 @@
 /* 空域分類與配色設定 */
 
 export type AirspaceCategory =
+  | "adiz"               // ADIZ 防空識別區（地緣政治邊界）
   | "restricted"         // RCR 限航區（最搶眼）
   | "prohibited"         // RCP 禁航 + RCD 危險
   | "training"           // DANGER 訓練空域 + ULZ 超輕型
@@ -17,6 +18,14 @@ export interface AirspaceCategoryConfig {
 }
 
 export const AIRSPACE_CATEGORIES: AirspaceCategoryConfig[] = [
+  {
+    id: "adiz",
+    label: "ADIZ",
+    colorDark: [1.0, 0.75, 0.25],   // 琥珀金
+    colorLight: [0.85, 0.55, 0.1],
+    defaultVisible: true,
+    sortOrder: 6,
+  },
   {
     id: "restricted",
     label: "Restricted (RCR)",
@@ -65,6 +74,7 @@ export const AIRSPACE_CATEGORY_BY_ID: Record<AirspaceCategory, AirspaceCategoryC
 /** 依 eAIP layer 字串分類 */
 export function classifyAirspace(layer: string): AirspaceCategory {
   const L = (layer || "").toUpperCase();
+  if (L === "ADIZ") return "adiz";
   if (L === "RCR") return "restricted";
   if (L === "RCP" || L === "RCD") return "prohibited";
   if (L === "DANGER" || L === "ULZ") return "training";
@@ -84,10 +94,13 @@ export interface AirspaceSettings {
   heightScale: number;
   /** 頂邊發光強度 0~2 */
   edgeGlow: number;
+  /** 海峽中線顯示（獨立於 polygon airspace，走 Mapbox line layer） */
+  showMedianLine: boolean;
 }
 
 export function defaultAirspaceSettings(): AirspaceSettings {
   const visibility: Record<AirspaceCategory, boolean> = {
+    adiz: true,
     restricted: true,
     prohibited: true,
     training: true,
@@ -101,5 +114,6 @@ export function defaultAirspaceSettings(): AirspaceSettings {
     opacity: 0.35,
     heightScale: 1.8,
     edgeGlow: 0.8,
+    showMedianLine: true,
   };
 }

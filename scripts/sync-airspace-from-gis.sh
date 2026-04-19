@@ -21,6 +21,7 @@ mkdir -p "$DST_DIR"
 MAPPINGS="
 taiwan_airspace_3d.geojson|taiwan_airspace.geojson|tw
 gb_airspace_3d.geojson|gb_airspace.geojson|gb
+cn_airspace_3d.geojson|cn_airspace.geojson|cn
 jp_airspace_3d.geojson|jp_airspace.geojson|jp
 "
 

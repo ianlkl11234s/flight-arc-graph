@@ -34,7 +34,9 @@ interface RawGeoJSON {
 
 const DEFAULT_SOURCES: { region: string; url: string }[] = [
   { region: "TW", url: "./airspace/taiwan_airspace.geojson" },
+  { region: "TW", url: "./airspace/taiwan_adiz.geojson" },
   { region: "UK", url: "./airspace/gb_airspace.geojson" },
+  { region: "CN", url: "./airspace/cn_airspace.geojson" },
 ];
 
 let cache: AirspaceFeature[] | null = null;
@@ -46,7 +48,7 @@ function parseFeatures(region: string, raw: RawGeoJSON): AirspaceFeature[] {
     const p = f.properties || {};
     const layer = String(p["layer"] ?? "");
     const code = String(p["code"] ?? "");
-    const nameZh = String(p["name_zh"] ?? code);
+    const nameZh = String(p["name_zh"] || code);
     const nameEn = String(p["name_en"] ?? "");
     const floorM = Number(p["floor_m"] ?? 0);
     const ceilingMRaw = Number(p["ceiling_m"] ?? floorM);

@@ -1,0 +1,36 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "ADIZ",
+        "code": "TAIPEI_ADIZ",
+        "name_zh": "台北防空識別區",
+        "name_en": "Taipei ADIZ",
+        "floor_m": 0,
+        "ceiling_m": 20000,
+        "floor_raw": "SFC",
+        "ceiling_raw": "UNL",
+        "airspace_class": "",
+        "layer_index": 0,
+        "remarks": "中華民國國防部宣告之防空識別區 (Air Defense Identification Zone)。航空器進入識別區須向台北 FIR 報告並接受識別。\n\n簡化五點輪廓，轉折點：\n1. 最東北 (123.00°E, 29.00°N) — 浙江寧波/台州外海\n2. (123.00°E, 23.00°N) — 台灣東部海域\n3. (121.30°E, 21.00°N) — 台菲海域\n4. 最西南 (117.30°E, 21.00°N) — 廣東汕頭/漳州外海\n5. 最西北 (117.30°E, 29.00°N) — 江西樂平\n\n來源：Wikipedia / GlobalSecurity / CSIS ChinaPower 引用之簡化版本。",
+        "warnings": [
+          "此為簡化輪廓，非 AIP 精確邊界",
+          "ADIZ 無 ICAO 官方座標，ROC 未公告 AIP 規格精確邊界"
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [123.00, 29.00],
+          [123.00, 23.00],
+          [121.30, 21.00],
+          [117.30, 21.00],
+          [117.30, 29.00],
+          [123.00, 29.00]
+        ]]
+      }
+    }
+  ]
+}

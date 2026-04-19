@@ -1800,6 +1800,46 @@ function AirspacePanel({
         );
       })}
 
+      {/* Overlays */}
+      <SectionHeader theme={theme}>Overlays</SectionHeader>
+      <div
+        onClick={() => settings.enabled && update({ showMedianLine: !settings.showMedianLine })}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "6px 8px",
+          marginBottom: 8,
+          borderRadius: 4,
+          cursor: settings.enabled ? "pointer" : "not-allowed",
+          opacity: settings.enabled ? 1 : 0.4,
+          background: settings.showMedianLine ? theme.HOVER_BG : "transparent",
+          border: `1px solid ${settings.showMedianLine ? theme.BORDER : "transparent"}`,
+          transition: "background 0.15s",
+        }}
+      >
+        <span
+          style={{
+            width: 18,
+            height: 2,
+            background: settings.showMedianLine ? "#ffffff" : theme.DIM,
+            boxShadow: settings.showMedianLine ? "0 0 6px rgba(255,255,255,0.6)" : "none",
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            flex: 1,
+            fontSize: 11,
+            fontFamily: "monospace",
+            color: settings.showMedianLine ? theme.ACTIVE_TEXT : theme.DIM,
+          }}
+        >
+          海峽中線 Median Line
+        </span>
+        <span style={{ fontSize: 10, color: theme.DIM }}>{settings.showMedianLine ? "●" : "○"}</span>
+      </div>
+
       {/* Style */}
       <SectionHeader theme={theme}>Style</SectionHeader>
       <SliderRow

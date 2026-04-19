@@ -9,6 +9,7 @@ import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo } from "./map/cameraPresets";
 import { createFlightLayer } from "./map/customLayer";
 import { createAirspaceLayer } from "./map/airspaceAurora";
+import { addMedianLineLayer, removeMedianLineLayer, setMedianLineVisibility, setMedianLineTheme } from "./map/medianLine";
 import { defaultAirspaceSettings, type AirspaceSettings } from "./types/airspace";
 import { getCachedAirspace, type AirspaceFeature } from "./data/airspaceLoader";
 import { pickAirspace } from "./map/airspacePicker";
@@ -168,7 +169,14 @@ export default function App() {
       const raw = localStorage.getItem("flight-arc-airspace");
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<AirspaceSettings>;
-        return { ...defaultAirspaceSettings(), ...parsed, enabled: false };
+        const def = defaultAirspaceSettings();
+        return {
+          ...def,
+          ...parsed,
+          // 新加入的 category 要從 default 補上，避免舊 cache 沒有該 key
+          visibility: { ...def.visibility, ...(parsed.visibility ?? {}) },
+          enabled: false,
+        };
       }
     } catch { /* ignore */ }
     return defaultAirspaceSettings();
@@ -578,6 +586,20 @@ export default function App() {
     try { localStorage.setItem("flight-arc-airspace", JSON.stringify(airspaceSettings)); } catch { /* ignore */ }
   }, [airspaceSettings]);
 
+  // 海峽中線可見性跟隨 settings
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    setMedianLineVisibility(map, airspaceSettings.enabled && airspaceSettings.showMedianLine);
+  }, [airspaceSettings.enabled, airspaceSettings.showMedianLine]);
+
+  // 海峽中線主題色跟隨暗/亮
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    setMedianLineTheme(map, isDarkTheme);
+  }, [isDarkTheme]);
+
   const showTerminatorRef = useRef(showTerminator);
   showTerminatorRef.current = showTerminator;
 
@@ -611,6 +633,12 @@ export default function App() {
       getIsDarkTheme: () => isDarkThemeRef.current,
     });
     map.addLayer(layer);
+
+    // 海峽中線（獨立 Mapbox line layer）
+    removeMedianLineLayer(map);
+    addMedianLineLayer(map, isDarkThemeRef.current);
+    const s = airspaceSettingsRef.current;
+    setMedianLineVisibility(map, s.enabled && s.showMedianLine);
   };
 
   const addFlightLayer = (map: MapboxMap) => {

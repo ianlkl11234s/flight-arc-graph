@@ -6,8 +6,8 @@ varying float vCategoryId;
 varying float vEdgeFactor;
 varying vec2 vWorldXY;
 
-uniform vec3 uColors[5];
-uniform float uEnabled[5];    // 0 = 隱藏 / 1 = 顯示（小於 0.5 會 discard）
+uniform vec3 uColors[6];
+uniform float uEnabled[6];    // 0 = 隱藏 / 1 = 顯示（小於 0.5 會 discard）
 uniform float uOpacity;
 uniform float uEdgeGlow;
 uniform float uTime;
@@ -21,6 +21,7 @@ void pickCategory(in float id, out vec3 col, out float enabled) {
   else if (idx == 2) { col = uColors[2]; enabled = uEnabled[2]; }
   else if (idx == 3) { col = uColors[3]; enabled = uEnabled[3]; }
   else if (idx == 4) { col = uColors[4]; enabled = uEnabled[4]; }
+  else if (idx == 5) { col = uColors[5]; enabled = uEnabled[5]; }
 }
 
 // 簡易 2D hash / noise（不用 textures）
