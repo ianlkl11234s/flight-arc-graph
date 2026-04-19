@@ -55,6 +55,10 @@ export class FlightScene {
   private currentStaticOpacity = 0.2;
   private isDarkTheme = true;
   private showTrails = true;
+  /** fr24_id → 強制指派顏色（用於 compare 模式、per-airport 模式）*/
+  private perFlightColorMap: Map<string, THREE.Color> | null = null;
+  /** 上次 setPerFlightColorMap 的內容簽章（避免 prop reference 變但內容相同時重建） */
+  private lastColorMapSignature = "__init__";
   private colorTheme: ColorTheme = COLOR_THEMES[DEFAULT_THEME_KEY]!;
   private themeColors: THREE.Color[] = themeToColors(COLOR_THEMES[DEFAULT_THEME_KEY]!);
   private lastMatrix: THREE.Matrix4 | null = null;
@@ -142,11 +146,47 @@ export class FlightScene {
     return this.colorTheme;
   }
 
+  /**
+   * 設定 per-flight color 覆寫（例如以起飛機場分色）。
+   * 傳 null 或空 Map → 回到 theme-cycle 配色。
+   */
+  setPerFlightColorMap(hexMap: Map<string, string> | null) {
+    // 簽章：用 size + 前後幾個 entry 取樣（夠抓出內容差異，不用全部 hash）
+    const sig = !hexMap || hexMap.size === 0
+      ? "empty"
+      : (() => {
+          let s = `${hexMap.size}|`;
+          let n = 0;
+          for (const [id, hex] of hexMap) {
+            s += `${id}:${hex};`;
+            if (++n >= 8) break;
+          }
+          return s;
+        })();
+    if (sig === this.lastColorMapSignature) return; // 內容相同 → 跳過，避免靜態 mesh 重建
+    this.lastColorMapSignature = sig;
+
+    if (!hexMap || hexMap.size === 0) {
+      this.perFlightColorMap = null;
+    } else {
+      const m = new Map<string, THREE.Color>();
+      for (const [id, hex] of hexMap) {
+        const [r, g, b] = hexToRgb(hex);
+        m.set(id, new THREE.Color(r, g, b));
+      }
+      this.perFlightColorMap = m;
+    }
+    this.applyColors();
+    // 靜態 3D mesh 重建（per-vertex color 從 altitude gradient 換成 airport 色 / 反之）
+    this.forceRebuildStatic();
+  }
+
   private applyColors() {
     let idx = 0;
-    for (const entry of this.trails.values()) {
-      const color = this.colors[idx % this.colors.length]!;
-      idx++;
+    for (const [flightId, entry] of this.trails) {
+      const override = this.perFlightColorMap?.get(flightId);
+      const color = override ?? this.colors[idx % this.colors.length]!;
+      if (!override) idx++;
       entry.trail.setColor(color);
       entry.trail.setBlending(this.blending);
     }
@@ -320,6 +360,8 @@ export class FlightScene {
       }
 
       const flightVertStart = vertsThisFrame;
+      // 若此 flight 有指定顏色（per-airport 模式），整條 trail 使用平色，忽略 altitude gradient
+      const airportOverride = this.perFlightColorMap?.get(f.fr24_id) ?? null;
 
       for (let i = startPt; i < f.path.length - 1 && vertsThisFrame < limit; i++) {
         const a = f.path[i]!;
@@ -334,16 +376,26 @@ export class FlightScene {
         state.positions[state.offset++] = mb.y;
         state.positions[state.offset++] = mb.z;
 
-        let t = Math.min(Math.max(a[2] / MAX_ALT, 0), 1);
-        let [cr, cg, cb] = lerpGradient(t);
-        state.colors[state.cOffset++] = cr;
-        state.colors[state.cOffset++] = cg;
-        state.colors[state.cOffset++] = cb;
-        t = Math.min(Math.max(b[2] / MAX_ALT, 0), 1);
-        [cr, cg, cb] = lerpGradient(t);
-        state.colors[state.cOffset++] = cr;
-        state.colors[state.cOffset++] = cg;
-        state.colors[state.cOffset++] = cb;
+        if (airportOverride) {
+          const r = airportOverride.r, g = airportOverride.g, bl = airportOverride.b;
+          state.colors[state.cOffset++] = r;
+          state.colors[state.cOffset++] = g;
+          state.colors[state.cOffset++] = bl;
+          state.colors[state.cOffset++] = r;
+          state.colors[state.cOffset++] = g;
+          state.colors[state.cOffset++] = bl;
+        } else {
+          let t = Math.min(Math.max(a[2] / MAX_ALT, 0), 1);
+          let [cr, cg, cb] = lerpGradient(t);
+          state.colors[state.cOffset++] = cr;
+          state.colors[state.cOffset++] = cg;
+          state.colors[state.cOffset++] = cb;
+          t = Math.min(Math.max(b[2] / MAX_ALT, 0), 1);
+          [cr, cg, cb] = lerpGradient(t);
+          state.colors[state.cOffset++] = cr;
+          state.colors[state.cOffset++] = cg;
+          state.colors[state.cOffset++] = cb;
+        }
 
         state.alphas[state.aOffset++] = 1.0;
         state.alphas[state.aOffset++] = 1.0;
@@ -581,8 +633,9 @@ export class FlightScene {
   }
 
   private createTrailEntry(flightId: string): TrailEntry {
-    const color = this.colors[this.colorIndex % this.colors.length]!;
-    this.colorIndex++;
+    const override = this.perFlightColorMap?.get(flightId);
+    const color = override ?? this.colors[this.colorIndex % this.colors.length]!;
+    if (!override) this.colorIndex++;
 
     const trail = new LightTrail(color, 512, this.blending);
     this.scene.add(trail.mesh);

@@ -5,7 +5,12 @@ dist
 *.local
 *.tsbuildinfo
 public/tracks/
-public/airspace/
+# 空域快照（每天一檔，走 S3 pull）
+public/airspace/days/
+public/airspace/manifest.json
+public/airspace/aviation_data.json
+# OpenAIP API key（跑 fetch-uk-airspace.mjs 時用）
+.env.openaip
 scripts/flight-list.json
 scripts/track-progress.json
 scripts/track-progress.json.bak
