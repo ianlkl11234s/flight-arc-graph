@@ -8,6 +8,11 @@ import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo } from "./map/cameraPresets";
 import { createFlightLayer } from "./map/customLayer";
+import { createAirspaceLayer } from "./map/airspaceAurora";
+import { defaultAirspaceSettings, type AirspaceSettings } from "./types/airspace";
+import { getCachedAirspace, type AirspaceFeature } from "./data/airspaceLoader";
+import { pickAirspace } from "./map/airspacePicker";
+import { AirspaceInfoCard } from "./components/AirspaceInfoCard";
 import { filterByAirport } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -30,6 +35,7 @@ import { computeBearing, getViewshedArcPoints, getViewshedRings } from "./map/vi
 import { CinemaBar } from "./components/CinemaBar";
 import { RecordingGuide } from "./components/RecordingGuide";
 import { COLOR_THEMES, DEFAULT_THEME_KEY } from "./types/colorTheme";
+import { assignAirportColors, type AirportColorMode, type AirportAssignment } from "./types/airportColors";
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
 
@@ -138,8 +144,16 @@ export default function App() {
   const [depArrFilter, setDepArrFilter] = useState<DepArrFilter>("all");
   const [captureMode, setCaptureMode] = useState(false);
   const [showTerminator, setShowTerminator] = useState(false);
-  const [colorThemeKey, setColorThemeKey] = useState(() => localStorage.getItem("flight-arc-color-theme") ?? DEFAULT_THEME_KEY);
+  // 每次載入皆從 default theme + Compare Airports off 開始（不沿用 localStorage 偏好）
+  const [colorThemeKey, setColorThemeKey] = useState(DEFAULT_THEME_KEY);
   const [colorThemeOverride, setColorThemeOverride] = useState<import("./types/colorTheme").ColorTheme | null>(null);
+  const [colorBy, setColorBy] = useState<AirportColorMode>("theme");
+  const [airportColorOverrides, setAirportColorOverrides] = useState<Record<string, string>>(() => {
+    try {
+      const raw = localStorage.getItem("flight-arc-airport-color-overrides");
+      return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    } catch { return {}; }
+  });
   const [showGuide, setShowGuide] = useState(true);
   const [showGuideGrid, setShowGuideGrid] = useState(true);
   const [trailDisplay, setTrailDisplay] = useState<TrailDisplay>("full");
@@ -147,6 +161,18 @@ export default function App() {
   const [viewshedSharpness, setViewshedSharpness] = useState(0.5);
   const [showInfo, setShowInfo] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [airspaceSelection, setAirspaceSelection] = useState<{ selected: AirspaceFeature; others: AirspaceFeature[] } | null>(null);
+  const [airspaceSettings, setAirspaceSettings] = useState<AirspaceSettings>(() => {
+    // 保留分類顯示 / opacity / heightScale / edgeGlow 等偏好，但每次載入強制 enabled=false
+    try {
+      const raw = localStorage.getItem("flight-arc-airspace");
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<AirspaceSettings>;
+        return { ...defaultAirspaceSettings(), ...parsed, enabled: false };
+      }
+    } catch { /* ignore */ }
+    return defaultAirspaceSettings();
+  });
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
   const { isMobile, isLandscape } = useIsMobile();
@@ -308,7 +334,6 @@ export default function App() {
   const handleColorThemeChange = useCallback((key: string) => {
     setColorThemeKey(key);
     setColorThemeOverride(null);
-    localStorage.setItem("flight-arc-color-theme", key);
     const theme = COLOR_THEMES[key];
     if (!theme) return;
     flightSceneRef.current?.setColorTheme(theme);
@@ -418,6 +443,19 @@ export default function App() {
     return map;
   }, [timeline.isMultiDateMode, timeline.dateWindowStarts, timeline.dateWindowEnds, displayedFlights]);
 
+  // Compare mode 開啟時自動停用 airport 分色
+  const effectiveColorBy: AirportColorMode = timeline.isMultiDateMode ? "theme" : colorBy;
+
+  // 一次性清除舊版 localStorage 偏好（color theme + colorBy 不再持久化）
+  useEffect(() => {
+    localStorage.removeItem("flight-arc-color-theme");
+    localStorage.removeItem("flight-arc-color-by");
+  }, []);
+  // 自訂機場色仍持久化（Compare 開啟時還用得到）
+  useEffect(() => {
+    try { localStorage.setItem("flight-arc-airport-color-overrides", JSON.stringify(airportColorOverrides)); } catch { /* ignore */ }
+  }, [airportColorOverrides]);
+
   // Aircraft type filter
   const typeFilteredFlights = useMemo(
     () => filterByAircraftType(displayedFlights, aircraftFilter),
@@ -462,6 +500,43 @@ export default function App() {
     [allFlights, selectedAirport],
   );
 
+  // Local 模式專用：依 region prefix 過濾 airports（避免外國機場混進來）
+  // 注意：REGION_CONFIG 不能進 deps（每 render 是新物件），改用 region 字串 + isKnownRegion 工具
+  const regionalAirports = useMemo(() => {
+    const prefixes: Record<Region, (icao: string) => boolean> = {
+      TW: (i) => i.startsWith("RC"),
+      JP: (i) => i.startsWith("RJ") || i.startsWith("RO"),
+      HK: (i) => i.startsWith("VH"),
+      US: (i) => i.startsWith("K"),
+      UK: (i) => i.startsWith("EG"),
+      world: (i) => !["RC", "RJ", "RO", "VH", "EG"].some((p) => i.startsWith(p)) && !i.startsWith("K"),
+      all: () => true,
+    };
+    return airports.filter(prefixes[region]);
+  }, [airports, region]);
+
+  // 機場分色指派（依實際顯示的航班 + 使用者手動覆寫）
+  const airportAssignment = useMemo((): AirportAssignment | null => {
+    if (effectiveColorBy === "theme") return null;
+    return assignAirportColors(finalFlights, effectiveColorBy, airportColorOverrides, regionalAirports);
+  }, [effectiveColorBy, finalFlights, airportColorOverrides, regionalAirports]);
+
+  // 給 MapView + FlightScene 的最終 per-flight color map
+  // Compare 優先於 airport（前者已把 airport 設為 theme）
+  const perFlightColorMap = useMemo((): Map<string, string> | undefined => {
+    if (compareColorMap) return compareColorMap;
+    if (airportAssignment && airportAssignment.flightColors.size > 0) return airportAssignment.flightColors;
+    return undefined;
+  }, [compareColorMap, airportAssignment]);
+
+  const perFlightColorMapRef = useRef(perFlightColorMap);
+  perFlightColorMapRef.current = perFlightColorMap;
+
+  // perFlightColorMap 變動時推到 FlightScene（重建靜態 3D mesh + 重上色動態 trail）
+  useEffect(() => {
+    flightSceneRef.current?.setPerFlightColorMap(perFlightColorMap ?? null);
+  }, [perFlightColorMap]);
+
   const isDarkTheme = !["light", "streets"].includes(mapStyleId);
 
   const flightsRef = useRef(finalFlights);
@@ -478,6 +553,7 @@ export default function App() {
   const mapStyleIdRef = useRef(mapStyleId);
   const viewshedOpacityRef = useRef(viewshedOpacity);
   const viewshedSharpnessRef = useRef(viewshedSharpness);
+  const airspaceSettingsRef = useRef(airspaceSettings);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
 
@@ -495,6 +571,12 @@ export default function App() {
   mapStyleIdRef.current = mapStyleId;
   viewshedOpacityRef.current = viewshedOpacity;
   viewshedSharpnessRef.current = viewshedSharpness;
+  airspaceSettingsRef.current = airspaceSettings;
+
+  // 持久化 airspace 設定
+  useEffect(() => {
+    try { localStorage.setItem("flight-arc-airspace", JSON.stringify(airspaceSettings)); } catch { /* ignore */ }
+  }, [airspaceSettings]);
 
   const showTerminatorRef = useRef(showTerminator);
   showTerminatorRef.current = showTerminator;
@@ -520,6 +602,17 @@ export default function App() {
 
   const styleUrl = useMemo(() => getStyleUrl(mapStyleId), [mapStyleId]);
 
+  const addAirspaceLayer = (map: MapboxMap) => {
+    if (map.getLayer("airspace-aurora")) {
+      map.removeLayer("airspace-aurora");
+    }
+    const layer = createAirspaceLayer({
+      getSettings: () => airspaceSettingsRef.current,
+      getIsDarkTheme: () => isDarkThemeRef.current,
+    });
+    map.addLayer(layer);
+  };
+
   const addFlightLayer = (map: MapboxMap) => {
     if (map.getLayer("flight-3d")) {
       map.removeLayer("flight-3d");
@@ -536,13 +629,18 @@ export default function App() {
       getShowTrails: () => showTrailsRef.current,
       getTimeWindow: () => timeWindowRef.current,
       getTrailDisplay: () => trailDisplayRef.current,
-      onSceneReady: (scene) => { flightSceneRef.current = scene; },
+      onSceneReady: (scene) => {
+        flightSceneRef.current = scene;
+        // 初次或 style 切換後重新套用 per-flight 顏色
+        scene.setPerFlightColorMap(perFlightColorMapRef.current ?? null);
+      },
     });
     map.addLayer(layer);
   };
 
   const handleMapReady = (map: MapboxMap) => {
     mapRef.current = map;
+    addAirspaceLayer(map);
     addFlightLayer(map);
     if (showTerminatorRef.current) {
       initTerminatorLayer(map, () => timeRef.current, isDarkThemeRef.current);
@@ -565,9 +663,8 @@ export default function App() {
 
       map.on("click", (e) => {
         const scene = flightSceneRef.current;
-        if (!scene) { setTooltipInfo(null); return; }
         const container = map.getContainer();
-        const flightId = scene.pickFlight(
+        const flightId = scene?.pickFlight(
           e.point.x, e.point.y,
           container.clientWidth, container.clientHeight,
         );
@@ -580,9 +677,21 @@ export default function App() {
               if (flight.path[i]![3] <= t) { altitude = Math.round(flight.path[i]![2]); break; }
             }
             setTooltipInfo({ flight, x: e.point.x, y: e.point.y, altitude });
+            setAirspaceSelection(null);
           }
-        } else {
-          setTooltipInfo(null);
+          return;
+        }
+        setTooltipInfo(null);
+        // 嘗試 pick airspace
+        const features = getCachedAirspace();
+        if (features && features.length > 0) {
+          const { lng, lat } = e.lngLat;
+          const hits = pickAirspace(lng, lat, features, airspaceSettingsRef.current);
+          if (hits.length > 0) {
+            setAirspaceSelection({ selected: hits[0]!, others: hits.slice(1) });
+          } else {
+            setAirspaceSelection(null);
+          }
         }
       });
 
@@ -722,7 +831,7 @@ export default function App() {
         airportGlow={airportGlow}
         isDarkTheme={isDarkTheme}
         showTrails={showTrails}
-        compareColorMap={compareColorMap}
+        compareColorMap={perFlightColorMap}
         onMapReady={handleMapReady}
       />
 
@@ -1072,6 +1181,22 @@ export default function App() {
             onColorThemeChange={handleColorThemeChange}
             colorThemeOverride={colorThemeOverride}
             onColorThemeOverride={handleColorThemeOverride}
+            airspaceSettings={airspaceSettings}
+            onAirspaceSettingsChange={setAirspaceSettings}
+            colorBy={colorBy}
+            onColorByChange={setColorBy}
+            airportAssignment={airportAssignment}
+            airportColorOverrides={airportColorOverrides}
+            onAirportColorOverride={(icao, hex) => {
+              setAirportColorOverrides((prev) => {
+                const next = { ...prev };
+                if (hex) next[icao] = hex;
+                else delete next[icao];
+                return next;
+              });
+            }}
+            onAirportColorReset={() => setAirportColorOverrides({})}
+            compareModeActive={timeline.isMultiDateMode}
           />
 
           {/* 頂部控制列（sidebar 右邊） */}
@@ -1606,6 +1731,23 @@ export default function App() {
 
       {/* ── Info Modal ── */}
       <InfoModal open={showInfo} onClose={() => setShowInfo(false)} isMobile={isMobile} />
+
+      {/* ── Airspace Info Card ── */}
+      {!captureMode && !isMobile && airspaceSelection && (
+        <AirspaceInfoCard
+          selected={airspaceSelection.selected}
+          others={airspaceSelection.others}
+          onSelect={(f) => {
+            setAirspaceSelection((prev) => {
+              if (!prev) return { selected: f, others: [] };
+              const others = [prev.selected, ...prev.others].filter((o) => o.id !== f.id);
+              return { selected: f, others };
+            });
+          }}
+          onClose={() => setAirspaceSelection(null)}
+          isDarkTheme={isDarkTheme}
+        />
+      )}
     </div>
   );
 }

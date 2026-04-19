@@ -19,9 +19,11 @@
 | Taiwan (TW) | 16 | 民用 + 軍民合用機場 |
 | Japan (JP) | 70+ | 七大主要 + 地方 + 沖繩離島，分層級顯示 |
 | Hong Kong (HK) | 1 | VHHH 香港國際機場 |
+| United States (US) | KATL 等 | 主要樞紐 |
+| United Kingdom (UK) | 4+ | EGLL / EGKK / EGSS / EGGW（倫敦四大機場）|
 | World | 2+ | Madeira (LPMA)、Paro (VQPR) 等特色機場 |
 
-Region Pills UI 可切換 TW / JP / HK / World / All，每個區域有對應的場景預設與攝影機視角。
+Region Pills UI 可切換 TW / JP / HK / US / UK / World / All，每個區域有對應的場景預設與攝影機視角。
 
 ## 視覺概念
 
@@ -128,8 +130,50 @@ Flight Trails 模式下的子選項，開啟後僅顯示當前播放時間前後
 | 設定 | 顯示模式、渲染模式、底圖樣式、視覺參數滑桿 |
 | 位置 | 區域選擇 + 場景預設 + 機場快速跳轉 |
 | 行事曆 | 日期選擇器（full/partial 標記） |
+| 配色 | 6 種主題切換、各元素 color picker 微調、Compare Airports 機場分色 |
+| 空域 | 限制空域顯示開關、5 類分類選擇、opacity / 高度倍率 / 邊緣發光調整 |
 | 統計 | 開啟 Flight Statistics 面板 |
 | 資訊 | 開啟 Info Modal |
+
+### 限制空域 Airspace Overlay
+
+3D 半透明極光風格的飛航管制空域視覺化（Three.js 自訂 shader）：
+
+| 分類 | 來源 | 顏色 | 說明 |
+|------|------|------|------|
+| Restricted (RCR) | 限航區 | 暖紅 | 軍事或敏感區域，需先申請 |
+| Prohibited / Danger | 禁航 + 危險 | 紫紅 | 完全禁止 / 危險演習 |
+| Training / ULZ | 訓練 + 超輕型 | 青綠 | 訓練空域、超輕型載具區 |
+| TMA / Control | TMA + CTR | 冷藍 | 終端管制區、塔台管制 |
+| FIR | 飛航情報區 | 淡白 | 大區域邊界 |
+
+**資料來源**：
+- 台灣：交通部民用航空局 eAIP（AIRAC 01-26）
+- 英國：[OpenAIP](https://www.openaip.net/) REST API（CTR / TMA / Restricted / Danger / Prohibited）
+
+**互動**：點擊空域多邊形 → 右下浮動卡片顯示名稱、ICAO class、底/頂高度、限制 remarks（含管理單位電話、申請程序、限航時段自動抽取等）、warnings、同點重疊空域列表（可切換）。
+
+**渲染特色**：
+- Per-vertex aurora gradient（底部實 → 頂部稀釋成極光青藍紫）
+- 頂邊 LineSegments + AdditiveBlending 發光描邊
+- 世界座標 hash 驅動 shimmer 動畫
+- Dark / Light 主題自適應（亮色降飽和度避免刺眼）
+
+### 機場分色比較（Compare Airports）
+
+Colors 面板內建 opt-in toggle，啟用後依機場為每條航班指派獨立色票，方便比較多機場流量分佈：
+
+| 維度 | 說明 |
+|------|------|
+| Local | 自動挑出該航班兩端中屬於當前 region 的機場（推薦）|
+| Origin | 起飛機場分色 |
+| Destination | 目的地機場分色 |
+
+- 10 組視覺上可分辨的色票（Amber / Cyan / Magenta / Lime / Violet / Coral / Teal / Gold / Sky / Rose）
+- 依機場航班數由多到少自動指派 palette
+- 每個機場可手動點色票自訂
+- 同時影響 3D 動態光軌、3D 靜態網格、2D Mapbox 軌跡線
+- 與日期 Compare 互斥（日期 Compare 啟用時自動禁用）
 
 ### Loading Screen
 
@@ -233,8 +277,10 @@ public/tracks/
 └── aviation_data.json           # 完整合併資料（gitignored）
 
 public/airspace/
-├── days/                        # 每日空域快照
+├── days/                        # 每日空域快照（gitignored，走 S3 pull）
 │   └── YYYY-MM-DD.jsonl
+├── taiwan_airspace.geojson      # 台灣限制空域（CAA eAIP，承諾入版）
+├── gb_airspace.geojson          # 英國限制空域（OpenAIP，承諾入版）
 └── aviation_data.json
 
 public/airports.geojson          # OSM 機場邊界多邊形
@@ -473,6 +519,9 @@ open color-preview.html
 | | Region Selector | TW / JP / HK / World / All 區域切換，動態標題與場景 |
 | | Per-airport lazy loading | JSONL streaming + progressive rendering，初始載入從 70MB 降至 < 5MB |
 | | Light Theme | 所有 UI 元件支援明暗主題自動適應 |
+| 2026/04 中 | UK 區域 + 多日比較 | 新增英國四大機場（EGLL/EGKK/EGSS/EGGW），多日期 Compare 模式（每日色彩區分）|
+| 2026/04 下 | **限制空域圖層** | Three.js 極光風格 shader、台灣 eAIP（81 features）+ 英國 OpenAIP（302 features）、點擊互動資訊卡 |
+| | Compare Airports | Colors 面板 opt-in 機場分色，10 組擴充色票、Local/Origin/Dest 三種維度 |
 
 ## License
 

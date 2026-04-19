@@ -2,6 +2,8 @@ import { useState, useMemo, type CSSProperties, type ReactNode } from "react";
 import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight } from "../types";
 import type { AircraftFilterKey } from "../data/aircraftCategories";
 import { COLOR_THEMES, type ColorTheme } from "../types/colorTheme";
+import { AIRSPACE_CATEGORIES, type AirspaceCategory, type AirspaceSettings } from "../types/airspace";
+import type { AirportColorMode, AirportAssignment } from "../types/airportColors";
 import { StyleSelector } from "./StyleSelector";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
 import {
@@ -212,7 +214,7 @@ function getThemeColors(isDark: boolean): ThemeColors {
 
 /* ── Types ───────────────────────────────────────────────── */
 
-type PanelId = "settings" | "locations" | "calendar" | "colors" | "summary";
+type PanelId = "settings" | "locations" | "calendar" | "colors" | "airspace" | "summary";
 
 export interface IconRailSidebarProps {
   // Theme
@@ -281,6 +283,17 @@ export interface IconRailSidebarProps {
   onColorThemeChange: (key: string) => void;
   colorThemeOverride: ColorTheme | null;
   onColorThemeOverride: (theme: ColorTheme) => void;
+  // Airspace
+  airspaceSettings: AirspaceSettings;
+  onAirspaceSettingsChange: (s: AirspaceSettings) => void;
+  // Per-airport color
+  colorBy: AirportColorMode;
+  onColorByChange: (m: AirportColorMode) => void;
+  airportAssignment: AirportAssignment | null;
+  airportColorOverrides: Record<string, string>;
+  onAirportColorOverride: (icao: string, hex: string | null) => void;
+  onAirportColorReset: () => void;
+  compareModeActive: boolean;
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -765,12 +778,13 @@ function AirportButton({ preset, isActive, onAirportChange, onLocationJump, them
   );
 }
 
-const KNOWN_PREFIXES = ["RC", "RJ", "RO", "VH", "K"];
+const KNOWN_PREFIXES = ["RC", "RJ", "RO", "VH", "K", "EG"];
 const REGION_ICAO_MATCH: Record<string, (icao: string) => boolean> = {
   TW: (icao) => icao.startsWith("RC"),
   JP: (icao) => icao.startsWith("RJ") || icao.startsWith("RO"),
   HK: (icao) => icao.startsWith("VH"),
   US: (icao) => icao.startsWith("K"),
+  UK: (icao) => icao.startsWith("EG"),
   world: (icao) => !KNOWN_PREFIXES.some((p) => icao.startsWith(p)),
   all: () => true,
 };
@@ -780,6 +794,7 @@ const REGION_LABELS: Record<string, string> = {
   JP: "日本 Japan",
   HK: "香港 Hong Kong",
   US: "United States",
+  UK: "United Kingdom",
   world: "World",
 };
 
@@ -799,7 +814,7 @@ function LocationsPanel({
 
   // Group by region when "all"
   const groupedByRegion = region === "all"
-    ? (["TW", "JP", "HK", "US", "world"] as const).map((r) => ({
+    ? (["TW", "JP", "HK", "US", "UK", "world"] as const).map((r) => ({
         key: r,
         label: REGION_LABELS[r],
         presets: CAMERA_PRESETS.filter((p) => available.has(p.icao) && REGION_ICAO_MATCH[r]!(p.icao)),
@@ -1077,8 +1092,22 @@ function CalendarPanel({
 
 /* ── Color Theme Panel ────────────────────────────────────── */
 
-function ColorThemePanel({ colorThemeKey, onColorThemeChange, colorThemeOverride, onColorThemeOverride, theme }:
-  Pick<IconRailSidebarProps, "colorThemeKey" | "onColorThemeChange" | "colorThemeOverride" | "onColorThemeOverride"> & { theme: ThemeColors }) {
+type ColorThemePanelProps = Pick<IconRailSidebarProps,
+  | "colorThemeKey" | "onColorThemeChange"
+  | "colorThemeOverride" | "onColorThemeOverride"
+  | "colorBy" | "onColorByChange"
+  | "airportAssignment" | "airportColorOverrides"
+  | "onAirportColorOverride" | "onAirportColorReset"
+  | "compareModeActive"
+> & { theme: ThemeColors };
+
+function ColorThemePanel(props: ColorThemePanelProps) {
+  const {
+    colorThemeKey, onColorThemeChange, colorThemeOverride, onColorThemeOverride,
+    colorBy, onColorByChange, airportAssignment, airportColorOverrides,
+    onAirportColorOverride, onAirportColorReset, compareModeActive,
+    theme,
+  } = props;
 
   const entries = Object.entries(COLOR_THEMES);
   const ct: ColorTheme = colorThemeOverride ?? COLOR_THEMES[colorThemeKey] ?? COLOR_THEMES["default"]!;
@@ -1180,6 +1209,183 @@ function ColorThemePanel({ colorThemeKey, onColorThemeChange, colorThemeOverride
           <div style={{ flex: 1, height: 16, borderRadius: 3, background: `linear-gradient(90deg, ${ct.mapTrailA}, ${ct.mapTrailB})`, border: "1px solid rgba(255,255,255,0.1)" }} />
         </div>
       </div>
+
+      {/* ── Compare Airports（opt-in 比較模式）─────────────── */}
+      <SectionHeader theme={theme}>Compare Airports</SectionHeader>
+      {compareModeActive && (
+        <div style={{ fontSize: 10, color: theme.DIM, marginBottom: 6, lineHeight: 1.4 }}>
+          日期 Compare 啟用時自動關閉
+        </div>
+      )}
+
+      {/* 主開關（ON/OFF toggle）*/}
+      <div
+        onClick={() => {
+          if (compareModeActive) return;
+          onColorByChange(colorBy === "theme" ? "local" : "theme");
+        }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "8px 10px",
+          marginBottom: 6,
+          borderRadius: 6,
+          border: `1px solid ${colorBy !== "theme" ? theme.ACTIVE_BORDER : theme.BORDER}`,
+          background: colorBy !== "theme" ? theme.ACTIVE_BG : "transparent",
+          cursor: compareModeActive ? "not-allowed" : "pointer",
+          opacity: compareModeActive ? 0.4 : 1,
+          transition: "all 0.15s",
+        }}
+      >
+        <span style={{ fontSize: 12, fontFamily: "monospace", color: theme.ACCENT }}>
+          {colorBy === "theme" ? "Off" : "On"}
+        </span>
+        <span
+          style={{
+            width: 28, height: 14, borderRadius: 7,
+            background: colorBy !== "theme" ? theme.ACCENT_BLUE : theme.SLIDER_TRACK,
+            position: "relative", transition: "background 0.15s",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute", top: 1,
+              left: colorBy !== "theme" ? 15 : 1,
+              width: 12, height: 12, borderRadius: "50%",
+              background: "#fff", transition: "left 0.15s",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+            }}
+          />
+        </span>
+      </div>
+
+      {/* On 時才顯示維度切換 */}
+      {colorBy !== "theme" && !compareModeActive && (
+        <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+          {(["local", "origin", "dest"] as AirportColorMode[]).map((m) => {
+            const label = m === "local" ? "Local" : m === "origin" ? "Origin" : "Dest";
+            const active = colorBy === m;
+            return (
+              <button
+                key={m}
+                onClick={() => onColorByChange(m)}
+                title={
+                  m === "local" ? "區域內機場（自動挑 region 端）"
+                  : m === "origin" ? "起飛機場"
+                  : "目的地機場"
+                }
+                style={{
+                  flex: 1,
+                  padding: "4px 0",
+                  fontSize: 10,
+                  fontFamily: "monospace",
+                  border: `1px solid ${active ? theme.ACTIVE_BORDER : theme.BORDER}`,
+                  borderRadius: 4,
+                  background: active ? theme.ACTIVE_BG : "transparent",
+                  color: active ? theme.ACTIVE_TEXT : theme.DIM,
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {colorBy !== "theme" && !compareModeActive && airportAssignment && (
+        <>
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            fontSize: 10, color: theme.DIM, marginBottom: 6,
+          }}>
+            <span>
+              {airportAssignment.airports.length} airport{airportAssignment.airports.length !== 1 ? "s" : ""}
+              {" · "}
+              {colorBy === "local" ? "in region"
+                : colorBy === "origin" ? "by departure"
+                : "by arrival"}
+            </span>
+            {Object.keys(airportColorOverrides).length > 0 && (
+              <button
+                onClick={onAirportColorReset}
+                style={{
+                  fontSize: 10, color: theme.ACCENT_BLUE, background: "none",
+                  border: "none", cursor: "pointer", padding: 0,
+                  fontFamily: "monospace",
+                }}
+              >
+                reset
+              </button>
+            )}
+          </div>
+          <div style={{
+            display: "flex", flexDirection: "column", gap: 3,
+            maxHeight: 220, overflowY: "auto",
+            paddingRight: 2,
+          }}>
+            {airportAssignment.airports.map((ap) => (
+              <div
+                key={ap.icao}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "4px 6px",
+                  borderRadius: 4,
+                  background: ap.isCustom ? theme.HOVER_BG : "transparent",
+                  border: `1px solid ${ap.isCustom ? theme.BORDER : "transparent"}`,
+                }}
+              >
+                <label
+                  style={{
+                    position: "relative", width: 18, height: 18, flexShrink: 0,
+                    borderRadius: "50%", cursor: "pointer",
+                    background: ap.palette.primary,
+                    boxShadow: `0 0 6px ${ap.palette.primary}88`,
+                    border: "1px solid rgba(255,255,255,0.25)",
+                  }}
+                  title="點擊改色"
+                >
+                  <input
+                    type="color"
+                    value={ap.palette.primary}
+                    onChange={(e) => onAirportColorOverride(ap.icao, e.target.value)}
+                    style={{
+                      position: "absolute", inset: 0, opacity: 0,
+                      width: "100%", height: "100%", cursor: "pointer",
+                    }}
+                  />
+                </label>
+                <span style={{ fontSize: 11, fontFamily: "monospace", color: theme.ACCENT, minWidth: 42 }}>
+                  {ap.icao}
+                </span>
+                <span style={{ flex: 1 }} />
+                <span style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+                  {ap.count}
+                </span>
+                {ap.isCustom && (
+                  <button
+                    onClick={() => onAirportColorOverride(ap.icao, null)}
+                    style={{
+                      fontSize: 10, color: theme.DIM, background: "none",
+                      border: "none", cursor: "pointer", padding: "0 2px",
+                    }}
+                    title="恢復預設色"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            {airportAssignment.airports.length === 0 && (
+              <div style={{ fontSize: 10, color: theme.DIM, padding: "6px 0" }}>
+                尚無航班資料
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -1472,6 +1678,175 @@ function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays, them
   return null;
 }
 
+/* ── Airspace Panel ─────────────────────────────────────── */
+
+function AirspacePanel({
+  settings,
+  onChange,
+  theme,
+}: {
+  settings: AirspaceSettings;
+  onChange: (s: AirspaceSettings) => void;
+  theme: ThemeColors;
+}) {
+  const update = (patch: Partial<AirspaceSettings>) => onChange({ ...settings, ...patch });
+  const toggleCategory = (cat: AirspaceCategory) => {
+    onChange({
+      ...settings,
+      visibility: { ...settings.visibility, [cat]: !settings.visibility[cat] },
+    });
+  };
+
+  // 分類色點（依主題）
+  const getSwatchColor = (cat: AirspaceCategory) => {
+    const conf = AIRSPACE_CATEGORIES.find((c) => c.id === cat)!;
+    const rgb = conf.colorDark;
+    return `rgb(${Math.round(rgb[0] * 255)}, ${Math.round(rgb[1] * 255)}, ${Math.round(rgb[2] * 255)})`;
+  };
+
+  return (
+    <>
+      <SectionHeader theme={theme}>Airspace</SectionHeader>
+
+      {/* 總開關 */}
+      <div
+        onClick={() => update({ enabled: !settings.enabled })}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "8px 10px",
+          marginBottom: 8,
+          borderRadius: 6,
+          border: `1px solid ${settings.enabled ? theme.ACTIVE_BORDER : theme.BORDER}`,
+          background: settings.enabled ? theme.ACTIVE_BG : "transparent",
+          cursor: "pointer",
+          transition: "all 0.15s",
+        }}
+      >
+        <span style={{ fontSize: 12, fontFamily: "monospace", color: theme.ACCENT }}>
+          Show Airspace
+        </span>
+        <span
+          style={{
+            width: 28,
+            height: 14,
+            borderRadius: 7,
+            background: settings.enabled ? theme.ACCENT_BLUE : theme.SLIDER_TRACK,
+            position: "relative",
+            transition: "background 0.15s",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              top: 1,
+              left: settings.enabled ? 15 : 1,
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              background: "#fff",
+              transition: "left 0.15s",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+            }}
+          />
+        </span>
+      </div>
+
+      {/* 分類 */}
+      <SectionHeader theme={theme}>Layers</SectionHeader>
+      {AIRSPACE_CATEGORIES.map((conf) => {
+        const isOn = settings.visibility[conf.id];
+        return (
+          <div
+            key={conf.id}
+            onClick={() => toggleCategory(conf.id)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 8px",
+              marginBottom: 4,
+              borderRadius: 4,
+              cursor: settings.enabled ? "pointer" : "not-allowed",
+              opacity: settings.enabled ? 1 : 0.4,
+              background: isOn ? theme.HOVER_BG : "transparent",
+              border: `1px solid ${isOn ? theme.BORDER : "transparent"}`,
+              transition: "background 0.15s",
+            }}
+          >
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: getSwatchColor(conf.id),
+                boxShadow: isOn ? `0 0 6px ${getSwatchColor(conf.id)}` : "none",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                flex: 1,
+                fontSize: 11,
+                fontFamily: "monospace",
+                color: isOn ? theme.ACTIVE_TEXT : theme.DIM,
+              }}
+            >
+              {conf.label}
+            </span>
+            <span style={{ fontSize: 10, color: theme.DIM }}>{isOn ? "●" : "○"}</span>
+          </div>
+        );
+      })}
+
+      {/* Style */}
+      <SectionHeader theme={theme}>Style</SectionHeader>
+      <SliderRow
+        label="Opacity"
+        value={settings.opacity}
+        min={0}
+        max={1}
+        step={0.01}
+        format={(v) => v.toFixed(2)}
+        onChange={(v) => update({ opacity: v })}
+        theme={theme}
+      />
+      <SliderRow
+        label="Height Scale"
+        value={settings.heightScale}
+        min={0.5}
+        max={5}
+        step={0.1}
+        format={(v) => `${v.toFixed(1)}×`}
+        onChange={(v) => update({ heightScale: v })}
+        theme={theme}
+      />
+      <SliderRow
+        label="Edge Glow"
+        value={settings.edgeGlow}
+        min={0}
+        max={2}
+        step={0.05}
+        format={(v) => v.toFixed(2)}
+        onChange={(v) => update({ edgeGlow: v })}
+        theme={theme}
+      />
+    </>
+  );
+}
+
+function IconAirspace() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 3 20 8 20 16 12 21 4 16 4 8 12 3" />
+      <path d="M12 3v18" opacity="0.5" />
+      <path d="M4 8l16 8" opacity="0.3" />
+      <path d="M20 8L4 16" opacity="0.3" />
+    </svg>
+  );
+}
+
 /* ── Main Component ──────────────────────────────────────── */
 
 export function IconRailSidebar(props: IconRailSidebarProps) {
@@ -1587,6 +1962,16 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="13.5" r="2.5"/><circle cx="6.5" cy="10.5" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>
         </RailIcon>
 
+        {/* Airspace */}
+        <RailIcon
+          active={activePanel === "airspace"}
+          onClick={() => togglePanel("airspace")}
+          title="Airspace"
+          theme={theme}
+        >
+          <IconAirspace />
+        </RailIcon>
+
         {/* Summary */}
         <RailIcon
           active={activePanel === "summary"}
@@ -1663,6 +2048,20 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onColorThemeChange={props.onColorThemeChange}
               colorThemeOverride={props.colorThemeOverride}
               onColorThemeOverride={props.onColorThemeOverride}
+              colorBy={props.colorBy}
+              onColorByChange={props.onColorByChange}
+              airportAssignment={props.airportAssignment}
+              airportColorOverrides={props.airportColorOverrides}
+              onAirportColorOverride={props.onAirportColorOverride}
+              onAirportColorReset={props.onAirportColorReset}
+              compareModeActive={props.compareModeActive}
+              theme={theme}
+            />
+          )}
+          {activePanel === "airspace" && (
+            <AirspacePanel
+              settings={props.airspaceSettings}
+              onChange={props.onAirspaceSettingsChange}
               theme={theme}
             />
           )}
