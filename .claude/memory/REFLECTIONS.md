@@ -36,4 +36,34 @@
 
 ---
 
+## 2026-04-23 首次 /wrap-up 測試
+
+### What worked ✅
+
+- Stage 1 Gather 的平行執行（Read × 3 + Bash git 批次）一次到位
+- Memory 9 檔結構讓 context load 很輕（單輪讀完全部）
+- `origin/master..HEAD` 空 = 已 push 乾淨，狀態清楚
+- Skill 自己被偵測為 `user_invocable`，觸發順暢
+
+### What didn't ❌
+
+- 本次 wrap-up 材料過少：前一次 REFLECTIONS 已在 memory 建立時**預先**寫好「倫敦 + memory 系統」反省 → 造成重複記錄
+- STATUS.md 初建時寫的，沒包含後續 push 與 wrap-up 測試 → 每次 wrap-up 必 rewrite（這是設計，不是問題）
+
+### Next-time rules 🎯
+
+1. **Memory 系統初建時 REFLECTIONS 留空或只寫 placeholder**，讓第一次真正的 `/wrap-up` 自己填 → 避免重複
+2. STATUS 同一 session 出現兩次以上時，後者為準
+
+### Skill 改進候選
+
+- 考慮加「初建後第一次 wrap-up」特例提示（若 REFLECTIONS 已有當天條目，append 而非重寫）
+
+### Memory 產出
+
+- STATUS：rewrite（+memory 上線里程碑 + 3 commits 明列）
+- REFLECTIONS：append 本條
+
+---
+
 <!-- /wrap-up 之後追加新反省 -->
