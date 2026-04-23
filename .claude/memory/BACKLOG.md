@@ -10,9 +10,9 @@
 | B002 | P2 | [BUG] Stn slider `setPaintProperty` 對 circle 圖層不生效 | open | Mapbox terrain 模式限制？需要實驗切換 source 或改 symbol |
 | B003 | P3 | 補抓 EGLL 2/18 TW 邊界時段差異 21 筆 | open | 佔比 1.7%，可先忽略 |
 | B004 | P3 | `PRINCIPLES.md` 拆出 `DECISIONS.md`（ADR 格式） | open | PRINCIPLES 條目多到難讀時再拆 |
-| B005 | P3 | `scripts/count-london.mjs` 去留決策 | open | 保留 / 刪除 / 重構成 `count-flights.ts` 通用版？ |
+| B005 | P3 | `scripts/oneoff/count-london.mjs` 重構成 `count-flights.ts` 通用版？ | done | 2026-04-23 搬到 `scripts/oneoff/`，通用版日後再議 |
 | B006 | P3 | `pull-from-s3.sh` region 清單改從 manifest 動態解析 | open | 避免每次加 region 都要改腳本（INCIDENT #3） |
-| B007 | P3 | 刪除 `scripts/track-progress.json` + `.bak`（migration 已穩定） | open | 322MB + 備份，節省空間 |
+| B007 | P3 | 刪除 `scripts/track-progress.json` + `.bak`（migration 已穩定） | done | 2026-04-23 搬到資源回收桶（644MB） |
 | B008 | P3 | 其他非倫敦機場也補 OSM boundary | open | 目前 107 / 900 座機場有 boundary，其餘用點顯示 |
 | B009 | P3 | 將 `fetch-airport-boundaries` 的 runway-buffer 套到所有 no-polygon 機場 | open | 目前只對 `--icao` 指定範圍生效，可加 `--missing` 全面補 |
 

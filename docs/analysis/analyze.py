@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Flight data analysis script.
-Reads ../scripts/flight-list.json and generates 13 analysis JSON files in data/.
+Reads ../../scripts/flight-list.json and generates 13 analysis JSON files in data/.
 """
 
 import json
@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 TPE_TZ = timezone(timedelta(hours=8))
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-INPUT_FILE = os.path.join(SCRIPT_DIR, "..", "scripts", "flight-list.json")
+INPUT_FILE = os.path.join(SCRIPT_DIR, "..", "..", "scripts", "flight-list.json")
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "data")
 
 ICAO_COUNTRY_MAP = {

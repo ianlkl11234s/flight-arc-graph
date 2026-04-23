@@ -45,7 +45,7 @@ b1d8de0 memory: scaffold .claude/memory/ system (9 files)
 
 見 [BACKLOG.md](BACKLOG.md)。優先：
 - B001 Phase 3 深度分析（P1）
-- B005 `scripts/count-london.mjs` 去留決策（30 秒）
+- ~~B005 `scripts/count-london.mjs` 去留決策~~（已搬到 `scripts/oneoff/`，2026-04-23）
 - B008 其他 793 座機場補 OSM boundary（可等）
 
 ## 累計狀態快照

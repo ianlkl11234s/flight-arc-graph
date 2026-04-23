@@ -9,8 +9,8 @@
 > ⚠ **三層同步原則**（參 PRINCIPLES）：資料 / UI / 邊界 缺一不可。
 
 ```bash
-# 1. 預估航班數 + credit（沿用 scripts/count-london.mjs 或改 airport list）
-npx tsx scripts/count-london.mjs
+# 1. 預估航班數 + credit（沿用 scripts/oneoff/count-london.mjs 或改 airport list）
+npx tsx scripts/oneoff/count-london.mjs
 
 # 2. 抓 schedule（--from/--to 是 UTC 日期；TW 2/18 涵蓋 UTC 2/17 + 2/18）
 npx tsx scripts/fetch-flights.ts \
