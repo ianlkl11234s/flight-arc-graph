@@ -6,6 +6,8 @@
 
 ## PB-01 新增機場群資料（某日 TW）
 
+> ⚠ **三層同步原則**（參 PRINCIPLES）：資料 / UI / 邊界 缺一不可。
+
 ```bash
 # 1. 預估航班數 + credit（沿用 scripts/count-london.mjs 或改 airport list）
 npx tsx scripts/count-london.mjs
@@ -24,10 +26,23 @@ npx tsx scripts/split-tracks.ts
 # 5. 上傳 S3
 npx tsx scripts/upload-split-to-s3.ts
 
-# 6. Zeabur 拉資料
-sh scripts/pull-from-s3.sh   # Alpine 無 bash，用 sh
+# 6. ⭐ UI 層：加入 cameraPresets.ts
+#    - AIRPORT_INFO（icao → name/iata 對照）
+#    - CAMERA_PRESETS（center / zoom / pitch / bearing）
+#    - 若是新地區，記得更新 overview preset 航站數與 zoom
 
-# 7. 更新 .claude/memory/DATA_SCOPE.md
+# 7. ⭐ 邊界層：抓 OSM aerodrome polygon
+npx tsx scripts/fetch-airport-boundaries.ts \
+  --icao EGTK,EGKB,EGLF,EGMC,EGMD
+#   （找不到 aerodrome polygon 會自動 fallback 到 runway buffer）
+
+# 8. npm run typecheck → commit（三層各一 commit） → push
+#    Zeabur 自動 build（UI + geojson 會更新）
+
+# 9. Zeabur 拉 tracks 資料（絕對路徑！容器 WORKDIR=/）
+sh /app/scripts/pull-from-s3.sh
+
+# 10. 更新 .claude/memory/DATA_SCOPE.md
 ```
 
 **小規模測試**（不浪費 credits）：
@@ -61,8 +76,8 @@ git add <files>
 git commit -m "..."
 git push             # Zeabur auto-build
 
-# Build 完後，Zeabur 終端機
-sh scripts/pull-from-s3.sh
+# Build 完後，Zeabur 終端機（注意：WORKDIR=/ 須用絕對路徑）
+sh /app/scripts/pull-from-s3.sh
 ```
 
 ---
