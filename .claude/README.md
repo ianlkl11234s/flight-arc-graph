@@ -5,6 +5,7 @@
 ```
 .claude/
 ├── README.md              # 本檔（目錄）
+├── FRAMEWORK.md           # ⭐ 可移植的記憶系統說明書（給新專案複製用）
 ├── memory/                # ⭐ 專案記憶系統（Session 開頭必讀）
 │   ├── README.md          # 記憶索引 + SOP
 │   ├── STATUS.md          # 當前進度
