@@ -47,3 +47,24 @@
 - **不盲信 memory**：凡涉及「某資料是否存在」「某機場是否已抓」類判斷，先 `Grep` / `Read` 驗證現況，不靠記憶（2026-04-23 教訓）
 - **成本估算要標示來源**：寫「實測」或「估算」，不混淆
 - **改上游資料 pipeline → 下游全查**：`grep -r` 所有消費端，避免漏改（2026-04-23 UK region 教訓）
+
+## 新增機場資料 — 三層同步原則（2026-04-23 新增）
+
+新增機場群時，**資料 / UI / 邊界**三層缺一不可：
+
+1. **資料層**：`fetch-flights` + `fetch-tracks` → `public/tracks/airports/*.jsonl`
+2. **UI 層**：`src/map/cameraPresets.ts` 加 `AIRPORT_INFO` + `CAMERA_PRESETS`（缺了 tab dropdown 不顯示）
+3. **邊界層**：`scripts/fetch-airport-boundaries.ts --icao ...` 更新 `public/airports.geojson`（缺了地圖上沒機場輪廓）
+
+三層都要更新 → 否則 UI 看起來像「沒抓到」（參 REFLECTIONS 2026-04-23 晚段）。
+
+## 外部 API 可靠性（2026-04-23 新增）
+
+- **Overpass**：用 `execFileSync('curl', [...])` 而非 Node 內建 fetch（後者 ETIMEDOUT）
+- **FR24**：Node fetch 正常，維持現狀
+
+## Zeabur 容器操作（2026-04-23 新增）
+
+- 容器 WORKDIR 預設 `/`（不是 `/app`）
+- 執行 script 一律用絕對路徑：`sh /app/scripts/pull-from-s3.sh`
+- 或先 `cd /app` 再執行相對路徑
