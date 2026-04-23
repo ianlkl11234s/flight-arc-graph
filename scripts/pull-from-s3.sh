@@ -43,7 +43,7 @@ echo "  done: ${COUNT} airport files"
 # 3. 下載 regions
 echo ""
 echo "[3/4] Tracks regions..."
-for R in TW JP HK US other; do
+for R in TW JP HK US UK other; do
   wget -q "${S3_BASE}/tracks/regions/${R}.jsonl" -O "${DATA_DIR}/tracks/regions/${R}.jsonl" 2>/dev/null || true
   echo "  ${R}.jsonl"
 done
