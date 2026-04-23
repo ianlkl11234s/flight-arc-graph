@@ -10,6 +10,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { execFileSync } from "child_process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,34 +47,54 @@ function saveGeoJSON(data: GeoJSON) {
   fs.writeFileSync(GEOJSON_PATH, JSON.stringify(data), "utf8");
 }
 
+// Node 內建 fetch 對 Overpass 會 ETIMEDOUT（IPv6 / TLS 路由問題）
+// → 改用 curl 繞過，與 shell 行為一致
+function runOverpass(query: string): any[] | null {
+  let raw: string;
+  try {
+    raw = execFileSync(
+      "curl",
+      [
+        "-sS",
+        "-X", "POST",
+        "--max-time", "60",
+        "-H", "Content-Type: application/x-www-form-urlencoded",
+        "--data-urlencode", `data=${query.trim()}`,
+        OVERPASS_URL,
+      ],
+      { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }
+    );
+  } catch (err: any) {
+    console.error(`  ❌ curl failed: ${err.message}`);
+    return null;
+  }
+  try {
+    const data = JSON.parse(raw);
+    return data.elements || [];
+  } catch {
+    console.error(`  ❌ JSON parse failed (got ${raw.length} bytes)`);
+    return null;
+  }
+}
+
 async function fetchAirportBoundary(
   icao: string
 ): Promise<AirportFeature | null> {
-  // Query: aeroway=aerodrome with matching icao tag
+  // Query: aeroway=aerodrome (way/relation for polygons, node for fallback anchor)
   const query = `
 [out:json][timeout:30];
 (
   way["aeroway"="aerodrome"]["icao"="${icao}"];
   relation["aeroway"="aerodrome"]["icao"="${icao}"];
+  node["aeroway"="aerodrome"]["icao"="${icao}"];
 );
 out body;
 >;
 out skel qt;
-  `.trim();
+  `;
 
-  const res = await fetch(OVERPASS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `data=${encodeURIComponent(query)}`,
-  });
-
-  if (!res.ok) {
-    console.error(`  ❌ HTTP ${res.status} for ${icao}`);
-    return null;
-  }
-
-  const data = await res.json();
-  const elements = data.elements || [];
+  const elements = runOverpass(query);
+  if (!elements) return null;
 
   // Build node lookup
   const nodes: Record<number, [number, number]> = {};
@@ -91,7 +112,12 @@ out skel qt;
   );
 
   if (aerodromes.length === 0) {
-    return null;
+    // Fallback: try to build polygon from nearby runway(s) using aerodrome node as anchor
+    const aeroNode = elements.find(
+      (el: any) => el.type === "node" && el.tags?.aeroway === "aerodrome"
+    );
+    if (!aeroNode) return null;
+    return buildRunwayBufferFeature(icao, aeroNode);
   }
 
   const aerodrome = aerodromes[0];
@@ -153,6 +179,109 @@ out skel qt;
     geometry: {
       type: "Polygon",
       coordinates: [coordinates],
+    },
+  };
+}
+
+// ── Runway buffer fallback（小機場 OSM 無 aerodrome polygon）──────────────
+
+const METERS_PER_DEG_LAT = 111320;
+const RUNWAY_END_BUFFER_M = 200;  // 跑道兩端延伸（apron + safety）
+const RUNWAY_WIDTH_HALF_M = 150;  // 跑道中心向兩側的緩衝（含航廈 + taxiway）
+const RUNWAY_SEARCH_BBOX_DEG = 0.02;  // ~2km 搜尋半徑
+
+function bufferRunway(runway: number[][]): number[][] {
+  if (runway.length < 2) return [];
+  const [sx, sy] = runway[0];
+  const [ex, ey] = runway[runway.length - 1];
+  const midLat = (sy + ey) / 2;
+  const mLat = 1 / METERS_PER_DEG_LAT;
+  const mLon = 1 / (METERS_PER_DEG_LAT * Math.cos((midLat * Math.PI) / 180));
+
+  // 方向向量（轉為公尺）
+  const dxM = (ex - sx) / mLon;
+  const dyM = (ey - sy) / mLat;
+  const lenM = Math.hypot(dxM, dyM);
+  if (lenM < 1) return [];
+  const ux = dxM / lenM;
+  const uy = dyM / lenM;
+  // 垂直向量
+  const px = -uy;
+  const py = ux;
+
+  // 兩端延伸
+  const extSx = sx - ux * RUNWAY_END_BUFFER_M * mLon;
+  const extSy = sy - uy * RUNWAY_END_BUFFER_M * mLat;
+  const extEx = ex + ux * RUNWAY_END_BUFFER_M * mLon;
+  const extEy = ey + uy * RUNWAY_END_BUFFER_M * mLat;
+
+  // 4 個角
+  const c1 = [extSx + px * RUNWAY_WIDTH_HALF_M * mLon, extSy + py * RUNWAY_WIDTH_HALF_M * mLat];
+  const c2 = [extEx + px * RUNWAY_WIDTH_HALF_M * mLon, extEy + py * RUNWAY_WIDTH_HALF_M * mLat];
+  const c3 = [extEx - px * RUNWAY_WIDTH_HALF_M * mLon, extEy - py * RUNWAY_WIDTH_HALF_M * mLat];
+  const c4 = [extSx - px * RUNWAY_WIDTH_HALF_M * mLon, extSy - py * RUNWAY_WIDTH_HALF_M * mLat];
+  return [c1, c2, c3, c4, c1];
+}
+
+function buildRunwayBufferFeature(
+  icao: string,
+  aeroNode: any
+): AirportFeature | null {
+  const lat = aeroNode.lat;
+  const lon = aeroNode.lon;
+  const dLat = RUNWAY_SEARCH_BBOX_DEG;
+  const dLon = RUNWAY_SEARCH_BBOX_DEG / Math.cos((lat * Math.PI) / 180);
+  const bbox = `${lat - dLat},${lon - dLon},${lat + dLat},${lon + dLon}`;
+
+  const query = `
+[out:json][timeout:30];
+way["aeroway"="runway"](${bbox});
+out body;
+>;
+out skel qt;
+  `;
+  const elements = runOverpass(query);
+  if (!elements) return null;
+
+  const nodes: Record<number, [number, number]> = {};
+  for (const el of elements as any[]) {
+    if (el.type === "node") nodes[el.id] = [el.lon, el.lat];
+  }
+
+  // 選最長的 runway 作為 buffer 來源
+  let bestCoords: number[][] = [];
+  let bestLen = 0;
+  for (const el of elements as any[]) {
+    if (el.type !== "way" || el.tags?.aeroway !== "runway") continue;
+    const coords = (el.nodes || [])
+      .map((nid: number) => nodes[nid])
+      .filter(Boolean) as number[][];
+    if (coords.length < 2) continue;
+    const [a, b] = [coords[0], coords[coords.length - 1]];
+    const len = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (len > bestLen) {
+      bestLen = len;
+      bestCoords = coords;
+    }
+  }
+  if (bestCoords.length < 2) return null;
+
+  const polygon = bufferRunway(bestCoords);
+  if (polygon.length < 4) return null;
+
+  const tags = aeroNode.tags || {};
+  console.log(`  ⚠ fallback runway-buffer (${polygon.length - 1} pts)`);
+  return {
+    type: "Feature",
+    properties: {
+      name: tags.name || icao,
+      name_en: tags["name:en"] || tags.name || icao,
+      icao,
+      iata: tags.iata || "",
+    },
+    geometry: {
+      type: "Polygon",
+      coordinates: [polygon],
     },
   };
 }
