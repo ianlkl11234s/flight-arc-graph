@@ -66,4 +66,36 @@
 
 ---
 
+## 2026-04-23（晚段）倫敦 UI + boundary 補齊
+
+### What worked ✅
+
+- 用戶質疑「這裡是單純沒顯示還是現在 UK 沒全機場」→ 立刻實測 `grep EGLL src/map/cameraPresets.ts` 驗證，發現 5/10 → 快速定位是 UI 資料缺
+- Overpass Node fetch 失敗時，快速用 curl 直測確認「不是網路問題是 Node fetch 問題」→ 迅速切換 execFileSync('curl')，沒在 Node fetch debug 死磕
+- EGMD 只有 node 沒 polygon → 不放棄、實作 runway-buffer fallback，順便成為未來所有小機場的通用解（B009）
+- 3 個 atomic commit 切割乾淨（fix / feat / data）
+- 每次動資料都用 `python3 wc/len` 驗證數字（airports.geojson 97 → 107、polygon 邊長米數）
+
+### What didn't ❌
+
+- **初期不知道 UI 是三層分離**（airport JSONL / cameraPresets / airports.geojson）：當用戶問「UK 沒全機場嗎」的瞬間其實 3 個層都可能缺，只是我第一反應是檢查 cameraPresets
+- **Boundary 層一開始沒想到要抓**：是用戶主動提「想抓機場範圍」才做，否則 UI 會顯示 10 個但少 5 個輪廓
+
+### Next-time rules 🎯
+
+1. **新機場群 = 資料 + UI + 邊界三層**（已寫入 PRINCIPLES + PB-01）
+2. Node fetch 對 GIS 類慢 API（Overpass / Nominatim / OpenSky）要預期可能 ETIMEDOUT，優先 curl
+3. 小機場缺 polygon 時不要直接放棄，考慮 fallback 算法（runway buffer、bbox 等）
+
+### Memory 產出
+
+- INCIDENTS：+3 條（Zeabur WORKDIR / Overpass ETIMEDOUT / EGMD 無 polygon）
+- PRINCIPLES：+3 節（三層同步 / Overpass curl / Zeabur 絕對路徑）
+- PLAYBOOKS：PB-01 step 6+7 加入 UI/boundary，PB-03 路徑改絕對
+- GLOSSARY：+OSM / Overpass / runway-buffer 區段
+- BACKLOG：+B008 / +B009
+- DATA_SCOPE：+機場邊界區段（107 座）
+
+---
+
 <!-- /wrap-up 之後追加新反省 -->
