@@ -1,23 +1,45 @@
-# Claude 協作筆記 — Flight Arc (plan-art)
-
-飛行軌跡視覺化專案（FR24 / OpenSky）。
+# .claude/ — Flight Arc 協作目錄
 
 ## 結構
 
 ```
 .claude/
-├── README.md              # 本檔案
-├── principles.md          # 開發原則
-├── skills/                # Claude Code skills（已存在）
-└── pitfalls/              # 過往踩坑紀錄
+├── README.md              # 本檔（目錄）
+├── memory/                # ⭐ 專案記憶系統（Session 開頭必讀）
+│   ├── README.md          # 記憶索引 + SOP
+│   ├── STATUS.md          # 當前進度
+│   ├── BACKLOG.md         # 待辦
+│   ├── DATA_SCOPE.md      # 資料盤點
+│   ├── PRINCIPLES.md      # 預設 / 原則
+│   ├── PLAYBOOKS.md       # 固定流程
+│   ├── GLOSSARY.md        # 術語表
+│   ├── INCIDENTS.md       # 踩坑紀錄（append-only）
+│   └── REFLECTIONS.md     # Session 反省（append-only）
+├── skills/
+│   ├── video-compose.md   # 影片後製（ffmpeg 流程）
+│   └── wrap-up/
+│       └── SKILL.md       # ⭐ Session 收尾 + memory atomic commit
+└── pitfalls/              # Long-form 事件紀錄（INCIDENTS 的 archive）
+    └── track-progress-migration.md
 ```
 
-## 文件清單
+## 閱讀順序（新 session 開頭）
 
-- [next-steps.md](next-steps.md) — **目前進行中的工作**（重開 session 先看這個）
-- [principles.md](principles.md) — 開發慣例
-- 專案根 [CLAUDE.md](../CLAUDE.md) — 必做的 build 檢查與程式碼慣例
+1. `memory/STATUS.md` → 知道上次結束在哪
+2. `memory/BACKLOG.md` → 看優先級
+3. `memory/PRINCIPLES.md` → 避免重開溝通
+4. 必要時查 `memory/DATA_SCOPE` / `PLAYBOOKS` / `GLOSSARY`
+5. **不變規則**在專案根 [../CLAUDE.md](../CLAUDE.md)
 
-### Pitfalls
+## Session 結束
 
-- [track-progress-migration.md](pitfalls/track-progress-migration.md) — 322MB progress 檔瘦身成 NDJSON（2026-04-16）
+喊 `/wrap-up` → skill 自動 5 階段更新 memory 並 atomic commit。
+
+## 分層原則
+
+| 層級 | 位置 | 性質 |
+|---|---|---|
+| 規則 | `CLAUDE.md`（專案根） | 不變規則（build 檢查、程式風格） |
+| 狀態 | `.claude/memory/` | 變動狀態、待辦、反省 |
+| 長文 | `.claude/pitfalls/` | 重大事件的詳細紀錄 |
+| Skills | `.claude/skills/` | 可 user-invocable 的工作流程 |
