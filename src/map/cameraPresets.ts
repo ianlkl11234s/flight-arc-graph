@@ -111,6 +111,11 @@ export const AIRPORT_INFO: Record<string, { name: string; iata: string }> = {
   EGLC: { name: "London City", iata: "LCY" },
   EGSS: { name: "London Stansted", iata: "STN" },
   EGGW: { name: "London Luton", iata: "LTN" },
+  EGMC: { name: "London Southend", iata: "SEN" },
+  EGTK: { name: "London Oxford", iata: "OXF" },
+  EGKB: { name: "London Biggin Hill", iata: "BQH" },
+  EGLF: { name: "London Farnborough", iata: "FAB" },
+  EGMD: { name: "London Ashford (Lydd)", iata: "LYX" },
   // Ireland
   EIDW: { name: "Dublin Airport", iata: "DUB" },
   // Singapore
@@ -920,10 +925,50 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     bearing: 76, // 跑道 07/25
   },
   {
-    name: "Greater London (5 airports)",
+    name: "London Southend",
+    icao: "EGMC",
+    center: [0.6956, 51.5714],
+    zoom: 12.2,
+    pitch: 55,
+    bearing: 50, // 跑道 05/23
+  },
+  {
+    name: "London Oxford",
+    icao: "EGTK",
+    center: [-1.3200, 51.8369],
+    zoom: 12.2,
+    pitch: 55,
+    bearing: 10, // 跑道 01/19
+  },
+  {
+    name: "London Biggin Hill",
+    icao: "EGKB",
+    center: [0.0325, 51.3308],
+    zoom: 12.2,
+    pitch: 55,
+    bearing: 30, // 跑道 03/21
+  },
+  {
+    name: "London Farnborough",
+    icao: "EGLF",
+    center: [-0.7764, 51.2758],
+    zoom: 12.2,
+    pitch: 55,
+    bearing: 60, // 跑道 06/24
+  },
+  {
+    name: "London Ashford (Lydd)",
+    icao: "EGMD",
+    center: [0.9394, 50.9561],
+    zoom: 12.2,
+    pitch: 55,
+    bearing: 40, // 跑道 04/22
+  },
+  {
+    name: "Greater London (10 airports)",
     icao: "EGLL_OVERVIEW",
     center: [0.0, 51.5],
-    zoom: 9,
+    zoom: 8.4,
     pitch: 45,
     bearing: 0,
   },
