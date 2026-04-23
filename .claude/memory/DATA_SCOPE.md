@@ -11,6 +11,7 @@
 | 時刻表（flight-list.json 累計） | 58,849 筆 |
 | 軌跡（不重複 fr24_id） | 22,536 筆 |
 | 機場 JSONL 檔 | 900 座 |
+| 機場邊界（airports.geojson） | 107 座 |
 | Region JSONL | 6 個 |
 | 空域日快照 | 6 天 |
 
@@ -43,6 +44,13 @@
 ## 其他機場（~850 座）
 
 自然產生，為上述主力航班的 dest/orig 端點。不單獨 campaign。
+
+## 機場邊界（public/airports.geojson）
+
+107 座機場有 OSM polygon 邊界：
+- **倫敦群 10 座**：EGLL（611 pts）/ EGKK（733）/ EGSS（377）/ EGGW（155）/ EGLC（108）/ EGLF（173）/ EGMC（140）/ EGTK（85）/ EGKB（73）/ **EGMD（5 pts，runway-buffer fallback）**
+- 其餘 97 座：台灣、日本、香港、美國、中東等（先前批次抓取）
+- 尚未補邊界：約 793 座（BACKLOG B008）
 
 ## S3 對應路徑
 
