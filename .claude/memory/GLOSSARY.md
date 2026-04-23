@@ -37,6 +37,16 @@
 | Dynamic Viewshed | Track Single 模式的飛機視域分析（Three.js 扇形 mesh） |
 | Color Theme | 可自訂的 3D / 2D 渲染配色（6 組 preset） |
 
+## OSM / 機場邊界
+
+| 術語 | 說明 |
+|---|---|
+| Overpass API | OSM 查詢 API，endpoint：`https://overpass-api.de/api/interpreter` |
+| `aerodrome` | OSM `aeroway` tag 值之一，標記機場主體（way / relation / node） |
+| `runway` | OSM `aeroway` tag，跑道 way（通常是 LineString 兩端點） |
+| Runway-buffer fallback | 機場僅有 aerodrome node 時的邊界 fallback：以 node 為錨點搜尋 2km 內最長 runway，端點延伸 200m + 側緩衝 150m 產生矩形 |
+| `public/airports.geojson` | 機場邊界 FeatureCollection，107 座（2026-04-23） |
+
 ## 時區換算
 
 - **TW = UTC+8**
