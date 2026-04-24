@@ -1,5 +1,5 @@
 import { useState, useMemo, type CSSProperties, type ReactNode } from "react";
-import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight } from "../types";
+import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
 import type { AircraftFilterKey } from "../data/aircraftCategories";
 import { COLOR_THEMES, type ColorTheme } from "../types/colorTheme";
 import { AIRSPACE_CATEGORIES, type AirspaceCategory, type AirspaceSettings } from "../types/airspace";
@@ -214,7 +214,7 @@ function getThemeColors(isDark: boolean): ThemeColors {
 
 /* ── Types ───────────────────────────────────────────────── */
 
-type PanelId = "settings" | "locations" | "calendar" | "colors" | "airspace" | "summary";
+type PanelId = "settings" | "locations" | "sets" | "calendar" | "colors" | "airspace" | "summary";
 
 export interface IconRailSidebarProps {
   // Theme
@@ -294,6 +294,14 @@ export interface IconRailSidebarProps {
   onAirportColorOverride: (icao: string, hex: string | null) => void;
   onAirportColorReset: () => void;
   compareModeActive: boolean;
+  // 多機場組合（Sets 模式）
+  airportSet: string[] | null;
+  setName: string | null;
+  savedSets: SavedAirportSet[];
+  onApplySet: (set: SavedAirportSet) => void;
+  onToggleAirportInSet: (icao: string) => void;
+  onClearSet: () => void;
+  onExitSetMode: () => void;
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -923,6 +931,280 @@ function LocationsPanel({
           ))}
         </>
       )}
+    </div>
+  );
+}
+
+/* ── SetsPanel: 多機場組合檢視 ─────────────────────────────── */
+
+function SetChip({ icao, onRemove, theme }: {
+  icao: string;
+  onRemove: () => void;
+  theme: ThemeColors;
+}) {
+  const info = getAirportInfo(icao);
+  const label = info?.iata ?? icao;
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "2px 4px 2px 8px",
+        background: theme.ACTIVE_BTN_BG,
+        border: `1px solid ${theme.ACTIVE_BORDER}`,
+        borderRadius: 12,
+        fontSize: 11,
+        fontFamily: "monospace",
+        color: theme.ACTIVE_TEXT,
+        lineHeight: 1.4,
+      }}
+      title={info?.name ?? icao}
+    >
+      {label}
+      <button
+        onClick={onRemove}
+        style={{
+          width: 16, height: 16, padding: 0,
+          background: "transparent", border: "none",
+          color: theme.DIM, cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 12, lineHeight: 1, borderRadius: "50%",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = theme.ACCENT; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = theme.DIM; }}
+        title="移除"
+      >
+        ×
+      </button>
+    </span>
+  );
+}
+
+function AirportCheckboxRow({ icao, name, checked, onToggle, theme }: {
+  icao: string;
+  name: string;
+  checked: boolean;
+  onToggle: () => void;
+  theme: ThemeColors;
+}) {
+  const info = getAirportInfo(icao);
+  return (
+    <button
+      onClick={onToggle}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "6px 8px",
+        background: checked ? theme.ACTIVE_BTN_BG : "transparent",
+        border: "none",
+        borderRadius: 6,
+        cursor: "pointer",
+        textAlign: "left",
+        width: "100%",
+        transition: "background 0.15s",
+      }}
+      onMouseEnter={(e) => { if (!checked) e.currentTarget.style.background = theme.HOVER_BG; }}
+      onMouseLeave={(e) => { if (!checked) e.currentTarget.style.background = "transparent"; }}
+    >
+      <span
+        style={{
+          width: 14, height: 14, flexShrink: 0,
+          borderRadius: 3,
+          border: `1.5px solid ${checked ? theme.ACTIVE_BORDER : theme.BORDER}`,
+          background: checked ? theme.ACTIVE_BORDER : "transparent",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#fff", fontSize: 10, lineHeight: 1,
+        }}
+      >
+        {checked ? "✓" : ""}
+      </span>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: 12, color: checked ? theme.ACTIVE_TEXT : theme.ACCENT, lineHeight: 1.3 }}>
+          {info?.name ?? name}
+        </div>
+        <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+          {info?.iata ?? icao} / {icao}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function SetsPanel({
+  airports,
+  region,
+  airportSet,
+  setName,
+  savedSets,
+  onApplySet,
+  onToggleAirport,
+  onClearSet,
+  onExitSetMode,
+  theme,
+}: {
+  airports: string[];
+  region: Region;
+  airportSet: string[];
+  setName: string | null;
+  savedSets: SavedAirportSet[];
+  onApplySet: (set: SavedAirportSet) => void;
+  onToggleAirport: (icao: string) => void;
+  onClearSet: () => void;
+  onExitSetMode: () => void;
+  theme: ThemeColors;
+}) {
+  const available = new Set(airports);
+  const selectedSet = new Set(airportSet);
+  const defaultRegionKey = region === "all" || region === "world" ? "world" : region;
+  const [openRegions, setOpenRegions] = useState<Set<string>>(new Set([defaultRegionKey]));
+
+  const groupedByRegion = (["TW", "JP", "HK", "US", "UK", "world"] as const).map((r) => ({
+    key: r as string,
+    label: REGION_LABELS[r] ?? r,
+    presets: CAMERA_PRESETS.filter((p) => available.has(p.icao) && REGION_ICAO_MATCH[r]!(p.icao)),
+  })).filter((g) => g.presets.length > 0);
+
+  const toggleRegion = (key: string) => {
+    setOpenRegions((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const matchedSavedSetId = setName
+    ? savedSets.find((s) => s.shortName === setName)?.id ?? null
+    : null;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* Header: 已選 + 動作 */}
+      <div style={{ padding: "4px 8px 6px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ fontSize: 11, color: theme.ACCENT, lineHeight: 1.3 }}>
+          已選 <strong style={{ color: theme.ACTIVE_TEXT }}>{airportSet.length}</strong> 座
+          {setName && (
+            <span style={{ marginLeft: 6, fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>· {setName}</span>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: 4 }}>
+          <button
+            onClick={onClearSet}
+            disabled={airportSet.length === 0}
+            style={{
+              padding: "2px 8px", fontSize: 10, borderRadius: 4,
+              background: "transparent", border: `1px solid ${theme.BORDER}`,
+              color: airportSet.length === 0 ? theme.DISABLED_TEXT : theme.DIM,
+              cursor: airportSet.length === 0 ? "default" : "pointer",
+            }}
+          >
+            清空
+          </button>
+          <button
+            onClick={onExitSetMode}
+            style={{
+              padding: "2px 8px", fontSize: 10, borderRadius: 4,
+              background: "transparent", border: `1px solid ${theme.BORDER}`,
+              color: theme.DIM, cursor: "pointer",
+            }}
+            title="退出組合模式（回到單一機場）"
+          >
+            退出
+          </button>
+        </div>
+      </div>
+
+      {/* Selected chips */}
+      {airportSet.length > 0 && (
+        <div style={{ padding: "4px 8px 8px", display: "flex", flexWrap: "wrap", gap: 4 }}>
+          {airportSet.map((icao) => (
+            <SetChip key={icao} icao={icao} onRemove={() => onToggleAirport(icao)} theme={theme} />
+          ))}
+        </div>
+      )}
+
+      <div style={{ height: 1, background: theme.BORDER, margin: "2px 8px 6px" }} />
+
+      {/* Saved Sets */}
+      <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 4px" }}>
+        預設組合 Saved Sets
+      </div>
+      {savedSets.map((s) => {
+        const isActive = s.id === matchedSavedSetId;
+        return (
+          <button
+            key={s.id}
+            onClick={() => onApplySet(s)}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "6px 8px",
+              background: isActive ? theme.ACTIVE_BTN_BG : "transparent",
+              border: "none", borderRadius: 6,
+              cursor: "pointer", textAlign: "left", width: "100%",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = theme.HOVER_BG; }}
+            onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+          >
+            <span style={{ width: 3, height: 24, borderRadius: 2, background: isActive ? theme.ACCENT_BLUE : theme.SCENE_BAR, flexShrink: 0 }} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: 12, color: isActive ? theme.ACTIVE_TEXT : theme.ACCENT, lineHeight: 1.3 }}>
+                {s.name}
+              </div>
+              <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+                {s.icaos.length} 座 · {s.icaos.slice(0, 4).join(" · ")}{s.icaos.length > 4 ? " …" : ""}
+              </div>
+            </div>
+          </button>
+        );
+      })}
+
+      <div style={{ height: 1, background: theme.BORDER, margin: "8px 8px 6px" }} />
+
+      {/* All airports (collapsible by region) */}
+      <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 4px" }}>
+        全部機場 All Airports
+      </div>
+      {groupedByRegion.map((g) => {
+        const open = openRegions.has(g.key);
+        const selectedInGroup = g.presets.filter((p) => selectedSet.has(p.icao)).length;
+        return (
+          <div key={g.key}>
+            <button
+              onClick={() => toggleRegion(g.key)}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "4px 8px", width: "100%",
+                background: "transparent", border: "none",
+                cursor: "pointer", textAlign: "left",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = theme.HOVER_BG; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <span style={{ fontSize: 9, color: theme.DIM, width: 8, display: "inline-block" }}>
+                {open ? "▼" : "▶"}
+              </span>
+              <span style={{ fontSize: 11, color: theme.ACCENT, flex: 1 }}>
+                {g.label}
+              </span>
+              <span style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+                {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{g.presets.length}
+              </span>
+            </button>
+            {open && g.presets.map((p) => (
+              <AirportCheckboxRow
+                key={p.icao}
+                icao={p.icao}
+                name={p.name}
+                checked={selectedSet.has(p.icao)}
+                onToggle={() => onToggleAirport(p.icao)}
+                theme={theme}
+              />
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1982,6 +2264,19 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           <IconMapPin />
         </RailIcon>
 
+        {/* Sets (multi-airport view) */}
+        <RailIcon
+          active={activePanel === "sets" || props.airportSet !== null}
+          onClick={() => togglePanel("sets")}
+          title="Multi-Airport Sets"
+          theme={theme}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+        </RailIcon>
+
         {/* Calendar */}
         <RailIcon
           active={activePanel === "calendar"}
@@ -2070,6 +2365,20 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onLocationJump={props.onLocationJump}
               onSceneSelect={props.onSceneSelect}
               region={props.region}
+              theme={theme}
+            />
+          )}
+          {activePanel === "sets" && (
+            <SetsPanel
+              airports={props.airports}
+              region={props.region}
+              airportSet={props.airportSet ?? []}
+              setName={props.setName}
+              savedSets={props.savedSets}
+              onApplySet={props.onApplySet}
+              onToggleAirport={props.onToggleAirportInSet}
+              onClearSet={props.onClearSet}
+              onExitSetMode={props.onExitSetMode}
               theme={theme}
             />
           )}

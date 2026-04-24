@@ -28,6 +28,14 @@ export interface CameraPreset {
   bearing: number;
 }
 
+/** 多機場組合（saved set），用於組合檢視模式 */
+export interface SavedAirportSet {
+  id: string;
+  name: string;
+  shortName: string;
+  icaos: string[];
+}
+
 /** 時間軸狀態 */
 export interface TimelineState {
   playing: boolean;

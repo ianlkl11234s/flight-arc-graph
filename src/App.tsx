@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
-import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay } from "./types";
+import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay, SavedAirportSet } from "./types";
+import { computeFitBoundsForSet } from "./map/fitBoundsForSet";
+import { BUILTIN_SETS } from "./map/savedSets";
 import type { FlightScene } from "./three/FlightScene";
 import { MapView } from "./map/MapView";
 import { useFlightData } from "./hooks/useFlightData";
@@ -143,6 +145,9 @@ export default function App() {
   const [aircraftFilter, setAircraftFilter] = useState<AircraftFilterKey>("all");
   const [airlineFilter, setAirlineFilter] = useState("all");
   const [depArrFilter, setDepArrFilter] = useState<DepArrFilter>("all");
+  // 多機場組合檢視：null = single mode（讀 selectedAirport），非 null = set mode（忽略 selectedAirport）
+  const [airportSet, setAirportSet] = useState<string[] | null>(null);
+  const [setName, setSetName] = useState<string | null>(null);
   const [captureMode, setCaptureMode] = useState(false);
   const [showTerminator, setShowTerminator] = useState(false);
   // 每次載入皆從 default theme + Compare Airports off 開始（不沿用 localStorage 偏好）
@@ -483,13 +488,85 @@ export default function App() {
     });
   }, [typeFilteredFlights, airlineFilter]);
 
-  // Dep/Arr filter
-  const finalFlights = useMemo(() => {
-    if (depArrFilter === "all") return airlineFilteredFlights;
-    return airlineFilteredFlights.filter((f) =>
-      depArrFilter === "dep" ? f.origin_icao === selectedAirport : f.dest_icao === selectedAirport
+  // 組合模式 derived：set 模式時讀 airportSet，single 模式時讀 [selectedAirport]
+  const activeIcaoSet = useMemo(
+    () => new Set(airportSet ?? [selectedAirport]),
+    [airportSet, selectedAirport],
+  );
+
+  // Set 模式：dep OR dest 在 set 內（先過濾再進 dep/arr toggle）
+  const setFilteredFlights = useMemo(() => {
+    if (!airportSet) return airlineFilteredFlights;
+    return airlineFilteredFlights.filter(
+      (f) => activeIcaoSet.has(f.origin_icao) || activeIcaoSet.has(f.dest_icao),
     );
-  }, [airlineFilteredFlights, depArrFilter, selectedAirport]);
+  }, [airlineFilteredFlights, airportSet, activeIcaoSet]);
+
+  // ── 組合模式：state mutation wrappers ─────────────────────────
+  // 單選機場（包過所有原本 setSelectedAirport 入口）：自動退出 set 模式
+  const selectAirportSingle = useCallback((icao: string) => {
+    setAirportSet(null);
+    setSetName(null);
+    setSelectedAirport(icao);
+  }, [setSelectedAirport]);
+
+  // 套用 saved set：強制切到 region scope 才能載多機場航班
+  const applySavedSet = useCallback((set: SavedAirportSet) => {
+    setScope("region");
+    setAirportSet([...set.icaos]);
+    setSetName(set.shortName);
+    const fb = computeFitBoundsForSet(set.icaos, getPresetByIcao);
+    if (fb && mapRef.current) {
+      if (fb.fallbackPreset) {
+        mapRef.current.flyTo({
+          center: fb.fallbackPreset.center,
+          zoom: fb.fallbackPreset.zoom,
+          pitch: fb.fallbackPreset.pitch,
+          bearing: fb.fallbackPreset.bearing,
+          duration: 1800,
+        });
+      } else {
+        mapRef.current.fitBounds(fb.bounds, {
+          padding: { top: 120, bottom: 80, left: 280, right: 80 },
+          pitch: fb.pitch,
+          bearing: fb.bearing,
+          duration: 1800,
+          maxZoom: 7,
+        });
+      }
+    }
+  }, []);
+
+  const exitSetMode = useCallback(() => {
+    setAirportSet(null);
+    setSetName(null);
+  }, []);
+
+  const toggleAirportInSet = useCallback((icao: string) => {
+    setAirportSet((prev) => {
+      const base = prev ?? [];
+      const has = base.includes(icao);
+      const next = has ? base.filter((i) => i !== icao) : [...base, icao];
+      return next;
+    });
+    // 自訂組合 → 失去 set name（不再對應某個 saved set）
+    setSetName(null);
+    // 切到 region scope（如果還在 airport scope，新加機場可能沒資料）
+    setScope((s) => (s === "region" ? s : "region"));
+  }, []);
+
+  const clearSet = useCallback(() => {
+    setAirportSet([]);
+    setSetName(null);
+  }, []);
+
+  // Dep/Arr filter（兼容 single + set）
+  const finalFlights = useMemo(() => {
+    if (depArrFilter === "all") return setFilteredFlights;
+    return setFilteredFlights.filter((f) =>
+      depArrFilter === "dep" ? activeIcaoSet.has(f.origin_icao) : activeIcaoSet.has(f.dest_icao)
+    );
+  }, [setFilteredFlights, depArrFilter, activeIcaoSet]);
   const availableAirlines = useMemo(() => {
     const map = new Map<string, number>();
     for (const f of typeFilteredFlights) {
@@ -502,11 +579,15 @@ export default function App() {
       .sort((a, b) => b.count - a.count);
   }, [typeFilteredFlights]);
 
-  // 用於 FlightPicker 的航班列表（always based on airport filter）
-  const pickableFlights = useMemo(
-    () => filterByAirport(allFlights, selectedAirport),
-    [allFlights, selectedAirport],
-  );
+  // 用於 FlightPicker 的航班列表（airport filter；set 模式則 union 所有 set 機場）
+  const pickableFlights = useMemo(() => {
+    if (airportSet) {
+      return allFlights.filter(
+        (f) => activeIcaoSet.has(f.origin_icao) || activeIcaoSet.has(f.dest_icao),
+      );
+    }
+    return filterByAirport(allFlights, selectedAirport);
+  }, [allFlights, airportSet, activeIcaoSet, selectedAirport]);
 
   // Local 模式專用：依 region prefix 過濾 airports（避免外國機場混進來）
   // 注意：REGION_CONFIG 不能進 deps（每 render 是新物件），改用 region 字串 + isKnownRegion 工具
@@ -1143,6 +1224,10 @@ export default function App() {
             selectedFlightId={selectedFlightId}
             onScopeChange={(s) => {
               setScope(s);
+              if (s === "airport") {
+                // 切回單一機場 scope → 退出組合模式
+                exitSetMode();
+              }
               if (s === "region") {
                 const cam = REGION_CONFIG[region].regionCamera ?? REGION_CONFIG[region].camera;
                 mapRef.current?.flyTo({ ...cam, duration: 2000 });
@@ -1153,7 +1238,7 @@ export default function App() {
             onFlightSelect={setSelectedFlightId}
             airports={airports}
             selectedAirport={selectedAirport}
-            onAirportChange={setSelectedAirport}
+            onAirportChange={selectAirportSingle}
             onLocationJump={(icao) => {
               const p = getPresetByIcao(icao);
               if (p && mapRef.current) {
@@ -1171,7 +1256,7 @@ export default function App() {
               prevDataSourceRef.current = scene.dataSource;
               setDataSource(scene.dataSource);
               setScope(scene.scope);
-              if (scene.airport) setSelectedAirport(scene.airport);
+              if (scene.airport) selectAirportSingle(scene.airport);
               if (scene.opacity != null) setStaticOpacity(scene.opacity);
               setAircraftFilter(scene.aircraftFilter ?? "all");
               // 時間軸：計算 seek 目標（台灣 UTC+8）
@@ -1225,6 +1310,13 @@ export default function App() {
             }}
             onAirportColorReset={() => setAirportColorOverrides({})}
             compareModeActive={timeline.isMultiDateMode}
+            airportSet={airportSet}
+            setName={setName}
+            savedSets={BUILTIN_SETS}
+            onApplySet={applySavedSet}
+            onToggleAirportInSet={toggleAirportInSet}
+            onClearSet={clearSet}
+            onExitSetMode={exitSetMode}
           />
 
           {/* 頂部控制列（sidebar 右邊） */}
@@ -1251,6 +1343,40 @@ export default function App() {
               >
                 {regionTitle}
               </h1>
+              {airportSet && (
+                <div
+                  style={{
+                    padding: "4px 8px 4px 10px",
+                    background: isDarkTheme ? "rgba(100,170,255,0.18)" : "rgba(59,130,246,0.12)",
+                    border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.45)" : "#3B82F6"}`,
+                    borderRadius: 14,
+                    fontSize: 12,
+                    fontFamily: "monospace",
+                    color: isDarkTheme ? "#fff" : "#1a1a1a",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                  title={airportSet.join(", ")}
+                >
+                  <span>🔗 {setName ?? "Custom"} ({airportSet.length} 座 · {finalFlights.length} flights)</span>
+                  <button
+                    onClick={exitSetMode}
+                    style={{
+                      width: 16, height: 16, padding: 0, borderRadius: "50%",
+                      background: "transparent",
+                      border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"}`,
+                      color: "inherit",
+                      cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 10, lineHeight: 1,
+                    }}
+                    title="退出組合模式"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
               <DataSourceToggle
                 dataSource={dataSource}
                 hasFused={hasFused}
@@ -1286,7 +1412,7 @@ export default function App() {
                       setRegion(r);
                       setScope("airport");
                       const cfg = REGION_CONFIG[r];
-                      if (cfg.defaultAirport) setSelectedAirport(cfg.defaultAirport);
+                      if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
                       // 跳到有資料的日期
                       if (cfg.defaultDate) timeline.setSelectedDate(cfg.defaultDate);
                       // 飛到預設機場視角
@@ -1474,7 +1600,7 @@ export default function App() {
               airports={airports}
               selected={selectedAirport}
               isDarkTheme={true}
-              onChange={setSelectedAirport}
+              onChange={selectAirportSingle}
             />
 
             <div style={{ flex: 1 }} />
@@ -1747,7 +1873,7 @@ export default function App() {
           isDarkTheme={isDarkTheme}
           onClose={() => setShowStats(false)}
           onSelectAirport={(icao) => {
-            setSelectedAirport(icao);
+            selectAirportSingle(icao);
           }}
           onSelectFlight={(id) => {
             setTrackMode("single");
