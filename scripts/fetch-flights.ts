@@ -341,6 +341,26 @@ async function main() {
   console.log(`不重複航班（累計）: ${allFlights.size} 筆`);
   console.log(`API 請求次數: ${totalRequests}`);
 
+  // ── 排序 + Credits 預估 ──
+  const validStats = stats.filter((s) => s.total !== -1);
+  if (validStats.length > 0) {
+    console.log("\n--- 本次依航班數排序 ---");
+    validStats
+      .sort((a, b) => b.total - a.total)
+      .forEach((s, i) => {
+        const rank = String(i + 1).padStart(2);
+        const ap = s.airport.padEnd(8);
+        const tot = String(s.total).padStart(5);
+        console.log(`${rank}. ${ap} ${tot} flights (新增 ${s.new})`);
+      });
+
+    const sessionTotal = validStats.reduce((sum, s) => sum + s.total, 0);
+    const sessionUnique = validStats.reduce((sum, s) => sum + s.new, 0);
+    console.log(`\nSchedule credits 已花: ${totalRequests} pages × 38.7 ≈ ${Math.round(totalRequests * 38.7)} credits`);
+    console.log(`Track credits 預估 (本次新增): ${sessionUnique} × 40 ≈ ${sessionUnique * 40} credits`);
+    console.log(`Track credits 預估 (本次全部): ${sessionTotal} × 40 ≈ ${sessionTotal * 40} credits（含 dep/arr 重複）`);
+  }
+
   if (done < airports.length) {
     console.log("\n⚠️  尚未完成，等待 rate limit 冷卻後重新執行即可續接。");
   } else {

@@ -118,6 +118,17 @@ export const AIRPORT_INFO: Record<string, { name: string; iata: string }> = {
   EGMD: { name: "London Ashford (Lydd)", iata: "LYX" },
   // Ireland
   EIDW: { name: "Dublin Airport", iata: "DUB" },
+  // France
+  LFPG: { name: "Paris Charles de Gaulle", iata: "CDG" },
+  // Netherlands
+  EHAM: { name: "Amsterdam Schiphol", iata: "AMS" },
+  // Germany
+  EDDF: { name: "Frankfurt am Main", iata: "FRA" },
+  EDDM: { name: "Munich", iata: "MUC" },
+  // Spain
+  LEMD: { name: "Madrid Barajas", iata: "MAD" },
+  // Turkey
+  LTFM: { name: "Istanbul", iata: "IST" },
   // Singapore
   WSSS: { name: "Singapore Changi", iata: "SIN" },
   // United Arab Emirates
@@ -979,6 +990,68 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     center: [-6.2701, 53.4264],
     zoom: 11.5,
     pitch: 55,
+    bearing: 0,
+  },
+  // France
+  {
+    name: "Paris Charles de Gaulle",
+    icao: "LFPG",
+    center: [2.5479, 49.0097],
+    zoom: 11,
+    pitch: 55,
+    bearing: 80, // 跑道 08L/26R, 09R/27L
+  },
+  // Netherlands
+  {
+    name: "Amsterdam Schiphol",
+    icao: "EHAM",
+    center: [4.7639, 52.3086],
+    zoom: 11,
+    pitch: 55,
+    bearing: 60, // 跑道 06/24 (Kaagbaan)
+  },
+  // Germany
+  {
+    name: "Frankfurt am Main",
+    icao: "EDDF",
+    center: [8.5431, 50.0264],
+    zoom: 11,
+    pitch: 55,
+    bearing: 70, // 跑道 07L/25R, 07C/25C, 07R/25L
+  },
+  {
+    name: "Munich",
+    icao: "EDDM",
+    center: [11.7861, 48.3538],
+    zoom: 11,
+    pitch: 55,
+    bearing: 80, // 跑道 08L/26R, 08R/26L
+  },
+  // Spain
+  {
+    name: "Madrid Barajas",
+    icao: "LEMD",
+    center: [-3.5626, 40.4719],
+    zoom: 11,
+    pitch: 55,
+    bearing: 140, // 跑道 14L/32R, 14R/32L
+  },
+  // Turkey
+  {
+    name: "Istanbul",
+    icao: "LTFM",
+    center: [28.7414, 41.2611],
+    zoom: 11,
+    pitch: 55,
+    bearing: 170, // 跑道 16L/34R, 16R/34L
+  },
+  // Europe Overview
+  {
+    name: "Europe Hubs (CDG · AMS · FRA · MUC · MAD · IST)",
+    icao: "EU_OVERVIEW",
+    center: [10.0, 48.0],
+    zoom: 4.3,
+    pitch: 30,
     bearing: 0,
   },
   // Singapore
