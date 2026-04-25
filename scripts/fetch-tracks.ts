@@ -84,6 +84,14 @@ interface FlightOutput {
   status: string;
   trail_points: number;
   path: [number, number, number, number][];
+  // FR24 flight-summary 的額外 metadata（2026-04-24 新增）
+  flight_number: string;      // IATA 航班號（如 "CX408"）
+  operating_as: string;        // 實際營運航空公司 ICAO（如 "CAL"）
+  painted_as: string;          // 機身塗裝航空公司 ICAO
+  hex: string;                 // ADS-B 晶片碼（6 位 hex，全球唯一）
+  dest_icao_actual: string;    // 實際降落機場（轉降時 ≠ dest_icao）
+  first_seen: number;          // ADS-B 首次偵測 Unix timestamp
+  last_seen: number;           // ADS-B 最後偵測 Unix timestamp
 }
 
 // ── 工具 ──────────────────────────────────────────────
@@ -395,6 +403,13 @@ async function main() {
           status: flight.flight_ended ? "landed" : "active",
           trail_points: points.length,
           path: reducePrecision(points),
+          flight_number: flight.flight || "",
+          operating_as: flight.operating_as || "",
+          painted_as: flight.painted_as || "",
+          hex: flight.hex || "",
+          dest_icao_actual: flight.dest_icao_actual || "",
+          first_seen: isoToUnix(flight.first_seen),
+          last_seen: isoToUnix(flight.last_seen),
         };
 
         // 順序很重要：先 append JSONL，再標記 done

@@ -16,6 +16,20 @@ export interface Flight {
   status: string;
   trail_points: number;
   path: TrailPoint[];
+  /** IATA 航班號（如 "CX408"，與 ATC callsign 可能不同） */
+  flight_number?: string;
+  /** 實際營運航空公司 ICAO 三字碼（如 "CAL"） */
+  operating_as?: string;
+  /** 機身塗裝航空公司 ICAO 三字碼（Codeshare / Wet lease 時與 operating_as 不同） */
+  painted_as?: string;
+  /** ADS-B 晶片碼（6 位 hex，全球唯一個體 ID） */
+  hex?: string;
+  /** 實際降落機場 ICAO（轉降 / 緊急降落時 ≠ dest_icao） */
+  dest_icao_actual?: string;
+  /** ADS-B 首次偵測 Unix timestamp */
+  first_seen?: number;
+  /** ADS-B 最後偵測 Unix timestamp */
+  last_seen?: number;
 }
 
 /** 機場預設視角 */
