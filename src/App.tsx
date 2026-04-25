@@ -26,10 +26,9 @@ import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
 import { DataSourceToggle } from "./components/DataSourceToggle";
-import { AircraftTypeFilter } from "./components/AircraftTypeFilter";
-import { AirlineFilter } from "./components/AirlineFilter";
 import { DepArrToggle, type DepArrFilter } from "./components/DepArrToggle";
-import { filterByAircraftType, type AircraftFilterKey } from "./data/aircraftCategories";
+import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
+import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
 import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
 import { useCinemaCamera } from "./hooks/useCinemaCamera";
@@ -143,8 +142,8 @@ export default function App() {
   const [airportOpacity, setAirportOpacity] = useState(0.12);
   const [airportGlow, setAirportGlow] = useState(0.8);
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
-  const [aircraftFilter, setAircraftFilter] = useState<AircraftFilterKey>("all");
-  const [airlineFilter, setAirlineFilter] = useState("all");
+  // Multi-condition filters（Deep Analysis 面板掌控；scene preset 也會寫入）
+  const [flightFilters, setFlightFilters] = useState<FlightFilters>(EMPTY_FILTERS);
   const [depArrFilter, setDepArrFilter] = useState<DepArrFilter>("all");
   // 多機場組合檢視：null = single mode（讀 selectedAirport），非 null = set mode（忽略 selectedAirport）
   const [airportSet, setAirportSet] = useState<string[] | null>(null);
@@ -155,6 +154,19 @@ export default function App() {
   const [colorThemeKey, setColorThemeKey] = useState(DEFAULT_THEME_KEY);
   const [colorThemeOverride, setColorThemeOverride] = useState<import("./types/colorTheme").ColorTheme | null>(null);
   const [colorBy, setColorBy] = useState<AirportColorMode>("theme");
+  // 把 ScenePreset 舊版 aircraftFilter 翻譯成新 multi-select Set
+  const aircraftFilterKeyToSet = (key: AircraftFilterKey | undefined): Set<string> => {
+    if (!key || key === "all") return new Set();
+    if (key === "all-special") {
+      return new Set(Object.values(AIRCRAFT_CATEGORIES).flatMap((c) => c.types));
+    }
+    if (key.startsWith("cat:")) {
+      const cat = key.slice(4) as AircraftCategory;
+      return new Set(AIRCRAFT_CATEGORIES[cat]?.types ?? []);
+    }
+    if (key.startsWith("type:")) return new Set([key.slice(5)]);
+    return new Set();
+  };
   // 🔬 Deep Analysis colorBy（機型/航司/用途/時長/航線）— 與 airport colorBy 正交
   const [analysisColorBy, setAnalysisColorBy] = useState<AnalysisColorBy>("none");
   const [airportColorOverrides, setAirportColorOverrides] = useState<Record<string, string>>(() => {
@@ -472,24 +484,11 @@ export default function App() {
     try { localStorage.setItem("flight-arc-airport-color-overrides", JSON.stringify(airportColorOverrides)); } catch { /* ignore */ }
   }, [airportColorOverrides]);
 
-  // Aircraft type filter
-  const typeFilteredFlights = useMemo(
-    () => filterByAircraftType(displayedFlights, aircraftFilter),
-    [displayedFlights, aircraftFilter],
+  // Multi-condition filter（機型/航司/用途/航線/時長/quick toggles）
+  const analysisFilteredFlights = useMemo(
+    () => applyFilters(displayedFlights, flightFilters),
+    [displayedFlights, flightFilters],
   );
-  const availableTypes = useMemo(
-    () => [...new Set(displayedFlights.map((f) => f.aircraft_type))].filter(Boolean).sort(),
-    [displayedFlights],
-  );
-
-  // Airline filter
-  const airlineFilteredFlights = useMemo(() => {
-    if (airlineFilter === "all") return typeFilteredFlights;
-    return typeFilteredFlights.filter((f) => {
-      const match = f.callsign.match(/^([A-Z]{2,3})/);
-      return match?.[1] === airlineFilter;
-    });
-  }, [typeFilteredFlights, airlineFilter]);
 
   // 組合模式 derived：set 模式時讀 airportSet，single 模式時讀 [selectedAirport]
   const activeIcaoSet = useMemo(
@@ -499,11 +498,11 @@ export default function App() {
 
   // Set 模式：dep OR dest 在 set 內（先過濾再進 dep/arr toggle）
   const setFilteredFlights = useMemo(() => {
-    if (!airportSet) return airlineFilteredFlights;
-    return airlineFilteredFlights.filter(
+    if (!airportSet) return analysisFilteredFlights;
+    return analysisFilteredFlights.filter(
       (f) => activeIcaoSet.has(f.origin_icao) || activeIcaoSet.has(f.dest_icao),
     );
-  }, [airlineFilteredFlights, airportSet, activeIcaoSet]);
+  }, [analysisFilteredFlights, airportSet, activeIcaoSet]);
 
   // ── 組合模式：state mutation wrappers ─────────────────────────
   // 單選機場（包過所有原本 setSelectedAirport 入口）：自動退出 set 模式
@@ -570,17 +569,6 @@ export default function App() {
       depArrFilter === "dep" ? activeIcaoSet.has(f.origin_icao) : activeIcaoSet.has(f.dest_icao)
     );
   }, [setFilteredFlights, depArrFilter, activeIcaoSet]);
-  const availableAirlines = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const f of typeFilteredFlights) {
-      const match = f.callsign.match(/^([A-Z]{2,3})/);
-      const code = match?.[1] ?? "???";
-      map.set(code, (map.get(code) ?? 0) + 1);
-    }
-    return [...map.entries()]
-      .map(([code, count]) => ({ code, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [typeFilteredFlights]);
 
   // 用於 FlightPicker 的航班列表（airport filter；set 模式則 union 所有 set 機場）
   const pickableFlights = useMemo(() => {
@@ -1268,7 +1256,11 @@ export default function App() {
               setScope(scene.scope);
               if (scene.airport) selectAirportSingle(scene.airport);
               if (scene.opacity != null) setStaticOpacity(scene.opacity);
-              setAircraftFilter(scene.aircraftFilter ?? "all");
+              // 把 scene 的舊 aircraftFilter 翻譯成 multi-select set
+              setFlightFilters((prev) => ({
+                ...prev,
+                aircraftTypes: aircraftFilterKeyToSet(scene.aircraftFilter),
+              }));
               // 時間軸：計算 seek 目標（台灣 UTC+8）
               const seekUnix = timeToUnixTW(scene.date, scene.time);
               const dateChanged = timeline.selectedDate !== scene.date || timeline.rangeDays !== scene.rangeDays;
@@ -1327,9 +1319,12 @@ export default function App() {
             onToggleAirportInSet={toggleAirportInSet}
             onClearSet={clearSet}
             onExitSetMode={exitSetMode}
-            analysisFlights={finalFlights}
+            analysisFilteredFlights={finalFlights}
+            analysisPreFilterFlights={displayedFlights}
             analysisColorBy={analysisColorBy}
             onAnalysisColorByChange={setAnalysisColorBy}
+            flightFilters={flightFilters}
+            onFlightFiltersChange={setFlightFilters}
           />
 
           {/* 頂部控制列（sidebar 右邊） */}
@@ -1395,18 +1390,6 @@ export default function App() {
                 hasFused={hasFused}
                 isDarkTheme={isDarkTheme}
                 onChange={setDataSource}
-              />
-              <AircraftTypeFilter
-                filter={aircraftFilter}
-                isDarkTheme={isDarkTheme}
-                availableTypes={availableTypes}
-                onChange={setAircraftFilter}
-              />
-              <AirlineFilter
-                filter={airlineFilter}
-                isDarkTheme={isDarkTheme}
-                availableAirlines={availableAirlines}
-                onChange={setAirlineFilter}
               />
               <DepArrToggle
                 filter={depArrFilter}
@@ -1756,18 +1739,6 @@ export default function App() {
                         hasFused={hasFused}
                         isDarkTheme={true}
                         onChange={setDataSource}
-                      />
-                      <AircraftTypeFilter
-                        filter={aircraftFilter}
-                        isDarkTheme={true}
-                        availableTypes={availableTypes}
-                        onChange={setAircraftFilter}
-                      />
-                      <AirlineFilter
-                        filter={airlineFilter}
-                        isDarkTheme={true}
-                        availableAirlines={availableAirlines}
-                        onChange={setAirlineFilter}
                       />
                       <DepArrToggle
                         filter={depArrFilter}

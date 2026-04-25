@@ -7,6 +7,7 @@ import type { AirportColorMode, AirportAssignment } from "../types/airportColors
 import { StyleSelector } from "./StyleSelector";
 import { DeepAnalysisPanel } from "./DeepAnalysisPanel";
 import type { AnalysisColorBy } from "../data/analysisColors";
+import type { FlightFilters } from "../data/classify";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
 import {
   getDepArrCount,
@@ -305,9 +306,12 @@ export interface IconRailSidebarProps {
   onClearSet: () => void;
   onExitSetMode: () => void;
   // Deep Analysis (🔬)
-  analysisFlights: Flight[];
+  analysisFilteredFlights: Flight[];
+  analysisPreFilterFlights: Flight[];
   analysisColorBy: AnalysisColorBy;
   onAnalysisColorByChange: (v: AnalysisColorBy) => void;
+  flightFilters: FlightFilters;
+  onFlightFiltersChange: (f: FlightFilters) => void;
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -2447,9 +2451,12 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           )}
           {activePanel === "analysis" && (
             <DeepAnalysisPanel
-              flights={props.analysisFlights}
+              filteredFlights={props.analysisFilteredFlights}
+              preFilterFlights={props.analysisPreFilterFlights}
               colorBy={props.analysisColorBy}
               onColorByChange={props.onAnalysisColorByChange}
+              filters={props.flightFilters}
+              onFiltersChange={props.onFlightFiltersChange}
               isDarkTheme={props.isDarkTheme}
               theme={theme}
             />

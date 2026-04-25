@@ -186,3 +186,67 @@ export function isWetLeaseOrCodeshare(flight: Flight): boolean {
     flight.operating_as !== flight.painted_as
   );
 }
+
+// ─── 多條件篩選 ──────────────────────────────────────────
+
+export interface FlightFilters {
+  /** 機型代碼 Set；空 Set = 不篩 */
+  aircraftTypes: Set<string>;
+  /** Operating airline ICAO 三字碼 Set；空 Set = 不篩 */
+  airlines: Set<string>;
+  /** 飛行用途 Set；空 Set = 不篩 */
+  purposes: Set<FlightPurpose>;
+  /** 航線範圍 Set；空 Set = 不篩 */
+  routeScopes: Set<RouteScope>;
+  /** 飛行時長範圍（小時，[min, max]）；[0, 24] = 不篩 */
+  durationRangeHours: [number, number];
+  /** 只看轉降 */
+  onlyDiverted: boolean;
+  /** 只看 Wet Lease / Codeshare */
+  onlyWetLease: boolean;
+}
+
+export const EMPTY_FILTERS: FlightFilters = {
+  aircraftTypes: new Set(),
+  airlines: new Set(),
+  purposes: new Set(),
+  routeScopes: new Set(),
+  durationRangeHours: [0, 24],
+  onlyDiverted: false,
+  onlyWetLease: false,
+};
+
+/** 全部都是預設（不篩任何條件）→ 早退用 */
+export function isFiltersEmpty(f: FlightFilters): boolean {
+  return (
+    f.aircraftTypes.size === 0 &&
+    f.airlines.size === 0 &&
+    f.purposes.size === 0 &&
+    f.routeScopes.size === 0 &&
+    f.durationRangeHours[0] === 0 &&
+    f.durationRangeHours[1] === 24 &&
+    !f.onlyDiverted &&
+    !f.onlyWetLease
+  );
+}
+
+export function applyFilters(flights: Flight[], f: FlightFilters): Flight[] {
+  if (isFiltersEmpty(f)) return flights;
+  const minSec = f.durationRangeHours[0] * 3600;
+  const maxSec = f.durationRangeHours[1] * 3600;
+  const checkDuration = f.durationRangeHours[0] !== 0 || f.durationRangeHours[1] !== 24;
+
+  return flights.filter((fl) => {
+    if (f.aircraftTypes.size > 0 && !f.aircraftTypes.has(fl.aircraft_type)) return false;
+    if (f.airlines.size > 0 && !f.airlines.has(fl.operating_as ?? "")) return false;
+    if (f.purposes.size > 0 && !f.purposes.has(classifyPurpose(fl))) return false;
+    if (f.routeScopes.size > 0 && !f.routeScopes.has(classifyRouteScope(fl))) return false;
+    if (checkDuration) {
+      const d = getFlightDuration(fl);
+      if (d < minSec || d > maxSec) return false;
+    }
+    if (f.onlyDiverted && !isDiverted(fl)) return false;
+    if (f.onlyWetLease && !isWetLeaseOrCodeshare(fl)) return false;
+    return true;
+  });
+}
