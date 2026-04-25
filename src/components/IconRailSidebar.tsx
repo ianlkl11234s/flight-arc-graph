@@ -5,6 +5,8 @@ import { COLOR_THEMES, type ColorTheme } from "../types/colorTheme";
 import { AIRSPACE_CATEGORIES, type AirspaceCategory, type AirspaceSettings } from "../types/airspace";
 import type { AirportColorMode, AirportAssignment } from "../types/airportColors";
 import { StyleSelector } from "./StyleSelector";
+import { DeepAnalysisPanel } from "./DeepAnalysisPanel";
+import type { AnalysisColorBy } from "../data/analysisColors";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
 import {
   getDepArrCount,
@@ -214,7 +216,7 @@ function getThemeColors(isDark: boolean): ThemeColors {
 
 /* ── Types ───────────────────────────────────────────────── */
 
-type PanelId = "settings" | "locations" | "sets" | "calendar" | "colors" | "airspace" | "summary";
+type PanelId = "settings" | "locations" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis";
 
 export interface IconRailSidebarProps {
   // Theme
@@ -302,6 +304,10 @@ export interface IconRailSidebarProps {
   onToggleAirportInSet: (icao: string) => void;
   onClearSet: () => void;
   onExitSetMode: () => void;
+  // Deep Analysis (🔬)
+  analysisFlights: Flight[];
+  analysisColorBy: AnalysisColorBy;
+  onAnalysisColorByChange: (v: AnalysisColorBy) => void;
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -2319,6 +2325,21 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           </svg>
         </RailIcon>
 
+        {/* Deep Analysis (🔬) */}
+        <RailIcon
+          active={activePanel === "analysis" || props.analysisColorBy !== "none"}
+          onClick={() => togglePanel("analysis")}
+          title="Deep Analysis"
+          theme={theme}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="16.5" y1="16.5" x2="21" y2="21" />
+            <line x1="11" y1="8" x2="11" y2="14" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+          </svg>
+        </RailIcon>
+
         {/* Stats */}
         <RailIcon
           active={false}
@@ -2421,6 +2442,15 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               scope={props.scope}
               region={props.region}
               rangeDays={props.rangeDays}
+              theme={theme}
+            />
+          )}
+          {activePanel === "analysis" && (
+            <DeepAnalysisPanel
+              flights={props.analysisFlights}
+              colorBy={props.analysisColorBy}
+              onColorByChange={props.onAnalysisColorByChange}
+              isDarkTheme={props.isDarkTheme}
               theme={theme}
             />
           )}

@@ -39,6 +39,7 @@ import { CinemaBar } from "./components/CinemaBar";
 import { RecordingGuide } from "./components/RecordingGuide";
 import { COLOR_THEMES, DEFAULT_THEME_KEY } from "./types/colorTheme";
 import { assignAirportColors, type AirportColorMode, type AirportAssignment } from "./types/airportColors";
+import { computeAnalysisColorMap, type AnalysisColorBy } from "./data/analysisColors";
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
 
@@ -154,6 +155,8 @@ export default function App() {
   const [colorThemeKey, setColorThemeKey] = useState(DEFAULT_THEME_KEY);
   const [colorThemeOverride, setColorThemeOverride] = useState<import("./types/colorTheme").ColorTheme | null>(null);
   const [colorBy, setColorBy] = useState<AirportColorMode>("theme");
+  // 🔬 Deep Analysis colorBy（機型/航司/用途/時長/航線）— 與 airport colorBy 正交
+  const [analysisColorBy, setAnalysisColorBy] = useState<AnalysisColorBy>("none");
   const [airportColorOverrides, setAirportColorOverrides] = useState<Record<string, string>>(() => {
     try {
       const raw = localStorage.getItem("flight-arc-airport-color-overrides");
@@ -610,13 +613,20 @@ export default function App() {
     return assignAirportColors(finalFlights, effectiveColorBy, airportColorOverrides, regionalAirports);
   }, [effectiveColorBy, finalFlights, airportColorOverrides, regionalAirports]);
 
+  // 🔬 Deep Analysis colorMap（按機型/用途/時長/航線/航司分色）
+  const analysisColorMap = useMemo(
+    () => computeAnalysisColorMap(finalFlights, analysisColorBy),
+    [finalFlights, analysisColorBy],
+  );
+
   // 給 MapView + FlightScene 的最終 per-flight color map
-  // Compare 優先於 airport（前者已把 airport 設為 theme）
+  // 優先序：Analysis > Compare > Airport > theme（fallback undefined）
   const perFlightColorMap = useMemo((): Map<string, string> | undefined => {
+    if (analysisColorMap && analysisColorMap.size > 0) return analysisColorMap;
     if (compareColorMap) return compareColorMap;
     if (airportAssignment && airportAssignment.flightColors.size > 0) return airportAssignment.flightColors;
     return undefined;
-  }, [compareColorMap, airportAssignment]);
+  }, [analysisColorMap, compareColorMap, airportAssignment]);
 
   const perFlightColorMapRef = useRef(perFlightColorMap);
   perFlightColorMapRef.current = perFlightColorMap;
@@ -1317,6 +1327,9 @@ export default function App() {
             onToggleAirportInSet={toggleAirportInSet}
             onClearSet={clearSet}
             onExitSetMode={exitSetMode}
+            analysisFlights={finalFlights}
+            analysisColorBy={analysisColorBy}
+            onAnalysisColorByChange={setAnalysisColorBy}
           />
 
           {/* 頂部控制列（sidebar 右邊） */}
