@@ -45,6 +45,9 @@ export interface DeepAnalysisPanelProps {
   // filters
   filters: FlightFilters;
   onFiltersChange: (f: FlightFilters) => void;
+  // 點位大小依機型縮放
+  scaleByAircraftSize: boolean;
+  onScaleByAircraftSizeChange: (v: boolean) => void;
   isDarkTheme: boolean;
   theme: ThemeColors;
 }
@@ -333,6 +336,8 @@ export function DeepAnalysisPanel({
   onColorByChange,
   filters,
   onFiltersChange,
+  scaleByAircraftSize,
+  onScaleByAircraftSizeChange,
   isDarkTheme,
   theme,
 }: DeepAnalysisPanelProps) {
@@ -644,6 +649,19 @@ export function DeepAnalysisPanel({
           label="Only Wet Lease / Codeshare"
           checked={filters.onlyWetLease}
           onChange={(v) => updateFilter("onlyWetLease", v)}
+          theme={theme}
+        />
+      </div>
+
+      {/* 視覺化：點位大小 */}
+      <div>
+        <div style={sectionHeader}>
+          Visual {scaleByAircraftSize && <span style={{ color: theme.ACTIVE_BORDER }}>•</span>}
+        </div>
+        <ToggleRow
+          label="Scale points by aircraft size"
+          checked={scaleByAircraftSize}
+          onChange={onScaleByAircraftSizeChange}
           theme={theme}
         />
       </div>

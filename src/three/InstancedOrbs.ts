@@ -30,6 +30,8 @@ export class InstancedOrbs {
   private flightIds: string[] = [];
 
   private orbScale = 0.000005;
+  /** Per-instance scale multiplier（fr24_id → multiplier）；null = 全 1.0 */
+  private scaleMap: Map<string, number> | null = null;
 
   constructor(scene: THREE.Scene, color: THREE.Color, blending: THREE.Blending) {
     this.geo = new THREE.IcosahedronGeometry(1, 2);
@@ -100,9 +102,12 @@ export class InstancedOrbs {
       // 呼吸動畫
       const pulse = 1.0 + Math.sin(this.time * 2.0 + phase) * 0.15;
 
+      // Per-instance multiplier（按機型等分類調整大小，未設定則 1.0）
+      const mul = this.scaleMap?.get(e.id) ?? 1.0;
+
       // Orb layers
       for (const layer of this.layers) {
-        const s = this.orbScale * layer.scaleRatio * pulse;
+        const s = this.orbScale * layer.scaleRatio * pulse * mul;
         _dummy.position.set(e.x, e.y, e.z);
         _dummy.scale.set(s, s, s);
         _dummy.updateMatrix();
@@ -115,7 +120,7 @@ export class InstancedOrbs {
       const blink2 = cycle > 0.15 && cycle < 0.25 ? 0.7 : 0.0;
       const blinkOpacity = Math.max(blink1, blink2);
 
-      const bs = this.orbScale * this.blinkLayer.scaleRatio;
+      const bs = this.orbScale * this.blinkLayer.scaleRatio * mul;
       _dummy.position.set(e.x, e.y, e.z + 0.0000015);
       _dummy.scale.set(bs, bs, bs);
       _dummy.updateMatrix();
@@ -138,9 +143,14 @@ export class InstancedOrbs {
     }
   }
 
-  /** 設定光球大小 */
+  /** 設定光球大小（全域基準） */
   setScale(scale: number) {
     this.orbScale = scale;
+  }
+
+  /** 設定 per-instance scale multiplier；null = 還原為全 1.0 */
+  setScaleMap(map: Map<string, number> | null) {
+    this.scaleMap = map;
   }
 
   /** 切換主題 */

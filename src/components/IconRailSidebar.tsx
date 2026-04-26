@@ -312,6 +312,8 @@ export interface IconRailSidebarProps {
   onAnalysisColorByChange: (v: AnalysisColorBy) => void;
   flightFilters: FlightFilters;
   onFlightFiltersChange: (f: FlightFilters) => void;
+  scaleByAircraftSize: boolean;
+  onScaleByAircraftSizeChange: (v: boolean) => void;
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -2457,6 +2459,8 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onColorByChange={props.onAnalysisColorByChange}
               filters={props.flightFilters}
               onFiltersChange={props.onFlightFiltersChange}
+              scaleByAircraftSize={props.scaleByAircraftSize}
+              onScaleByAircraftSizeChange={props.onScaleByAircraftSizeChange}
               isDarkTheme={props.isDarkTheme}
               theme={theme}
             />

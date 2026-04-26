@@ -465,6 +465,11 @@ export class FlightScene {
     this.instancedOrbs?.setScale(scale);
   }
 
+  /** Per-flight scale multiplier（按機型分類大小）；null = 還原為全 1.0 */
+  setPerFlightScaleMap(map: Map<string, number> | null) {
+    this.instancedOrbs?.setScaleMap(map);
+  }
+
   setShowTrails(show: boolean) {
     if (this.showTrails === show) return;
     this.showTrails = show;

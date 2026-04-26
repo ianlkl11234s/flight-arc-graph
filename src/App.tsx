@@ -39,6 +39,7 @@ import { RecordingGuide } from "./components/RecordingGuide";
 import { COLOR_THEMES, DEFAULT_THEME_KEY } from "./types/colorTheme";
 import { assignAirportColors, type AirportColorMode, type AirportAssignment } from "./types/airportColors";
 import { computeAnalysisColorMap, type AnalysisColorBy } from "./data/analysisColors";
+import { getAircraftInfo, type AircraftCategory as AcCat } from "./data/aircraftDatabase";
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
 
@@ -169,6 +170,8 @@ export default function App() {
   };
   // 🔬 Deep Analysis colorBy（機型/航司/用途/時長/航線）— 與 airport colorBy 正交
   const [analysisColorBy, setAnalysisColorBy] = useState<AnalysisColorBy>("none");
+  // 🔬 Deep Analysis 點位大小依機型分類自動縮放
+  const [scaleByAircraftSize, setScaleByAircraftSize] = useState(false);
   const [airportColorOverrides, setAirportColorOverrides] = useState<Record<string, string>>(() => {
     try {
       const raw = localStorage.getItem("flight-arc-airport-color-overrides");
@@ -606,6 +609,32 @@ export default function App() {
     () => computeAnalysisColorMap(finalFlights, analysisColorBy),
     [finalFlights, analysisColorBy],
   );
+
+  // 🔬 點位大小 multiplier（按機型分類）
+  const perFlightScaleMap = useMemo((): Map<string, number> | null => {
+    if (!scaleByAircraftSize) return null;
+    const sizeByCat: Record<AcCat, number> = {
+      widebody: 1.6,
+      narrowbody: 1.0,
+      regional: 0.8,
+      prop: 0.7,
+      bizjet: 0.55,
+      heli: 0.55,
+      military: 1.1,
+      cargo: 1.3,
+      other: 0.9,
+    };
+    const map = new Map<string, number>();
+    for (const f of finalFlights) {
+      const cat = getAircraftInfo(f.aircraft_type).category;
+      map.set(f.fr24_id, sizeByCat[cat]);
+    }
+    return map;
+  }, [finalFlights, scaleByAircraftSize]);
+
+  useEffect(() => {
+    flightSceneRef.current?.setPerFlightScaleMap(perFlightScaleMap);
+  }, [perFlightScaleMap]);
 
   // 給 MapView + FlightScene 的最終 per-flight color map
   // 優先序：Analysis > Compare > Airport > theme（fallback undefined）
@@ -1325,6 +1354,8 @@ export default function App() {
             onAnalysisColorByChange={setAnalysisColorBy}
             flightFilters={flightFilters}
             onFlightFiltersChange={setFlightFilters}
+            scaleByAircraftSize={scaleByAircraftSize}
+            onScaleByAircraftSizeChange={setScaleByAircraftSize}
           />
 
           {/* 頂部控制列（sidebar 右邊） */}
