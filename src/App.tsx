@@ -1853,6 +1853,7 @@ export default function App() {
       {showStats && !isMobile && (
         <FlightStatsPanel
           allFlights={allFlights}
+          filteredFlights={finalFlights}
           selectedAirport={selectedAirport}
           isDarkTheme={isDarkTheme}
           onClose={() => setShowStats(false)}

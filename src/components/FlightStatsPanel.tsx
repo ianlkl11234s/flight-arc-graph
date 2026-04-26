@@ -25,7 +25,10 @@ import {
 import type { TimelineSlot } from "../data/flightStats";
 
 interface Props {
+  /** 全部航班（給 ALL REGION tab — 客觀統計，不受 sidebar filter 影響） */
   allFlights: Flight[];
+  /** 已套用 Deep Analysis filter 的航班（給 AIRPORT tab — 跟篩選同步） */
+  filteredFlights: Flight[];
   selectedAirport: string;
   isDarkTheme: boolean;
   onClose: () => void;
@@ -863,7 +866,7 @@ function AllTaiwanTab({
 /* ── Main Panel ── */
 
 export function FlightStatsPanel({
-  allFlights, selectedAirport, isDarkTheme: dark, onClose, onSelectAirport, onSelectFlight,
+  allFlights, filteredFlights, selectedAirport, isDarkTheme: dark, onClose, onSelectAirport, onSelectFlight,
 }: Props) {
   const colors = t(dark);
   const [tab, setTab] = useState<StatsTab>("airport");
@@ -958,7 +961,7 @@ export function FlightStatsPanel({
       {/* Scrollable Content */}
       <div style={{ flex: 1, overflowY: "auto" }}>
         {tab === "airport" ? (
-          <AirportTab flights={allFlights} icao={selectedAirport} dark={dark}
+          <AirportTab flights={filteredFlights} icao={selectedAirport} dark={dark}
             drillDown={drillDown} setDrillDown={setDrillDown} onSelectFlight={onSelectFlight} />
         ) : (
           <AllTaiwanTab flights={allFlights} dark={dark} onSelectAirport={handleSelectAirport} />
