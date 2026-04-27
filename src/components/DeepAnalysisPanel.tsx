@@ -20,7 +20,7 @@ import {
   ROUTE_SCOPE_LABELS,
   EMPTY_FILTERS,
 } from "../data/classify";
-import { AIRLINE_DB } from "../data/airlineDatabase";
+import { AIRLINE_DB, getAirlineDisplayName } from "../data/airlineDatabase";
 import { getAircraftInfo } from "../data/aircraftDatabase";
 
 interface ThemeColors {
@@ -378,11 +378,12 @@ export function DeepAnalysisPanel({
     return [...counts.entries()]
       .map(([key, count]) => {
         const info = AIRLINE_DB[key];
+        // label = 中/英文航司名為主，sub = ICAO 代碼
         return {
           key,
-          label: key,
+          label: info ? getAirlineDisplayName(key) : key,
           count,
-          sub: info?.name,
+          sub: info ? key : undefined,
         };
       })
       .sort((a, b) => b.count - a.count);

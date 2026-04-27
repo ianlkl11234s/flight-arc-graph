@@ -18,7 +18,7 @@ import {
   type FlightPurpose,
 } from "./classify";
 import { CATEGORY_LABELS } from "./aircraftDatabase";
-import { AIRLINE_DB } from "./airlineDatabase";
+import { AIRLINE_DB, getAirlineDisplayName } from "./airlineDatabase";
 import { DURATION_LABELS, ROUTE_SCOPE_LABELS, PURPOSE_LABELS } from "./classify";
 
 // ─── ColorBy 維度 ────────────────────────────────────────
@@ -180,9 +180,11 @@ export function getAnalysisLegend(
     const others = sorted.slice(10);
     const items: LegendItem[] = top.map(([code, n]) => {
       const info = AIRLINE_DB[code];
+      const displayName = getAirlineDisplayName(code);
       return {
         key: code,
-        label: info ? `${code} — ${info.name}` : code,
+        // 顯示「長榮航空 (EVA)」/「Air France Hop (HOP)」/ 純代碼（未登錄）
+        label: info ? `${displayName} (${code})` : code,
         color: info?.brandColor ?? OTHERS_COLOR,
         count: n,
       };
