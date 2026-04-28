@@ -12,15 +12,18 @@
 
 ## 涵蓋範圍
 
-95+ 座機場，275 個 JSONL 資料檔，10,700+ 筆完整軌跡航班。
+116 座機場 camera presets，1,049 個 JSONL 資料檔，**28,577 筆不重複軌跡航班**（dep + arr 雙向）。
 
 | 區域 | 機場數 | 說明 |
 |------|--------|------|
 | Taiwan (TW) | 16 | 民用 + 軍民合用機場 |
-| Japan (JP) | 70+ | 七大主要 + 地方 + 沖繩離島，分層級顯示 |
+| Japan (JP) | 70 | 七大主要 + 地方 + 沖繩離島（含奄美、鹿兒島離島），分層級顯示 |
 | Hong Kong (HK) | 1 | VHHH 香港國際機場 |
-| United States (US) | KATL 等 | 主要樞紐 |
-| United Kingdom (UK) | 4+ | EGLL / EGKK / EGSS / EGGW（倫敦四大機場）|
+| Singapore (SG) | 1 | WSSS 樟宜國際機場 |
+| United States (US) | 4 | KATL、KDFW 等主要樞紐 |
+| United Kingdom (UK) | 11 | 倫敦群 10 座（EGLL/EGKK/EGSS/EGGW/EGLC/EGTK/EGKB/EGLF/EGMC/EGMD）+ 其他 |
+| Middle East (ME) | 3 | OMDB 杜拜、OMAA 阿布達比、OMSJ 沙迦（戰前/戰當天/戰後 3 個日期） |
+| Europe Hubs | 6 | LFPG 巴黎、EHAM 阿姆斯特丹、EDDF 法蘭克福、EDDM 慕尼黑、LEMD 馬德里、LTFM 伊斯坦堡 |
 | World | 2+ | Madeira (LPMA)、Paro (VQPR) 等特色機場 |
 
 Region Pills UI 可切換 TW / JP / HK / US / UK / World / All，每個區域有對應的場景預設與攝影機視角。
@@ -54,9 +57,46 @@ Per-airport lazy loading 架構：每座機場獨立 JSONL 檔案（`tracks/airp
 
 區域總覽（All Region）模式下，依序載入各機場 JSONL 完整軌跡並去重，大機場優先載入。
 
-### 機型篩選（Aircraft Filter）
+### Deep Analysis 面板（🔬）
 
-空域快照模式下可依機型分類篩選：Military / Business Jet / Helicopter / Turboprop / Narrowbody / Widebody 等類別。
+針對單一機場（或多機場組合）的深度分析工具，整合分類著色、多條件篩選、視覺化調整於一個面板。
+
+#### Color By（分類著色）
+
+5 種維度任選，動態軌跡 + 靜態軌跡 + 光球同步上色：
+
+| 維度 | 分類 |
+|------|------|
+| Aircraft Size | widebody（雙通道）/ narrowbody / regional / prop / bizjet / heli / military / cargo |
+| Airline | Top 10 operating_as 用品牌色（中華航空紅、長榮綠、星宇紫、Emirates 紅⋯）+ Others 灰 |
+| Flight Purpose | commercial / lowcost / regional / cargo / bizjet / military / training / helicopter |
+| Flight Duration | short(<1h) / medium(1-3h) / long(3-6h) / ultralong(6h+) — 綠→黃→橘→紅漸層 |
+| Route Scope | domestic / regional / intercontinental |
+
+Legend 即時顯示分類顏色 / 計數 / 百分比。
+
+#### Multi-Condition Filter（多條件篩選）
+
+可疊加 6 個維度，所有條件 AND 組合：
+
+- **Aircraft Type**：折疊式 multi-checkbox，按頻率排序（含機型 sub label）
+- **Airline**：multi-checkbox 用 `operating_as`（比 callsign 推導準 6.6%），顯示中文名為主、ICAO 為 sub
+- **Purpose chips**：商業 / 低成本 / 區域 / 貨運 / 商務噴射 / 軍用 / 訓練 / 直升機
+- **Route chips**：國內 / 區域 / 跨洲
+- **Duration**：雙 thumb range slider 0-24h
+- **Quick toggles**：Only Diverted（轉降）/ Only Wet Lease（濕租 / 代碼共享）
+
+底部即時計數 `Showing X / Y flights`，一鍵 Reset all。
+
+#### Visual（視覺化）
+
+- **Scale points by aircraft size**：點位大小依機型分類自動縮放（widebody ×1.6 / narrowbody ×1.0 / bizjet ×0.55⋯）
+
+#### 分類資料庫
+
+- **Aircraft DB**：120+ 機型，含 category / wake turbulence (J/H/M/L) / 座位數 / 製造商
+- **Airline DB**：151+ 航司，含中英文名 / 國家 / 品牌色 / 類型（fullservice/lowcost/cargo/regional⋯），涵蓋 88.6% 流量
+- **Heuristic 啟發式**：軍機 hex range 偵測、轉降 / 濕租自動標記
 
 ### 檢視模式
 
@@ -128,11 +168,14 @@ Flight Trails 模式下的子選項，開啟後僅顯示當前播放時間前後
 | 面板 | 功能 |
 |------|------|
 | 設定 | 顯示模式、渲染模式、底圖樣式、視覺參數滑桿 |
-| 位置 | 區域選擇 + 場景預設 + 機場快速跳轉 |
+| 📍 位置 | 區域選擇 + 場景預設 + 機場快速跳轉 |
+| 🔗 多機場組合 | 5 組預設 set（EU+LHR 紐帶、TW 國際、亞太樞紐、跨大西洋、倫敦群），與單一機場互斥 |
 | 行事曆 | 日期選擇器（full/partial 標記） |
 | 配色 | 6 種主題切換、各元素 color picker 微調、Compare Airports 機場分色 |
 | 空域 | 限制空域顯示開關、5 類分類選擇、opacity / 高度倍率 / 邊緣發光調整 |
-| 統計 | 開啟 Flight Statistics 面板 |
+| Summary | 即時統計、航空公司篩選、Dep/Arr toggle、24h 熱力條、每日趨勢 |
+| 🔬 Deep Analysis | 5 種 Color By 維度 + 6 種 multi-filter + 點位大小依機型縮放（詳見上方）|
+| 統計 | 開啟 Flight Statistics 完整面板 |
 | 資訊 | 開啟 Info Modal |
 
 ### 限制空域 Airspace Overlay
@@ -311,8 +354,9 @@ Flight Arc/
 │   └── screenshots/
 ├── scripts/
 │   ├── fetch-flights.ts               # 航班清單擷取（FR24 API）
-│   ├── fetch-tracks.ts                # 飛行軌跡擷取（--airports filter）
+│   ├── fetch-tracks.ts                # 飛行軌跡擷取（--airports filter，含完整 metadata）
 │   ├── split-tracks.ts                # 拆分為 per-airport JSONL
+│   ├── backfill-metadata.ts           # 純本地 JOIN flight-list.json → JSONL 補齊欄位
 │   ├── fetch-airport-boundaries.ts    # OSM 機場邊界下載
 │   ├── backup-to-s3.ts               # S3 備份上傳
 │   ├── upload-to-s3.ts               # S3 上傳（按日期 + manifest）
@@ -324,7 +368,11 @@ Flight Arc/
 │   │   ├── flightLoader.ts            # JSONL 串流載入、篩選、前處理
 │   │   ├── flightStats.ts             # 統計計算引擎
 │   │   ├── s3Loader.ts               # S3 增量更新
-│   │   ├── aircraftCategories.ts      # 機型分類篩選
+│   │   ├── aircraftCategories.ts      # 舊機型分類（ScenePreset 相容用）
+│   │   ├── aircraftDatabase.ts        # 120+ 機型資料庫（category/wake/seats）
+│   │   ├── airlineDatabase.ts         # 151+ 航司資料庫（中英文名/品牌色/類型）
+│   │   ├── classify.ts                # 統一分類 API（duration/route/purpose/filter）
+│   │   ├── analysisColors.ts          # Deep Analysis 調色盤 + perFlightColorMap
 │   │   └── tips.ts                    # 使用技巧
 │   ├── map/
 │   │   ├── MapView.tsx                # Mapbox 容器 + 機場圖層
@@ -344,12 +392,13 @@ Flight Arc/
 │   │   ├── useTimeline.ts             # 日期導航 + 時間軸播放
 │   │   └── useIsMobile.ts             # 響應式斷點偵測
 │   ├── components/
-│   │   ├── IconRailSidebar.tsx        # 左側圖示列 + 區域選擇 + 場景預設
+│   │   ├── IconRailSidebar.tsx        # 左側圖示列 + 區域選擇 + 場景預設 + 多機場組合
+│   │   ├── DeepAnalysisPanel.tsx      # 🔬 Color By + multi-filter + 視覺化 toggle
 │   │   ├── LoadingScreen.tsx          # 動畫載入畫面
 │   │   ├── InfoModal.tsx              # 多頁式使用指南
-│   │   ├── FlightStatsPanel.tsx       # 右側統計面板
+│   │   ├── FlightStatsPanel.tsx       # 右側統計面板（吃 filtered/all 雙 props）
 │   │   ├── DataSourceToggle.tsx       # 航線軌跡 / 空域快照 切換
-│   │   ├── AircraftTypeFilter.tsx     # 機型分類篩選
+│   │   ├── DepArrToggle.tsx           # Dep / Arr / All 篩選
 │   │   ├── TimelineControls.tsx       # 時間軸控制
 │   │   ├── FlightPicker.tsx           # Scope + TrackMode 選擇
 │   │   ├── AirportSelector.tsx        # 機場下拉選單（按區域分組）
@@ -442,10 +491,36 @@ bash scripts/pull-from-s3.sh
 每座機場一個 JSONL 檔案（`tracks/airports/{ICAO}.jsonl`），每行一筆航班：
 
 ```json
-{"fr24_id":"3e617f8a","callsign":"CPA408","registration":"B-HLM","aircraft_type":"A333","origin_icao":"VHHH","dest_icao":"RCTP","dep_time":1771371753,"arr_time":1771399200,"path":[[25.245,55.371,0,1771371753],[25.300,56.100,10058,1771373000]]}
+{
+  "fr24_id": "3e617f8a",
+  "callsign": "CPA408",
+  "flight_number": "CX408",
+  "registration": "B-HLM",
+  "aircraft_type": "A333",
+  "operating_as": "CPA",
+  "painted_as": "CPA",
+  "hex": "78018D",
+  "origin_icao": "VHHH",
+  "dest_icao": "RCTP",
+  "dest_icao_actual": "RCTP",
+  "dep_time": 1771371753,
+  "arr_time": 1771399200,
+  "first_seen": 1771370128,
+  "last_seen": 1771399583,
+  "path": [[25.245, 55.371, 0, 1771371753], [25.300, 56.100, 10058, 1771373000]]
+}
 ```
 
-`path` 每個點：`[緯度, 經度, 高度(m), Unix timestamp]`
+| 欄位 | 說明 |
+|------|------|
+| `path` | 軌跡點：`[緯度, 經度, 高度(m), Unix timestamp]` |
+| `callsign` | ATC 用呼號（如 CPA408） |
+| `flight_number` | IATA 航班號（如 CX408） |
+| `operating_as` | 實際營運航空公司 ICAO 三字碼（精準，比 callsign 推導準 6.6%） |
+| `painted_as` | 機身塗裝航空公司（與 operating_as 不同 = 濕租 / Codeshare，~11% 比例）|
+| `hex` | ADS-B 晶片碼（全球唯一個體 ID，可用於軍機偵測 / 跨資料追蹤）|
+| `dest_icao` / `dest_icao_actual` | 計畫降落 / 實際降落（不同 = 轉降，~0.5% 比例）|
+| `first_seen` / `last_seen` | ADS-B 首次/最後偵測時間，與 dep_time/arr_time 可能差數分鐘 |
 
 ### 資料前處理
 
@@ -522,6 +597,10 @@ open color-preview.html
 | 2026/04 中 | UK 區域 + 多日比較 | 新增英國四大機場（EGLL/EGKK/EGSS/EGGW），多日期 Compare 模式（每日色彩區分）|
 | 2026/04 下 | **限制空域圖層** | Three.js 極光風格 shader、台灣 eAIP（81 features）+ 英國 OpenAIP（302 features）、點擊互動資訊卡 |
 | | Compare Airports | Colors 面板 opt-in 機場分色，10 組擴充色票、Local/Origin/Dest 三種維度 |
+| | 全球擴展 | 新加坡 WSSS、中東（OMDB/OMAA/OMSJ，3 個戰前後日期）、倫敦群 10 座、歐洲 6 大樞紐 |
+| | 多機場組合檢視（🔗）| 5 組 saved set（EU+LHR/TW 國際/亞太樞紐/跨大西洋/倫敦群），自動 fitBounds + region 切換 |
+| | **FR24 metadata 補齊** | fetch-tracks 擴充 7 個欄位（operating_as/painted_as/hex/dest_icao_actual/...），純本地 JOIN backfill 1,049 檔 / 56,469 行歷史資料（零 API credits） |
+| | **Deep Analysis 面板（🔬）**| 5 種 Color By 維度（機型/航司/用途/時長/航線）+ 6 種 multi-filter + 點位大小依機型縮放；分類資料庫 120+ 機型 / 151+ 航司（中英文名、涵蓋 88.6% 流量）|
 
 ## License
 
