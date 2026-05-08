@@ -142,6 +142,7 @@ export default function App() {
   const [orbScale, setOrbScale] = useState(0.000005);
   const [airportOpacity, setAirportOpacity] = useState(0.12);
   const [airportGlow, setAirportGlow] = useState(0.8);
+  const [trailLineWidth, setTrailLineWidth] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
   // Multi-condition filters（Deep Analysis 面板掌控；scene preset 也會寫入）
   const [flightFilters, setFlightFilters] = useState<FlightFilters>(EMPTY_FILTERS);
@@ -965,6 +966,7 @@ export default function App() {
         renderMode={renderMode}
         airportOpacity={airportOpacity}
         airportGlow={airportGlow}
+        trailLineWidth={trailLineWidth}
         isDarkTheme={isDarkTheme}
         showTrails={showTrails}
         compareColorMap={perFlightColorMap}
@@ -1230,6 +1232,7 @@ export default function App() {
             orbScale={orbScale}
             airportOpacity={airportOpacity}
             airportGlow={airportGlow}
+            trailLineWidth={trailLineWidth}
             onDisplayModeChange={(m) => { setDisplayMode(m); setTooltipInfo(null); }}
             onRenderModeChange={setRenderMode}
             onMapStyleChange={setMapStyleId}
@@ -1239,6 +1242,7 @@ export default function App() {
             onOrbScaleChange={setOrbScale}
             onAirportOpacityChange={setAirportOpacity}
             onAirportGlowChange={setAirportGlow}
+            onTrailLineWidthChange={setTrailLineWidth}
             viewshedOpacity={viewshedOpacity}
             onViewshedOpacityChange={setViewshedOpacity}
             viewshedSharpness={viewshedSharpness}

@@ -233,6 +233,7 @@ export interface IconRailSidebarProps {
   orbScale: number;
   airportOpacity: number;
   airportGlow: number;
+  trailLineWidth: number;
   // Callbacks
   onDisplayModeChange: (mode: DisplayMode) => void;
   onRenderModeChange: (mode: RenderMode) => void;
@@ -243,6 +244,7 @@ export interface IconRailSidebarProps {
   onOrbScaleChange: (v: number) => void;
   onAirportOpacityChange: (v: number) => void;
   onAirportGlowChange: (v: number) => void;
+  onTrailLineWidthChange: (v: number) => void;
   viewshedOpacity: number;
   onViewshedOpacityChange: (v: number) => void;
   viewshedSharpness: number;
@@ -708,6 +710,14 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
         min={0.02} max={0.5} step={0.02}
         format={(v) => v.toFixed(2)}
         onChange={props.onStaticOpacityChange}
+        theme={theme}
+      />
+      <SliderRow
+        label="Width"
+        value={props.trailLineWidth}
+        min={0.5} max={6} step={0.5}
+        format={(v) => `×${v.toFixed(1)}`}
+        onChange={props.onTrailLineWidthChange}
         theme={theme}
       />
       <SliderRow

@@ -40,6 +40,11 @@ const lerpColorLight = makeLerpColor("#1a3a8a", "#8a1a2a");
 // Custom theme colors (mutable)
 let customLerpDark: ((t: number) => string) | null = null;
 
+// 線寬倍率（user-controlled），預設 1.0
+let lineWidthMultiplier = 1;
+const BASE_LINE_WIDTH = 1;
+const BASE_GLOW_WIDTH = 3;
+
 /** 設定 2D 軌跡的自訂顏色 */
 export function setMapTrailColors(hexA: string, hexB: string) {
   customLerpDark = makeLerpColor(hexA, hexB);
@@ -116,7 +121,7 @@ export function updateStaticTrails(
       source: SOURCE_ID,
       paint: {
         "line-color": ["get", "color"],
-        "line-width": 3,
+        "line-width": BASE_GLOW_WIDTH * lineWidthMultiplier,
         "line-opacity": glowOpacity,
         "line-blur": 4,
       },
@@ -129,11 +134,24 @@ export function updateStaticTrails(
       source: SOURCE_ID,
       paint: {
         "line-color": ["get", "color"],
-        "line-width": 1,
+        "line-width": BASE_LINE_WIDTH * lineWidthMultiplier,
         "line-opacity": lineOpacity,
         "line-blur": 1,
       },
     });
+  }
+}
+
+/**
+ * 設定 2D 軌跡線寬倍率（即時更新已建立的圖層）
+ */
+export function setStaticTrailsLineWidth(map: MapboxMap, multiplier: number) {
+  lineWidthMultiplier = multiplier;
+  if (map.getLayer(LAYER_ID)) {
+    map.setPaintProperty(LAYER_ID, "line-width", BASE_LINE_WIDTH * multiplier);
+  }
+  if (map.getLayer(GLOW_LAYER_ID)) {
+    map.setPaintProperty(GLOW_LAYER_ID, "line-width", BASE_GLOW_WIDTH * multiplier);
   }
 }
 
