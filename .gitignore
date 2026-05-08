@@ -16,6 +16,9 @@ scripts/track-progress.json
 scripts/track-progress.json.bak
 scripts/track-done.ndjson
 scripts/track-failed.ndjson
+scripts/airports-cache.csv
+scripts/airports-coords.json
+scripts/flight-lists/
 video/
 output/
 music/
