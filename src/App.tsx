@@ -253,6 +253,24 @@ export default function App() {
       defaultAirport: "VHHH",
       defaultDate: "2026-02-18",
     },
+    KR: {
+      title: "Korea Flight Arc",
+      label: "KR",
+      icaoMatch: (icao) => icao.startsWith("RK"),
+      camera: { center: [126.4505, 37.4602], zoom: 9.8, pitch: 55, bearing: 0 },
+      regionCamera: { center: [127.7669, 35.9078], zoom: 6.6, pitch: 30, bearing: 0 },
+      defaultAirport: "RKSI",
+      defaultDate: "2026-02-18",
+    },
+    TH: {
+      title: "Thailand Flight Arc",
+      label: "TH",
+      icaoMatch: (icao) => icao.startsWith("VT"),
+      camera: { center: [100.7501, 13.6900], zoom: 10.0, pitch: 55, bearing: 0 },
+      regionCamera: { center: [101.0, 13.5], zoom: 5.6, pitch: 25, bearing: 0 },
+      defaultAirport: "VTBS",
+      defaultDate: "2026-02-18",
+    },
     US: {
       title: "US Flight Arc",
       label: "US",
@@ -591,9 +609,11 @@ export default function App() {
       TW: (i) => i.startsWith("RC"),
       JP: (i) => i.startsWith("RJ") || i.startsWith("RO"),
       HK: (i) => i.startsWith("VH"),
+      KR: (i) => i.startsWith("RK"),
+      TH: (i) => i.startsWith("VT"),
       US: (i) => i.startsWith("K"),
       UK: (i) => i.startsWith("EG"),
-      world: (i) => !["RC", "RJ", "RO", "VH", "EG"].some((p) => i.startsWith(p)) && !i.startsWith("K"),
+      world: (i) => !["RC", "RJ", "RO", "VH", "RK", "VT", "EG"].some((p) => i.startsWith(p)) && !i.startsWith("K"),
       all: () => true,
     };
     return airports.filter(prefixes[region]);
@@ -1434,7 +1454,7 @@ export default function App() {
             </div>
             {/* Region Pills */}
             <div style={{ display: "flex", gap: 4 }}>
-              {(["TW", "JP", "HK", "US", "UK", "world", "all"] as Region[]).map((r) => {
+              {(["TW", "JP", "HK", "KR", "TH", "US", "UK", "world", "all"] as Region[]).map((r) => {
                 const isActive = region === r;
                 return (
                   <button

@@ -808,11 +808,13 @@ function AirportButton({ preset, isActive, onAirportChange, onLocationJump, them
   );
 }
 
-const KNOWN_PREFIXES = ["RC", "RJ", "RO", "VH", "K", "EG"];
+const KNOWN_PREFIXES = ["RC", "RJ", "RO", "VH", "RK", "VT", "K", "EG"];
 const REGION_ICAO_MATCH: Record<string, (icao: string) => boolean> = {
   TW: (icao) => icao.startsWith("RC"),
   JP: (icao) => icao.startsWith("RJ") || icao.startsWith("RO"),
   HK: (icao) => icao.startsWith("VH"),
+  KR: (icao) => icao.startsWith("RK"),
+  TH: (icao) => icao.startsWith("VT"),
   US: (icao) => icao.startsWith("K"),
   UK: (icao) => icao.startsWith("EG"),
   world: (icao) => !KNOWN_PREFIXES.some((p) => icao.startsWith(p)),
@@ -823,6 +825,8 @@ const REGION_LABELS: Record<string, string> = {
   TW: "台灣 Taiwan",
   JP: "日本 Japan",
   HK: "香港 Hong Kong",
+  KR: "韓國 Korea",
+  TH: "泰國 Thailand",
   US: "United States",
   UK: "United Kingdom",
   world: "World",
@@ -844,7 +848,7 @@ function LocationsPanel({
 
   // Group by region when "all"
   const groupedByRegion = region === "all"
-    ? (["TW", "JP", "HK", "US", "UK", "world"] as const).map((r) => ({
+    ? (["TW", "JP", "HK", "KR", "TH", "US", "UK", "world"] as const).map((r) => ({
         key: r,
         label: REGION_LABELS[r],
         presets: CAMERA_PRESETS.filter((p) => available.has(p.icao) && REGION_ICAO_MATCH[r]!(p.icao)),
@@ -1082,7 +1086,7 @@ function SetsPanel({
   const defaultRegionKey = region === "all" || region === "world" ? "world" : region;
   const [openRegions, setOpenRegions] = useState<Set<string>>(new Set([defaultRegionKey]));
 
-  const groupedByRegion = (["TW", "JP", "HK", "US", "UK", "world"] as const).map((r) => ({
+  const groupedByRegion = (["TW", "JP", "HK", "KR", "TH", "US", "UK", "world"] as const).map((r) => ({
     key: r as string,
     label: REGION_LABELS[r] ?? r,
     presets: CAMERA_PRESETS.filter((p) => available.has(p.icao) && REGION_ICAO_MATCH[r]!(p.icao)),

@@ -19,6 +19,8 @@ scripts/track-failed.ndjson
 scripts/airports-cache.csv
 scripts/airports-coords.json
 scripts/flight-lists/
+scripts/fetch-tracks*.log
+scripts/fetch-flights*.log
 video/
 output/
 music/

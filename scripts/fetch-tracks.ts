@@ -274,6 +274,13 @@ async function main() {
   const dateIdx = process.argv.indexOf("--date");
   const dateFilter = dateIdx !== -1 ? process.argv[dateIdx + 1] : null;
 
+  // 解析 --from-time / --to-time 參數（ISO datetime，精準時區過濾 datetime_takeoff）
+  const fromTimeIdx = process.argv.indexOf("--from-time");
+  const toTimeIdx = process.argv.indexOf("--to-time");
+  const fromTime =
+    fromTimeIdx !== -1 ? process.argv[fromTimeIdx + 1]! : null;
+  const toTime = toTimeIdx !== -1 ? process.argv[toTimeIdx + 1]! : null;
+
   // 解析 --airports 參數（篩選 orig_icao 或 dest_icao）
   const airportsIdx = process.argv.indexOf("--airports");
   const airportsFilter =
@@ -305,7 +312,13 @@ async function main() {
 
   // 篩選日期
   let targets: FR24FlightSummary[];
-  if (dateFilter) {
+  if (fromTime && toTime) {
+    targets = allSummaries.filter((f) => {
+      const dt = f.datetime_takeoff || f.first_seen || "";
+      return dt >= fromTime && dt < toTime;
+    });
+    console.log(`時間範圍篩選 (ISO): ${fromTime} ~ ${toTime}`);
+  } else if (dateFilter) {
     targets = allSummaries.filter((f) => {
       const dt = (f.datetime_takeoff || f.first_seen || "").slice(0, 10);
       return dt === dateFilter;

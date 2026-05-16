@@ -407,6 +407,8 @@ const REGION_PREFIXES: Record<string, string[]> = {
   TW: ["RC"],
   JP: ["RJ", "RO"],
   HK: ["VH"],
+  KR: ["RK"],
+  TH: ["VT"],
   US: ["K"],
   UK: ["EG"],
 };

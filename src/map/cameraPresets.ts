@@ -134,6 +134,27 @@ export const AIRPORT_INFO: Record<string, { name: string; iata: string }> = {
   // United Arab Emirates
   OMDB: { name: "Dubai International", iata: "DXB" },
   OMAA: { name: "Abu Dhabi International", iata: "AUH" },
+  // France (Paris)
+  LFPO: { name: "Paris Orly", iata: "ORY" },
+  LFPB: { name: "Paris Le Bourget", iata: "LBG" },
+  LFOB: { name: "Beauvais–Tillé", iata: "BVA" },
+  // Korea
+  RKSI: { name: "Incheon International", iata: "ICN" },
+  RKSS: { name: "Gimpo International", iata: "GMP" },
+  RKPK: { name: "Gimhae International (Busan)", iata: "PUS" },
+  RKPC: { name: "Jeju International", iata: "CJU" },
+  RKTU: { name: "Cheongju International", iata: "CJJ" },
+  RKTN: { name: "Daegu International", iata: "TAE" },
+  // Thailand
+  VTBS: { name: "Suvarnabhumi (Bangkok)", iata: "BKK" },
+  VTBD: { name: "Don Mueang (Bangkok)", iata: "DMK" },
+  VTCC: { name: "Chiang Mai International", iata: "CNX" },
+  VTSP: { name: "Phuket International", iata: "HKT" },
+  VTSG: { name: "Krabi International", iata: "KBV" },
+  VTSM: { name: "Samui International", iata: "USM" },
+  VTBU: { name: "U-Tapao Rayong-Pattaya", iata: "UTP" },
+  VTSS: { name: "Hat Yai International", iata: "HDY" },
+  VTSB: { name: "Surat Thani International", iata: "URT" },
 };
 
 export function getAirportInfo(icao: string): { name: string; iata: string } | undefined {
@@ -1086,6 +1107,169 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     center: [53.5, 25.1],
     zoom: 7,
     pitch: 45,
+    bearing: 0,
+  },
+  // France (Paris cluster)
+  {
+    name: "Paris Orly",
+    icao: "LFPO",
+    center: [2.3650, 48.7233],
+    zoom: 11,
+    pitch: 55,
+    bearing: 70, // 跑道 06/24
+  },
+  {
+    name: "Paris Le Bourget",
+    icao: "LFPB",
+    center: [2.4413, 48.9694],
+    zoom: 12,
+    pitch: 55,
+    bearing: 70,
+  },
+  {
+    name: "Beauvais–Tillé",
+    icao: "LFOB",
+    center: [2.1128, 49.4544],
+    zoom: 12,
+    pitch: 55,
+    bearing: 130,
+  },
+  // Korea
+  {
+    name: "Incheon International",
+    icao: "RKSI",
+    center: [126.4505, 37.4602],
+    zoom: 10.8,
+    pitch: 55,
+    bearing: 158, // 跑道 15/33
+  },
+  {
+    name: "Gimpo International",
+    icao: "RKSS",
+    center: [126.7906, 37.5583],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 142, // 跑道 14/32
+  },
+  {
+    name: "Gimhae (Busan)",
+    icao: "RKPK",
+    center: [128.9382, 35.1795],
+    zoom: 11,
+    pitch: 55,
+    bearing: 36, // 跑道 36L/18R
+  },
+  {
+    name: "Jeju International",
+    icao: "RKPC",
+    center: [126.4929, 33.5113],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 70, // 跑道 07/25
+  },
+  {
+    name: "Cheongju International",
+    icao: "RKTU",
+    center: [127.4990, 36.7166],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 60,
+  },
+  {
+    name: "Daegu International",
+    icao: "RKTN",
+    center: [128.6589, 35.8941],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 132,
+  },
+  {
+    name: "Korea (ICN · GMP · PUS · CJU)",
+    icao: "KR_OVERVIEW",
+    center: [127.7669, 36.0],
+    zoom: 6.6,
+    pitch: 30,
+    bearing: 0,
+  },
+  // Thailand
+  {
+    name: "Suvarnabhumi (Bangkok)",
+    icao: "VTBS",
+    center: [100.7501, 13.6900],
+    zoom: 11,
+    pitch: 55,
+    bearing: 192, // 跑道 19R/01L
+  },
+  {
+    name: "Don Mueang (Bangkok)",
+    icao: "VTBD",
+    center: [100.6068, 13.9126],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 22,
+  },
+  {
+    name: "Chiang Mai",
+    icao: "VTCC",
+    center: [98.9626, 18.7669],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 18,
+  },
+  {
+    name: "Phuket International",
+    icao: "VTSP",
+    center: [98.3068, 8.1132],
+    zoom: 12,
+    pitch: 55,
+    bearing: 9,
+  },
+  {
+    name: "Krabi International",
+    icao: "VTSG",
+    center: [98.9858, 8.0986],
+    zoom: 12,
+    pitch: 55,
+    bearing: 14,
+  },
+  {
+    name: "Samui International",
+    icao: "VTSM",
+    center: [100.0625, 9.5479],
+    zoom: 12.5,
+    pitch: 55,
+    bearing: 170,
+  },
+  {
+    name: "U-Tapao Rayong-Pattaya",
+    icao: "VTBU",
+    center: [101.0050, 12.6800],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 180,
+  },
+  {
+    name: "Hat Yai International",
+    icao: "VTSS",
+    center: [100.3933, 6.9333],
+    zoom: 11.8,
+    pitch: 55,
+    bearing: 80,
+  },
+  {
+    name: "Surat Thani International",
+    icao: "VTSB",
+    center: [99.1356, 9.1326],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 100,
+  },
+  {
+    name: "Thailand (BKK · DMK · CNX · HKT)",
+    icao: "TH_OVERVIEW",
+    center: [101.0, 13.5],
+    zoom: 5.6,
+    pitch: 25,
     bearing: 0,
   },
 ];

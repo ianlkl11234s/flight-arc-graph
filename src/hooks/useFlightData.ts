@@ -54,12 +54,12 @@ export function useFlightData(
       setAllAirports(getManifestAirports(m));
       // 各 region 日期
       const rdm: Record<string, string[]> = {};
-      for (const r of ["TW", "JP", "HK", "US", "UK", "world"]) {
+      for (const r of ["TW", "JP", "HK", "KR", "TH", "US", "UK", "world"]) {
         rdm[r] = getRegionDates(m, r);
       }
       setRegionDatesMap(rdm);
       const rfdm: Record<string, string[]> = {};
-      for (const r of ["TW", "JP", "HK", "US", "UK", "world"]) {
+      for (const r of ["TW", "JP", "HK", "KR", "TH", "US", "UK", "world"]) {
         rfdm[r] = getRegionFullDates(m, r);
       }
       setRegionFullDatesMap(rfdm);

@@ -87,6 +87,8 @@ function getRegion(icao: string): string {
   if (icao.startsWith("RC")) return "TW";
   if (icao.startsWith("RJ") || icao.startsWith("RO")) return "JP";
   if (icao.startsWith("VH")) return "HK";
+  if (icao.startsWith("RK")) return "KR";
+  if (icao.startsWith("VT")) return "TH";
   if (icao.startsWith("K")) return "US";
   if (icao.startsWith("EG")) return "UK";
   return "other";
