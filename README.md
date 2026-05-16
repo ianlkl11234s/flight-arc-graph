@@ -12,21 +12,23 @@
 
 ## 涵蓋範圍
 
-116 座機場 camera presets，1,049 個 JSONL 資料檔，**28,577 筆不重複軌跡航班**（dep + arr 雙向）。
+138 座機場 camera presets，1,137 個 JSONL 資料檔，**32,616 筆不重複軌跡航班**（dep + arr 雙向）。
 
 | 區域 | 機場數 | 說明 |
 |------|--------|------|
 | Taiwan (TW) | 16 | 民用 + 軍民合用機場 |
 | Japan (JP) | 70 | 七大主要 + 地方 + 沖繩離島（含奄美、鹿兒島離島），分層級顯示 |
+| Korea (KR) | 6 + Overview | RKSI 仁川、RKSS 金浦、RKPK 釜山、RKPC 濟州、RKTU 清州、RKTN 大邱 |
+| Thailand (TH) | 9 + Overview | VTBS 蘇凡那布、VTBD 廊曼、VTCC 清邁、VTSP 普吉、VTSG 喀比、VTSM 蘇梅、VTBU 烏塔堡、VTSS 合艾、VTSB 素叻他尼 |
 | Hong Kong (HK) | 1 | VHHH 香港國際機場 |
 | Singapore (SG) | 1 | WSSS 樟宜國際機場 |
 | United States (US) | 4 | KATL、KDFW 等主要樞紐 |
 | United Kingdom (UK) | 11 | 倫敦群 10 座（EGLL/EGKK/EGSS/EGGW/EGLC/EGTK/EGKB/EGLF/EGMC/EGMD）+ 其他 |
 | Middle East (ME) | 3 | OMDB 杜拜、OMAA 阿布達比、OMSJ 沙迦（戰前/戰當天/戰後 3 個日期） |
-| Europe Hubs | 6 | LFPG 巴黎、EHAM 阿姆斯特丹、EDDF 法蘭克福、EDDM 慕尼黑、LEMD 馬德里、LTFM 伊斯坦堡 |
+| Europe Hubs | 9 | LFPG 巴黎 CDG / LFPO 奧利 / LFPB 布爾歇 / LFOB 博韋、EHAM 阿姆斯特丹、EDDF 法蘭克福、EDDM 慕尼黑、LEMD 馬德里、LTFM 伊斯坦堡 |
 | World | 2+ | Madeira (LPMA)、Paro (VQPR) 等特色機場 |
 
-Region Pills UI 可切換 TW / JP / HK / US / UK / World / All，每個區域有對應的場景預設與攝影機視角。
+Region Pills UI 可切換 TW / JP / HK / **KR / TH** / US / UK / World / All，每個區域有對應的場景預設與攝影機視角。
 
 ## 視覺概念
 
@@ -49,7 +51,7 @@ Region Pills UI 可切換 TW / JP / HK / US / UK / World / All，每個區域有
 
 ### 區域選擇（Region Selector）
 
-Region Pills 切換地理區域：TW / JP / HK / World / All。切換時自動載入對應機場資料、更新機場選單與場景預設、跳至有資料的日期。日本機場依流量分為四層級：Major（10）/ Regional（15）/ Local / Special。
+Region Pills 切換地理區域：TW / JP / HK / KR / TH / US / UK / World / All。切換時自動載入對應 region jsonl（依 ICAO prefix 分類）、更新機場選單與場景預設、跳至有資料的日期。日本機場依流量分為四層級：Major（10）/ Regional（15）/ Local / Special。
 
 ### 資料載入
 

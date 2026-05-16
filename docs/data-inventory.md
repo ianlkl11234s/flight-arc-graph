@@ -129,17 +129,20 @@
 
 ---
 
-## 4. 目前的資料規模
+## 4. 目前的資料規模（2026-05-16 更新）
 
 | 指標 | 值 |
 |------|-----|
-| 資料日期範圍 | 2026-02-17 ~ 2026-02-20 |
-| 航班總數 | ~1,835 筆 |
-| 台灣機場數 | 14 座 |
-| 國際目的地 | 100+ 機場 |
-| 軌跡點總數 | 數十萬點 |
-| 資料大小 | ~84 MB (aviation_data.json) |
-| 每筆軌跡點數 | 10 ~ 500+ |
+| 資料日期範圍 | 2026-02-17 ~ 2026-05-06（部分機場連續 50+ 天） |
+| 不重複航班 | **32,616** 筆（split-tracks 統計） |
+| 累計 done (track-done.ndjson) | 32,727 筆 |
+| 機場 JSONL 數 | 1,137 座 |
+| Region 分檔 | 8 個（TW / JP / HK / KR / TH / US / UK / other） |
+| Camera Presets | 138 座機場 + Overview |
+| 資料大小 | ~462 MB（airports/*.jsonl gzip） + ~27 MB（regions） |
+| 每筆軌跡點數 | 10 ~ 2,800+ |
+
+詳細抓取進度與下一步規劃 → [`docs/backlog/data-fetching-status.md`](./backlog/data-fetching-status.md)
 
 ---
 

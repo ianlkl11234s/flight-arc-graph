@@ -1,5 +1,12 @@
 # Flight Arc — 專案規則
 
+## 📋 資料抓取狀態
+
+**任何關於「下一步抓哪些機場」「目前抓到哪了」的討論，先讀**
+👉 [`docs/backlog/data-fetching-status.md`](docs/backlog/data-fetching-status.md)
+
+該檔案追蹤：目標機場群、主動/被動狀態、API 額度預估、操作指令。每完成一輪抓取後同步更新。
+
 ## Build 檢查（必做）
 
 **每次 commit 前，必須執行 `npm run typecheck`（即 `tsc -b`）確認無錯誤。**
