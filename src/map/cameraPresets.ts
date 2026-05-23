@@ -97,6 +97,19 @@ export const AIRPORT_INFO: Record<string, { name: string; iata: string }> = {
   // United States
   KATL: { name: "Hartsfield-Jackson Atlanta Intl", iata: "ATL" },
   KADW: { name: "Joint Base Andrews", iata: "ADW" },
+  // United States — New York
+  KJFK: { name: "John F. Kennedy International", iata: "JFK" },
+  KEWR: { name: "Newark Liberty International", iata: "EWR" },
+  KLGA: { name: "LaGuardia Airport", iata: "LGA" },
+  // United States — Los Angeles metro
+  KLAX: { name: "Los Angeles International", iata: "LAX" },
+  KBUR: { name: "Hollywood Burbank (Bob Hope)", iata: "BUR" },
+  KSNA: { name: "John Wayne (Orange County)", iata: "SNA" },
+  KONT: { name: "Ontario International", iata: "ONT" },
+  // United States — San Francisco Bay
+  KSFO: { name: "San Francisco International", iata: "SFO" },
+  KOAK: { name: "Oakland International", iata: "OAK" },
+  KSJC: { name: "San Jose Mineta International", iata: "SJC" },
   // Portugal
   LPMA: { name: "Aeroporto da Madeira", iata: "FNC" },
   // Bhutan
@@ -878,6 +891,89 @@ export const CAMERA_PRESETS: CameraPreset[] = [
     zoom: 11,
     pitch: 55,
     bearing: 0,
+  },
+  // United States — New York
+  {
+    name: "John F. Kennedy International",
+    icao: "KJFK",
+    center: [-73.7781, 40.6413],
+    zoom: 11.2,
+    pitch: 55,
+    bearing: 130, // 跑道 13L/31R, 13R/31L 主用
+  },
+  {
+    name: "Newark Liberty International",
+    icao: "KEWR",
+    center: [-74.1745, 40.6925],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 40, // 跑道 04L/22R 主用
+  },
+  {
+    name: "LaGuardia Airport",
+    icao: "KLGA",
+    center: [-73.874, 40.7769],
+    zoom: 12,
+    pitch: 55,
+    bearing: 130, // 跑道 13/31
+  },
+  // United States — Los Angeles metro
+  {
+    name: "Los Angeles International",
+    icao: "KLAX",
+    center: [-118.4085, 33.9425],
+    zoom: 11.2,
+    pitch: 55,
+    bearing: 65, // 跑道 06L/24R, 06R/24L, 07L/25R, 07R/25L
+  },
+  {
+    name: "Hollywood Burbank",
+    icao: "KBUR",
+    center: [-118.3582, 34.2007],
+    zoom: 12,
+    pitch: 55,
+    bearing: 80, // 跑道 08/26
+  },
+  {
+    name: "John Wayne (Orange County)",
+    icao: "KSNA",
+    center: [-117.8682, 33.6762],
+    zoom: 12.2,
+    pitch: 55,
+    bearing: 20, // 跑道 02L/20R
+  },
+  {
+    name: "Ontario International",
+    icao: "KONT",
+    center: [-117.6011, 34.056],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 80, // 跑道 08L/26R, 08R/26L
+  },
+  // United States — San Francisco Bay
+  {
+    name: "San Francisco International",
+    icao: "KSFO",
+    center: [-122.379, 37.6213],
+    zoom: 11.5,
+    pitch: 55,
+    bearing: 100, // 跑道 10L/28R, 10R/28L（東西主跑道）
+  },
+  {
+    name: "Oakland International",
+    icao: "KOAK",
+    center: [-122.221, 37.7126],
+    zoom: 11.8,
+    pitch: 55,
+    bearing: 100, // 跑道 10L/28R, 10R/28L
+  },
+  {
+    name: "San Jose Mineta International",
+    icao: "KSJC",
+    center: [-121.9289, 37.3626],
+    zoom: 11.8,
+    pitch: 55,
+    bearing: 120, // 跑道 12L/30R, 12R/30L
   },
   // Portugal
   {

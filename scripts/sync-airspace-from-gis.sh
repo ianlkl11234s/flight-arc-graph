@@ -23,6 +23,14 @@ taiwan_airspace_3d.geojson|taiwan_airspace.geojson|tw
 gb_airspace_3d.geojson|gb_airspace.geojson|gb
 cn_airspace_3d.geojson|cn_airspace.geojson|cn
 jp_airspace_3d.geojson|jp_airspace.geojson|jp
+us_airspace_3d.geojson|us_airspace.geojson|us
+fr_airspace_3d.geojson|fr_airspace.geojson|fr
+de_airspace_3d.geojson|de_airspace.geojson|de
+nl_airspace_3d.geojson|nl_airspace.geojson|nl
+es_airspace_3d.geojson|es_airspace.geojson|es
+it_airspace_3d.geojson|it_airspace.geojson|it
+tr_airspace_3d.geojson|tr_airspace.geojson|tr
+th_airspace_3d.geojson|th_airspace.geojson|th
 "
 
 # 把參數轉小寫成空白分隔字串（前後加空白方便 substring 比對）

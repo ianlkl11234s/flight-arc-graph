@@ -5,6 +5,40 @@
 
 ## 🆕 最近完成
 
+### 2026-05-23 晚: Camera Presets + 禁航區大擴張
+
+#### Camera Presets — 新增 10 座美國機場
+- 紐約三場（KJFK/KEWR/KLGA）+ LA 都會（KLAX/KBUR/KSNA/KONT）+ SF 灣區（KSFO/KOAK/KSJC）
+- 對應上午剛抓完軌跡的 10 座
+- 美國場景：3 座 → **13 座**
+
+#### 禁航區 — 從 3 國擴張到 **12 國**
+
+| 國家 | Features | 大小 | 主要類型 |
+|------|---------|------|---------|
+| 🇺🇸 US | 1,986 | 5.3 MB | RCD 1432 / RCR 542 / RCP 12 |
+| 🇫🇷 FR | 1,302 | 2.8 MB | RCR 663 / TMA 357 / RCP 108 |
+| 🇮🇹 IT | 816 | 3.6 MB | RCR 274 / RCP 264 / RCD 124 / CTR 115 |
+| 🇪🇸 ES | 450 | 552 KB | TMA 201 / RCD 104 / CTR/RCR/RCP |
+| 🇩🇪 DE | 381 | 593 KB | TMA 158 / RCR 142 / CTR 63 |
+| 🇯🇵 JP | 280 | 440 KB | RCR 107 / RCD 89 / CTR 84 |
+| 🇹🇷 TR | 207 | 965 KB | CTR 83 / TMA 41 / RCD 44 |
+| 🇳🇱 NL | 110 | 279 KB | TMA 31 / RCR 23 / RCD/CTR/FIR |
+| 🇹🇭 TH | 13 | 100 KB | TMA 7 / CTR 5 / RCD 1 |
+| 既有 🇹🇼 TW | 81 | 266 KB | eAIP 解析 |
+| 既有 🇬🇧 UK | (已抓)| 752 KB | OpenAIP |
+| 既有 🇨🇳 CN | (已抓)| 82 KB | OpenAIP |
+
+**Repo 大小增加**: ~14.5 MB（geojson 進 git）
+
+⚠️ **OpenAIP 限制**：
+- 🇰🇷 韓國 — **0 筆**（OpenAIP 不收）
+- 對亞洲覆蓋差（TH 也只有 13 筆）
+- 美國沒有 TMA/CTR（FAA 自有體系）
+- 授權 **CC BY-NC-SA 4.0**（非商業）
+
+**修補的 bug**: `taipei-gis-analytics/pipelines/aviation/airspace_openaip/00_fetch_openaip.py` 對 JP/FR 失敗（activity 欄位有 int 沒 cast str），已修。
+
 ### 2026-05-23: 美國紐約三場 + LA/SF 都會區（台灣時間 2/18 整天）
 
 範圍：UTC `2026-02-17T16:00:00Z ~ 2026-02-18T16:00:00Z`

@@ -37,6 +37,15 @@ const DEFAULT_SOURCES: { region: string; url: string }[] = [
   { region: "TW", url: "./airspace/taiwan_adiz.geojson" },
   { region: "UK", url: "./airspace/gb_airspace.geojson" },
   { region: "CN", url: "./airspace/cn_airspace.geojson" },
+  { region: "JP", url: "./airspace/jp_airspace.geojson" },
+  { region: "US", url: "./airspace/us_airspace.geojson" },
+  { region: "FR", url: "./airspace/fr_airspace.geojson" },
+  { region: "DE", url: "./airspace/de_airspace.geojson" },
+  { region: "NL", url: "./airspace/nl_airspace.geojson" },
+  { region: "ES", url: "./airspace/es_airspace.geojson" },
+  { region: "IT", url: "./airspace/it_airspace.geojson" },
+  { region: "TR", url: "./airspace/tr_airspace.geojson" },
+  { region: "TH", url: "./airspace/th_airspace.geojson" },
 ];
 
 let cache: AirspaceFeature[] | null = null;
