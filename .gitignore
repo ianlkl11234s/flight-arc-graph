@@ -12,10 +12,13 @@ public/airspace/aviation_data.json
 # OpenAIP API key（跑 fetch-uk-airspace.mjs 時用）
 .env.openaip
 scripts/flight-list.json
+scripts/flight-list.json.bak*
 scripts/track-progress.json
 scripts/track-progress.json.bak
 scripts/track-done.ndjson
 scripts/track-failed.ndjson
+scripts/retry-targets.txt
+logs/
 scripts/airports-cache.csv
 scripts/airports-coords.json
 scripts/flight-lists/

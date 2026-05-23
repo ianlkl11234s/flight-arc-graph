@@ -1,9 +1,41 @@
 # Flight Arc — 資料抓取狀態與計劃
 
-> **最後更新**: 2026-05-16
+> **最後更新**: 2026-05-23
 > **目的**: 追蹤每個目標機場的「時刻表 + 軌跡」抓取進度，避免重複規劃或忘記未完成項目。
 
 ## 🆕 最近完成
+
+### 2026-05-23: 美國紐約三場 + LA/SF 都會區（台灣時間 2/18 整天）
+
+範圍：UTC `2026-02-17T16:00:00Z ~ 2026-02-18T16:00:00Z`
+
+| 區 | 機場 | Step 1 班次 | 結果 |
+|----|------|------------|------|
+| 🗽 紐約 | KJFK / KEWR / KLGA | 1,137 / 1,026 / 970 | 主動 100% |
+| ☀️ 洛杉磯都會 | KLAX / KBUR / KSNA / KONT | 1,292 / 280 / 474 / 281 | 主動 100% |
+| 🌉 灣區 | KSFO / KOAK / KSJC | 920 / 339 / 314 | 主動 100% |
+
+**Schedule credits**: ~4,295（含 1 次誤跑 3,173） / **Track credits**: ~214K + retry ~72K = **~286K**
+**新增軌跡**（首次 + retry 合計）: **7,148 筆成功** / 10 真 404 / 0 仍失敗 🎉
+**累計 done**: 32,727 → **39,875**
+**累計 failed**: 51 → **56**（只剩 5 筆是真的 404 + 既有 51 筆）
+**機場 JSONL**: 1,137 → **1,276** 座
+**US region**: 新誕生 **10,855 flights**（gzip 6.21 MB）
+
+### Retry 階段（同日下午）
+
+第一次 fetch-tracks 因網路 blip 失敗 1,803 筆。寫了 `scripts/retry-failed-tracks.ts` 帶 3 次網路 retry：
+- **救回 1,803 / 1,808 = 99.7%** ✅
+- 真 404: 5 筆
+- 耗時 90.7 分鐘 / API 1,808 次
+
+### 🛡️ 同步改進
+
+- **Circuit breaker**：fetch-tracks.ts + retry-failed-tracks.ts 都加上連續 15 筆失敗或最近 50 筆 >50% 失敗自動停止，避免 batch 全跑完才發現系統性問題
+
+⚠️ **教訓**：
+1. fetch-flights 用 `--from` / `--to`（支援 ISO 格式），**不是** `--from-time` / `--to-time`（那是 fetch-tracks 專用）。誤用會 fallback 預設「今天往前 3 天」。
+2. fetch-tracks 原本只 retry HTTP 429，不 retry 網路層 `fetch failed` → 已修補。
 
 ### 2026-05-16: 巴黎 + 曼谷 + 仁川（台灣時間 2/18 整天）
 
@@ -100,18 +132,43 @@ npx tsx scripts/fetch-tracks.ts \
   --airports VTBS,VTBD,VTCC,VTSP,VTSG,VTSM,VTBU,VTSS,VTSB
 ```
 
-#### 🇺🇸 紐約
-| 機場 | 被動筆數 | done | 計劃 |
-|------|---------|------|------|
-| KJFK 甘迺迪 | 373 | 161 | 主動抓 7 天 |
-| KEWR 紐華克 | 129 | 102 | 一起 |
-| KLGA 拉瓜地亞 | 77 | 77 | 一起（量小） |
+#### 🇺🇸 紐約三場（2/18 ✅ 完成，可擴大日期）
+| 機場 | 2/18 已抓 | 後續計劃 |
+|------|---------|---------|
+| KJFK 甘迺迪 | 1,137 (100%) | 擴大到 7 天 |
+| KEWR 紐華克 | 1,026 (100%) | 一起 |
+| KLGA 拉瓜地亞 | 970 (100%) | 一起 |
+
+#### 🇺🇸 西岸都會區（2/18 ✅ 完成）
+| 機場 | 2/18 已抓 |
+|------|---------|
+| KLAX 洛杉磯 | 1,292 (100%) |
+| KBUR Burbank | 280 (100%) |
+| KSNA Orange County | 474 (100%) |
+| KONT Ontario | 281 (100%) |
+| KSFO 舊金山 | 920 (100%) |
+| KOAK 奧克蘭 | 339 (100%) |
+| KSJC 聖荷西 | 314 (100%) |
 
 ```bash
+# 擴大 7 天範圍時用這條
 npx tsx scripts/fetch-flights.ts --from 2026-02-17 --to 2026-02-23 \
-  --airports KJFK,KEWR,KLGA
-npx tsx scripts/fetch-tracks.ts --airports KJFK,KEWR,KLGA
+  --airports KJFK,KEWR,KLGA,KLAX,KSFO,KBUR,KSNA,KOAK,KSJC,KONT
+npx tsx scripts/fetch-tracks.ts \
+  --airports KJFK,KEWR,KLGA,KLAX,KSFO,KBUR,KSNA,KOAK,KSJC,KONT
 ```
+
+#### 🇺🇸 美國尚未補：中部 / 南部樞紐（Tier 2-3）
+| 機場 | 被動2/18 | 計劃 |
+|------|---------|------|
+| KORD 芝加哥 | 123 | 主動抓 1 天 |
+| KDFW 達拉斯 | 74 | 一起 |
+| KMIA 邁阿密 | 86 | 一起 |
+| KIAH 休士頓 | 57 | 一起 |
+| KATL ✅ | 1,820 | 已主動 |
+| KDCA ✅ | 881 | 已主動 |
+| PANC 安克拉治（貨運樞紐） | 35 | 跨太平洋紐帶 |
+| PHNL 檀香山 | 22 | 跨太平洋紐帶 |
 
 #### 🇦🇺 澳洲 + 🇳🇿 紐西蘭
 | 機場 | 被動筆數 | done | 計劃 |

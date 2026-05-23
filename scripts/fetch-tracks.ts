@@ -378,6 +378,16 @@ async function main() {
   let emptyCount = 0;
   let firstLogged = totalDoneCount > 0; // 若已有進度，跳過首筆 log
 
+  // ── Circuit breaker ──
+  // A. 連續 15 筆失敗 → abort (網路死/API key 掛掉的徵兆)
+  // B. 跑滿 20 筆後，最近 50 筆失敗率 > 50% → abort
+  const CB_CONSECUTIVE_FAIL = 15;
+  const CB_WINDOW_SIZE = 50;
+  const CB_WINDOW_FAIL_RATE = 0.5;
+  const CB_MIN_SAMPLES = 20;
+  let consecutiveFails = 0;
+  const recentResults: boolean[] = []; // true = success/empty (count as not-failure), false = error
+
   for (let i = 0; i < todo.length; i++) {
     const flight = todo[i]!;
     const pct = (
@@ -388,6 +398,7 @@ async function main() {
       `[${doneInTargets + i + 1}/${targets.length}] ${pct}% ${flight.callsign || flight.flight} (${flight.fr24_id}) ... `,
     );
 
+    let thisRequestFailed = false;
     try {
       const raw = await fetchTrack(flight.fr24_id);
 
@@ -442,7 +453,34 @@ async function main() {
       markFailed(flight.fr24_id);
       progress.failed.add(flight.fr24_id);
       failCount++;
+      thisRequestFailed = true;
       console.log(`❌ ${(err as Error).message}`);
+    }
+
+    // ── Circuit breaker check ──
+    if (thisRequestFailed) consecutiveFails++;
+    else consecutiveFails = 0;
+
+    recentResults.push(!thisRequestFailed);
+    if (recentResults.length > CB_WINDOW_SIZE) recentResults.shift();
+
+    if (consecutiveFails >= CB_CONSECUTIVE_FAIL) {
+      console.error(
+        `\n🛑 CIRCUIT BREAKER: 連續 ${consecutiveFails} 筆失敗，疑似系統性異常（網路斷/API token 失效）`,
+      );
+      console.error(`   已停止以避免浪費 credits。請排查後重跑。`);
+      break;
+    }
+    if (recentResults.length >= CB_MIN_SAMPLES) {
+      const fails = recentResults.filter((r) => !r).length;
+      const rate = fails / recentResults.length;
+      if (recentResults.length >= CB_WINDOW_SIZE && rate > CB_WINDOW_FAIL_RATE) {
+        console.error(
+          `\n🛑 CIRCUIT BREAKER: 最近 ${recentResults.length} 筆失敗率 ${(rate * 100).toFixed(0)}% > 50%`,
+        );
+        console.error(`   已停止以避免浪費 credits。請排查後重跑。`);
+        break;
+      }
     }
 
     await sleep(DELAY_MS);
