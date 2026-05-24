@@ -30,6 +30,9 @@ output/
 music/
 scripts/__pycache__/
 
+# 軌跡幾何分析探索區（不進 git，演算法驗證 OK 後畢業到 src/analysis/）
+exploration/
+
 # Claude Code 內部儲存（不 commit）
 .claude/projects/
 .claude/worktrees/
