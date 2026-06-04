@@ -1,0 +1,4260 @@
+{
+  "meta": {
+    "generatedAt": "2026-06-04T09:39:40.049Z",
+    "source": "plan-art / public/tracks/airports (FR24 軌跡樣本)",
+    "caveat": "本檔基於 2026-02 至 04 期間的 FR24 軌跡樣本，非民航局/桃機官方統計。計數慣例：fetch-tracks 在「起點機場」與「終點機場」各寫一筆同一航班，所以 total = arrivals + departures（國際標準的『起降架次』）。獨立航班數 ≈ total / 2。若需長期年/月趨勢請串接民航局或桃機 odp.taoyuan-airport.com 的官方統計。",
+    "coverage": {
+      "airports": [
+        "RCTP",
+        "RCKH",
+        "RCSS",
+        "RCQC",
+        "RCBS",
+        "RCMQ",
+        "RCFN"
+      ],
+      "note": "離島/區域機場（RCQC/RCBS/RCMQ/RCFN）目前僅 7 天樣本，桃園/高雄/松山有 28–47 天。顯示『日均』KPI 請用各機場的 dailyAverage 欄位（已按各自實際天數計算）。"
+    }
+  },
+  "overall": {
+    "totalMovements": 10546,
+    "domestic": 3421,
+    "international": 7056,
+    "unknownRoute": 69,
+    "seatCapacityTotal": 2322996,
+    "earliestSample": "2026-02-17T14:55:28.000Z",
+    "latestSample": "2026-04-05T14:47:50.000Z",
+    "airportCount": 7,
+    "domesticPct": 32.44,
+    "internationalPct": 66.91
+  },
+  "airports": {
+    "RCTP": {
+      "icao": "RCTP",
+      "iata": "TPE",
+      "nameZh": "桃園國際機場",
+      "nameEn": "Taoyuan International",
+      "total": 5787,
+      "arrivals": 2853,
+      "departures": 2934,
+      "domestic": 26,
+      "international": 5752,
+      "unknownRoute": 9,
+      "spanDays": 47,
+      "firstSeen": "2026-02-17T14:55:28.000Z",
+      "lastSeen": "2026-04-05T14:47:50.000Z",
+      "dailyAverage": 123.1,
+      "airlines": [
+        {
+          "code": "EVA",
+          "nameZh": "長榮航空",
+          "nameEn": "EVA Air",
+          "type": "fullservice",
+          "brandColor": "#1e6f42",
+          "country": "TW",
+          "count": 1434,
+          "pct": 24.78
+        },
+        {
+          "code": "CAL",
+          "nameZh": "中華航空",
+          "nameEn": "China Airlines",
+          "type": "fullservice",
+          "brandColor": "#c8102e",
+          "country": "TW",
+          "count": 1408,
+          "pct": 24.33
+        },
+        {
+          "code": "SJX",
+          "nameZh": "星宇航空",
+          "nameEn": "Starlux Airlines",
+          "type": "fullservice",
+          "brandColor": "#5f42a3",
+          "country": "TW",
+          "count": 523,
+          "pct": 9.04
+        },
+        {
+          "code": "TGW",
+          "nameZh": "台灣虎航",
+          "nameEn": "Tigerair Taiwan",
+          "type": "lowcost",
+          "brandColor": "#fa5800",
+          "country": "TW",
+          "count": 325,
+          "pct": 5.62
+        },
+        {
+          "code": "TTW",
+          "nameZh": "天津航空",
+          "nameEn": "Tianjin Airlines",
+          "type": "fullservice",
+          "brandColor": "#9d2235",
+          "country": "CN",
+          "count": 198,
+          "pct": 3.42
+        },
+        {
+          "code": "SIA",
+          "nameZh": "新加坡航空",
+          "nameEn": "Singapore Airlines",
+          "type": "fullservice",
+          "brandColor": "#1d3770",
+          "country": "SG",
+          "count": 185,
+          "pct": 3.2
+        },
+        {
+          "code": "UAL",
+          "nameZh": "聯合航空",
+          "nameEn": "United Airlines",
+          "type": "fullservice",
+          "brandColor": "#1414aa",
+          "country": "US",
+          "count": 141,
+          "pct": 2.44
+        },
+        {
+          "code": "CPA",
+          "nameZh": "國泰航空",
+          "nameEn": "Cathay Pacific",
+          "type": "fullservice",
+          "brandColor": "#006564",
+          "country": "HK",
+          "count": 136,
+          "pct": 2.35
+        },
+        {
+          "code": "THY",
+          "nameZh": "土耳其航空",
+          "nameEn": "Turkish Airlines",
+          "type": "fullservice",
+          "brandColor": "#c70a0c",
+          "country": "TR",
+          "count": 122,
+          "pct": 2.11
+        },
+        {
+          "code": "APJ",
+          "nameZh": "樂桃航空",
+          "nameEn": "Peach Aviation",
+          "type": "lowcost",
+          "brandColor": "#d50057",
+          "country": "JP",
+          "count": 115,
+          "pct": 1.99
+        },
+        {
+          "code": "UAE",
+          "nameZh": "阿聯酋航空",
+          "nameEn": "Emirates",
+          "type": "fullservice",
+          "brandColor": "#d71a21",
+          "country": "AE",
+          "count": 74,
+          "pct": 1.28
+        },
+        {
+          "code": "VJC",
+          "nameZh": "越捷航空",
+          "nameEn": "VietJet Air",
+          "type": "lowcost",
+          "brandColor": "#e21b2c",
+          "country": "VN",
+          "count": 55,
+          "pct": 0.95
+        },
+        {
+          "code": "TVJ",
+          "nameZh": "泰國越捷航空",
+          "nameEn": "Thai Vietjet Air",
+          "type": "lowcost",
+          "brandColor": "#e21b2c",
+          "country": "TH",
+          "count": 53,
+          "pct": 0.92
+        },
+        {
+          "code": "ESR",
+          "nameZh": "易斯達航空",
+          "nameEn": "Eastar Jet",
+          "type": "lowcost",
+          "brandColor": "#0089d0",
+          "country": "KR",
+          "count": 50,
+          "pct": 0.86
+        },
+        {
+          "code": "TLM",
+          "count": 49,
+          "pct": 0.85
+        }
+      ],
+      "aircraft": [
+        {
+          "type": "B77W",
+          "name": "Boeing 777-300ER",
+          "category": "widebody",
+          "seats": 396,
+          "count": 1276,
+          "pct": 22.05,
+          "seatsTotal": 505296
+        },
+        {
+          "type": "A359",
+          "name": "Airbus A350-900",
+          "category": "widebody",
+          "seats": 325,
+          "count": 635,
+          "pct": 10.97,
+          "seatsTotal": 206375
+        },
+        {
+          "type": "A21N",
+          "name": "Airbus A321neo",
+          "category": "narrowbody",
+          "seats": 220,
+          "count": 562,
+          "pct": 9.71,
+          "seatsTotal": 123640
+        },
+        {
+          "type": "B789",
+          "name": "Boeing 787-9",
+          "category": "widebody",
+          "seats": 296,
+          "count": 533,
+          "pct": 9.21,
+          "seatsTotal": 157768
+        },
+        {
+          "type": "B77L",
+          "name": "Boeing 777-200LR / 777F",
+          "category": "widebody",
+          "seats": 317,
+          "count": 415,
+          "pct": 7.17,
+          "seatsTotal": 131555
+        },
+        {
+          "type": "A333",
+          "name": "Airbus A330-300",
+          "category": "widebody",
+          "seats": 300,
+          "count": 407,
+          "pct": 7.03,
+          "seatsTotal": 122100
+        },
+        {
+          "type": "A320",
+          "name": "Airbus A320",
+          "category": "narrowbody",
+          "seats": 180,
+          "count": 285,
+          "pct": 4.92,
+          "seatsTotal": 51300
+        },
+        {
+          "type": "B78X",
+          "name": "Boeing 787-10",
+          "category": "widebody",
+          "seats": 336,
+          "count": 284,
+          "pct": 4.91,
+          "seatsTotal": 95424
+        },
+        {
+          "type": "A321",
+          "name": "Airbus A321",
+          "category": "narrowbody",
+          "seats": 200,
+          "count": 271,
+          "pct": 4.68,
+          "seatsTotal": 54200
+        },
+        {
+          "type": "B738",
+          "name": "Boeing 737-800",
+          "category": "narrowbody",
+          "seats": 189,
+          "count": 233,
+          "pct": 4.03,
+          "seatsTotal": 44037
+        },
+        {
+          "type": "A20N",
+          "name": "Airbus A320neo",
+          "category": "narrowbody",
+          "seats": 194,
+          "count": 228,
+          "pct": 3.94,
+          "seatsTotal": 44232
+        },
+        {
+          "type": "A339",
+          "name": "Airbus A330-900neo",
+          "category": "widebody",
+          "seats": 287,
+          "count": 142,
+          "pct": 2.45,
+          "seatsTotal": 40754
+        },
+        {
+          "type": "B772",
+          "name": "Boeing 777-200",
+          "category": "widebody",
+          "seats": 314,
+          "count": 100,
+          "pct": 1.73,
+          "seatsTotal": 31400
+        },
+        {
+          "type": "B744",
+          "name": "Boeing 747-400",
+          "category": "widebody",
+          "seats": 416,
+          "count": 93,
+          "pct": 1.61,
+          "seatsTotal": 38688
+        },
+        {
+          "type": "B739",
+          "name": "Boeing 737-900",
+          "category": "narrowbody",
+          "seats": 220,
+          "count": 65,
+          "pct": 1.12,
+          "seatsTotal": 14300
+        }
+      ],
+      "aircraftCategoryMix": {
+        "widebody": {
+          "count": 4077,
+          "pct": 70.45,
+          "seats": 1402832
+        },
+        "narrowbody": {
+          "count": 1708,
+          "pct": 29.51,
+          "seats": 343654
+        },
+        "prop": {
+          "count": 2,
+          "pct": 0.03,
+          "seats": 116
+        }
+      },
+      "airlineTypeMix": {
+        "fullservice": {
+          "count": 4673,
+          "pct": 80.75
+        },
+        "unknown": {
+          "count": 171,
+          "pct": 2.95
+        },
+        "lowcost": {
+          "count": 870,
+          "pct": 15.03
+        },
+        "cargo": {
+          "count": 64,
+          "pct": 1.11
+        },
+        "regional": {
+          "count": 9,
+          "pct": 0.16
+        }
+      },
+      "seatCapacity": {
+        "total": 1746602,
+        "avgPerFlight": 302,
+        "coveragePct": 100
+      },
+      "routes": [
+        {
+          "origin": "RCTP",
+          "dest": "WSSS",
+          "count": 485,
+          "isInternational": true
+        },
+        {
+          "origin": "WSSS",
+          "dest": "RCTP",
+          "count": 436,
+          "isInternational": true
+        },
+        {
+          "origin": "KSFO",
+          "dest": "RCTP",
+          "count": 265,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "KSFO",
+          "count": 264,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "KLAX",
+          "count": 262,
+          "isInternational": true
+        },
+        {
+          "origin": "KLAX",
+          "dest": "RCTP",
+          "count": 226,
+          "isInternational": true
+        },
+        {
+          "origin": "VHHH",
+          "dest": "RCTP",
+          "count": 197,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "VHHH",
+          "count": 192,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "RJAA",
+          "count": 111,
+          "isInternational": true
+        },
+        {
+          "origin": "RJAA",
+          "dest": "RCTP",
+          "count": 110,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "RJBB",
+          "count": 95,
+          "isInternational": true
+        },
+        {
+          "origin": "RJBB",
+          "dest": "RCTP",
+          "count": 94,
+          "isInternational": true
+        },
+        {
+          "origin": "VTBS",
+          "dest": "RCTP",
+          "count": 85,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "VTBS",
+          "count": 80,
+          "isInternational": true
+        },
+        {
+          "origin": "RKSI",
+          "dest": "RCTP",
+          "count": 77,
+          "isInternational": true
+        },
+        {
+          "origin": "ROAH",
+          "dest": "RCTP",
+          "count": 70,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "RKSI",
+          "count": 69,
+          "isInternational": true
+        },
+        {
+          "origin": "RPLL",
+          "dest": "RCTP",
+          "count": 67,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "LTFM",
+          "count": 62,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "RPLL",
+          "count": 61,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "ROAH",
+          "count": 60,
+          "isInternational": true
+        },
+        {
+          "origin": "LTFM",
+          "dest": "RCTP",
+          "count": 60,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "KONT",
+          "count": 57,
+          "isInternational": true
+        },
+        {
+          "origin": "EDDF",
+          "dest": "RCTP",
+          "count": 55,
+          "isInternational": true
+        },
+        {
+          "origin": "ZSPD",
+          "dest": "RCTP",
+          "count": 53,
+          "isInternational": true
+        },
+        {
+          "origin": "RKPK",
+          "dest": "RCTP",
+          "count": 53,
+          "isInternational": true
+        },
+        {
+          "origin": "KJFK",
+          "dest": "RCTP",
+          "count": 53,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "ZSPD",
+          "count": 52,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "RKPK",
+          "count": 52,
+          "isInternational": true
+        },
+        {
+          "origin": "KONT",
+          "dest": "RCTP",
+          "count": 51,
+          "isInternational": true
+        }
+      ],
+      "topRoutesUndirected": [
+        {
+          "a": "RCTP",
+          "b": "WSSS",
+          "count": 921,
+          "isInternational": true
+        },
+        {
+          "a": "KSFO",
+          "b": "RCTP",
+          "count": 529,
+          "isInternational": true
+        },
+        {
+          "a": "KLAX",
+          "b": "RCTP",
+          "count": 488,
+          "isInternational": true
+        },
+        {
+          "a": "RCTP",
+          "b": "VHHH",
+          "count": 389,
+          "isInternational": true
+        },
+        {
+          "a": "RCTP",
+          "b": "RJAA",
+          "count": 221,
+          "isInternational": true
+        },
+        {
+          "a": "RCTP",
+          "b": "RJBB",
+          "count": 189,
+          "isInternational": true
+        },
+        {
+          "a": "RCTP",
+          "b": "VTBS",
+          "count": 165,
+          "isInternational": true
+        },
+        {
+          "a": "RCTP",
+          "b": "RKSI",
+          "count": 146,
+          "isInternational": true
+        },
+        {
+          "a": "RCTP",
+          "b": "ROAH",
+          "count": 130,
+          "isInternational": true
+        },
+        {
+          "a": "RCTP",
+          "b": "RPLL",
+          "count": 128,
+          "isInternational": true
+        },
+        {
+          "a": "LTFM",
+          "b": "RCTP",
+          "count": 122,
+          "isInternational": true
+        },
+        {
+          "a": "KONT",
+          "b": "RCTP",
+          "count": 108,
+          "isInternational": true
+        },
+        {
+          "a": "RCTP",
+          "b": "ZSPD",
+          "count": 105,
+          "isInternational": true
+        },
+        {
+          "a": "RCTP",
+          "b": "RKPK",
+          "count": 105,
+          "isInternational": true
+        },
+        {
+          "a": "KJFK",
+          "b": "RCTP",
+          "count": 104,
+          "isInternational": true
+        }
+      ],
+      "intlPartners": [
+        {
+          "country": "US",
+          "nameZh": "美國",
+          "count": 1322,
+          "pct": 23.2
+        },
+        {
+          "country": "JP",
+          "nameZh": "日本",
+          "count": 940,
+          "pct": 16.49
+        },
+        {
+          "country": "SG",
+          "nameZh": "新加坡",
+          "count": 921,
+          "pct": 16.16
+        },
+        {
+          "country": "HK",
+          "nameZh": "香港",
+          "count": 389,
+          "pct": 6.83
+        },
+        {
+          "country": "KR",
+          "nameZh": "南韓",
+          "count": 334,
+          "pct": 5.86
+        },
+        {
+          "country": "CN",
+          "nameZh": "中國",
+          "count": 278,
+          "pct": 4.88
+        },
+        {
+          "country": "TH",
+          "nameZh": "泰國",
+          "count": 233,
+          "pct": 4.09
+        },
+        {
+          "country": "VN",
+          "nameZh": "越南",
+          "count": 219,
+          "pct": 3.84
+        },
+        {
+          "country": "PH",
+          "nameZh": "菲律賓",
+          "count": 189,
+          "pct": 3.32
+        },
+        {
+          "country": "DE",
+          "nameZh": "德國",
+          "count": 142,
+          "pct": 2.49
+        },
+        {
+          "country": "TR",
+          "nameZh": "土耳其",
+          "count": 122,
+          "pct": 2.14
+        },
+        {
+          "country": "AE",
+          "nameZh": "阿聯酋",
+          "count": 93,
+          "pct": 1.63
+        },
+        {
+          "country": "NL",
+          "nameZh": "荷蘭",
+          "count": 82,
+          "pct": 1.44
+        },
+        {
+          "country": "MY",
+          "nameZh": "馬來西亞",
+          "count": 80,
+          "pct": 1.4
+        },
+        {
+          "country": "FR",
+          "nameZh": "法國",
+          "count": 72,
+          "pct": 1.26
+        },
+        {
+          "country": "MO",
+          "nameZh": "澳門",
+          "count": 72,
+          "pct": 1.26
+        },
+        {
+          "country": "GB",
+          "nameZh": "英國",
+          "count": 49,
+          "pct": 0.86
+        },
+        {
+          "country": "ID",
+          "nameZh": "印尼",
+          "count": 43,
+          "pct": 0.75
+        },
+        {
+          "country": "CA",
+          "nameZh": "加拿大",
+          "count": 33,
+          "pct": 0.58
+        },
+        {
+          "country": "AU",
+          "nameZh": "澳洲",
+          "count": 31,
+          "pct": 0.54
+        },
+        {
+          "country": "IT",
+          "nameZh": "義大利",
+          "count": 20,
+          "pct": 0.35
+        },
+        {
+          "country": "KH",
+          "nameZh": "柬埔寨",
+          "count": 15,
+          "pct": 0.26
+        },
+        {
+          "country": "AT",
+          "nameZh": "奧地利",
+          "count": 7,
+          "pct": 0.12
+        },
+        {
+          "country": "IN",
+          "nameZh": "印度",
+          "count": 5,
+          "pct": 0.09
+        },
+        {
+          "country": "NZ",
+          "nameZh": "紐西蘭",
+          "count": 5,
+          "pct": 0.09
+        },
+        {
+          "country": "CZ",
+          "nameZh": "捷克",
+          "count": 3,
+          "pct": 0.05
+        }
+      ],
+      "hourly": [
+        272,
+        142,
+        169,
+        135,
+        74,
+        85,
+        222,
+        215,
+        348,
+        244,
+        244,
+        270,
+        253,
+        318,
+        470,
+        396,
+        251,
+        246,
+        270,
+        283,
+        227,
+        206,
+        114,
+        333
+      ],
+      "weekday": [
+        773,
+        763,
+        745,
+        1088,
+        782,
+        838,
+        798
+      ]
+    },
+    "RCKH": {
+      "icao": "RCKH",
+      "iata": "KHH",
+      "nameZh": "高雄國際機場",
+      "nameEn": "Kaohsiung International",
+      "total": 1271,
+      "arrivals": 645,
+      "departures": 626,
+      "domestic": 515,
+      "international": 750,
+      "unknownRoute": 6,
+      "spanDays": 38,
+      "firstSeen": "2026-02-17T19:47:27.000Z",
+      "lastSeen": "2026-03-28T05:00:41.000Z",
+      "dailyAverage": 33.4,
+      "airlines": [
+        {
+          "code": "MDA",
+          "nameZh": "華信航空",
+          "nameEn": "Mandarin Airlines",
+          "type": "regional",
+          "brandColor": "#80221c",
+          "country": "TW",
+          "count": 273,
+          "pct": 21.48
+        },
+        {
+          "code": "UIA",
+          "nameZh": "立榮航空",
+          "nameEn": "UNI Air",
+          "type": "regional",
+          "brandColor": "#cc6600",
+          "country": "TW",
+          "count": 183,
+          "pct": 14.4
+        },
+        {
+          "code": "CAL",
+          "nameZh": "中華航空",
+          "nameEn": "China Airlines",
+          "type": "fullservice",
+          "brandColor": "#c8102e",
+          "country": "TW",
+          "count": 135,
+          "pct": 10.62
+        },
+        {
+          "code": "EVA",
+          "nameZh": "長榮航空",
+          "nameEn": "EVA Air",
+          "type": "fullservice",
+          "brandColor": "#1e6f42",
+          "country": "TW",
+          "count": 122,
+          "pct": 9.6
+        },
+        {
+          "code": "TTW",
+          "nameZh": "天津航空",
+          "nameEn": "Tianjin Airlines",
+          "type": "fullservice",
+          "brandColor": "#9d2235",
+          "country": "CN",
+          "count": 97,
+          "pct": 7.63
+        },
+        {
+          "code": "UNKNOWN",
+          "count": 73,
+          "pct": 5.74
+        },
+        {
+          "code": "CPA",
+          "nameZh": "國泰航空",
+          "nameEn": "Cathay Pacific",
+          "type": "fullservice",
+          "brandColor": "#006564",
+          "country": "HK",
+          "count": 52,
+          "pct": 4.09
+        },
+        {
+          "code": "HKE",
+          "nameZh": "香港快運",
+          "nameEn": "HK Express",
+          "type": "lowcost",
+          "brandColor": "#df0024",
+          "country": "HK",
+          "count": 35,
+          "pct": 2.75
+        },
+        {
+          "code": "TLM",
+          "count": 31,
+          "pct": 2.44
+        },
+        {
+          "code": "HVN",
+          "nameZh": "越南航空",
+          "nameEn": "Vietnam Airlines",
+          "type": "fullservice",
+          "brandColor": "#1c4996",
+          "country": "VN",
+          "count": 31,
+          "pct": 2.44
+        },
+        {
+          "code": "VJC",
+          "nameZh": "越捷航空",
+          "nameEn": "VietJet Air",
+          "type": "lowcost",
+          "brandColor": "#e21b2c",
+          "country": "VN",
+          "count": 31,
+          "pct": 2.44
+        },
+        {
+          "code": "AMU",
+          "nameZh": "澳門航空",
+          "nameEn": "Air Macau",
+          "type": "fullservice",
+          "brandColor": "#006633",
+          "country": "MO",
+          "count": 27,
+          "pct": 2.12
+        },
+        {
+          "code": "AIQ",
+          "nameZh": "泰國亞洲航空",
+          "nameEn": "Thai AirAsia",
+          "type": "lowcost",
+          "brandColor": "#ed1b24",
+          "country": "TH",
+          "count": 26,
+          "pct": 2.05
+        },
+        {
+          "code": "TWB",
+          "nameZh": "德威航空",
+          "nameEn": "T'way Air",
+          "type": "lowcost",
+          "brandColor": "#e60012",
+          "country": "KR",
+          "count": 26,
+          "pct": 2.05
+        },
+        {
+          "code": "JJA",
+          "nameZh": "濟州航空",
+          "nameEn": "Jeju Air",
+          "type": "lowcost",
+          "brandColor": "#ff7a00",
+          "country": "KR",
+          "count": 15,
+          "pct": 1.18
+        }
+      ],
+      "aircraft": [
+        {
+          "type": "AT76",
+          "name": "ATR 72-600",
+          "category": "prop",
+          "seats": 70,
+          "count": 408,
+          "pct": 32.1,
+          "seatsTotal": 28560
+        },
+        {
+          "type": "A321",
+          "name": "Airbus A321",
+          "category": "narrowbody",
+          "seats": 200,
+          "count": 197,
+          "pct": 15.5,
+          "seatsTotal": 39400
+        },
+        {
+          "type": "B738",
+          "name": "Boeing 737-800",
+          "category": "narrowbody",
+          "seats": 189,
+          "count": 179,
+          "pct": 14.08,
+          "seatsTotal": 33831
+        },
+        {
+          "type": "A20N",
+          "name": "Airbus A320neo",
+          "category": "narrowbody",
+          "seats": 194,
+          "count": 113,
+          "pct": 8.89,
+          "seatsTotal": 21922
+        },
+        {
+          "type": "A21N",
+          "name": "Airbus A321neo",
+          "category": "narrowbody",
+          "seats": 220,
+          "count": 109,
+          "pct": 8.58,
+          "seatsTotal": 23980
+        },
+        {
+          "type": "A320",
+          "name": "Airbus A320",
+          "category": "narrowbody",
+          "seats": 180,
+          "count": 109,
+          "pct": 8.58,
+          "seatsTotal": 19620
+        },
+        {
+          "type": "DHC6",
+          "count": 64,
+          "pct": 5.04,
+          "seatsTotal": 0
+        },
+        {
+          "type": "A333",
+          "name": "Airbus A330-300",
+          "category": "widebody",
+          "seats": 300,
+          "count": 49,
+          "pct": 3.86,
+          "seatsTotal": 14700
+        },
+        {
+          "type": "B739",
+          "name": "Boeing 737-900",
+          "category": "narrowbody",
+          "seats": 220,
+          "count": 21,
+          "pct": 1.65,
+          "seatsTotal": 4620
+        },
+        {
+          "type": "B773",
+          "count": 6,
+          "pct": 0.47,
+          "seatsTotal": 0
+        },
+        {
+          "type": "B77W",
+          "name": "Boeing 777-300ER",
+          "category": "widebody",
+          "seats": 396,
+          "count": 4,
+          "pct": 0.31,
+          "seatsTotal": 1584
+        },
+        {
+          "type": "A169",
+          "name": "Agusta AW169",
+          "category": "heli",
+          "seats": 10,
+          "count": 4,
+          "pct": 0.31,
+          "seatsTotal": 40
+        },
+        {
+          "type": "A319",
+          "name": "Airbus A319",
+          "category": "narrowbody",
+          "seats": 156,
+          "count": 2,
+          "pct": 0.16,
+          "seatsTotal": 312
+        },
+        {
+          "type": "A359",
+          "name": "Airbus A350-900",
+          "category": "widebody",
+          "seats": 325,
+          "count": 2,
+          "pct": 0.16,
+          "seatsTotal": 650
+        },
+        {
+          "type": "A35K",
+          "name": "Airbus A350-1000",
+          "category": "widebody",
+          "seats": 369,
+          "count": 2,
+          "pct": 0.16,
+          "seatsTotal": 738
+        }
+      ],
+      "aircraftCategoryMix": {
+        "other": {
+          "count": 65,
+          "pct": 5.11,
+          "seats": 0
+        },
+        "widebody": {
+          "count": 63,
+          "pct": 4.96,
+          "seats": 19472
+        },
+        "prop": {
+          "count": 408,
+          "pct": 32.1,
+          "seats": 28560
+        },
+        "narrowbody": {
+          "count": 730,
+          "pct": 57.44,
+          "seats": 143685
+        },
+        "heli": {
+          "count": 5,
+          "pct": 0.39,
+          "seats": 46
+        }
+      },
+      "airlineTypeMix": {
+        "unknown": {
+          "count": 126,
+          "pct": 9.91
+        },
+        "fullservice": {
+          "count": 501,
+          "pct": 39.42
+        },
+        "regional": {
+          "count": 456,
+          "pct": 35.88
+        },
+        "lowcost": {
+          "count": 188,
+          "pct": 14.79
+        }
+      },
+      "seatCapacity": {
+        "total": 191763,
+        "avgPerFlight": 159,
+        "coveragePct": 94.9
+      },
+      "routes": [
+        {
+          "origin": "RCKH",
+          "dest": "RCQC",
+          "count": 130,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCKH",
+          "count": 130,
+          "isInternational": false
+        },
+        {
+          "origin": "RCKH",
+          "dest": "RCBS",
+          "count": 83,
+          "isInternational": false
+        },
+        {
+          "origin": "RCBS",
+          "dest": "RCKH",
+          "count": 80,
+          "isInternational": false
+        },
+        {
+          "origin": "VHHH",
+          "dest": "RCKH",
+          "count": 70,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "VHHH",
+          "count": 68,
+          "isInternational": true
+        },
+        {
+          "origin": "RJAA",
+          "dest": "RCKH",
+          "count": 42,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "RJAA",
+          "count": 37,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "RJBB",
+          "count": 31,
+          "isInternational": true
+        },
+        {
+          "origin": "RJBB",
+          "dest": "RCKH",
+          "count": 31,
+          "isInternational": true
+        },
+        {
+          "origin": "RCCM",
+          "dest": "RCKH",
+          "count": 29,
+          "isInternational": false
+        },
+        {
+          "origin": "RCKH",
+          "dest": "RCCM",
+          "count": 29,
+          "isInternational": false
+        },
+        {
+          "origin": "VMMC",
+          "dest": "RCKH",
+          "count": 23,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "VMMC",
+          "count": 21,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "RKSI",
+          "count": 19,
+          "isInternational": true
+        },
+        {
+          "origin": "RKSI",
+          "dest": "RCKH",
+          "count": 18,
+          "isInternational": true
+        },
+        {
+          "origin": "WSSS",
+          "dest": "RCKH",
+          "count": 18,
+          "isInternational": true
+        },
+        {
+          "origin": "ROAH",
+          "dest": "RCKH",
+          "count": 16,
+          "isInternational": true
+        },
+        {
+          "origin": "VVNB",
+          "dest": "RCKH",
+          "count": 16,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "WSSS",
+          "count": 16,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "RPLL",
+          "count": 15,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "ROAH",
+          "count": 15,
+          "isInternational": true
+        },
+        {
+          "origin": "ZSPD",
+          "dest": "RCKH",
+          "count": 15,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "VVNB",
+          "count": 15,
+          "isInternational": true
+        },
+        {
+          "origin": "VTBD",
+          "dest": "RCKH",
+          "count": 14,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "VTBS",
+          "count": 13,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "VTBD",
+          "count": 13,
+          "isInternational": true
+        },
+        {
+          "origin": "VVTS",
+          "dest": "RCKH",
+          "count": 13,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "VVTS",
+          "count": 12,
+          "isInternational": true
+        },
+        {
+          "origin": "RCKH",
+          "dest": "ZSPD",
+          "count": 12,
+          "isInternational": true
+        }
+      ],
+      "topRoutesUndirected": [
+        {
+          "a": "RCKH",
+          "b": "RCQC",
+          "count": 260,
+          "isInternational": false
+        },
+        {
+          "a": "RCBS",
+          "b": "RCKH",
+          "count": 163,
+          "isInternational": false
+        },
+        {
+          "a": "RCKH",
+          "b": "VHHH",
+          "count": 138,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "RJAA",
+          "count": 79,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "RJBB",
+          "count": 62,
+          "isInternational": true
+        },
+        {
+          "a": "RCCM",
+          "b": "RCKH",
+          "count": 58,
+          "isInternational": false
+        },
+        {
+          "a": "RCKH",
+          "b": "VMMC",
+          "count": 44,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "RKSI",
+          "count": 37,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "WSSS",
+          "count": 34,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "ROAH",
+          "count": 31,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "VVNB",
+          "count": 31,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "VTBD",
+          "count": 27,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "RPLL",
+          "count": 27,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "ZSPD",
+          "count": 27,
+          "isInternational": true
+        },
+        {
+          "a": "RCKH",
+          "b": "VVTS",
+          "count": 25,
+          "isInternational": true
+        }
+      ],
+      "intlPartners": [
+        {
+          "country": "JP",
+          "nameZh": "日本",
+          "count": 232,
+          "pct": 30.93
+        },
+        {
+          "country": "HK",
+          "nameZh": "香港",
+          "count": 138,
+          "pct": 18.4
+        },
+        {
+          "country": "KR",
+          "nameZh": "南韓",
+          "count": 94,
+          "pct": 12.53
+        },
+        {
+          "country": "VN",
+          "nameZh": "越南",
+          "count": 68,
+          "pct": 9.07
+        },
+        {
+          "country": "TH",
+          "nameZh": "泰國",
+          "count": 54,
+          "pct": 7.2
+        },
+        {
+          "country": "CN",
+          "nameZh": "中國",
+          "count": 52,
+          "pct": 6.93
+        },
+        {
+          "country": "MO",
+          "nameZh": "澳門",
+          "count": 44,
+          "pct": 5.87
+        },
+        {
+          "country": "SG",
+          "nameZh": "新加坡",
+          "count": 34,
+          "pct": 4.53
+        },
+        {
+          "country": "PH",
+          "nameZh": "菲律賓",
+          "count": 27,
+          "pct": 3.6
+        },
+        {
+          "country": "MY",
+          "nameZh": "馬來西亞",
+          "count": 7,
+          "pct": 0.93
+        }
+      ],
+      "hourly": [
+        0,
+        0,
+        0,
+        11,
+        2,
+        0,
+        34,
+        102,
+        65,
+        73,
+        121,
+        85,
+        117,
+        80,
+        65,
+        91,
+        80,
+        80,
+        81,
+        93,
+        49,
+        33,
+        8,
+        1
+      ],
+      "weekday": [
+        186,
+        174,
+        170,
+        207,
+        181,
+        181,
+        172
+      ]
+    },
+    "RCSS": {
+      "icao": "RCSS",
+      "iata": "TSA",
+      "nameZh": "台北松山機場",
+      "nameEn": "Taipei Songshan",
+      "total": 1145,
+      "arrivals": 567,
+      "departures": 578,
+      "domestic": 861,
+      "international": 280,
+      "unknownRoute": 4,
+      "spanDays": 28,
+      "firstSeen": "2026-02-17T22:36:19.000Z",
+      "lastSeen": "2026-03-18T03:05:17.000Z",
+      "dailyAverage": 40.9,
+      "airlines": [
+        {
+          "code": "UIA",
+          "nameZh": "立榮航空",
+          "nameEn": "UNI Air",
+          "type": "regional",
+          "brandColor": "#cc6600",
+          "country": "TW",
+          "count": 322,
+          "pct": 28.12
+        },
+        {
+          "code": "MDA",
+          "nameZh": "華信航空",
+          "nameEn": "Mandarin Airlines",
+          "type": "regional",
+          "brandColor": "#80221c",
+          "country": "TW",
+          "count": 318,
+          "pct": 27.77
+        },
+        {
+          "code": "EVA",
+          "nameZh": "長榮航空",
+          "nameEn": "EVA Air",
+          "type": "fullservice",
+          "brandColor": "#1e6f42",
+          "country": "TW",
+          "count": 182,
+          "pct": 15.9
+        },
+        {
+          "code": "CAL",
+          "nameZh": "中華航空",
+          "nameEn": "China Airlines",
+          "type": "fullservice",
+          "brandColor": "#c8102e",
+          "country": "TW",
+          "count": 137,
+          "pct": 11.97
+        },
+        {
+          "code": "UNKNOWN",
+          "count": 28,
+          "pct": 2.45
+        },
+        {
+          "code": "AJX",
+          "nameZh": "日本航空 (LCC)",
+          "nameEn": "Air Japan",
+          "type": "lowcost",
+          "brandColor": "#00247c",
+          "country": "JP",
+          "count": 26,
+          "pct": 2.27
+        },
+        {
+          "code": "CSH",
+          "nameZh": "上海航空",
+          "nameEn": "Shanghai Airlines",
+          "type": "fullservice",
+          "brandColor": "#0070c0",
+          "country": "CN",
+          "count": 26,
+          "pct": 2.27
+        },
+        {
+          "code": "JAL",
+          "nameZh": "日本航空",
+          "nameEn": "Japan Airlines",
+          "type": "fullservice",
+          "brandColor": "#c00000",
+          "country": "JP",
+          "count": 25,
+          "pct": 2.18
+        },
+        {
+          "code": "CXA",
+          "nameZh": "廈門航空",
+          "nameEn": "Xiamen Airlines",
+          "type": "fullservice",
+          "brandColor": "#006dab",
+          "country": "CN",
+          "count": 25,
+          "pct": 2.18
+        },
+        {
+          "code": "CSC",
+          "nameZh": "四川航空",
+          "nameEn": "Sichuan Airlines",
+          "type": "fullservice",
+          "brandColor": "#c8102e",
+          "country": "CN",
+          "count": 13,
+          "pct": 1.14
+        },
+        {
+          "code": "CES",
+          "nameZh": "中國東方航空",
+          "nameEn": "China Eastern",
+          "type": "fullservice",
+          "brandColor": "#e60012",
+          "country": "CN",
+          "count": 13,
+          "pct": 1.14
+        },
+        {
+          "code": "TWB",
+          "nameZh": "德威航空",
+          "nameEn": "T'way Air",
+          "type": "lowcost",
+          "brandColor": "#e60012",
+          "country": "KR",
+          "count": 8,
+          "pct": 0.7
+        },
+        {
+          "code": "VJT",
+          "nameEn": "VistaJet",
+          "type": "private",
+          "brandColor": "#cc0000",
+          "country": "MT",
+          "count": 8,
+          "pct": 0.7
+        },
+        {
+          "code": "CCA",
+          "nameZh": "中國國際航空",
+          "nameEn": "Air China",
+          "type": "fullservice",
+          "brandColor": "#b00018",
+          "country": "CN",
+          "count": 8,
+          "pct": 0.7
+        },
+        {
+          "code": "ESR",
+          "nameZh": "易斯達航空",
+          "nameEn": "Eastar Jet",
+          "type": "lowcost",
+          "brandColor": "#0089d0",
+          "country": "KR",
+          "count": 5,
+          "pct": 0.44
+        }
+      ],
+      "aircraft": [
+        {
+          "type": "AT76",
+          "name": "ATR 72-600",
+          "category": "prop",
+          "seats": 70,
+          "count": 640,
+          "pct": 55.9,
+          "seatsTotal": 44800
+        },
+        {
+          "type": "B738",
+          "name": "Boeing 737-800",
+          "category": "narrowbody",
+          "seats": 189,
+          "count": 167,
+          "pct": 14.59,
+          "seatsTotal": 31563
+        },
+        {
+          "type": "A321",
+          "name": "Airbus A321",
+          "category": "narrowbody",
+          "seats": 200,
+          "count": 142,
+          "pct": 12.4,
+          "seatsTotal": 28400
+        },
+        {
+          "type": "A333",
+          "name": "Airbus A330-300",
+          "category": "widebody",
+          "seats": 300,
+          "count": 61,
+          "pct": 5.33,
+          "seatsTotal": 18300
+        },
+        {
+          "type": "B78X",
+          "name": "Boeing 787-10",
+          "category": "widebody",
+          "seats": 336,
+          "count": 40,
+          "pct": 3.49,
+          "seatsTotal": 13440
+        },
+        {
+          "type": "B788",
+          "name": "Boeing 787-8",
+          "category": "widebody",
+          "seats": 242,
+          "count": 27,
+          "pct": 2.36,
+          "seatsTotal": 6534
+        },
+        {
+          "type": "B789",
+          "name": "Boeing 787-9",
+          "category": "widebody",
+          "seats": 296,
+          "count": 24,
+          "pct": 2.1,
+          "seatsTotal": 7104
+        },
+        {
+          "type": "GLEX",
+          "name": "Bombardier Global Express",
+          "category": "bizjet",
+          "seats": 19,
+          "count": 10,
+          "pct": 0.87,
+          "seatsTotal": 190
+        },
+        {
+          "type": "A21N",
+          "name": "Airbus A321neo",
+          "category": "narrowbody",
+          "seats": 220,
+          "count": 8,
+          "pct": 0.7,
+          "seatsTotal": 1760
+        },
+        {
+          "type": "C25M",
+          "name": "Cessna Citation M2",
+          "category": "bizjet",
+          "seats": 7,
+          "count": 3,
+          "pct": 0.26,
+          "seatsTotal": 21
+        },
+        {
+          "type": "F50",
+          "name": "Fokker 50",
+          "category": "prop",
+          "seats": 58,
+          "count": 3,
+          "pct": 0.26,
+          "seatsTotal": 174
+        },
+        {
+          "type": "A320",
+          "name": "Airbus A320",
+          "category": "narrowbody",
+          "seats": 180,
+          "count": 3,
+          "pct": 0.26,
+          "seatsTotal": 540
+        },
+        {
+          "type": "GL7T",
+          "name": "Gulfstream G700",
+          "category": "bizjet",
+          "seats": 19,
+          "count": 3,
+          "pct": 0.26,
+          "seatsTotal": 57
+        },
+        {
+          "type": "UNKNOWN",
+          "count": 2,
+          "pct": 0.17,
+          "seatsTotal": 0
+        },
+        {
+          "type": "A20N",
+          "name": "Airbus A320neo",
+          "category": "narrowbody",
+          "seats": 194,
+          "count": 2,
+          "pct": 0.17,
+          "seatsTotal": 388
+        }
+      ],
+      "aircraftCategoryMix": {
+        "narrowbody": {
+          "count": 323,
+          "pct": 28.21,
+          "seats": 62807
+        },
+        "other": {
+          "count": 4,
+          "pct": 0.35,
+          "seats": 0
+        },
+        "prop": {
+          "count": 643,
+          "pct": 56.16,
+          "seats": 44974
+        },
+        "widebody": {
+          "count": 152,
+          "pct": 13.28,
+          "seats": 45378
+        },
+        "bizjet": {
+          "count": 23,
+          "pct": 2.01,
+          "seats": 373
+        }
+      },
+      "airlineTypeMix": {
+        "fullservice": {
+          "count": 429,
+          "pct": 37.47
+        },
+        "unknown": {
+          "count": 29,
+          "pct": 2.53
+        },
+        "regional": {
+          "count": 640,
+          "pct": 55.9
+        },
+        "lowcost": {
+          "count": 39,
+          "pct": 3.41
+        },
+        "private": {
+          "count": 8,
+          "pct": 0.7
+        }
+      },
+      "seatCapacity": {
+        "total": 153532,
+        "avgPerFlight": 135,
+        "coveragePct": 99.7
+      },
+      "routes": [
+        {
+          "origin": "RCSS",
+          "dest": "RCBS",
+          "count": 167,
+          "isInternational": false
+        },
+        {
+          "origin": "RCBS",
+          "dest": "RCSS",
+          "count": 164,
+          "isInternational": false
+        },
+        {
+          "origin": "RCSS",
+          "dest": "RCQC",
+          "count": 159,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCSS",
+          "count": 158,
+          "isInternational": false
+        },
+        {
+          "origin": "RJTT",
+          "dest": "RCSS",
+          "count": 55,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "RJTT",
+          "count": 51,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "RCFG",
+          "count": 38,
+          "isInternational": false
+        },
+        {
+          "origin": "RCFG",
+          "dest": "RCSS",
+          "count": 38,
+          "isInternational": false
+        },
+        {
+          "origin": "RCSS",
+          "dest": "RCFN",
+          "count": 37,
+          "isInternational": false
+        },
+        {
+          "origin": "RCFN",
+          "dest": "RCSS",
+          "count": 36,
+          "isInternational": false
+        },
+        {
+          "origin": "ZSSS",
+          "dest": "RCSS",
+          "count": 25,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "ZSSS",
+          "count": 24,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "RCMT",
+          "count": 15,
+          "isInternational": false
+        },
+        {
+          "origin": "RCMT",
+          "dest": "RCSS",
+          "count": 14,
+          "isInternational": false
+        },
+        {
+          "origin": "ZSPD",
+          "dest": "RCSS",
+          "count": 13,
+          "isInternational": true
+        },
+        {
+          "origin": "RKSS",
+          "dest": "RCSS",
+          "count": 13,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "ZSPD",
+          "count": 13,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "RKSS",
+          "count": 11,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "ZSFZ",
+          "count": 10,
+          "isInternational": true
+        },
+        {
+          "origin": "ZSAM",
+          "dest": "RCSS",
+          "count": 10,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "RCTP",
+          "count": 10,
+          "isInternational": false
+        },
+        {
+          "origin": "RCSS",
+          "dest": "ZSAM",
+          "count": 9,
+          "isInternational": true
+        },
+        {
+          "origin": "ZSFZ",
+          "dest": "RCSS",
+          "count": 7,
+          "isInternational": true
+        },
+        {
+          "origin": "RCTP",
+          "dest": "RCSS",
+          "count": 5,
+          "isInternational": false
+        },
+        {
+          "origin": "ZUTF",
+          "dest": "RCSS",
+          "count": 4,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "ZUTF",
+          "count": 4,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RCSS",
+          "count": 4,
+          "isInternational": false
+        },
+        {
+          "origin": "RCSS",
+          "dest": "ZUCK",
+          "count": 4,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "RCMQ",
+          "count": 4,
+          "isInternational": false
+        },
+        {
+          "origin": "RCYU",
+          "dest": "RCSS",
+          "count": 4,
+          "isInternational": false
+        }
+      ],
+      "topRoutesUndirected": [
+        {
+          "a": "RCBS",
+          "b": "RCSS",
+          "count": 331,
+          "isInternational": false
+        },
+        {
+          "a": "RCQC",
+          "b": "RCSS",
+          "count": 317,
+          "isInternational": false
+        },
+        {
+          "a": "RCSS",
+          "b": "RJTT",
+          "count": 106,
+          "isInternational": true
+        },
+        {
+          "a": "RCFG",
+          "b": "RCSS",
+          "count": 76,
+          "isInternational": false
+        },
+        {
+          "a": "RCFN",
+          "b": "RCSS",
+          "count": 73,
+          "isInternational": false
+        },
+        {
+          "a": "RCSS",
+          "b": "ZSSS",
+          "count": 49,
+          "isInternational": true
+        },
+        {
+          "a": "RCMT",
+          "b": "RCSS",
+          "count": 29,
+          "isInternational": false
+        },
+        {
+          "a": "RCSS",
+          "b": "ZSPD",
+          "count": 26,
+          "isInternational": true
+        },
+        {
+          "a": "RCSS",
+          "b": "RKSS",
+          "count": 24,
+          "isInternational": true
+        },
+        {
+          "a": "RCSS",
+          "b": "ZSAM",
+          "count": 19,
+          "isInternational": true
+        },
+        {
+          "a": "RCSS",
+          "b": "ZSFZ",
+          "count": 17,
+          "isInternational": true
+        },
+        {
+          "a": "RCSS",
+          "b": "RCTP",
+          "count": 15,
+          "isInternational": false
+        },
+        {
+          "a": "RCSS",
+          "b": "ZUTF",
+          "count": 8,
+          "isInternational": true
+        },
+        {
+          "a": "RCMQ",
+          "b": "RCSS",
+          "count": 8,
+          "isInternational": false
+        },
+        {
+          "a": "RCSS",
+          "b": "ZUCK",
+          "count": 7,
+          "isInternational": true
+        }
+      ],
+      "intlPartners": [
+        {
+          "country": "CN",
+          "nameZh": "中國",
+          "count": 130,
+          "pct": 46.59
+        },
+        {
+          "country": "JP",
+          "nameZh": "日本",
+          "count": 111,
+          "pct": 39.78
+        },
+        {
+          "country": "KR",
+          "nameZh": "南韓",
+          "count": 24,
+          "pct": 8.6
+        },
+        {
+          "country": "SG",
+          "nameZh": "新加坡",
+          "count": 4,
+          "pct": 1.43
+        },
+        {
+          "country": "VN",
+          "nameZh": "越南",
+          "count": 4,
+          "pct": 1.43
+        },
+        {
+          "country": "MY",
+          "nameZh": "馬來西亞",
+          "count": 2,
+          "pct": 0.72
+        },
+        {
+          "country": "PH",
+          "nameZh": "菲律賓",
+          "count": 2,
+          "pct": 0.72
+        },
+        {
+          "country": "HK",
+          "nameZh": "香港",
+          "count": 1,
+          "pct": 0.36
+        },
+        {
+          "country": "US",
+          "nameZh": "美國",
+          "count": 1,
+          "pct": 0.36
+        }
+      ],
+      "hourly": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        33,
+        69,
+        94,
+        75,
+        65,
+        70,
+        61,
+        88,
+        90,
+        80,
+        88,
+        87,
+        67,
+        71,
+        57,
+        37,
+        12,
+        0
+      ],
+      "weekday": [
+        175,
+        152,
+        135,
+        184,
+        171,
+        170,
+        158
+      ]
+    },
+    "RCQC": {
+      "icao": "RCQC",
+      "iata": "MZG",
+      "nameZh": "馬公機場",
+      "nameEn": "Magong",
+      "total": 802,
+      "arrivals": 400,
+      "departures": 402,
+      "domestic": 802,
+      "international": 0,
+      "unknownRoute": 0,
+      "spanDays": 7,
+      "firstSeen": "2026-02-17T23:11:39.000Z",
+      "lastSeen": "2026-02-24T23:54:13.000Z",
+      "dailyAverage": 114.6,
+      "airlines": [
+        {
+          "code": "MDA",
+          "nameZh": "華信航空",
+          "nameEn": "Mandarin Airlines",
+          "type": "regional",
+          "brandColor": "#80221c",
+          "country": "TW",
+          "count": 347,
+          "pct": 43.27
+        },
+        {
+          "code": "UIA",
+          "nameZh": "立榮航空",
+          "nameEn": "UNI Air",
+          "type": "regional",
+          "brandColor": "#cc6600",
+          "country": "TW",
+          "count": 341,
+          "pct": 42.52
+        },
+        {
+          "code": "EVA",
+          "nameZh": "長榮航空",
+          "nameEn": "EVA Air",
+          "type": "fullservice",
+          "brandColor": "#1e6f42",
+          "country": "TW",
+          "count": 59,
+          "pct": 7.36
+        },
+        {
+          "code": "CAL",
+          "nameZh": "中華航空",
+          "nameEn": "China Airlines",
+          "type": "fullservice",
+          "brandColor": "#c8102e",
+          "country": "TW",
+          "count": 41,
+          "pct": 5.11
+        },
+        {
+          "code": "UNKNOWN",
+          "count": 14,
+          "pct": 1.75
+        }
+      ],
+      "aircraft": [
+        {
+          "type": "AT76",
+          "name": "ATR 72-600",
+          "category": "prop",
+          "seats": 70,
+          "count": 688,
+          "pct": 85.79,
+          "seatsTotal": 48160
+        },
+        {
+          "type": "A321",
+          "name": "Airbus A321",
+          "category": "narrowbody",
+          "seats": 200,
+          "count": 59,
+          "pct": 7.36,
+          "seatsTotal": 11800
+        },
+        {
+          "type": "B738",
+          "name": "Boeing 737-800",
+          "category": "narrowbody",
+          "seats": 189,
+          "count": 41,
+          "pct": 5.11,
+          "seatsTotal": 7749
+        },
+        {
+          "type": "DHC6",
+          "count": 9,
+          "pct": 1.12,
+          "seatsTotal": 0
+        },
+        {
+          "type": "A169",
+          "name": "Agusta AW169",
+          "category": "heli",
+          "seats": 10,
+          "count": 5,
+          "pct": 0.62,
+          "seatsTotal": 50
+        }
+      ],
+      "aircraftCategoryMix": {
+        "other": {
+          "count": 9,
+          "pct": 1.12,
+          "seats": 0
+        },
+        "narrowbody": {
+          "count": 100,
+          "pct": 12.47,
+          "seats": 19549
+        },
+        "prop": {
+          "count": 688,
+          "pct": 85.79,
+          "seats": 48160
+        },
+        "heli": {
+          "count": 5,
+          "pct": 0.62,
+          "seats": 50
+        }
+      },
+      "airlineTypeMix": {
+        "unknown": {
+          "count": 14,
+          "pct": 1.75
+        },
+        "fullservice": {
+          "count": 100,
+          "pct": 12.47
+        },
+        "regional": {
+          "count": 688,
+          "pct": 85.79
+        }
+      },
+      "seatCapacity": {
+        "total": 67759,
+        "avgPerFlight": 85,
+        "coveragePct": 98.9
+      },
+      "routes": [
+        {
+          "origin": "RCSS",
+          "dest": "RCQC",
+          "count": 159,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCSS",
+          "count": 158,
+          "isInternational": false
+        },
+        {
+          "origin": "RCKH",
+          "dest": "RCQC",
+          "count": 130,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCKH",
+          "count": 130,
+          "isInternational": false
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RCQC",
+          "count": 74,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCMQ",
+          "count": 73,
+          "isInternational": false
+        },
+        {
+          "origin": "RCNN",
+          "dest": "RCQC",
+          "count": 27,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCNN",
+          "count": 27,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCKU",
+          "count": 7,
+          "isInternational": false
+        },
+        {
+          "origin": "RCKU",
+          "dest": "RCQC",
+          "count": 7,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCCM",
+          "count": 6,
+          "isInternational": false
+        },
+        {
+          "origin": "RCCM",
+          "dest": "RCQC",
+          "count": 3,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCWA",
+          "count": 1,
+          "isInternational": false
+        }
+      ],
+      "topRoutesUndirected": [
+        {
+          "a": "RCQC",
+          "b": "RCSS",
+          "count": 317,
+          "isInternational": false
+        },
+        {
+          "a": "RCKH",
+          "b": "RCQC",
+          "count": 260,
+          "isInternational": false
+        },
+        {
+          "a": "RCMQ",
+          "b": "RCQC",
+          "count": 147,
+          "isInternational": false
+        },
+        {
+          "a": "RCNN",
+          "b": "RCQC",
+          "count": 54,
+          "isInternational": false
+        },
+        {
+          "a": "RCKU",
+          "b": "RCQC",
+          "count": 14,
+          "isInternational": false
+        },
+        {
+          "a": "RCCM",
+          "b": "RCQC",
+          "count": 9,
+          "isInternational": false
+        },
+        {
+          "a": "RCQC",
+          "b": "RCWA",
+          "count": 1,
+          "isInternational": false
+        }
+      ],
+      "intlPartners": [],
+      "hourly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        49,
+        66,
+        50,
+        44,
+        56,
+        53,
+        43,
+        59,
+        55,
+        69,
+        48,
+        61,
+        50,
+        49,
+        34,
+        12,
+        0
+      ],
+      "weekday": [
+        126,
+        110,
+        85,
+        130,
+        114,
+        119,
+        118
+      ]
+    },
+    "RCBS": {
+      "icao": "RCBS",
+      "iata": "KNH",
+      "nameZh": "金門機場",
+      "nameEn": "Kinmen",
+      "total": 709,
+      "arrivals": 358,
+      "departures": 351,
+      "domestic": 709,
+      "international": 0,
+      "unknownRoute": 0,
+      "spanDays": 7,
+      "firstSeen": "2026-02-17T22:48:16.000Z",
+      "lastSeen": "2026-02-25T00:20:14.000Z",
+      "dailyAverage": 101.3,
+      "airlines": [
+        {
+          "code": "UIA",
+          "nameZh": "立榮航空",
+          "nameEn": "UNI Air",
+          "type": "regional",
+          "brandColor": "#cc6600",
+          "country": "TW",
+          "count": 282,
+          "pct": 39.77
+        },
+        {
+          "code": "MDA",
+          "nameZh": "華信航空",
+          "nameEn": "Mandarin Airlines",
+          "type": "regional",
+          "brandColor": "#80221c",
+          "country": "TW",
+          "count": 253,
+          "pct": 35.68
+        },
+        {
+          "code": "EVA",
+          "nameZh": "長榮航空",
+          "nameEn": "EVA Air",
+          "type": "fullservice",
+          "brandColor": "#1e6f42",
+          "country": "TW",
+          "count": 109,
+          "pct": 15.37
+        },
+        {
+          "code": "CAL",
+          "nameZh": "中華航空",
+          "nameEn": "China Airlines",
+          "type": "fullservice",
+          "brandColor": "#c8102e",
+          "country": "TW",
+          "count": 65,
+          "pct": 9.17
+        }
+      ],
+      "aircraft": [
+        {
+          "type": "AT76",
+          "name": "ATR 72-600",
+          "category": "prop",
+          "seats": 70,
+          "count": 535,
+          "pct": 75.46,
+          "seatsTotal": 37450
+        },
+        {
+          "type": "A321",
+          "name": "Airbus A321",
+          "category": "narrowbody",
+          "seats": 200,
+          "count": 109,
+          "pct": 15.37,
+          "seatsTotal": 21800
+        },
+        {
+          "type": "B738",
+          "name": "Boeing 737-800",
+          "category": "narrowbody",
+          "seats": 189,
+          "count": 65,
+          "pct": 9.17,
+          "seatsTotal": 12285
+        }
+      ],
+      "aircraftCategoryMix": {
+        "narrowbody": {
+          "count": 174,
+          "pct": 24.54,
+          "seats": 34085
+        },
+        "prop": {
+          "count": 535,
+          "pct": 75.46,
+          "seats": 37450
+        }
+      },
+      "airlineTypeMix": {
+        "fullservice": {
+          "count": 174,
+          "pct": 24.54
+        },
+        "regional": {
+          "count": 535,
+          "pct": 75.46
+        }
+      },
+      "seatCapacity": {
+        "total": 71535,
+        "avgPerFlight": 101,
+        "coveragePct": 100
+      },
+      "routes": [
+        {
+          "origin": "RCSS",
+          "dest": "RCBS",
+          "count": 167,
+          "isInternational": false
+        },
+        {
+          "origin": "RCBS",
+          "dest": "RCSS",
+          "count": 164,
+          "isInternational": false
+        },
+        {
+          "origin": "RCKH",
+          "dest": "RCBS",
+          "count": 83,
+          "isInternational": false
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RCBS",
+          "count": 80,
+          "isInternational": false
+        },
+        {
+          "origin": "RCBS",
+          "dest": "RCKH",
+          "count": 80,
+          "isInternational": false
+        },
+        {
+          "origin": "RCBS",
+          "dest": "RCMQ",
+          "count": 79,
+          "isInternational": false
+        },
+        {
+          "origin": "RCNN",
+          "dest": "RCBS",
+          "count": 21,
+          "isInternational": false
+        },
+        {
+          "origin": "RCBS",
+          "dest": "RCNN",
+          "count": 21,
+          "isInternational": false
+        },
+        {
+          "origin": "RCBS",
+          "dest": "RCKU",
+          "count": 7,
+          "isInternational": false
+        },
+        {
+          "origin": "RCKU",
+          "dest": "RCBS",
+          "count": 7,
+          "isInternational": false
+        }
+      ],
+      "topRoutesUndirected": [
+        {
+          "a": "RCBS",
+          "b": "RCSS",
+          "count": 331,
+          "isInternational": false
+        },
+        {
+          "a": "RCBS",
+          "b": "RCKH",
+          "count": 163,
+          "isInternational": false
+        },
+        {
+          "a": "RCBS",
+          "b": "RCMQ",
+          "count": 159,
+          "isInternational": false
+        },
+        {
+          "a": "RCBS",
+          "b": "RCNN",
+          "count": 42,
+          "isInternational": false
+        },
+        {
+          "a": "RCBS",
+          "b": "RCKU",
+          "count": 14,
+          "isInternational": false
+        }
+      ],
+      "intlPartners": [],
+      "hourly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        8,
+        46,
+        38,
+        56,
+        54,
+        36,
+        55,
+        65,
+        60,
+        52,
+        51,
+        58,
+        28,
+        54,
+        23,
+        20,
+        5,
+        0
+      ],
+      "weekday": [
+        106,
+        106,
+        82,
+        106,
+        107,
+        102,
+        100
+      ]
+    },
+    "RCMQ": {
+      "icao": "RCMQ",
+      "iata": "RMQ",
+      "nameZh": "台中清泉崗機場",
+      "nameEn": "Taichung Ching Chuan Kang",
+      "total": 660,
+      "arrivals": 318,
+      "departures": 342,
+      "domestic": 346,
+      "international": 274,
+      "unknownRoute": 40,
+      "spanDays": 7,
+      "firstSeen": "2026-02-17T22:46:39.000Z",
+      "lastSeen": "2026-02-24T23:56:40.000Z",
+      "dailyAverage": 94.3,
+      "airlines": [
+        {
+          "code": "UIA",
+          "nameZh": "立榮航空",
+          "nameEn": "UNI Air",
+          "type": "regional",
+          "brandColor": "#cc6600",
+          "country": "TW",
+          "count": 152,
+          "pct": 23.03
+        },
+        {
+          "code": "MDA",
+          "nameZh": "華信航空",
+          "nameEn": "Mandarin Airlines",
+          "type": "regional",
+          "brandColor": "#80221c",
+          "country": "TW",
+          "count": 123,
+          "pct": 18.64
+        },
+        {
+          "code": "SJX",
+          "nameZh": "星宇航空",
+          "nameEn": "Starlux Airlines",
+          "type": "fullservice",
+          "brandColor": "#5f42a3",
+          "country": "TW",
+          "count": 70,
+          "pct": 10.61
+        },
+        {
+          "code": "HKE",
+          "nameZh": "香港快運",
+          "nameEn": "HK Express",
+          "type": "lowcost",
+          "brandColor": "#df0024",
+          "country": "HK",
+          "count": 52,
+          "pct": 7.88
+        },
+        {
+          "code": "CAL",
+          "nameZh": "中華航空",
+          "nameEn": "China Airlines",
+          "type": "fullservice",
+          "brandColor": "#c8102e",
+          "country": "TW",
+          "count": 44,
+          "pct": 6.67
+        },
+        {
+          "code": "HSO",
+          "count": 43,
+          "pct": 6.52
+        },
+        {
+          "code": "VJC",
+          "nameZh": "越捷航空",
+          "nameEn": "VietJet Air",
+          "type": "lowcost",
+          "brandColor": "#e21b2c",
+          "country": "VN",
+          "count": 37,
+          "pct": 5.61
+        },
+        {
+          "code": "AMU",
+          "nameZh": "澳門航空",
+          "nameEn": "Air Macau",
+          "type": "fullservice",
+          "brandColor": "#006633",
+          "country": "MO",
+          "count": 27,
+          "pct": 4.09
+        },
+        {
+          "code": "JNA",
+          "nameZh": "真航空",
+          "nameEn": "Jin Air",
+          "type": "lowcost",
+          "brandColor": "#00965e",
+          "country": "KR",
+          "count": 24,
+          "pct": 3.64
+        },
+        {
+          "code": "EVA",
+          "nameZh": "長榮航空",
+          "nameEn": "EVA Air",
+          "type": "fullservice",
+          "brandColor": "#1e6f42",
+          "country": "TW",
+          "count": 24,
+          "pct": 3.64
+        },
+        {
+          "code": "TWB",
+          "nameZh": "德威航空",
+          "nameEn": "T'way Air",
+          "type": "lowcost",
+          "brandColor": "#e60012",
+          "country": "KR",
+          "count": 16,
+          "pct": 2.42
+        },
+        {
+          "code": "TTW",
+          "nameZh": "天津航空",
+          "nameEn": "Tianjin Airlines",
+          "type": "fullservice",
+          "brandColor": "#9d2235",
+          "country": "CN",
+          "count": 14,
+          "pct": 2.12
+        },
+        {
+          "code": "KAL",
+          "nameZh": "大韓航空",
+          "nameEn": "Korean Air",
+          "type": "fullservice",
+          "brandColor": "#00256c",
+          "country": "KR",
+          "count": 12,
+          "pct": 1.82
+        },
+        {
+          "code": "UNKNOWN",
+          "count": 11,
+          "pct": 1.67
+        },
+        {
+          "code": "EOK",
+          "count": 4,
+          "pct": 0.61
+        }
+      ],
+      "aircraft": [
+        {
+          "type": "AT76",
+          "name": "ATR 72-600",
+          "category": "prop",
+          "seats": 70,
+          "count": 274,
+          "pct": 41.52,
+          "seatsTotal": 19180
+        },
+        {
+          "type": "A21N",
+          "name": "Airbus A321neo",
+          "category": "narrowbody",
+          "seats": 220,
+          "count": 115,
+          "pct": 17.42,
+          "seatsTotal": 25300
+        },
+        {
+          "type": "B738",
+          "name": "Boeing 737-800",
+          "category": "narrowbody",
+          "seats": 189,
+          "count": 79,
+          "pct": 11.97,
+          "seatsTotal": 14931
+        },
+        {
+          "type": "A321",
+          "name": "Airbus A321",
+          "category": "narrowbody",
+          "seats": 200,
+          "count": 54,
+          "pct": 8.18,
+          "seatsTotal": 10800
+        },
+        {
+          "type": "A320",
+          "name": "Airbus A320",
+          "category": "narrowbody",
+          "seats": 180,
+          "count": 49,
+          "pct": 7.42,
+          "seatsTotal": 8820
+        },
+        {
+          "type": "A169",
+          "name": "Agusta AW169",
+          "category": "heli",
+          "seats": 10,
+          "count": 43,
+          "pct": 6.52,
+          "seatsTotal": 430
+        },
+        {
+          "type": "A20N",
+          "name": "Airbus A320neo",
+          "category": "narrowbody",
+          "seats": 194,
+          "count": 16,
+          "pct": 2.42,
+          "seatsTotal": 3104
+        },
+        {
+          "type": "B38M",
+          "name": "Boeing 737 MAX 8",
+          "category": "narrowbody",
+          "seats": 189,
+          "count": 12,
+          "pct": 1.82,
+          "seatsTotal": 2268
+        },
+        {
+          "type": "BCS3",
+          "name": "Airbus A220-300",
+          "category": "narrowbody",
+          "seats": 141,
+          "count": 12,
+          "pct": 1.82,
+          "seatsTotal": 1692
+        },
+        {
+          "type": "F50",
+          "name": "Fokker 50",
+          "category": "prop",
+          "seats": 58,
+          "count": 2,
+          "pct": 0.3,
+          "seatsTotal": 116
+        },
+        {
+          "type": "C25M",
+          "name": "Cessna Citation M2",
+          "category": "bizjet",
+          "seats": 7,
+          "count": 1,
+          "pct": 0.15,
+          "seatsTotal": 7
+        },
+        {
+          "type": "GA7C",
+          "name": "Gulfstream G700/G800",
+          "category": "bizjet",
+          "seats": 19,
+          "count": 1,
+          "pct": 0.15,
+          "seatsTotal": 19
+        },
+        {
+          "type": "ASTR",
+          "name": "Gulfstream G100/G150",
+          "category": "bizjet",
+          "seats": 8,
+          "count": 1,
+          "pct": 0.15,
+          "seatsTotal": 8
+        },
+        {
+          "type": "C208",
+          "count": 1,
+          "pct": 0.15,
+          "seatsTotal": 0
+        }
+      ],
+      "aircraftCategoryMix": {
+        "heli": {
+          "count": 43,
+          "pct": 6.52,
+          "seats": 430
+        },
+        "narrowbody": {
+          "count": 337,
+          "pct": 51.06,
+          "seats": 66915
+        },
+        "prop": {
+          "count": 276,
+          "pct": 41.82,
+          "seats": 19296
+        },
+        "bizjet": {
+          "count": 3,
+          "pct": 0.45,
+          "seats": 34
+        },
+        "other": {
+          "count": 1,
+          "pct": 0.15,
+          "seats": 0
+        }
+      },
+      "airlineTypeMix": {
+        "unknown": {
+          "count": 61,
+          "pct": 9.24
+        },
+        "lowcost": {
+          "count": 133,
+          "pct": 20.15
+        },
+        "regional": {
+          "count": 275,
+          "pct": 41.67
+        },
+        "fullservice": {
+          "count": 191,
+          "pct": 28.94
+        }
+      },
+      "seatCapacity": {
+        "total": 86675,
+        "avgPerFlight": 132,
+        "coveragePct": 99.8
+      },
+      "routes": [
+        {
+          "origin": "RCMQ",
+          "dest": "RCBS",
+          "count": 80,
+          "isInternational": false
+        },
+        {
+          "origin": "RCBS",
+          "dest": "RCMQ",
+          "count": 79,
+          "isInternational": false
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RCQC",
+          "count": 74,
+          "isInternational": false
+        },
+        {
+          "origin": "RCQC",
+          "dest": "RCMQ",
+          "count": 73,
+          "isInternational": false
+        },
+        {
+          "origin": "RKSI",
+          "dest": "RCMQ",
+          "count": 27,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "VHHH",
+          "count": 27,
+          "isInternational": true
+        },
+        {
+          "origin": "VHHH",
+          "dest": "RCMQ",
+          "count": 25,
+          "isInternational": true
+        },
+        {
+          "origin": "VMMC",
+          "dest": "RCMQ",
+          "count": 22,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "VMMC",
+          "count": 22,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RKSI",
+          "count": 22,
+          "isInternational": true
+        },
+        {
+          "origin": "VVTS",
+          "dest": "RCMQ",
+          "count": 14,
+          "isInternational": true
+        },
+        {
+          "origin": "ROAH",
+          "dest": "RCMQ",
+          "count": 14,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "VVTS",
+          "count": 13,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "ROAH",
+          "count": 13,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RCMQ",
+          "count": 8,
+          "isInternational": false
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RJBE",
+          "count": 7,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RCFG",
+          "count": 7,
+          "isInternational": false
+        },
+        {
+          "origin": "RCFG",
+          "dest": "RCMQ",
+          "count": 7,
+          "isInternational": false
+        },
+        {
+          "origin": "VVNB",
+          "dest": "RCMQ",
+          "count": 6,
+          "isInternational": true
+        },
+        {
+          "origin": "RJBE",
+          "dest": "RCMQ",
+          "count": 6,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RJOT",
+          "count": 5,
+          "isInternational": true
+        },
+        {
+          "origin": "RJOT",
+          "dest": "RCMQ",
+          "count": 5,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "VVNB",
+          "count": 5,
+          "isInternational": true
+        },
+        {
+          "origin": "VVDN",
+          "dest": "RCMQ",
+          "count": 4,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RCSS",
+          "count": 4,
+          "isInternational": false
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "VVDN",
+          "count": 4,
+          "isInternational": true
+        },
+        {
+          "origin": "RCSS",
+          "dest": "RCMQ",
+          "count": 4,
+          "isInternational": false
+        },
+        {
+          "origin": "RJGG",
+          "dest": "RCMQ",
+          "count": 3,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RJGG",
+          "count": 3,
+          "isInternational": true
+        },
+        {
+          "origin": "RCMQ",
+          "dest": "RCYU",
+          "count": 3,
+          "isInternational": false
+        }
+      ],
+      "topRoutesUndirected": [
+        {
+          "a": "RCBS",
+          "b": "RCMQ",
+          "count": 159,
+          "isInternational": false
+        },
+        {
+          "a": "RCMQ",
+          "b": "RCQC",
+          "count": 147,
+          "isInternational": false
+        },
+        {
+          "a": "RCMQ",
+          "b": "VHHH",
+          "count": 52,
+          "isInternational": true
+        },
+        {
+          "a": "RCMQ",
+          "b": "RKSI",
+          "count": 49,
+          "isInternational": true
+        },
+        {
+          "a": "RCMQ",
+          "b": "VMMC",
+          "count": 44,
+          "isInternational": true
+        },
+        {
+          "a": "RCMQ",
+          "b": "VVTS",
+          "count": 27,
+          "isInternational": true
+        },
+        {
+          "a": "RCMQ",
+          "b": "ROAH",
+          "count": 27,
+          "isInternational": true
+        },
+        {
+          "a": "RCFG",
+          "b": "RCMQ",
+          "count": 14,
+          "isInternational": false
+        },
+        {
+          "a": "RCMQ",
+          "b": "RJBE",
+          "count": 13,
+          "isInternational": true
+        },
+        {
+          "a": "RCMQ",
+          "b": "VVNB",
+          "count": 11,
+          "isInternational": true
+        },
+        {
+          "a": "RCMQ",
+          "b": "RJOT",
+          "count": 10,
+          "isInternational": true
+        },
+        {
+          "a": "RCMQ",
+          "b": "RCMQ",
+          "count": 8,
+          "isInternational": false
+        },
+        {
+          "a": "RCMQ",
+          "b": "VVDN",
+          "count": 8,
+          "isInternational": true
+        },
+        {
+          "a": "RCMQ",
+          "b": "RCSS",
+          "count": 8,
+          "isInternational": false
+        },
+        {
+          "a": "RCMQ",
+          "b": "RJGG",
+          "count": 6,
+          "isInternational": true
+        }
+      ],
+      "intlPartners": [
+        {
+          "country": "JP",
+          "nameZh": "日本",
+          "count": 60,
+          "pct": 21.9
+        },
+        {
+          "country": "KR",
+          "nameZh": "南韓",
+          "count": 59,
+          "pct": 21.53
+        },
+        {
+          "country": "VN",
+          "nameZh": "越南",
+          "count": 54,
+          "pct": 19.71
+        },
+        {
+          "country": "HK",
+          "nameZh": "香港",
+          "count": 52,
+          "pct": 18.98
+        },
+        {
+          "country": "MO",
+          "nameZh": "澳門",
+          "count": 44,
+          "pct": 16.06
+        },
+        {
+          "country": "TH",
+          "nameZh": "泰國",
+          "count": 5,
+          "pct": 1.82
+        }
+      ],
+      "hourly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        11,
+        47,
+        49,
+        46,
+        55,
+        40,
+        78,
+        58,
+        36,
+        33,
+        45,
+        42,
+        39,
+        48,
+        25,
+        7,
+        1,
+        0
+      ],
+      "weekday": [
+        94,
+        99,
+        75,
+        114,
+        92,
+        108,
+        78
+      ]
+    },
+    "RCFN": {
+      "icao": "RCFN",
+      "iata": "TTT",
+      "nameZh": "台東機場",
+      "nameEn": "Taitung",
+      "total": 172,
+      "arrivals": 85,
+      "departures": 87,
+      "domestic": 162,
+      "international": 0,
+      "unknownRoute": 10,
+      "spanDays": 7,
+      "firstSeen": "2026-02-17T23:43:46.000Z",
+      "lastSeen": "2026-02-24T23:43:21.000Z",
+      "dailyAverage": 24.6,
+      "airlines": [
+        {
+          "code": "UNKNOWN",
+          "count": 99,
+          "pct": 57.56
+        },
+        {
+          "code": "UIA",
+          "nameZh": "立榮航空",
+          "nameEn": "UNI Air",
+          "type": "regional",
+          "brandColor": "#cc6600",
+          "country": "TW",
+          "count": 44,
+          "pct": 25.58
+        },
+        {
+          "code": "MDA",
+          "nameZh": "華信航空",
+          "nameEn": "Mandarin Airlines",
+          "type": "regional",
+          "brandColor": "#80221c",
+          "country": "TW",
+          "count": 29,
+          "pct": 16.86
+        }
+      ],
+      "aircraft": [
+        {
+          "type": "DHC6",
+          "count": 94,
+          "pct": 54.65,
+          "seatsTotal": 0
+        },
+        {
+          "type": "AT76",
+          "name": "ATR 72-600",
+          "category": "prop",
+          "seats": 70,
+          "count": 73,
+          "pct": 42.44,
+          "seatsTotal": 5110
+        },
+        {
+          "type": "DA40",
+          "name": "Diamond DA40",
+          "category": "prop",
+          "seats": 4,
+          "count": 3,
+          "pct": 1.74,
+          "seatsTotal": 12
+        },
+        {
+          "type": "DA42",
+          "name": "Diamond DA42 Twin Star",
+          "category": "prop",
+          "seats": 4,
+          "count": 2,
+          "pct": 1.16,
+          "seatsTotal": 8
+        }
+      ],
+      "aircraftCategoryMix": {
+        "other": {
+          "count": 94,
+          "pct": 54.65,
+          "seats": 0
+        },
+        "prop": {
+          "count": 78,
+          "pct": 45.35,
+          "seats": 5130
+        }
+      },
+      "airlineTypeMix": {
+        "unknown": {
+          "count": 99,
+          "pct": 57.56
+        },
+        "regional": {
+          "count": 73,
+          "pct": 42.44
+        }
+      },
+      "seatCapacity": {
+        "total": 5130,
+        "avgPerFlight": 66,
+        "coveragePct": 45.3
+      },
+      "routes": [
+        {
+          "origin": "RCSS",
+          "dest": "RCFN",
+          "count": 37,
+          "isInternational": false
+        },
+        {
+          "origin": "RCFN",
+          "dest": "RCSS",
+          "count": 36,
+          "isInternational": false
+        },
+        {
+          "origin": "RCLY",
+          "dest": "RCFN",
+          "count": 26,
+          "isInternational": false
+        },
+        {
+          "origin": "RCFN",
+          "dest": "RCGI",
+          "count": 21,
+          "isInternational": false
+        },
+        {
+          "origin": "RCGI",
+          "dest": "RCFN",
+          "count": 20,
+          "isInternational": false
+        },
+        {
+          "origin": "RCFN",
+          "dest": "RCLY",
+          "count": 20,
+          "isInternational": false
+        },
+        {
+          "origin": "RCKH",
+          "dest": "RCFN",
+          "count": 1,
+          "isInternational": false
+        },
+        {
+          "origin": "RCFN",
+          "dest": "RCFN",
+          "count": 1,
+          "isInternational": false
+        }
+      ],
+      "topRoutesUndirected": [
+        {
+          "a": "RCFN",
+          "b": "RCSS",
+          "count": 73,
+          "isInternational": false
+        },
+        {
+          "a": "RCFN",
+          "b": "RCLY",
+          "count": 46,
+          "isInternational": false
+        },
+        {
+          "a": "RCFN",
+          "b": "RCGI",
+          "count": 41,
+          "isInternational": false
+        },
+        {
+          "a": "RCFN",
+          "b": "RCKH",
+          "count": 1,
+          "isInternational": false
+        },
+        {
+          "a": "RCFN",
+          "b": "RCFN",
+          "count": 1,
+          "isInternational": false
+        }
+      ],
+      "intlPartners": [],
+      "hourly": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        15,
+        11,
+        18,
+        8,
+        13,
+        13,
+        13,
+        12,
+        20,
+        20,
+        9,
+        9,
+        7,
+        3,
+        0,
+        0,
+        0
+      ],
+      "weekday": [
+        23,
+        18,
+        29,
+        16,
+        24,
+        32,
+        30
+      ]
+    }
+  },
+  "odMatrix": [
+    {
+      "origin": "RCTP",
+      "dest": "WSSS",
+      "count": 485,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "KSFO",
+      "count": 264,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "KLAX",
+      "count": 262,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "VHHH",
+      "count": 192,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "RCBS",
+      "count": 167,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCBS",
+      "dest": "RCSS",
+      "count": 164,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCSS",
+      "dest": "RCQC",
+      "count": 159,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCQC",
+      "dest": "RCSS",
+      "count": 158,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCKH",
+      "dest": "RCQC",
+      "count": 130,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCQC",
+      "dest": "RCKH",
+      "count": 130,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCTP",
+      "dest": "RJAA",
+      "count": 111,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "RJBB",
+      "count": 95,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "RCBS",
+      "count": 83,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCTP",
+      "dest": "VTBS",
+      "count": 80,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCBS",
+      "dest": "RCKH",
+      "count": 80,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RCBS",
+      "count": 80,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCBS",
+      "dest": "RCMQ",
+      "count": 79,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RCQC",
+      "count": 74,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCQC",
+      "dest": "RCMQ",
+      "count": 73,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCTP",
+      "dest": "RKSI",
+      "count": 69,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "VHHH",
+      "count": 68,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "LTFM",
+      "count": 62,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "RPLL",
+      "count": 61,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "ROAH",
+      "count": 60,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "KONT",
+      "count": 57,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "ZSPD",
+      "count": 52,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCTP",
+      "dest": "RKPK",
+      "count": 52,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "RJTT",
+      "count": 51,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "RCFG",
+      "count": 38,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCKH",
+      "dest": "RJAA",
+      "count": 37,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "RCFN",
+      "count": 37,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCFN",
+      "dest": "RCSS",
+      "count": 36,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCKH",
+      "dest": "RJBB",
+      "count": 31,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "RCCM",
+      "count": 29,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCQC",
+      "dest": "RCNN",
+      "count": 27,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "VHHH",
+      "count": 27,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "ZSSS",
+      "count": 24,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "VMMC",
+      "count": 22,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RKSI",
+      "count": 22,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "VMMC",
+      "count": 21,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCBS",
+      "dest": "RCNN",
+      "count": 21,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCFN",
+      "dest": "RCGI",
+      "count": 21,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCFN",
+      "dest": "RCLY",
+      "count": 20,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCKH",
+      "dest": "RKSI",
+      "count": 19,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "WSSS",
+      "count": 16,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "RPLL",
+      "count": 15,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "ROAH",
+      "count": 15,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "VVNB",
+      "count": 15,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "RCMT",
+      "count": 15,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCKH",
+      "dest": "VTBS",
+      "count": 13,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "VTBD",
+      "count": 13,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "ZSPD",
+      "count": 13,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "VVTS",
+      "count": 13,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "ROAH",
+      "count": 13,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "VVTS",
+      "count": 12,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCKH",
+      "dest": "ZSPD",
+      "count": 12,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "RKSS",
+      "count": 11,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "ZSFZ",
+      "count": 10,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "RCTP",
+      "count": 10,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCSS",
+      "dest": "ZSAM",
+      "count": 9,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RCMQ",
+      "count": 8,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCQC",
+      "dest": "RCKU",
+      "count": 7,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCBS",
+      "dest": "RCKU",
+      "count": 7,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RJBE",
+      "count": 7,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RCFG",
+      "count": 7,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCQC",
+      "dest": "RCCM",
+      "count": 6,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RJOT",
+      "count": 5,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "VVNB",
+      "count": 5,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "ZUTF",
+      "count": 4,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "ZUCK",
+      "count": 4,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCSS",
+      "dest": "RCMQ",
+      "count": 4,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RCSS",
+      "count": 4,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "VVDN",
+      "count": 4,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RJGG",
+      "count": 3,
+      "isInternational": true,
+      "isDomestic": false
+    },
+    {
+      "origin": "RCMQ",
+      "dest": "RCYU",
+      "count": 3,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCQC",
+      "dest": "RCWA",
+      "count": 1,
+      "isInternational": false,
+      "isDomestic": true
+    },
+    {
+      "origin": "RCFN",
+      "dest": "RCFN",
+      "count": 1,
+      "isInternational": false,
+      "isDomestic": true
+    }
+  ]
+}
