@@ -12,7 +12,7 @@
 
 ## 涵蓋範圍
 
-138 座機場 camera presets，1,137 個 JSONL 資料檔，**32,616 筆不重複軌跡航班**（dep + arr 雙向）。
+138 座機場 camera presets，1,356 個 JSONL 資料檔，**41,766 筆不重複軌跡航班**（dep + arr 雙向）。
 
 | 區域 | 機場數 | 說明 |
 |------|--------|------|
@@ -20,15 +20,53 @@
 | Japan (JP) | 70 | 七大主要 + 地方 + 沖繩離島（含奄美、鹿兒島離島），分層級顯示 |
 | Korea (KR) | 6 + Overview | RKSI 仁川、RKSS 金浦、RKPK 釜山、RKPC 濟州、RKTU 清州、RKTN 大邱 |
 | Thailand (TH) | 9 + Overview | VTBS 蘇凡那布、VTBD 廊曼、VTCC 清邁、VTSP 普吉、VTSG 喀比、VTSM 蘇梅、VTBU 烏塔堡、VTSS 合艾、VTSB 素叻他尼 |
+| China (CN) | 上海/北京為主 | ZSPD 浦東、ZSSS 虹橋、ZBAA 首都、ZBAD 大興（ICAO Z 開頭，排除北韓/蒙古）|
 | Hong Kong (HK) | 1 | VHHH 香港國際機場 |
 | Singapore (SG) | 1 | WSSS 樟宜國際機場 |
-| United States (US) | 4 | KATL、KDFW 等主要樞紐 |
+| United States (US) | 17 | 亞特蘭大 / 紐約三場 / LA 都會 / SF 灣區 / 西雅圖 等樞紐 |
 | United Kingdom (UK) | 11 | 倫敦群 10 座（EGLL/EGKK/EGSS/EGGW/EGLC/EGTK/EGKB/EGLF/EGMC/EGMD）+ 其他 |
 | Middle East (ME) | 3 | OMDB 杜拜、OMAA 阿布達比、OMSJ 沙迦（戰前/戰當天/戰後 3 個日期） |
 | Europe Hubs | 9 | LFPG 巴黎 CDG / LFPO 奧利 / LFPB 布爾歇 / LFOB 博韋、EHAM 阿姆斯特丹、EDDF 法蘭克福、EDDM 慕尼黑、LEMD 馬德里、LTFM 伊斯坦堡 |
 | World | 2+ | Madeira (LPMA)、Paro (VQPR) 等特色機場 |
 
-Region Pills UI 可切換 TW / JP / HK / **KR / TH** / US / UK / World / All，每個區域有對應的場景預設與攝影機視角。
+Region Pills UI 可切換 TW / JP / HK / **KR / TH** / **CN** / US / UK / World / All，每個區域有對應的場景預設與攝影機視角。
+
+### 軌跡資料量（Track Coverage）
+
+> **最後更新：2026-06-04** ｜ 數據來源：`public/tracks/manifest.json`（每次跑 `split-tracks.ts` 後更新）
+> ⚠️ **抓完新軌跡後務必同步更新此表**（見下方維護說明）。
+
+- **不重複軌跡航班**：41,766 筆（`scripts/track-done.ndjson`）
+- **機場 JSONL 檔**：1,356 座
+- **主動查詢機場**：165 座（其餘為被動觸及）
+
+| Region | 軌跡數（含雙向） | 大小 (gzip) |
+|--------|------:|------:|
+| other（未分區）| 20,028 | 12.91 MB |
+| US 美國 | 10,868 | 6.23 MB |
+| TW 台灣 | 9,087 | 5.17 MB |
+| JP 日本 | 4,911 | 2.47 MB |
+| CN 中國 | 3,638 | 1.74 MB |
+| UK 英國 | 3,613 | 2.09 MB |
+| TH 泰國 | 2,554 | 1.38 MB |
+| KR 韓國 | 2,531 | 1.26 MB |
+| HK 香港 | 1,476 | 0.91 MB |
+
+**軌跡數 Top 15 機場**（★ = 主動查詢）：
+
+| 機場 | 軌跡 | 機場 | 軌跡 | 機場 | 軌跡 |
+|------|---:|------|---:|------|---:|
+| ★RCTP 桃園 | 5,787 | ★KSFO 舊金山 | 1,470 | ★RJTT 羽田 | 1,318 |
+| ★OMDB 杜拜 | 2,740 | ★LTFM 伊斯坦堡 | 1,379 | ★VTBS 曼谷 | 1,316 |
+| ★WSSS 新加坡 | 1,968 | ★RKSI 仁川 | 1,377 | ★LFPG 巴黎 | 1,292 |
+| ★KATL 亞特蘭大 | 1,839 | ★EGLL 倫敦 | 1,362 | ★OMAA 阿布達比 | 1,281 |
+| ★KLAX 洛杉磯 | 1,768 | ★KJFK 甘迺迪 | 1,354 | ★ZSPD 浦東 | 1,656 |
+
+> 軌跡資料**不進 git**，存於 S3（`migu-gis-data-collector/flight-arc/`），部署時由 Zeabur 端 `pull-from-s3.sh` 拉取。完整抓取進度與下一步規劃見 [`docs/backlog/data-fetching-status.md`](docs/backlog/data-fetching-status.md)。
+
+#### 🔄 維護此表（重要）
+
+每次用 `fetch-tracks.ts` 抓完新軌跡、跑完 `split-tracks.ts` 後，**務必同步更新上方「軌跡資料量」表**（region 數字、總筆數、Top 15、最後更新日）。數字一律以重建後的 `public/tracks/manifest.json` 為準。
 
 ## 視覺概念
 

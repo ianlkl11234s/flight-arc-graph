@@ -7,6 +7,16 @@
 
 該檔案追蹤：目標機場群、主動/被動狀態、API 額度預估、操作指令。每完成一輪抓取後同步更新。
 
+## 🔄 抓完軌跡後的同步更新（必做）
+
+每次跑完 `fetch-tracks.ts` + `split-tracks.ts` 後，**務必同步更新這三處**（數字一律以重建後的 `public/tracks/manifest.json` 為準）：
+
+1. **README.md「軌跡資料量（Track Coverage）」表** — region 軌跡數、總筆數（`track-done.ndjson` 行數）、Top 15 機場、最後更新日
+2. **`docs/backlog/data-fetching-status.md`** — 更新狀態欄、移除已完成項、記接力點
+3. **記憶 `project_fetch_resume_point.md`** — 若有未抓完的接力點
+
+> 目的：讓「目前有哪些軌跡、各幾班」隨時可查、不過時。
+
 ## Build 檢查（必做）
 
 **每次 commit 前，必須執行 `npm run typecheck`（即 `tsc -b`）確認無錯誤。**
