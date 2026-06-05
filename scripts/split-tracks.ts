@@ -91,6 +91,8 @@ function getRegion(icao: string): string {
   if (icao.startsWith("VT")) return "TH";
   if (icao.startsWith("K")) return "US";
   if (icao.startsWith("EG")) return "UK";
+  // 中國大陸：ICAO 開頭 Z，排除北韓 ZK、蒙古 ZM（香港 VH / 澳門 VM 不算）
+  if (icao.startsWith("Z") && !icao.startsWith("ZK") && !icao.startsWith("ZM")) return "CN";
   return "other";
 }
 

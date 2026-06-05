@@ -211,7 +211,11 @@ export default function App() {
 
   // Region 相關 helper
   const KNOWN_REGIONS = ["RC", "RJ", "RO", "VH", "K", "EG"];
-  const isKnownRegion = (icao: string) => KNOWN_REGIONS.some((p) => icao.startsWith(p));
+  // 中國大陸：ICAO 開頭 Z，排除北韓 ZK、蒙古 ZM
+  const isChinaIcao = (icao: string) =>
+    icao.startsWith("Z") && !icao.startsWith("ZK") && !icao.startsWith("ZM");
+  const isKnownRegion = (icao: string) =>
+    KNOWN_REGIONS.some((p) => icao.startsWith(p)) || isChinaIcao(icao);
 
   type RegionCfg = {
     title: string;
@@ -287,6 +291,15 @@ export default function App() {
       camera: { center: [-0.4614, 51.4700], zoom: 11, pitch: 55, bearing: -10 },
       regionCamera: { center: [-0.1, 51.6], zoom: 9, pitch: 40, bearing: 0 },
       defaultAirport: "EGLL",
+      defaultDate: "2026-02-18",
+    },
+    CN: {
+      title: "China Flight Arc",
+      label: "CN",
+      icaoMatch: (icao) => isChinaIcao(icao),
+      camera: { center: [121.8053, 31.1443], zoom: 9.6, pitch: 55, bearing: 0 },
+      regionCamera: { center: [110.0, 33.0], zoom: 4.0, pitch: 25, bearing: 0 },
+      defaultAirport: "ZSPD",
       defaultDate: "2026-02-18",
     },
     world: {
@@ -613,7 +626,11 @@ export default function App() {
       TH: (i) => i.startsWith("VT"),
       US: (i) => i.startsWith("K"),
       UK: (i) => i.startsWith("EG"),
-      world: (i) => !["RC", "RJ", "RO", "VH", "RK", "VT", "EG"].some((p) => i.startsWith(p)) && !i.startsWith("K"),
+      CN: (i) => isChinaIcao(i),
+      world: (i) =>
+        !["RC", "RJ", "RO", "VH", "RK", "VT", "EG"].some((p) => i.startsWith(p)) &&
+        !i.startsWith("K") &&
+        !isChinaIcao(i),
       all: () => true,
     };
     return airports.filter(prefixes[region]);
@@ -1454,7 +1471,7 @@ export default function App() {
             </div>
             {/* Region Pills */}
             <div style={{ display: "flex", gap: 4 }}>
-              {(["TW", "JP", "HK", "KR", "TH", "US", "UK", "world", "all"] as Region[]).map((r) => {
+              {(["TW", "JP", "HK", "KR", "TH", "US", "UK", "CN", "world", "all"] as Region[]).map((r) => {
                 const isActive = region === r;
                 return (
                   <button
