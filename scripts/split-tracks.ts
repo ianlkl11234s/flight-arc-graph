@@ -8,9 +8,15 @@
  * 注意：airports/{ICAO}.jsonl 是 fetch-tracks.ts 直接寫入的最終輸出，
  *       本腳本只做 dedupe（排序 + 去重）+ 產生 region + manifest。
  *
+ * manifest.airports 額外欄位（資料目錄，給前端日期選單 / 機場清單分層用）：
+ *   - isCore:    是否為主動查詢機場（來源 scripts/core-airports.json，由 build-core-airports.ts 產生）
+ *   - dates:     該機場每日（台灣時間 UTC+8）軌跡筆數 { "2026-02-18": 614, ... }
+ *   - fullDates: 抓「滿」的日期（core-airports.json 的 fullDates ∩ 實際有軌跡的日期）
+ *
  * Usage:
  *   npx tsx scripts/split-tracks.ts
- *   npx tsx scripts/split-tracks.ts --dedupe-only   # 只去重 airports/*.jsonl，不動 region
+ *   npx tsx scripts/split-tracks.ts --dedupe-only     # 只去重 airports/*.jsonl，不動 region
+ *   npx tsx scripts/split-tracks.ts --manifest-only   # 只重建 manifest（串流統計、不重寫 region 檔、低記憶體）
  */
 
 import {
@@ -96,6 +102,67 @@ function getRegion(icao: string): string {
   return "other";
 }
 
+// ── 資料目錄（isCore / dates / fullDates）──
+
+const CORE_AIRPORTS_FILE = join(__dirname, "core-airports.json");
+
+interface AirportManifestEntry {
+  flights: number;
+  gzipBytes: number;
+  isCore: boolean;
+  dates: Record<string, number>;
+  fullDates: string[];
+}
+
+function loadCoreAirports(): Map<string, string[]> {
+  if (!existsSync(CORE_AIRPORTS_FILE)) {
+    console.warn("⚠️  找不到 scripts/core-airports.json（跑 build-core-airports.ts 產生），isCore/fullDates 將全部為空");
+    return new Map();
+  }
+  const raw = JSON.parse(readFileSync(CORE_AIRPORTS_FILE, "utf-8")) as {
+    airports: Record<string, { fullDates: string[] }>;
+  };
+  return new Map(Object.entries(raw.airports).map(([icao, a]) => [icao, a.fullDates]));
+}
+
+/** dep_time (unix 秒) → 台灣時間日期字串，與前端 App.tsx 切日邏輯一致 */
+function toTwDate(depTime: number): string {
+  return new Date(depTime * 1000 + 8 * 3600_000).toISOString().slice(0, 10);
+}
+
+function countDates(flights: Flight[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const f of flights) {
+    // 與前端 App.tsx availableDates 同邏輯：dep_time 無效時 fallback 到 path 首點時間戳
+    // sanity floor 1e9（2001 年）：擋掉接近 epoch 的壞時間戳（如 path[0][3]=98）
+    const t = f.dep_time || f.path[0]?.[3];
+    if (!t || t < 1e9) continue;
+    const d = toTwDate(t);
+    counts[d] = (counts[d] ?? 0) + 1;
+  }
+  // 按日期排序輸出，manifest diff 才穩定
+  return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => (a < b ? -1 : 1)));
+}
+
+function buildAirportEntry(
+  icao: string,
+  flights: Flight[],
+  gzipBytes: number,
+  coreAirports: Map<string, string[]>,
+): AirportManifestEntry {
+  const dates = countDates(flights);
+  const candidates = coreAirports.get(icao);
+  // fullDates 取 candidates ∩ 實際有足量軌跡的日期（防「時刻表抓了、軌跡沒抓」誤標）
+  const fullDates = (candidates ?? []).filter((d) => (dates[d] ?? 0) >= 50);
+  return {
+    flights: flights.length,
+    gzipBytes,
+    isCore: coreAirports.has(icao),
+    dates,
+    fullDates,
+  };
+}
+
 // ── 讀取一個 JSONL 檔，dedupe 並回寫 ──
 
 function readAndDedupe(icao: string): Flight[] {
@@ -132,15 +199,21 @@ function main() {
   }
 
   const dedupeOnly = process.argv.includes("--dedupe-only");
+  const manifestOnly = process.argv.includes("--manifest-only");
+
+  const coreAirports = loadCoreAirports();
+  console.log(`📖 core-airports: ${coreAirports.size} 座主動查詢機場\n`);
 
   // 1. 掃 airports/*.jsonl，dedupe + 建 manifest
+  //    --manifest-only 模式：串流統計，不在記憶體保留 flights（避免 OOM）
   console.log("📖 載入 airports/*.jsonl...");
   const files = readdirSync(AIRPORTS_DIR).filter((f) => f.endsWith(".jsonl"));
   const byAirport = new Map<string, Flight[]>();
+  const uniqueIds = new Set<string>();
   let totalFlightsIndexed = 0;
 
   const manifest: {
-    airports: Record<string, { flights: number; gzipBytes: number }>;
+    airports: Record<string, AirportManifestEntry>;
     regions: Record<string, { flights: number; gzipBytes: number }>;
     totalFlights: number;
     generatedAt: string;
@@ -154,17 +227,37 @@ function main() {
   for (const file of files) {
     const icao = file.replace(".jsonl", "");
     const flights = readAndDedupe(icao);
-    byAirport.set(icao, flights);
     totalFlightsIndexed += flights.length;
 
     const jsonl = flights.map((f) => JSON.stringify(f)).join("\n") + "\n";
     const gzSize = gzipSync(jsonl).length;
-    manifest.airports[icao] = { flights: flights.length, gzipBytes: gzSize };
+    manifest.airports[icao] = buildAirportEntry(icao, flights, gzSize, coreAirports);
+
+    if (manifestOnly) {
+      for (const f of flights) uniqueIds.add(f.fr24_id);
+    } else {
+      byAirport.set(icao, flights);
+    }
   }
   console.log(`   ${files.length} 機場，${totalFlightsIndexed} 筆（含重複歸屬）\n`);
 
   if (dedupeOnly) {
     console.log("(--dedupe-only, 跳過 region + manifest)");
+    return;
+  }
+
+  if (manifestOnly) {
+    // 沿用既有 manifest 的 regions 區塊（不重寫 region 檔）
+    manifest.totalFlights = uniqueIds.size;
+    if (existsSync(MANIFEST_FILE)) {
+      const old = JSON.parse(readFileSync(MANIFEST_FILE, "utf-8")) as {
+        regions?: Record<string, { flights: number; gzipBytes: number }>;
+      };
+      manifest.regions = old.regions ?? {};
+    }
+    writeFileSync(MANIFEST_FILE, JSON.stringify(manifest, null, 2));
+    console.log(`🛫 不重複航班: ${uniqueIds.size}`);
+    console.log(`✅ manifest.json（--manifest-only，regions 沿用既有值）`);
     return;
   }
 

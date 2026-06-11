@@ -8,6 +8,7 @@ import { StyleSelector } from "./StyleSelector";
 import { DeepAnalysisPanel } from "./DeepAnalysisPanel";
 import type { AnalysisColorBy } from "../data/analysisColors";
 import type { FlightFilters } from "../data/classify";
+import type { AirportManifestEntry } from "../data/flightLoader";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
 import {
   getDepArrCount,
@@ -262,6 +263,8 @@ export interface IconRailSidebarProps {
   onFlightSelect: (id: string | null) => void;
   // Locations
   airports: string[];
+  /** manifest 機場目錄（isCore / dates / fullDates / flights），key = ICAO */
+  airportCatalog: Record<string, AirportManifestEntry>;
   selectedAirport: string;
   onAirportChange: (icao: string) => void;
   onLocationJump: (icao: string) => void;
@@ -270,6 +273,8 @@ export interface IconRailSidebarProps {
   availableDates: string[];
   /** 完整資料的日期（實心標記） */
   fullDates: string[];
+  /** 各日期的軌跡筆數（單一機場模式才有，tooltip 顯示用） */
+  dateCounts?: Record<string, number>;
   selectedDate: string | null;
   onDateSelect: (date: string | null) => void;
   // Flights data (for summary panel — already filtered by time window)
@@ -768,17 +773,21 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
   );
 }
 
-function AirportButton({ preset, isActive, onAirportChange, onLocationJump, theme }: {
+function AirportButton({ preset, isActive, onAirportChange, onLocationJump, theme, meta }: {
   preset: { icao: string; name: string };
   isActive: boolean;
   onAirportChange: (icao: string) => void;
   onLocationJump: (icao: string) => void;
   theme: ThemeColors;
+  /** manifest 目錄資訊：有給才顯示完整度標記（◐ = 被動收集，資料不完整） */
+  meta?: AirportManifestEntry;
 }) {
   const info = getAirportInfo(preset.icao);
+  const isPartial = meta ? !meta.isCore : false;
   return (
     <button
       onClick={() => { onAirportChange(preset.icao); onLocationJump(preset.icao); }}
+      title={meta ? (isPartial ? `${meta.flights} flights · 被動收集，資料不完整` : `${meta.flights} flights`) : undefined}
       style={{
         display: "flex",
         alignItems: "center",
@@ -796,7 +805,7 @@ function AirportButton({ preset, isActive, onAirportChange, onLocationJump, them
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
     >
       <span style={{ width: 3, height: 24, borderRadius: 2, background: isActive ? theme.ACCENT_BLUE : theme.BORDER, flexShrink: 0 }} />
-      <div style={{ minWidth: 0 }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ fontSize: 12, color: isActive ? theme.ACTIVE_TEXT : theme.ACCENT, lineHeight: 1.3 }}>
           {info?.name ?? preset.name}
         </div>
@@ -804,6 +813,11 @@ function AirportButton({ preset, isActive, onAirportChange, onLocationJump, them
           {info?.iata ?? preset.icao} / {preset.icao}
         </div>
       </div>
+      {meta && (
+        <span style={{ fontSize: 9, color: theme.DIM, fontFamily: "monospace", flexShrink: 0 }}>
+          {isPartial ? "◐ " : ""}{meta.flights}
+        </span>
+      )}
     </button>
   );
 }
@@ -834,17 +848,51 @@ const REGION_LABELS: Record<string, string> = {
 
 function LocationsPanel({
   airports,
+  airportCatalog,
   selectedAirport,
   onAirportChange,
   onLocationJump,
   onSceneSelect,
   region,
   theme,
-}: Pick<IconRailSidebarProps, "airports" | "selectedAirport" | "onAirportChange" | "onLocationJump" | "onSceneSelect" | "region"> & { theme: ThemeColors }) {
+}: Pick<IconRailSidebarProps, "airports" | "airportCatalog" | "selectedAirport" | "onAirportChange" | "onLocationJump" | "onSceneSelect" | "region"> & { theme: ThemeColors }) {
+  const [search, setSearch] = useState("");
+  const [showTail, setShowTail] = useState(false);
+
   // Use CAMERA_PRESETS order, filtered by available airports + region
   const available = new Set(airports);
   const matchRegion = REGION_ICAO_MATCH[region] || (() => true);
   const ordered = CAMERA_PRESETS.filter((p) => available.has(p.icao) && matchRegion(p.icao));
+
+  // 搜尋：涵蓋 manifest 全部機場（不限 camera presets），core 優先
+  const q = search.trim().toUpperCase();
+  const searchResults = useMemo(() => {
+    if (!q) return null;
+    const matched = Object.keys(airportCatalog).filter((icao) => {
+      if (icao.includes(q)) return true;
+      const info = getAirportInfo(icao);
+      if (!info) return false;
+      return info.iata.toUpperCase().includes(q) || info.name.toUpperCase().includes(q);
+    });
+    matched.sort((a, b) => (airportCatalog[b]?.flights ?? 0) - (airportCatalog[a]?.flights ?? 0));
+    return {
+      core: matched.filter((i) => airportCatalog[i]?.isCore),
+      tail: matched.filter((i) => !airportCatalog[i]?.isCore),
+    };
+  }, [q, airportCatalog]);
+
+  const selectedMeta = airportCatalog[selectedAirport];
+  const renderIcao = (icao: string) => (
+    <AirportButton
+      key={icao}
+      preset={{ icao, name: getAirportInfo(icao)?.name ?? icao }}
+      isActive={icao === selectedAirport}
+      onAirportChange={onAirportChange}
+      onLocationJump={onLocationJump}
+      theme={theme}
+      meta={airportCatalog[icao]}
+    />
+  );
 
   // Group by region when "all"
   const groupedByRegion = region === "all"
@@ -910,8 +958,84 @@ function LocationsPanel({
         </>
       )}
 
+      {/* 機場搜尋（涵蓋 manifest 全部機場，含未在下方清單的長尾機場） */}
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="搜尋機場 ICAO / IATA / 名稱"
+        style={{
+          margin: "0 8px 6px",
+          padding: "6px 8px",
+          fontSize: 11,
+          fontFamily: "monospace",
+          background: "transparent",
+          border: `1px solid ${theme.BORDER}`,
+          borderRadius: 6,
+          color: theme.ACTIVE_TEXT,
+          outline: "none",
+        }}
+      />
+
+      {/* 選中機場為被動收集時的資料品質提示 */}
+      {selectedMeta && !selectedMeta.isCore && (
+        <div
+          style={{
+            margin: "0 8px 6px",
+            padding: "6px 8px",
+            fontSize: 10,
+            lineHeight: 1.5,
+            borderRadius: 6,
+            border: "1px solid rgba(255,166,0,0.35)",
+            background: "rgba(255,166,0,0.08)",
+            color: theme.ACCENT,
+          }}
+        >
+          ◐ {selectedAirport} 為被動收集資料：僅含與主動抓取機場之間的航班，非該機場完整流量
+        </div>
+      )}
+
       {/* 機場列表 */}
-      {groupedByRegion ? (
+      {searchResults ? (
+        /* 搜尋結果：core 優先，長尾收合 */
+        <>
+          <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "6px 8px 2px" }}>
+            核心機場 ({searchResults.core.length})
+          </div>
+          {searchResults.core.slice(0, 30).map(renderIcao)}
+          {searchResults.core.length === 0 && (
+            <div style={{ fontSize: 11, color: theme.DIM, padding: "2px 8px 6px" }}>無符合的核心機場</div>
+          )}
+          {searchResults.tail.length > 0 && (
+            <>
+              <button
+                onClick={() => setShowTail((v) => !v)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "6px 8px 2px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 10,
+                  color: theme.DIM,
+                  letterSpacing: 1.2,
+                  textTransform: "uppercase",
+                }}
+              >
+                {showTail ? "▾" : "▸"} 更多機場（資料不完整）({searchResults.tail.length})
+              </button>
+              {showTail && searchResults.tail.slice(0, 30).map(renderIcao)}
+              {showTail && searchResults.tail.length > 30 && (
+                <div style={{ fontSize: 10, color: theme.DIM, padding: "2px 8px 6px" }}>
+                  僅顯示前 30 筆，請輸入更精確的關鍵字
+                </div>
+              )}
+            </>
+          )}
+        </>
+      ) : groupedByRegion ? (
         /* All regions: grouped */
         groupedByRegion.map((group) => (
           <div key={group.key}>
@@ -919,7 +1043,7 @@ function LocationsPanel({
               {group.label} ({group.presets.length})
             </div>
             {group.presets.map((preset) => (
-              <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} />
+              <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} meta={airportCatalog[preset.icao]} />
             ))}
           </div>
         ))
@@ -940,7 +1064,7 @@ function LocationsPanel({
                   {label} ({group.length})
                 </div>
                 {group.map((preset) => (
-                  <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} />
+                  <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} meta={airportCatalog[preset.icao]} />
                 ))}
               </div>
             );
@@ -953,7 +1077,7 @@ function LocationsPanel({
             機場 Airport ({ordered.length})
           </div>
           {ordered.map((preset) => (
-            <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} />
+            <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} meta={airportCatalog[preset.icao]} />
           ))}
         </>
       )}
@@ -1238,10 +1362,11 @@ function SetsPanel({
 function CalendarPanel({
   availableDates,
   fullDates,
+  dateCounts,
   selectedDate,
   onDateSelect,
   theme,
-}: Pick<IconRailSidebarProps, "availableDates" | "fullDates" | "selectedDate" | "onDateSelect"> & { theme: ThemeColors }) {
+}: Pick<IconRailSidebarProps, "availableDates" | "fullDates" | "dateCounts" | "selectedDate" | "onDateSelect"> & { theme: ThemeColors }) {
   const availableSet = new Set(availableDates);
   const fullSet = new Set(fullDates);
 
@@ -1361,9 +1486,18 @@ function CalendarPanel({
           const hasData = availableSet.has(dateStr);
           const isFull = fullSet.has(dateStr);
           const isSelected = selectedDate === dateStr;
+          const count = dateCounts?.[dateStr];
+          // 有 fullDates 資訊時，部分資料的日期文字調暗以區分
+          const isPartial = hasData && !isFull && fullSet.size > 0;
+          const tooltip = hasData
+            ? count !== undefined
+              ? `${count} flights${isFull ? "（完整）" : "（部分）"}`
+              : isFull ? "完整資料" : undefined
+            : undefined;
           return (
             <button
               key={day}
+              title={tooltip}
               onClick={() => {
                 if (isSelected) onDateSelect(null);
                 else if (hasData) onDateSelect(dateStr);
@@ -1371,7 +1505,7 @@ function CalendarPanel({
               style={{
                 ...cellBase,
                 background: isSelected ? theme.ACTIVE_BG : "transparent",
-                color: hasData ? theme.ACTIVE_TEXT : theme.NO_DATA_TEXT,
+                color: hasData ? (isPartial ? theme.ACCENT : theme.ACTIVE_TEXT) : theme.NO_DATA_TEXT,
                 cursor: hasData ? "pointer" : "default",
                 fontWeight: isSelected ? 700 : 400,
               }}
@@ -2401,6 +2535,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           {activePanel === "locations" && (
             <LocationsPanel
               airports={props.airports}
+              airportCatalog={props.airportCatalog}
               selectedAirport={props.selectedAirport}
               onAirportChange={props.onAirportChange}
               onLocationJump={props.onLocationJump}
@@ -2427,6 +2562,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             <CalendarPanel
               availableDates={props.availableDates}
               fullDates={props.fullDates}
+              dateCounts={props.dateCounts}
               selectedDate={props.selectedDate}
               onDateSelect={props.onDateSelect}
               theme={theme}

@@ -12,10 +12,13 @@ import {
   getRegionDates,
   getRegionFullDates,
 } from "../data/flightLoader";
+import type { AirportManifestEntry } from "../data/flightLoader";
 
 interface UseFlightDataReturn {
   allFlights: Flight[];
   airports: string[];
+  /** manifest 的機場目錄（isCore / dates / fullDates），key = ICAO */
+  airportCatalog: Record<string, AirportManifestEntry>;
   selectedAirport: string;
   setSelectedAirport: (icao: string) => void;
   timeRange: { start: number; end: number };
@@ -37,6 +40,7 @@ export function useFlightData(
   const [trackFlights, setTrackFlights] = useState<Flight[]>([]);
   const [airspaceFlights, setAirspaceFlights] = useState<Flight[] | null>(null);
   const [allAirports, setAllAirports] = useState<string[]>([]);
+  const [airportCatalog, setAirportCatalog] = useState<Record<string, AirportManifestEntry>>({});
   const [airspaceDates, setAirspaceDates] = useState<string[]>([]);
   const [regionDatesMap, setRegionDatesMap] = useState<Record<string, string[]>>({});
   const [regionFullDatesMap, setRegionFullDatesMap] = useState<Record<string, string[]>>({});
@@ -52,6 +56,7 @@ export function useFlightData(
     loadManifest().then((m) => {
       manifestRef.current = m;
       setAllAirports(getManifestAirports(m));
+      setAirportCatalog(m.airports);
       // 各 region 日期
       const rdm: Record<string, string[]> = {};
       for (const r of ["TW", "JP", "HK", "KR", "TH", "US", "UK", "world"]) {
@@ -188,6 +193,7 @@ export function useFlightData(
   return {
     allFlights: sourceFlights,
     airports,
+    airportCatalog,
     selectedAirport,
     setSelectedAirport: handleSetAirport,
     timeRange,

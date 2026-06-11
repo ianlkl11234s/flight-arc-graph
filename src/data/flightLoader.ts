@@ -233,8 +233,19 @@ export async function loadTracks(): Promise<Flight[]> {
 
 // ── Manifest ──
 
+export interface AirportManifestEntry {
+  flights: number;
+  gzipBytes: number;
+  /** 是否為主動查詢機場（false/缺 = 被動沾到，資料不完整） */
+  isCore?: boolean;
+  /** 每日（台灣時間）軌跡筆數 { "2026-02-18": 614, ... } */
+  dates?: Record<string, number>;
+  /** 抓「滿」的日期（done ≥ 50 且完成度 ≥ 80%） */
+  fullDates?: string[];
+}
+
 interface TrackManifest {
-  airports: Record<string, { flights: number; gzipBytes: number }>;
+  airports: Record<string, AirportManifestEntry>;
   regions: Record<string, { flights: number; gzipBytes: number }>;
   /** 各 region 有資料的日期（含部分） */
   regionDates?: Record<string, string[]>;
@@ -251,6 +262,21 @@ export function getRegionDates(manifest: TrackManifest, region: string): string[
 /** 取得指定 region 的完整資料日期 */
 export function getRegionFullDates(manifest: TrackManifest, region: string): string[] {
   return manifest.regionFullDates?.[region] ?? [];
+}
+
+/** 取得機場每日軌跡筆數（台灣時間切日；空物件 = manifest 無此資訊） */
+export function getAirportDates(manifest: TrackManifest, icao: string): Record<string, number> {
+  return manifest.airports[icao]?.dates ?? {};
+}
+
+/** 取得機場抓「滿」的日期 */
+export function getAirportFullDates(manifest: TrackManifest, icao: string): string[] {
+  return manifest.airports[icao]?.fullDates ?? [];
+}
+
+/** 機場是否為主動查詢（false = 被動沾到，僅有連到主動機場的航班） */
+export function isAirportCore(manifest: TrackManifest, icao: string): boolean {
+  return manifest.airports[icao]?.isCore ?? false;
 }
 
 let cachedManifest: TrackManifest | null = null;

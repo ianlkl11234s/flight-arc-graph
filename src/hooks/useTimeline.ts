@@ -3,6 +3,8 @@ import { dateToUnixTW } from "../utils/dateUtils";
 
 interface UseTimelineOptions {
   availableDates: string[];
+  /** 優先選用的日期（如該機場的 fullDate）；不給則維持 2026-02-18 */
+  preferredDate?: string;
 }
 
 interface UseTimelineReturn {
@@ -35,9 +37,9 @@ interface UseTimelineReturn {
 
 export function useTimeline({
   availableDates,
+  preferredDate = "2026-02-18",
 }: UseTimelineOptions): UseTimelineReturn {
-  // 初始選 2026-02-18（主要資料日期），fallback 到第一個可用日期
-  const preferredDate = "2026-02-18";
+  // 初始選 preferredDate（預設 2026-02-18 主資料日），fallback 到第一個可用日期
   const initialDate = availableDates.includes(preferredDate)
     ? preferredDate
     : availableDates.length > 0
@@ -108,12 +110,15 @@ export function useTimeline({
     }
   }, [windowStart, windowEnd]);
 
-  // availableDates 改變時，若 selectedDate 不在列表中，選第二個（2/19），fallback 第一個
+  // availableDates 改變時（如切換機場），若 selectedDate 不在列表中，
+  // 優先跳到 preferredDate（該機場的完整資料日），fallback 第一個可用日期
   useEffect(() => {
     if (availableDates.length > 0 && !availableDates.includes(selectedDate)) {
-      setSelectedDateRaw(availableDates.length > 1 ? availableDates[1]! : availableDates[0]!);
+      setSelectedDateRaw(
+        availableDates.includes(preferredDate) ? preferredDate : availableDates[0]!,
+      );
     }
-  }, [availableDates, selectedDate]);
+  }, [availableDates, selectedDate, preferredDate]);
 
   // 動畫循環
   useEffect(() => {

@@ -122,6 +122,7 @@ export default function App() {
   const {
     allFlights,
     airports,
+    airportCatalog,
     selectedAirport,
     setSelectedAirport,
     loading,
@@ -322,13 +323,24 @@ export default function App() {
 
   const regionTitle = REGION_CONFIG[region].title;
 
-  // 可用日期：根據 dataSource + region 從 manifest 取得
+  // 單一機場模式下的目錄資訊（manifest 的 isCore / dates / fullDates）
+  const isAirportScope = dataSource !== "fused" && scope === "airport" && !airportSet;
+  const airportEntry = isAirportScope ? airportCatalog[selectedAirport] : undefined;
+  const airportDateCounts = useMemo(
+    () => (airportEntry?.dates && Object.keys(airportEntry.dates).length > 0 ? airportEntry.dates : null),
+    [airportEntry],
+  );
+
+  // 可用日期：單一機場模式用該機場的日期目錄，region/airspace 模式維持原邏輯
   const availableDates = useMemo(() => {
     const dates = new Set<string>();
 
     if (dataSource === "fused") {
       // 空域快照日期
       for (const d of airspaceDates) dates.add(d);
+    } else if (airportDateCounts) {
+      // 單一機場：manifest 目錄即為權威日期清單
+      return Object.keys(airportDateCounts).sort();
     } else {
       // 航線軌跡：當前 region 的日期
       const regionKey = region === "all" ? "TW" : region;
@@ -336,19 +348,54 @@ export default function App() {
       for (const d of rd) dates.add(d);
     }
 
-    // 也加入已載入航班的日期（fallback）
+    // 也加入已載入航班的日期（fallback）；sanity floor 1e9 擋掉接近 epoch 的壞時間戳
     for (const f of allFlights) {
       const t = f.dep_time || f.path[0]?.[3];
-      if (t && t > 0) {
+      if (t && t > 1e9) {
         const d = new Date(t * 1000 + 8 * 3600_000);
         dates.add(d.toISOString().slice(0, 10));
       }
     }
 
     return [...dates].sort();
-  }, [dataSource, region, airspaceDates, regionDatesMap, allFlights]);
+  }, [dataSource, region, airspaceDates, regionDatesMap, allFlights, airportDateCounts]);
 
-  const timeline = useTimeline({ availableDates });
+  // 完整抓取日期：單一機場用該機場 fullDates，其餘維持 region 邏輯
+  const fullDates = useMemo(() => {
+    if (dataSource === "fused") return airspaceDates;
+    if (isAirportScope) return airportEntry?.fullDates ?? [];
+    return regionFullDatesMap[region === "all" ? "TW" : region] ?? [];
+  }, [dataSource, airspaceDates, isAirportScope, airportEntry, regionFullDatesMap, region]);
+
+  // 預設日期：優先 2026-02-18（主資料日），不在該機場 fullDates 時取第一個 fullDate，
+  // 再 fallback 到該機場筆數最多的日期
+  const preferredDate = useMemo(() => {
+    if (fullDates.includes("2026-02-18")) return "2026-02-18";
+    if (fullDates.length > 0) return fullDates[0]!;
+    if (airportDateCounts) {
+      let best: string | null = null;
+      let bestCount = 0;
+      for (const [d, c] of Object.entries(airportDateCounts)) {
+        if (c > bestCount) { best = d; bestCount = c; }
+      }
+      if (best) return best;
+    }
+    return "2026-02-18";
+  }, [fullDates, airportDateCounts]);
+
+  const timeline = useTimeline({ availableDates, preferredDate });
+
+  // 切換機場時：若目前日期不是新機場的完整資料日，跳到該機場的 preferredDate。
+  // 只在「機場改變」時觸發 —— 使用者手動點部分資料日期不會被蓋掉。
+  const prevAirportRef = useRef(selectedAirport);
+  useEffect(() => {
+    if (prevAirportRef.current === selectedAirport) return;
+    prevAirportRef.current = selectedAirport;
+    if (!isAirportScope) return;
+    if (fullDates.length > 0 && !fullDates.includes(timeline.selectedDate)) {
+      timeline.setSelectedDate(preferredDate);
+    }
+  }, [selectedAirport, isAirportScope, fullDates, preferredDate, timeline]);
   const mapRef = useRef<MapboxMap | null>(null);
   const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode });
   const recorder = useCanvasRecorder({ map: mapRef.current });
@@ -1305,6 +1352,7 @@ export default function App() {
             onTimeWindowChange={setTimeWindow}
             onFlightSelect={setSelectedFlightId}
             airports={airports}
+            airportCatalog={airportCatalog}
             selectedAirport={selectedAirport}
             onAirportChange={selectAirportSingle}
             onLocationJump={(icao) => {
@@ -1353,7 +1401,8 @@ export default function App() {
               });
             }}
             availableDates={availableDates}
-            fullDates={dataSource === "fused" ? airspaceDates : (regionFullDatesMap[region === "all" ? "TW" : region] ?? [])}
+            fullDates={fullDates}
+            dateCounts={airportDateCounts ?? undefined}
             selectedDate={timeline.selectedDate}
             onDateSelect={timeline.setSelectedDate}
             summaryFlights={displayedFlights}
