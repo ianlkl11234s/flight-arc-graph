@@ -1,121 +1,74 @@
 ---
 name: wrap-up
-description: Session 結束後收尾 + 更新 .claude/memory/ 的 skill。當使用者說 /wrap-up、「收工」、「收尾」、「session 結束」、「做完了」、「commit memory」、「整理記憶」時觸發。讀本 session 脈絡 + git log + 現有 memory → 對應更新 9 個 memory 檔 → 產出 diff 給用戶 review → 每檔 atomic commit（prefix memory:）→ 不自動 push。
+description: Session 結束後收尾的 skill。當使用者說 /wrap-up、「收工」、「收尾」、「session 結束」、「做完了」、「整理記憶」時觸發。讀本 session 脈絡 + git log + 現有文件 → 更新三個活的地方（docs/backlog/ 狀態檔、README 覆蓋表、auto-memory）→ 產出 diff 給用戶 review → atomic commit → 不自動 push。
 user_invocable: true
 ---
 
 # /wrap-up — Session 收尾 SOP
 
+> 舊的 `.claude/memory/` 9 檔記憶系統已於 2026-07-08 歸檔至 `docs/archive/claude-memory-2026-04/`，本 skill 不再維護它。
+
 ## 目的
 
-Session 結束時自動：
+Session 結束時：
 1. 分析本次做了什麼、學到什麼、失誤什麼
-2. 將 session insights 寫回 `.claude/memory/` 9 個檔
-3. 每檔獨立 atomic commit，git log 可追記憶演進
+2. 把還沒同步的狀態寫回**三個活的地方**（見下）
+3. 變更以 diff 給用戶 review，確認後 atomic commit
 4. 不 push，保留用戶最後 review 機會
+
+## 三個維護目標
+
+| # | 地方 | 更新條件 | 內容 |
+|---|------|---------|------|
+| 1 | `docs/backlog/` 狀態檔 | 本 session 有進度或新待辦 | `data-fetching-status.md`（接力點、完成項、目標清單）、`refactoring-roadmap.md` 第六節進度表（Phase 狀態、順手做清單） |
+| 2 | README「軌跡資料量（Track Coverage）」表 | **僅當本 session 有抓資料** | region 軌跡數、總筆數、Top 15 機場、最後更新日 — 數字一律以重建後的 `public/tracks/manifest.json` 為準 |
+| 3 | auto-memory | 有值得跨 session 留的事 | 接力點、教訓、用戶偏好 — 交給 Claude 內建的記憶指引處理（不在 repo 內，不進 commit） |
+
+事故紀錄（現象/根因/對策）另有去處：長文寫 `.claude/pitfalls/`。
 
 ## 執行流程（5 階段）
 
 ### Stage 1: Gather
 
-**平行執行**（三個同時發 Bash / Read）：
+**平行執行**：
 
-1. Read `.claude/memory/` 全部 9 檔，掌握現狀
-2. `git log --oneline origin/master..HEAD`（本地未 push 的 commit）+ `git log -20 --oneline`（最近 20 次）
-3. `git status`（本 session 未 commit 變動）
+1. `git log --oneline origin/master..HEAD`（本地未 push）+ `git log -15 --oneline` + `git status`
+2. Read `docs/backlog/data-fetching-status.md` 開頭（接力點）與 `refactoring-roadmap.md` 第六節（進度表）
+3. 若本 session 有抓資料：Read README 覆蓋表 + `public/tracks/manifest.json` 摘要
 
-**然後**回顧本 session 對話：
-- 用戶要求了什麼？
-- 做了哪些動作？（讀哪些檔、改哪些檔、跑哪些指令）
-- 哪裡順利、哪裡卡住、哪些指令失敗過？
-- 用戶有糾正過你嗎？（次數 / 原因）
+**然後**回顧本 session 對話：用戶要求了什麼、做了哪些動作、哪裡卡住、有沒有被糾正。
 
 ### Stage 2: Analyze
 
-將本 session 事件分類到對應 memory 檔：
+事件分類：
 
 | 事件類型 | 寫到哪 |
 |---|---|
-| 做完某功能 / 抓完某資料 | STATUS + DATA_SCOPE |
-| 產生新待辦 idea | BACKLOG（新增 P1/P2/P3） |
-| 關閉舊待辦 | BACKLOG（劃掉 + 搬到「已完成」區） |
-| 新決策 / 新預設 | PRINCIPLES |
-| 重複性流程定型（做過 ≥2 次） | PLAYBOOKS |
-| 遇到新術語 / 新代碼 | GLOSSARY |
-| 遇到 bug / 意外並修好 | INCIDENTS（append；長篇放 `.claude/pitfalls/`） |
-| 反省「下次怎麼改」 | REFLECTIONS（append） |
+| 抓完一輪資料 | README 覆蓋表 + data-fetching-status.md（移完成項、記新接力點） |
+| 重構 / 功能有進度 | refactoring-roadmap.md 進度表（或對應 backlog 檔） |
+| 新待辦 idea | docs/backlog/ 對應檔（抓資料類 → data-fetching-status；架構類 → refactoring-roadmap） |
+| 踩坑並修好 | `.claude/pitfalls/` 新檔（現象/根因/對策） |
+| 接力點 / 教訓 / 偏好 | auto-memory（內建記憶指引） |
 
-**寫回規則**：
-- `INCIDENTS` / `REFLECTIONS` **只 append**，不改舊條目
-- `PRINCIPLES` 衝突時：新原則覆蓋舊，舊的搬到 `INCIDENTS` 記錄演進
-- `STATUS` 每次**重寫**（只保留當下狀態）
-- `DATA_SCOPE` 數字改動時，**先 Grep / `wc -l` 驗證**不單信對話摘要
+**寫回規則**：數字先驗證（`wc -l`、manifest），不單信對話摘要。
 
 ### Stage 3: Draft
 
-產出 **總表**給用戶一眼看全：
-
-```
-| 檔案 | 變動類型 | 摘要 |
-|---|---|---|
-| STATUS.md | rewrite | 更新到「等待 Zeabur pull」 |
-| DATA_SCOPE.md | update | 倫敦 10 座補齊、UK region 3,358 |
-| INCIDENTS.md | append ×3 | EGLL 誤判 / bash-not-found / UK 漏加 |
-| BACKLOG.md | close 1 + add 2 | 關 B??？、加 B00?/B00? |
-```
-
-然後**每個變動 show 實際 diff**（Edit 前的 old_string / new_string，或 Write 前的完整草稿）。
+產出**總表**（檔案 × 變動類型 × 摘要）給用戶一眼看全，然後每個變動 show 實際 diff。
 
 ### Stage 4: Confirm
 
-問用戶：
-1. 全部 diff 採用？
-2. 要修改哪幾個？
-3. 要 skip 哪些？
-
-**等用戶回覆才進 Stage 5**，不自作主張。
+問用戶：全採用 / 修哪幾個 / skip 哪些。**等用戶回覆才進 Stage 5**。
 
 ### Stage 5: Atomic Commit
 
-每個檔案一個 commit，訊息格式：
-
-```
-memory: <動詞> <檔名> (<1 句摘要>)
-
-<必要時：更詳細的原因 / 對應的 session 事件>
-
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
-```
-
-**範例**：
-```
-memory: update STATUS (完成倫敦 10 座補抓)
-memory: append INCIDENTS (EGLL 誤判 + bash/sh + UK 漏加)
-memory: close BACKLOG B003 + add B006 (pull 腳本動態解析 region)
-memory: reflect REFLECTIONS (今晚 3 條 next-time rules)
-```
-
-commit 順序建議：**STATUS 最後**（其他檔都 commit 完再更新 STATUS，避免 STATUS 引用到還沒 commit 的變動）。
-
-完成後：
-- `git status` 確認 tree clean
-- **提醒用戶**：「要 push 嗎？`git push origin master`」
-- **不要自己 push**
+- 一個主題一個 commit（docs 更新可合為一個 `docs:` commit；程式修改照原本慣例分開）
+- Commit 前若動到 TS 檔：`npm run typecheck`
+- 完成後 `git status` 確認 tree clean，**提醒用戶**「要 push 嗎？`git push origin master`」，**不要自己 push**
 
 ## 注意事項
 
-- **Read first**：Edit 前一定先 Read 目標檔，避免 old_string 不精確
-- **驗證數字**：DATA_SCOPE / STATUS 的航班數、region size，用 `wc -l` / Grep 確認，不單信對話摘要
-- **Pre-commit hook 失敗**：fix 後**再開新 commit**，不要 amend
-- **不修 CLAUDE.md**：那是規則層，`/wrap-up` 不動（除非用戶明確要求）
-- **不跨 session 臆測**：只根據「本 session 對話 + git log + 現有 memory」三者交叉驗證
-- **若本 session 沒什麼好記**（純閒聊 / 讀檔不動作）：跟用戶確認「看起來沒需要 wrap-up，要強制留紀錄嗎？」
-
-## Skill 自身的反省
-
-這個 skill 也會被反省。若某次 `/wrap-up` 漏抓重要事件、或 commit 訊息風格不理想，應：
-1. 在本次 REFLECTIONS 記下
-2. 回頭修改本 SKILL.md（加新規則）
-3. 下次 `/wrap-up` 時按新規則執行
-
-**Skill 自我優化 = 記憶系統持續進化的核心**。
+- **Read first**：Edit 前先 Read 目標檔
+- **不跨 session 臆測**：只根據本 session 對話 + git log + 現有文件
+- **auto-memory 不進 commit**：它不在 repo 內，Stage 5 只 commit repo 檔案
+- **若本 session 沒什麼好記**（純閒聊 / 只讀不改）：跟用戶確認「看起來沒需要 wrap-up，要強制留紀錄嗎？」

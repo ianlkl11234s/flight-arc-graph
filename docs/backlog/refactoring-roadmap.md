@@ -168,6 +168,7 @@ tracks/airports/RCTP/index.json         （該機場的日期索引）
 | 項目 | 內容 | 成本 |
 |------|------|------|
 | .gitignore 修正 | `scripts/*.log` 一行涵蓋所有 log（E3） | 極低 |
+| pull-from-s3.sh region 動態解析 | `for R in ...` hardcode 清單改從 manifest `regions` 解析，避免新 region 漏拉（源自舊 memory BACKLOG B006；UK 曾漏加，2026-07-08 盤點又發現 manifest 已有 CN 但腳本清單缺 CN） | 低 |
 | scripts/ 整理 | 一次性腳本搬 `scripts/oneoff/`；fetch 系列抽共用 FR24 fetcher | 低 |
 | localStorage 統一 | `storageManager.ts` 統一 key 前綴與版本 | 低 |
 | 刪除或啟用 BatchedTrails.ts | 孤兒檔二選一：接上（trail 多時省 draw call）或刪掉 | 低 |

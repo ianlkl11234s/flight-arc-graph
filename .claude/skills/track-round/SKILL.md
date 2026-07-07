@@ -72,6 +72,17 @@ npx tsx scripts/split-tracks.ts --manifest-only
 
 - 掃 `airports/*.jsonl` 做 dedupe + 產生 `regions/*.jsonl` + `manifest.json`
 - `--manifest-only` 不重寫 region 檔（regions 沿用既有值）；有新增 region 機場時要跑完整版
+- ⚠️ **產出新 region 時**：`scripts/pull-from-s3.sh` 的 `for R in ...` 是 hardcode 清單，**必須同步加上新 region**，否則 Zeabur 拉不到（UK、CN 都曾漏加）
+
+## Step 3.5: 新機場 UI 三層同步（僅當這輪有「新」主動機場）
+
+新機場群要在 UI 完整顯示，**資料 / UI / 邊界**三層缺一不可，缺了會像「沒抓到」：
+
+1. **資料層**：Step 1-3 已完成（`public/tracks/airports/*.jsonl`）
+2. **UI 層**：`src/map/cameraPresets.ts` 加 `AIRPORT_INFO` + `CAMERA_PRESETS`（缺了機場 dropdown 不顯示）；新地區記得更新 overview preset
+3. **邊界層**：`npx tsx scripts/fetch-airport-boundaries.ts --icao A,B,C` 更新 `public/airports.geojson`（找不到 aerodrome polygon 會自動 fallback 成 runway-buffer 矩形；腳本走 curl，勿改回 Node fetch — 對 Overpass 會 ETIMEDOUT）
+
+改完跑 `npm run typecheck` 再 commit。
 
 ## Step 4: 同步文件（必做，三處）
 
@@ -87,8 +98,8 @@ npx tsx scripts/split-tracks.ts --manifest-only
 # 增量上傳（對照 scripts/upload-state.json 的 mtime；--force 全部重傳）
 npm run s3:upload
 
-# Zeabur 終端機執行
-bash scripts/pull-from-s3.sh
+# Zeabur 終端機執行（Alpine 容器無 bash 且 WORKDIR=/，須 sh + 絕對路徑）
+sh /app/scripts/pull-from-s3.sh
 ```
 
 軌跡資料**不進 git**，S3 路徑 `migu-gis-data-collector/flight-arc/`。

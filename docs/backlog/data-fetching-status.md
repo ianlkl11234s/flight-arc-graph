@@ -304,6 +304,7 @@ npx tsx scripts/fetch-tracks.ts  # 從頭照清單跑
 - [ ] 美國西岸（KLAX/KSFO/KSEA）— 被動
 - [ ] 印度主場（VABB 孟買/VIDP 德里）— 被動
 - [ ] 加拿大（CYYZ 多倫多/CYVR 溫哥華）— 完全空白
+- [ ] 機場 OSM 邊界補齊 — `public/airports.geojson` 目前 107 座 vs JSONL 1,400+ 座；用 `scripts/fetch-airport-boundaries.ts --icao ...` 批次補（找不到 aerodrome polygon 會自動 runway-buffer fallback），可考慮加 `--missing` 模式對所有 no-polygon 機場全面補（源自舊 memory BACKLOG B008/B009，2026-04-23）
 
 ---
 

@@ -76,7 +76,7 @@ echo "  done: total=${COUNT} fetched=${FETCHED} skipped=${SKIPPED} failed=${FAIL
 echo ""
 echo "[3/4] Tracks regions..."
 # regions 強制重抓（容量小、且常變動）
-for R in TW JP HK KR TH US UK other; do
+for R in TW JP HK KR TH US UK CN other; do
   DST="${DATA_DIR}/tracks/regions/${R}.jsonl"
   rm -f "$DST"
   if fetch "${S3_BASE}/tracks/regions/${R}.jsonl" "$DST"; then

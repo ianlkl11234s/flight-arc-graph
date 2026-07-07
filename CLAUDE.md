@@ -63,9 +63,11 @@ npm run typecheck
 
 # 2. Push 後 Zeabur 自動 build
 
-# 3. Zeabur 終端機拉資料
-bash scripts/pull-from-s3.sh
+# 3. Zeabur 終端機拉資料（Alpine 容器無 bash 且 WORKDIR=/，須 sh + 絕對路徑）
+sh /app/scripts/pull-from-s3.sh
 ```
+
+> ⚠️ Region 清單分散兩處 hardcode：`split-tracks.ts`（產出）與 `pull-from-s3.sh` 的 `for R in ...`（消費）。新增 region 時兩邊都要同步改（UK、CN 都曾漏加）。
 
 ## 時區
 
