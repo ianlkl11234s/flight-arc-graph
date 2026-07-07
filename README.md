@@ -396,11 +396,10 @@ Flight Arc/
 │   ├── fetch-flights.ts               # 航班清單擷取（FR24 API）
 │   ├── fetch-tracks.ts                # 飛行軌跡擷取（--airports filter，含完整 metadata）
 │   ├── split-tracks.ts                # 拆分為 per-airport JSONL
-│   ├── backfill-metadata.ts           # 純本地 JOIN flight-list.json → JSONL 補齊欄位
 │   ├── fetch-airport-boundaries.ts    # OSM 機場邊界下載
-│   ├── backup-to-s3.ts               # S3 備份上傳
-│   ├── upload-to-s3.ts               # S3 上傳（按日期 + manifest）
-│   └── fuse-collector-data.ts         # 合併多源資料
+│   ├── upload-split-to-s3.ts          # S3 上傳（per-airport JSONL + manifest）
+│   ├── fuse-collector-data.ts         # 合併多源資料
+│   └── oneoff/                        # 一次性/歷史腳本（backfill-metadata、backup-to-s3 等）
 ├── src/
 │   ├── App.tsx                        # 主應用 + 狀態管理
 │   ├── types/index.ts                 # 型別定義（Region, Scope 等）
@@ -518,7 +517,7 @@ npx tsx scripts/fetch-airport-boundaries.ts
 npx tsx scripts/upload-split-to-s3.ts
 
 # Step 6: 備份原始資料到 S3
-npx tsx scripts/backup-to-s3.ts
+npx tsx scripts/oneoff/backup-to-s3.ts
 
 # Zeabur: 從 S3 拉資料到 /data volume
 bash scripts/pull-from-s3.sh

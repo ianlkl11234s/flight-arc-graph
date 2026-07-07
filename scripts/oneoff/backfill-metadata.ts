@@ -7,8 +7,8 @@
  * 純本地 JOIN，不打 FR24 API，不花 credits。
  *
  * Usage:
- *   npx tsx scripts/backfill-metadata.ts --dry-run   # 只統計，不寫檔
- *   npx tsx scripts/backfill-metadata.ts             # 實際寫回
+ *   npx tsx scripts/oneoff/backfill-metadata.ts --dry-run   # 只統計，不寫檔
+ *   npx tsx scripts/oneoff/backfill-metadata.ts             # 實際寫回
  */
 
 import {
@@ -22,7 +22,7 @@ import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..");
+const ROOT = resolve(__dirname, "../..");
 const FLIGHT_LIST = resolve(ROOT, "scripts/flight-list.json");
 const AIRPORTS_DIR = resolve(ROOT, "public/tracks/airports");
 

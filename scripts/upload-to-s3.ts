@@ -1,7 +1,10 @@
 /**
+ * ⚠️ DEPRECATED：已由 upload-split-to-s3.ts 取代（npm run s3:upload 現指向該檔）。
+ * 保留原因：歷史 monolithic 格式（tracks/YYYY/MM/DD/data.json）的上傳邏輯參考。
+ *
  * 上傳航班資料到 S3 flight-arc/ 資料夾
  *
- * 用法：
+ * 用法（舊）：
  *   npm run s3:upload                    # 上傳兩種資料（若存在）
  *   npm run s3:upload -- --tracks        # 只上傳 FR24 完整軌跡
  *   npm run s3:upload -- --airspace      # 只上傳 AirSpace Scan

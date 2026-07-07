@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "fetch:flights": "tsx scripts/fetch-flights.ts",
     "fetch:tracks": "tsx scripts/fetch-tracks.ts",
-    "s3:upload": "tsx scripts/upload-to-s3.ts",
+    "s3:upload": "tsx scripts/upload-split-to-s3.ts",
     "fuse:data": "tsx scripts/fuse-collector-data.ts",
     "video:compose": "bash scripts/compose-video.sh",
     "video:chrome": "open -na 'Google Chrome' --args --window-size=1920,1080 --force-device-scale-factor=1",

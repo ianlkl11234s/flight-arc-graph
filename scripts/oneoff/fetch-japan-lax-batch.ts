@@ -10,9 +10,9 @@
  *   probe   : 只抓一個小窗口的 summary，印出航線/航司/機型密度與花費推估（不抓 tracks）
  *
  * 使用：
- *   npx tsx scripts/fetch-japan-lax-batch.ts --mode probe
- *   npx tsx scripts/fetch-japan-lax-batch.ts --mode summary
- *   npx tsx scripts/fetch-japan-lax-batch.ts --mode tracks
+ *   npx tsx scripts/oneoff/fetch-japan-lax-batch.ts --mode probe
+ *   npx tsx scripts/oneoff/fetch-japan-lax-batch.ts --mode summary
+ *   npx tsx scripts/oneoff/fetch-japan-lax-batch.ts --mode tracks
  *   （加 --dry-run 只算數量不打 tracks API）
  *
  * 計費（官方）：summary light 歷史 ≤30天 = 2 credits/班；flight-tracks = 40 credits/班。
@@ -32,7 +32,7 @@ dotenv.config();
 
 // ── 設定 ──────────────────────────────────────────────
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..");
+const ROOT = resolve(__dirname, "../..");
 
 const BATCH = "2026-06_jp-lax";
 const API_BASE = "https://fr24api.flightradar24.com/api";

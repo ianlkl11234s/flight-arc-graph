@@ -10,7 +10,7 @@
 
 - [x] `fetch-tracks.ts` 擴充 `FlightOutput` 存 7 個 FR24 metadata
 - [x] `src/types/index.ts` `Flight` interface 加 7 個 optional 欄位
-- [x] `scripts/backfill-metadata.ts` 把 flight-list.json JOIN 回歷史 JSONL
+- [x] `scripts/oneoff/backfill-metadata.ts` 把 flight-list.json JOIN 回歷史 JSONL
 - [x] 1,049 檔 / 56,469 行全數補齊（0 miss，零 API credits）
 - [x] `npm run typecheck` 通過
 

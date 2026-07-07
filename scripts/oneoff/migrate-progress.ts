@@ -9,7 +9,7 @@
  * public/tracks/airports/{ICAO}.jsonl 中，缺漏則 append 補上（不丟資料）。
  *
  * Usage:
- *   NODE_OPTIONS='--max-old-space-size=8192' npx tsx scripts/migrate-progress.ts
+ *   NODE_OPTIONS='--max-old-space-size=8192' npx tsx scripts/oneoff/migrate-progress.ts
  */
 
 import {
@@ -25,7 +25,7 @@ import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..");
+const ROOT = resolve(__dirname, "../..");
 const PROGRESS_FILE = resolve(ROOT, "scripts/track-progress.json");
 const BACKUP_FILE = resolve(ROOT, "scripts/track-progress.json.bak");
 const AIRPORTS_DIR = resolve(ROOT, "public/tracks/airports");

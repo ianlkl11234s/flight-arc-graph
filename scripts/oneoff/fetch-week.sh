@@ -7,11 +7,11 @@
 #   Step B：新增 11 座機場，從 2/18 開始抓完整 7 天
 #
 # 使用方式：
-#   chmod +x scripts/fetch-week.sh
-#   ./scripts/fetch-week.sh
+#   chmod +x scripts/oneoff/fetch-week.sh
+#   ./scripts/oneoff/fetch-week.sh
 
 set -e
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
 # ── 原本 11 座機場（2/18–2/20 已抓過，只補剩下 4 天）────────────
 ORIGINAL="RCTP,RCSS,RCKH,RCNN,RCBS,RCFG,RCQC,RCMQ,RCYU,RCFN,RCKU"

@@ -37,8 +37,8 @@ split-tracks.ts
 
 ## Migration 執行紀錄
 
-- 腳本：`scripts/migrate-progress.ts`
-- 執行命令：`NODE_OPTIONS='--max-old-space-size=8192' npx tsx scripts/migrate-progress.ts`
+- 腳本：`scripts/oneoff/migrate-progress.ts`
+- 執行命令：`NODE_OPTIONS='--max-old-space-size=8192' npx tsx scripts/oneoff/migrate-progress.ts`
 - 結果：
   - `completed`: 15,539 筆 → `track-done.ndjson` (137 KB)
   - `failed`: 23 筆 → `track-failed.ndjson`

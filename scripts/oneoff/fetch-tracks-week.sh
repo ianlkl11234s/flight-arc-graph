@@ -12,10 +12,10 @@
 #   2/24 → 待抓
 #
 # 使用方式：
-#   ./scripts/fetch-tracks-week.sh
+#   ./scripts/oneoff/fetch-tracks-week.sh
 
 set -e
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
 echo "========================================"
 echo "  fetch-tracks-week.sh"
