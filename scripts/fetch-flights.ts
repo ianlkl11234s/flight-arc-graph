@@ -1,5 +1,5 @@
 /**
- * Step 1: 查詢台灣機場過去 N 天的航班清單（Flight Summary Light）
+ * Step 1: 查詢機場航班清單（Flight Summary Light）
  *
  * Essential 方案限制：
  *   - Response limit: 300 筆/次
@@ -7,17 +7,29 @@
  *   - Historic: 2 年
  *   - Monthly credits: 666,000
  *
- * 分頁策略：sort=asc → 用最後一筆 datetime 作為下次查詢起點
- * 支援中斷續接：已完成的機場會自動跳過
- *
  * 使用方式：
- *   npx tsx scripts/fetch-flights.ts                        # 預設抓最近 3 天
+ *   npx tsx scripts/fetch-flights.ts                        # 預設抓台灣 + 最近 3 天
  *   npx tsx scripts/fetch-flights.ts --from 2026-02-20 --to 2026-02-24
+ *   npx tsx scripts/fetch-flights.ts --airports KSEA,ZBAA --direction outbound
+ *   npx tsx scripts/fetch-flights.ts --airports-file scripts/top1000-airports.json --batch-size 100
+ *
+ * 參數：
+ *   --from / --to                日期範圍（YYYY-MM-DD 或 ISO）
+ *   --airports A,B,C             覆蓋預設機場
+ *   --airports-file path         讀 JSON 清單（[{ icao }] 或 [ICAO]）
+ *   --direction outbound|inbound|both   預設 outbound（單向、零重複命中）
+ *   --batch-size N               跑 N 座機場後自動停（0 = 不停，預設 0）
+ *   --range A-B                  只跑清單中第 A~B 座（1-based 含頭含尾）
  */
 
 import dotenv from "dotenv";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { resolve, dirname, join } from "path";
+import { fileURLToPath } from "url";
 dotenv.config();
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, "..");
 
 // ── 設定 ──────────────────────────────────────────────
 
@@ -54,36 +66,140 @@ const API_BASE = "https://fr24api.flightradar24.com/api";
 const PAGE_SIZE = 300;         // Essential 方案上限
 const DELAY_MS = 2200;         // 2.2s → 安全低於 30 次/分鐘
 const MAX_RETRIES = 5;
-const OUTPUT_FILE = "scripts/flight-list.json";
+const OUTPUT_FILE = resolve(ROOT, "scripts/flight-list.json");
+const FLIGHTS_DIR = resolve(ROOT, "scripts/flights"); // 新格式: {ICAO}/{YYYY-MM-DD}.json
+
+type Direction = "outbound" | "inbound" | "both";
 
 // ── CLI 參數解析 ───────────────────────────────────────
 
-function parseArgs(): { from: Date; to: Date; sessionKey: string; airports: string[] } {
+interface ParsedArgs {
+  from: Date;
+  to: Date;
+  sessionKey: string;
+  airports: string[];
+  direction: Direction;
+  batchSize: number;          // 0 = 不停
+  range: [number, number] | null; // 1-based inclusive
+}
+
+function parseArgs(): ParsedArgs {
   const args = process.argv.slice(2);
-  const fromIdx = args.indexOf("--from");
-  const toIdx = args.indexOf("--to");
-  const airportsIdx = args.indexOf("--airports");
+  const get = (k: string) => {
+    const i = args.indexOf(k);
+    return i !== -1 ? args[i + 1] : undefined;
+  };
 
-  // --airports RCTP,RCSS,... → 覆蓋預設機場清單
-  const airports = airportsIdx !== -1
-    ? args[airportsIdx + 1]!.split(",").map((s) => s.trim().toUpperCase())
-    : TAIWAN_AIRPORTS;
+  // ── 機場清單 ──
+  let airports: string[];
+  const apFile = get("--airports-file");
+  const apInline = get("--airports");
+  if (apFile) {
+    const raw = JSON.parse(readFileSync(resolve(ROOT, apFile), "utf-8"));
+    airports = (Array.isArray(raw) ? raw : raw.airports ?? []).map((x: unknown) =>
+      typeof x === "string" ? x.toUpperCase() : String((x as { icao?: string }).icao || "").toUpperCase(),
+    ).filter((s: string) => s);
+  } else if (apInline) {
+    airports = apInline.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+  } else {
+    airports = TAIWAN_AIRPORTS;
+  }
 
-  if (fromIdx !== -1 && toIdx !== -1) {
-    const fromStr = args[fromIdx + 1]!;
-    const toStr = args[toIdx + 1]!;
+  // ── 方向 ──
+  const dirRaw = (get("--direction") || "outbound").toLowerCase();
+  if (dirRaw !== "outbound" && dirRaw !== "inbound" && dirRaw !== "both") {
+    console.error("❌ --direction 必須是 outbound / inbound / both");
+    process.exit(1);
+  }
+  const direction = dirRaw as Direction;
+
+  // ── batch / range ──
+  const batchSize = parseInt(get("--batch-size") || "0", 10) || 0;
+  let range: [number, number] | null = null;
+  const rangeRaw = get("--range");
+  if (rangeRaw) {
+    const m = rangeRaw.match(/^(\d+)-(\d+)$/);
+    if (!m) { console.error("❌ --range 格式錯誤，需 A-B"); process.exit(1); }
+    range = [parseInt(m[1]!, 10), parseInt(m[2]!, 10)];
+  }
+
+  // ── 日期範圍 ──
+  const fromStr = get("--from");
+  const toStr = get("--to");
+  if (fromStr && toStr) {
     const from = new Date(fromStr.includes("T") ? fromStr : `${fromStr}T00:00:00Z`);
     const to = new Date(toStr.includes("T") ? toStr : `${toStr}T23:59:59Z`);
     if (isNaN(from.getTime()) || isNaN(to.getTime())) {
-      console.error("❌ --from / --to 格式錯誤，請使用 YYYY-MM-DD");
-      process.exit(1);
+      console.error("❌ --from / --to 格式錯誤"); process.exit(1);
     }
-    return { from, to, sessionKey: `${fromStr}:${toStr}`, airports };
+    return { from, to, sessionKey: `${fromStr}:${toStr}`, airports, direction, batchSize, range };
   }
 
   const now = new Date();
   const from = new Date(now.getTime() - DAYS_BACK * 24 * 60 * 60 * 1000);
-  return { from, to: now, sessionKey: "default", airports };
+  return { from, to: now, sessionKey: "default", airports, direction, batchSize, range };
+}
+
+// ── 新格式儲存：scripts/flights/{ICAO}/{YYYY-MM-DD}.json ──
+// 用日期範圍的起始日當 key（同一 session 跨日就會多檔，但目前都是單日）
+function newFormatPaths(airport: string, from: Date, to: Date): string[] {
+  // 列出 from~to 涵蓋的所有日期（UTC 切日）
+  const dates: string[] = [];
+  const start = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()));
+  const end = to.getTime();
+  let cur = start.getTime();
+  while (cur <= end) {
+    const d = new Date(cur);
+    dates.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`);
+    cur += 24 * 3600 * 1000;
+  }
+  return dates.map((dt) => join(FLIGHTS_DIR, airport, `${dt}.json`));
+}
+
+function isAirportDone(airport: string, from: Date, to: Date): boolean {
+  // 新格式存在 → 視為完成（任一覆蓋日的檔案存在即可，因為主要用例是「單日範圍」）
+  return newFormatPaths(airport, from, to).some((p) => existsSync(p));
+}
+
+function writeNewFormat(
+  airport: string,
+  from: Date,
+  to: Date,
+  direction: Direction,
+  flights: FR24FlightSummary[],
+) {
+  // 把 flights 按 datetime_takeoff 的 UTC 日期分桶
+  const buckets = new Map<string, FR24FlightSummary[]>();
+  for (const f of flights) {
+    const dt = (f.datetime_takeoff || f.first_seen || "").slice(0, 10);
+    if (!dt) continue;
+    if (!buckets.has(dt)) buckets.set(dt, []);
+    buckets.get(dt)!.push(f);
+  }
+
+  // 也要為「該機場本次 sessionKey 涵蓋的日期」開空檔（避免下次重抓）
+  const sessionDates = newFormatPaths(airport, from, to).map((p) => {
+    const m = p.match(/(\d{4}-\d{2}-\d{2})\.json$/);
+    return m ? m[1]! : null;
+  }).filter((x): x is string => x !== null);
+  for (const dt of sessionDates) {
+    if (!buckets.has(dt)) buckets.set(dt, []);
+  }
+
+  for (const [dt, arr] of buckets) {
+    const dir = join(FLIGHTS_DIR, airport);
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    const path = join(dir, `${dt}.json`);
+    const payload = {
+      airport,
+      date: dt,
+      direction,
+      fetched_at: new Date().toISOString(),
+      count: arr.length,
+      flights: arr,
+    };
+    writeFileSync(path, JSON.stringify(payload, null, 2));
+  }
 }
 
 // ── 工具 ──────────────────────────────────────────────
@@ -126,14 +242,19 @@ async function fetchPage(
   airport: string,
   from: string,
   to: string,
+  direction: Direction,
 ): Promise<FR24FlightSummary[]> {
   const token = process.env.FR24_API_TOKEN;
   if (!token) throw new Error("FR24_API_TOKEN not found in .env");
 
+  // direction 加前綴 → 控制是否 dep/arr 都計
+  const airportParam =
+    direction === "both" ? airport : `${direction}:${airport}`;
+
   const params = new URLSearchParams({
     flight_datetime_from: from,
     flight_datetime_to: to,
-    "airports[]": airport,
+    "airports[]": airportParam,
     limit: String(PAGE_SIZE),
     sort: "asc",
   });
@@ -175,14 +296,17 @@ async function fetchAirportFlights(
   airport: string,
   from: Date,
   to: Date,
-): Promise<FR24FlightSummary[]> {
+  direction: Direction,
+): Promise<{ flights: FR24FlightSummary[]; pages: number }> {
   const allPages: FR24FlightSummary[] = [];
   let cursor = toISO(from);
   const endStr = toISO(to);
   let page = 1;
+  let pagesUsed = 0;
 
   while (true) {
-    const results = await fetchPage(airport, cursor, endStr);
+    const results = await fetchPage(airport, cursor, endStr, direction);
+    pagesUsed++;
     allPages.push(...results);
 
     process.stdout.write(`[p${page}:${results.length}] `);
@@ -207,7 +331,7 @@ async function fetchAirportFlights(
     await sleep(DELAY_MS);
   }
 
-  return allPages;
+  return { flights: allPages, pages: pagesUsed };
 }
 
 // ── 進度管理 ──────────────────────────────────────────
@@ -277,94 +401,127 @@ async function main() {
   console.log("=== FR24 Flight Summary - Step 1 ===");
   console.log("Essential 方案：300 筆/次, 30 次/分鐘\n");
 
-  const { from, to, sessionKey, airports } = parseArgs();
+  const { from, to, sessionKey, airports, direction, batchSize, range } = parseArgs();
   console.log(`時間範圍: ${toISO(from)} → ${toISO(to)}`);
-  if (sessionKey !== "default") console.log(`Session: ${sessionKey}`);
-  console.log(`機場: ${airports.join(", ")}\n`);
+  console.log(`方向    : ${direction}${direction === "outbound" ? "（單向，無重複命中）" : ""}`);
+  if (sessionKey !== "default") console.log(`Session : ${sessionKey}`);
+
+  // ── 套用 range ──
+  let targetAirports = airports;
+  if (range) {
+    const [a, b] = range;
+    targetAirports = airports.slice(a - 1, b);
+    console.log(`Range   : 第 ${a}~${b} 座 / ${airports.length} 總座`);
+  }
+  console.log(`機場數  : ${targetAirports.length}${targetAirports.length <= 30 ? ` (${targetAirports.join(", ")})` : ""}`);
+  if (batchSize > 0) console.log(`Batch   : ${batchSize} 座後自動停\n`);
+  else console.log();
 
   const { flights: allFlights, completed: completedAirports } = loadProgress(sessionKey);
-
   if (completedAirports.size > 0) {
-    console.log(
-      `📂 載入進度: ${allFlights.size} 筆航班（累計）, ${completedAirports.size}/${airports.length} 座機場（本次）\n`,
-    );
+    console.log(`📂 legacy 進度: ${allFlights.size} 筆航班（累計）, ${completedAirports.size} 座（舊 sessionKey 完成）\n`);
   }
 
-  const stats: { airport: string; total: number; new: number }[] = [];
+  const stats: { airport: string; total: number; new: number; pages: number; est_pages: number }[] = [];
+  let batchProcessed = 0;
+  let stoppedByBatch = false;
+  let remainingAfterStop = 0;
 
-  for (const airport of airports) {
+  for (let i = 0; i < targetAirports.length; i++) {
+    const airport = targetAirports[i]!;
     const sessionAirportKey = `${airport}:${sessionKey}`;
+
+    // 新格式檢查（檔案存在 = 已完成）
+    if (isAirportDone(airport, from, to)) {
+      console.log(`[${i + 1}/${targetAirports.length}] ${airport} ✅ 新檔已存在，跳過`);
+      continue;
+    }
+    // legacy 進度檢查（向下相容）
     if (completedAirports.has(sessionAirportKey)) {
-      console.log(`${airport} ✅ 已完成，跳過`);
+      console.log(`[${i + 1}/${targetAirports.length}] ${airport} ✅ legacy 完成，跳過`);
       continue;
     }
 
-    process.stdout.write(`${airport} `);
+    process.stdout.write(`[${i + 1}/${targetAirports.length}] ${airport} `);
 
     try {
-      const flights = await fetchAirportFlights(airport, from, to);
+      const { flights, pages } = await fetchAirportFlights(airport, from, to, direction);
       let newCount = 0;
-
       for (const f of flights) {
         if (!allFlights.has(f.fr24_id)) {
           allFlights.set(f.fr24_id, f);
           newCount++;
         }
       }
+      console.log(`→ ${flights.length} 筆 / ${pages} pages（全域新增 ${newCount}）`);
+      stats.push({ airport, total: flights.length, new: newCount, pages, est_pages: Math.ceil(flights.length / PAGE_SIZE) });
 
-      console.log(`→ ${flights.length} 筆（新增 ${newCount}）`);
-      stats.push({ airport, total: flights.length, new: newCount });
+      // 寫新格式（authoritative）
+      writeNewFormat(airport, from, to, direction, flights);
+
+      // 同時寫 legacy（給 fetch-tracks 用，過渡期保留）
       completedAirports.add(sessionAirportKey);
       saveProgress(allFlights, completedAirports, sessionKey);
+
+      batchProcessed++;
+      if (batchSize > 0 && batchProcessed >= batchSize) {
+        stoppedByBatch = true;
+        remainingAfterStop = targetAirports.length - i - 1;
+        console.log(`\n🛑 已完成本批 ${batchSize} 座，自動停下對帳。`);
+        break;
+      }
     } catch (err) {
       console.log(`→ ❌ ${(err as Error).message}`);
-      stats.push({ airport, total: -1, new: 0 });
+      stats.push({ airport, total: -1, new: 0, pages: 0, est_pages: 0 });
     }
 
     await sleep(DELAY_MS);
   }
 
-  // ── 統計 ──
-  console.log("\n=== 統計 ===\n");
-  if (stats.length > 0) {
-    console.log("機場       | 筆數     | 新增");
-    console.log("-----------|----------|------");
-    for (const s of stats) {
-      const ap = s.airport.padEnd(10);
-      const tot = s.total === -1 ? "ERR".padStart(8) : String(s.total).padStart(8);
-      console.log(`${ap} | ${tot} | ${String(s.new).padStart(4)}`);
-    }
-  }
-
-  const done = completedAirports.size;
-  console.log(`\n進度: ${done}/${airports.length} 座機場（本次）`);
-  console.log(`不重複航班（累計）: ${allFlights.size} 筆`);
-  console.log(`API 請求次數: ${totalRequests}`);
-
-  // ── 排序 + Credits 預估 ──
+  // ── 統計 + 對帳表 ──
+  console.log("\n=== 統計（本批）===\n");
   const validStats = stats.filter((s) => s.total !== -1);
+  const errCount = stats.length - validStats.length;
+
   if (validStats.length > 0) {
-    console.log("\n--- 本次依航班數排序 ---");
+    console.log("排名  機場    航班   pages  est  diff");
+    console.log("---  ------  -----  -----  ---  ----");
     validStats
+      .slice()
       .sort((a, b) => b.total - a.total)
       .forEach((s, i) => {
-        const rank = String(i + 1).padStart(2);
-        const ap = s.airport.padEnd(8);
+        const rank = String(i + 1).padStart(3);
+        const ap = s.airport.padEnd(6);
         const tot = String(s.total).padStart(5);
-        console.log(`${rank}. ${ap} ${tot} flights (新增 ${s.new})`);
+        const pg = String(s.pages).padStart(5);
+        const est = String(s.est_pages).padStart(3);
+        const diff = s.pages - s.est_pages;
+        const diffStr = (diff >= 0 ? "+" : "") + String(diff);
+        console.log(`${rank}  ${ap}  ${tot}  ${pg}  ${est}  ${diffStr}`);
       });
-
-    const sessionTotal = validStats.reduce((sum, s) => sum + s.total, 0);
-    const sessionUnique = validStats.reduce((sum, s) => sum + s.new, 0);
-    console.log(`\nSchedule credits 已花: ${totalRequests} pages × 38.7 ≈ ${Math.round(totalRequests * 38.7)} credits`);
-    console.log(`Track credits 預估 (本次新增): ${sessionUnique} × 40 ≈ ${sessionUnique * 40} credits`);
-    console.log(`Track credits 預估 (本次全部): ${sessionTotal} × 40 ≈ ${sessionTotal * 40} credits（含 dep/arr 重複）`);
   }
 
-  if (done < airports.length) {
-    console.log("\n⚠️  尚未完成，等待 rate limit 冷卻後重新執行即可續接。");
+  const totalFlights = validStats.reduce((sum, s) => sum + s.total, 0);
+  const totalNew = validStats.reduce((sum, s) => sum + s.new, 0);
+  const totalPages = validStats.reduce((sum, s) => sum + s.pages, 0);
+  const totalEstPages = validStats.reduce((sum, s) => sum + s.est_pages, 0);
+  const actualCredits = Math.round(totalPages * 38.7);
+  const estCredits = Math.round(totalEstPages * 38.7);
+
+  console.log("\n=== 對帳 ===");
+  console.log(`本批機場處理: ${validStats.length} 成功 / ${errCount} 失敗`);
+  console.log(`本批航班總數: ${totalFlights}（新增 ${totalNew}）`);
+  console.log(`pages       : 實際 ${totalPages} / 估算 ${totalEstPages}（差 ${totalPages - totalEstPages}）`);
+  console.log(`Schedule credits: 實際 ~${actualCredits} / 估算 ~${estCredits}（差 ${actualCredits - estCredits}）`);
+  console.log(`Track credits 預估（按本批新增）: ${totalNew} × 40 ≈ ${totalNew * 40}`);
+  console.log(`累計 flight-list.json 不重複航班: ${allFlights.size}`);
+  console.log(`API 請求次數（含 retry）: ${totalRequests}`);
+
+  if (stoppedByBatch) {
+    console.log(`\n⏸️  Batch 停下。剩餘 ${remainingAfterStop} 座未跑（檢查目錄 scripts/flights/）`);
+    console.log(`   續跑：移除 --batch-size 或加 --range ${range ? `${range[0] + batchProcessed}-${range[1]}` : `${batchProcessed + 1}-${targetAirports.length}`}`);
   } else {
-    console.log("\n✅ 所有機場查詢完成！");
+    console.log("\n✅ 本批所有機場處理完成！");
   }
 }
 

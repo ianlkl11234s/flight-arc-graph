@@ -15,7 +15,7 @@
  * Essential 方案限制：300 筆/次、30 次/分鐘、666,000 credits/月
  *
  * 資料流（v2, NDJSON append-only）：
- *   flight-list.json  → 航班清單 (Step 1 產出)
+ *   scripts/flights/{ICAO}/{YYYY-MM-DD}.json → 航班清單 (Step 1 產出，優先；fallback flight-list.json)
  *   track-done.ndjson / track-failed.ndjson → progress (append-only，不 re-serialize)
  *   public/tracks/airports/{ICAO}.jsonl     → 軌跡 (直接 append, dep + dest 各一份)
  *
@@ -25,12 +25,16 @@
 import dotenv from "dotenv";
 import {
   readFileSync,
+  writeFileSync,
   appendFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
+  statSync,
 } from "fs";
 import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { gzipSync } from "zlib";
 dotenv.config();
 
 // ── 設定 ──────────────────────────────────────────────
@@ -43,9 +47,11 @@ const DELAY_MS = 2050; // 2.05s → ~29 req/min，接近 Essential 30 req/min �
 const MAX_RETRIES = 5;
 
 const INPUT_FILE = resolve(ROOT, "scripts/flight-list.json");
+const FLIGHTS_DIR = resolve(ROOT, "scripts/flights"); // 新格式來源
 const DONE_NDJSON = resolve(ROOT, "scripts/track-done.ndjson");
 const FAILED_NDJSON = resolve(ROOT, "scripts/track-failed.ndjson");
 const AIRPORTS_DIR = resolve(ROOT, "public/tracks/airports");
+const RAW_DIR = resolve(ROOT, "public/tracks/raw"); // {YYYY-MM}/{ab}/{fr24_id}.json.gz
 
 // ── 型別 ──────────────────────────────────────────────
 
@@ -216,6 +222,34 @@ function parseTrackPoints(
   return points.length > 0 ? points : null;
 }
 
+// ── 航班清單載入 ──────────────────────────────────────
+
+/**
+ * 新格式：掃 scripts/flights/{ICAO}/{YYYY-MM-DD}.json
+ * （fetch-flights.ts writeNewFormat 產出，payload.flights 為 FR24FlightSummary[]）
+ * 合併所有檔案並按 fr24_id 去重；目錄不存在或無資料回傳 null。
+ */
+function loadNewFormatFlights(): FR24FlightSummary[] | null {
+  if (!existsSync(FLIGHTS_DIR)) return null;
+  const byId = new Map<string, FR24FlightSummary>();
+  for (const icao of readdirSync(FLIGHTS_DIR)) {
+    const dir = join(FLIGHTS_DIR, icao);
+    if (!statSync(dir).isDirectory()) continue; // 跳過 .DS_Store 等
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".json")) continue;
+      try {
+        const payload = JSON.parse(readFileSync(join(dir, file), "utf-8"));
+        for (const f of payload.flights ?? []) {
+          byId.set((f as FR24FlightSummary).fr24_id, f as FR24FlightSummary);
+        }
+      } catch {
+        // skip bad file
+      }
+    }
+  }
+  return byId.size > 0 ? [...byId.values()] : null;
+}
+
 // ── 進度管理（NDJSON append-only）─────────────────────
 
 interface Progress {
@@ -249,6 +283,29 @@ function markDone(fr24Id: string) {
 
 function markFailed(fr24Id: string) {
   appendFileSync(FAILED_NDJSON, `${fr24Id}\n`);
+}
+
+/** 把完整 API response gzip 存到 raw/{YYYY-MM}/{ab}/{fr24_id}.json.gz */
+function writeRawBackup(
+  fr24Id: string,
+  raw: unknown,
+  takeoffIso: string,
+  pathFirstTs?: number,
+) {
+  // 用 datetime_takeoff 的 YYYY-MM 當分桶；缺值 fallback 到 path 首點時間戳
+  // （同 split-tracks.ts 慣例，sanity floor 1e9 擋壞時間戳）；再拿不到才 "unknown"
+  let ym = (takeoffIso || "").slice(0, 7);
+  if (!ym && pathFirstTs && pathFirstTs >= 1e9) {
+    ym = new Date(pathFirstTs * 1000).toISOString().slice(0, 7);
+  }
+  if (!ym) ym = "unknown";
+  const ab = fr24Id.slice(0, 2).toLowerCase();
+  const dir = join(RAW_DIR, ym, ab);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  const path = join(dir, `${fr24Id}.json.gz`);
+  if (existsSync(path)) return; // idempotent
+  const buf = gzipSync(Buffer.from(JSON.stringify(raw)));
+  writeFileSync(path, buf);
 }
 
 /** 把 output append 到 origin 和 dest 的 JSONL */
@@ -300,15 +357,20 @@ async function main() {
   // --dry-run (不打 API)
   const dryRun = process.argv.includes("--dry-run");
 
-  // 讀取 Step 1 航班清單
-  if (!existsSync(INPUT_FILE)) {
-    console.error(`❌ 找不到 ${INPUT_FILE}，請先執行 Step 1`);
+  // 讀取 Step 1 航班清單：優先新格式 scripts/flights/，fallback legacy flight-list.json
+  let allSummaries: FR24FlightSummary[];
+  const newFormat = loadNewFormatFlights();
+  if (newFormat) {
+    allSummaries = newFormat;
+    console.log(`來源: scripts/flights/（新格式，${allSummaries.length} 筆不重複）`);
+  } else if (existsSync(INPUT_FILE)) {
+    const inputData = JSON.parse(readFileSync(INPUT_FILE, "utf-8"));
+    allSummaries = inputData.flights ?? inputData;
+    console.log(`來源: flight-list.json（legacy，${allSummaries.length} 筆）`);
+  } else {
+    console.error(`❌ 找不到 ${FLIGHTS_DIR}/ 或 ${INPUT_FILE}，請先執行 Step 1`);
     process.exit(1);
   }
-
-  const inputData = JSON.parse(readFileSync(INPUT_FILE, "utf-8"));
-  const allSummaries: FR24FlightSummary[] =
-    inputData.flights ?? inputData;
 
   // 篩選日期
   let targets: FR24FlightSummary[];
@@ -436,8 +498,9 @@ async function main() {
           last_seen: isoToUnix(flight.last_seen),
         };
 
-        // 順序很重要：先 append JSONL，再標記 done
-        // 若 JSONL 寫入失敗會 throw，done 不會被標記 → 下次可重抓
+        // 順序：raw 備份 → JSONL → markDone
+        // 任一步失敗就拋出，done 不會標記 → 下次可重抓
+        writeRawBackup(flight.fr24_id, raw, flight.datetime_takeoff, points[0]?.[3]);
         writeFlightToJsonl(output);
         markDone(flight.fr24_id);
         progress.done.add(flight.fr24_id);

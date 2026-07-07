@@ -13,6 +13,7 @@ public/airspace/aviation_data.json
 .env.openaip
 scripts/flight-list.json
 scripts/flight-list.json.bak*
+scripts/flights/
 scripts/track-progress.json
 scripts/track-progress.json.bak
 scripts/track-done.ndjson
