@@ -48,7 +48,7 @@
 |----|------|------|
 | C1 | 「日期比較」與「機場分色」是兩套獨立系統，開啟 Compare 時機場分色被禁用，邏輯層未整合 | `src/App.tsx:494-510`、`src/types/airportColors.ts` |
 | C2 | 機場分色**按航班數量由多到少**分配顏色，非按使用者選擇順序 → 「順序怪怪的」直接成因 | `src/types/airportColors.ts:90-94` |
-| C3 | Summary 面板吃 `displayedFlights`（未過 Deep Analysis 篩選），`analysisFilteredFlights` 算了沒人用 → 開篩選後畫面變了但統計數字不變 | `src/App.tsx:523-526, 1359`、`IconRailSidebar.tsx:2460` |
+| C3 | 🔶 **部分修**（2026-07-07 覆核）：`analysisFilteredFlights` 已接進管線（App.tsx:583 → finalFlights），但 Summary 面板仍吃 `displayedFlights`（App.tsx:1408）→ 開 Deep Analysis 篩選後 Summary 數字仍不同步 | `src/App.tsx:583, 1408`、`IconRailSidebar.tsx:2596` |
 | C4 | `computeAirportComparison` hardcode 只統計 RC 開頭（台灣）機場，region 比較對其他區域全部失效 → 「數據比較雞肋/壞掉」直接成因 | `src/data/flightStats.ts:198-203` |
 
 ### D. 效能
@@ -57,7 +57,7 @@
 |----|------|------|
 | D1 | **最大宗是資料量**：選一個機場動輒下載 89~166MB（見 A4），任何前端優化都不如按日期分檔有感 | 同 A4 |
 | D2 | `perFlightColorMap` 變更觸發靜態 mesh **全量重建**（`forceRebuildStatic`），其實只需更新 color buffer attribute | `src/three/FlightScene.ts:181` |
-| D3 | 載入過的機場資料無快取，切走再切回重新下載整檔 | `src/hooks/useFlightData.ts` |
+| D3 | ✅ **已修**（2026-07-07 覆核）：`flightLoader.ts:169` 已有 `airportCache` + `regionCache`，切走再切回不重新下載 | `src/data/flightLoader.ts:169-171` |
 | D4 | `BatchedTrails.ts` 寫好但零 import；目前每條動態 trail 是獨立 Line + material，draw call 隨數量線性增長 | `src/three/BatchedTrails.ts`（孤兒檔） |
 | D5 | 無 code splitting，所有面板打進單一 bundle | `vite.config` 無 manualChunks |
 
@@ -67,8 +67,8 @@
 
 | ID | 問題 | 證據 |
 |----|------|------|
-| E1 | God components：`IconRailSidebar.tsx` 2,486 行（6 個面板擠一檔）、`App.tsx` 1,964 行（80+ state hooks） | 行數統計 |
-| E2 | scripts/ 有 5 個一次性/過時腳本混在常用腳本中（fetch-week.sh、fetch-tracks-week.sh、sync-s3-to-data.sh、backfill-metadata.ts、migrate-progress.ts）；fetch-flights.ts 與 fetch-japan-lax-batch.ts 邏輯高度重複 | `scripts/` 共 22 檔 |
+| E1 | God components：`IconRailSidebar.tsx` 2,622 行（6 個面板擠一檔）、`App.tsx` 2,013 行（45 個 useState）— 2026-07-07 覆核仍在變大 | 行數統計 |
+| E2 | ✅ **已解**（2026-07-07）：7 個一次性腳本（fetch-week.sh、fetch-tracks-week.sh、sync-s3-to-data.sh、backfill-metadata.ts、migrate-progress.ts、backup-to-s3.ts、fetch-japan-lax-batch.ts）已搬 `scripts/oneoff/`；`npm run s3:upload` 改指 upload-split-to-s3.ts；fetch-japan-lax-batch 歸為一次性後重複問題消失 | commit 9cd2d01 |
 | E3 | .gitignore 的 `scripts/fetch-tracks*.log` 沒匹配到 `_fetch-tracks-shanghai.log`、`fetch-jp-lax-tracks.log`（目前 untracked 漂浮） | `.gitignore`、git status |
 | E4 | 載入錯誤靜默吞掉（9 個 `catch { continue; }`），失敗時 UI 無回饋 | `src/data/flightLoader.ts` |
 | E5 | 無 URL state：無法分享「某機場某日期」的連結；localStorage key 無統一管理 | 全專案無 pushState 用法 |
@@ -172,7 +172,7 @@ tracks/airports/RCTP/index.json         （該機場的日期索引）
 | localStorage 統一 | `storageManager.ts` 統一 key 前綴與版本 | 低 |
 | 刪除或啟用 BatchedTrails.ts | 孤兒檔二選一：接上（trail 多時省 draw call）或刪掉 | 低 |
 | 面板 lazy load | React.lazy 大面板，降初始 bundle | 低 |
-| 機場資料記憶體快取 | 切走再切回不重新下載（D3） | 低 |
+| 機場資料記憶體快取 | ✅ 已具備（D3，2026-07-07 覆核） | 低 |
 
 ### 可延後
 
@@ -203,4 +203,12 @@ Phase 3 與 Phase 2 幾乎不相依，可並行或穿插。
 | Phase 2 Region/Scope 解耦 | ⬜ 未開始 | — | 建議獨立分支；含「非 preset 機場鏡頭跳轉」待辦 |
 | Phase 3 比較/配色統一 | ⬜ 未開始 | — | |
 | Phase 4 日期分檔 | ⬜ 未開始 | — | 依賴 Phase 1（已就緒） |
-| 順手做清單 | 🔶 部分（.gitignore log 修正） | 同上 | |
+| 順手做清單 | 🔶 部分（.gitignore log 修正；2026-07-07 scripts 歸位 oneoff/ + s3:upload 指向修正 + 死檔清 196MB） | 同上 | |
+
+### 2026-07-07 infra 收尾（不動顯示層）
+
+- 航班清單遷移收尾：fetch-flights 新增 `scripts/flights/{ICAO}/{日期}.json` 分檔格式（過渡期雙寫 legacy），fetch-tracks 優先讀新格式、fallback legacy（commit a1bb8db）
+- raw 備份 `unknown/` 桶修正：datetime_takeoff 缺值 fallback path 首點時間戳分桶
+- scripts/ 歸位：7 個一次性腳本搬 oneoff/、`npm run s3:upload` 改指 upload-split-to-s3.ts（commit 9cd2d01，解 E2）
+- 磁碟清理：flight-list.json.bak-before-rollback（54MB）+ flight-lists/（142MB）搬資源回收桶（grep 確認現行管線零引用）
+- 待辦接力：跑過一輪完整 fetch 後，可拿掉 fetch-flights 的 legacy flight-list.json 雙寫
