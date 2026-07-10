@@ -36,6 +36,7 @@ interface Campaign {
   airports_file: string;
   credits_per_track: number;
   target_total: number;
+  track_done_baseline?: number;
   budget: {
     monthly_credits: number;
     manual_remaining: number;
@@ -180,10 +181,14 @@ if (existsSync(SESSIONS_NDJSON)) {
     }
   }
 }
-const remainingCredits = Math.max(
-  0,
-  camp.budget.manual_remaining - spentSinceAnchor,
-);
+// 花費以 track-done 差值自癒推導（被 kill 沒寫帳本也準）；與帳本取較大者
+const spentByDelta =
+  camp.track_done_baseline !== undefined
+    ? Math.max(0, done.size - camp.track_done_baseline) * CPT
+    : 0;
+const spent = Math.max(spentSinceAnchor, spentByDelta);
+const spentBasis = spentByDelta >= spentSinceAnchor ? "track-done 差值" : "帳本";
+const remainingCredits = Math.max(0, camp.budget.manual_remaining - spent);
 const cap = Math.floor(remainingCredits * 0.95); // 留 5% 餘裕
 const canFetch = Math.floor(cap / CPT);
 
@@ -230,7 +235,7 @@ console.log(
 
 console.log(`\n本期核准額度（@ ${anchor}，由你啟動時確認）：`);
 console.log(
-  `  核准 ${fmt(camp.budget.manual_remaining)}｜帳本已花 ${fmt(spentSinceAnchor)}（${sessionCount} 次）｜估還剩 ~${fmt(remainingCredits)} ≈ ${fmt(canFetch)} 條`,
+  `  核准 ${fmt(camp.budget.manual_remaining)}｜已花 ${fmt(spent)}（${spentBasis}，帳本 ${sessionCount} 次）｜估還剩 ~${fmt(remainingCredits)} ≈ ${fmt(canFetch)} 條`,
 );
 console.log(
   `  ※ 每次花多少先跟你確認；額度用完或換月，更新 campaign-top1000.json 的 budget.manual_remaining / as_of`,
