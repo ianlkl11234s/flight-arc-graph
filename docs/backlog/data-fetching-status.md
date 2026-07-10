@@ -5,7 +5,9 @@
 
 ## 🔖 下次接續（接力點 — 先讀這裡）
 
-> **狀態快照 @ 2026-07-09**：全球前 1000 大機場的 **2/18 時刻表已全數掃完**（1000/1000，0 錯誤）。下一步＝分月抓這些航班的軌跡（P2），把整張全球網織滿。
+> **狀態快照 @ 2026-07-11**：⏸️ **抓取暫停 —— FR24 餘額剩 ~8,000 credits**（本 session 大量消耗，見下方「2026-07-11」完成紀錄）。額度回補後再續戰役 P2。
+> 全球前 1000 大機場 2/18 時刻表已全掃完；軌跡進度 7,163/65,421（10.9%，Batch 1 rank 1-16 抓了 68%）。開工先跑 `npx tsx scripts/campaign-status.ts`。
+> ⚠️ **成本記牢**：時刻表 = **3 credits/筆**、軌跡 = 40 credits/筆。估算一律以 FR24 dashboard 為準。
 
 ### ⏸️ 待抓：Top-1000 軌跡分批（P2）— 從 Batch 1 開始
 
@@ -33,6 +35,22 @@ npx tsx scripts/campaign-status.ts
 > ⚙️ 系統（2026-07-10 建）：fetch-tracks 加了 `--airports-file` / `--rank` / `--max-credits` + session 帳本；`campaign-top1000.json` 存批次指針與額度錨點；`campaign-status.ts` 一鍵簡報。
 
 ## 🆕 最近完成
+
+### 2026-07-11: 抓取工具重構 + 台灣時刻表延伸 + 💥 成本大校正
+
+**⚠️ 成本模型大校正（最重要）**：發現 `flight-summary/light`（時刻表）**實際 ≈ 3 credits/筆**（per flight returned），不是舊估的 38.7/page，也不是中途誤判的 227/page。三次帳單皆吻合 3.0/筆（seg1 10,246→30,750、seg2-3 12,220→~36,800、dashboard 254,821÷84,897=3.0）。**後果：當初 top1000 掃描實際花 ~224K（非報告的「~40K」）**。已修 fetch-flights/build-top1000 常數。**教訓：成本一律以 FR24 dashboard 為準，別信程式估算。**
+
+**抓取工具重構**（修「fetch-tracks 讀不到台灣」bug）：
+- fetch-tracks 改**聯集讀取** `scripts/flights ∪ flight-list.json`（不做倉庫遷移，避免污染 campaign-status）
+- `--group TW` + `scripts/airport-groups.json`；`flights-inventory.ts`（通用庫存視圖）；`--max-credits` 安全網（沒帶就自動 dry-run）；fetch-flights merge-write；dry-run 按 UTC 日分桶
+
+**台灣時刻表延伸**（`--group TW-CIVIL`，schedule 非 track）：
+- 抓了 3 段：3/29–4/11 + 4/12–4/25 + 4/26–5/09，共 **~22,466 筆新時刻表**，花 **~67K credits**
+- 台灣時刻表現況：**2/17 → 5/09**（原 2/17–3/28）
+- ⚠️ **FR24 資料缺口**：~4/13–4/25 這兩週 FR24 幾乎沒台灣資料（RCTP 那些天 0 航班），花錢也填不了 → 台灣時刻表這段有個補不起來的洞
+- ⚠️ 台灣**軌跡**缺口仍 34,031 筆（~1.36M credits，用 `flights-inventory --group TW` 看）；本次只補「名單」不含軌跡
+
+**額度**：本 session 大量消耗（掃描 ~224K + 戰役軌跡 ~287K + 台灣時刻表 ~67K）→ **FR24 餘額剩 ~8,000**，戰役與抓取暫停待額度回補。
 
 ### 2026-07-10: 戰役系統上線 + Batch 1 首批（rank 1-16）進行中 68%
 
