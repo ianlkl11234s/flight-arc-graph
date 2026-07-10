@@ -1,0 +1,12 @@
+{
+  "_comment": "命名機場群，供 fetch-flights / fetch-tracks / flights-inventory 的 --group 使用。值為 ICAO 陣列，會與 --airports union。",
+  "TW": [
+    "RCTP", "RCSS", "RCKH", "RCNN", "RCBS", "RCFG", "RCMT", "RCQC",
+    "RCWA", "RCCM", "RCGI", "RCLY", "RCKW", "RCMQ", "RCYU", "RCFN",
+    "RCKU", "RCDC", "RCAY", "RCPO", "RCSQ", "RCQS"
+  ],
+  "TW-CIVIL": [
+    "RCTP", "RCSS", "RCKH", "RCNN", "RCBS", "RCFG", "RCMT", "RCQC",
+    "RCWA", "RCCM", "RCGI", "RCLY", "RCMQ", "RCYU", "RCFN", "RCKU"
+  ]
+}

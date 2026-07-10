@@ -9,18 +9,21 @@
  *   --date YYYY-MM-DD                只處理該日期的航班（datetime_takeoff 起頭）
  *   --airports RCTP,RJTT,...         只處理 orig 或 dest 落在清單內的航班（推薦）
  *   --airports-file path             從 JSON 清單取機場（[{icao,rank}] 或 [ICAO]）
+ *   --group NAME                     從 scripts/airport-groups.json 取 group（與 --airports union，如 TW）
  *   --rank A-B                       搭配 --airports-file，只取 rank 在 A~B 的機場（Top-1000 分批用）
  *   --limit N                        最多處理 N 筆（測試用）
  *   --max-credits N                  本次最多花 ~N credits（= 上限 floor(N/40) 筆），吃滿自動停
- *   --dry-run                        只印 todo 數量 + 預估 credits，不打 API
+ *   --dry-run                        只印 todo 數量 + UTC 日分桶 + 預估 credits，不打 API
  *   不帶參數 → 處理全部航班
+ *
+ *   ⚠️ 安全網：沒帶 --max-credits / --limit / --dry-run 任一 → 自動進 dry-run，不會噴 credit
  *
  *   每次實跑結束（含 SIGINT / circuit breaker）會 append 一行到 scripts/fetch-sessions.ndjson（額度帳）
  *
  * Essential 方案限制：300 筆/次、30 次/分鐘、666,000 credits/月
  *
  * 資料流（v2, NDJSON append-only）：
- *   scripts/flights/{ICAO}/{YYYY-MM-DD}.json → 航班清單 (Step 1 產出，優先；fallback flight-list.json)
+ *   scripts/flights/{ICAO}/{YYYY-MM-DD}.json ∪ flight-list.json → 航班清單 (Step 1 產出，按 fr24_id 聯集去重)
  *   track-done.ndjson / track-failed.ndjson → progress (append-only，不 re-serialize)
  *   public/tracks/airports/{ICAO}.jsonl     → 軌跡 (直接 append, dep + dest 各一份)
  *
@@ -54,6 +57,7 @@ const CREDITS_PER_TRACK = 40; // flight-tracks 每筆約 40 credits（估值，�
 
 const INPUT_FILE = resolve(ROOT, "scripts/flight-list.json");
 const FLIGHTS_DIR = resolve(ROOT, "scripts/flights"); // 新格式來源
+const GROUPS_FILE = resolve(ROOT, "scripts/airport-groups.json"); // 命名機場群（--group）
 const DONE_NDJSON = resolve(ROOT, "scripts/track-done.ndjson");
 const FAILED_NDJSON = resolve(ROOT, "scripts/track-failed.ndjson");
 const SESSIONS_NDJSON = resolve(ROOT, "scripts/fetch-sessions.ndjson"); // 額度帳（append-only）
@@ -229,6 +233,29 @@ function parseTrackPoints(
   return points.length > 0 ? points : null;
 }
 
+// ── 機場群（--group）─────────────────────────────────
+
+/** 讀 scripts/airport-groups.json 取某 group 的 ICAO 清單；找不到報錯列出可用 group。 */
+function loadGroup(name: string): string[] {
+  if (!existsSync(GROUPS_FILE)) {
+    console.error(`❌ 找不到 ${GROUPS_FILE}`);
+    process.exit(1);
+  }
+  const groups = JSON.parse(readFileSync(GROUPS_FILE, "utf-8")) as Record<
+    string,
+    unknown
+  >;
+  const list = groups[name];
+  if (!Array.isArray(list)) {
+    const avail = Object.keys(groups)
+      .filter((k) => Array.isArray(groups[k]))
+      .join(", ");
+    console.error(`❌ 找不到 group "${name}"，可用: ${avail}`);
+    process.exit(1);
+  }
+  return (list as string[]).map((s) => String(s).toUpperCase());
+}
+
 // ── 航班清單載入 ──────────────────────────────────────
 
 /**
@@ -381,9 +408,16 @@ async function main() {
       .filter(Boolean);
   }
 
+  // --group NAME：讀 airport-groups.json，與 --airports / --airports-file union
+  const groupIdx = process.argv.indexOf("--group");
+  const groupArg = groupIdx !== -1 ? process.argv[groupIdx + 1]! : null;
+  const groupAirports = groupArg ? loadGroup(groupArg) : [];
+
   const airportsFilter =
-    inlineAirports.length > 0 || fileAirports.length > 0
-      ? new Set<string>([...inlineAirports, ...fileAirports])
+    inlineAirports.length > 0 ||
+    fileAirports.length > 0 ||
+    groupAirports.length > 0
+      ? new Set<string>([...inlineAirports, ...fileAirports, ...groupAirports])
       : null;
 
   // --limit N (測試用)
@@ -412,22 +446,39 @@ async function main() {
       : "all";
 
   // --dry-run (不打 API)
-  const dryRun = process.argv.includes("--dry-run");
+  let dryRun = process.argv.includes("--dry-run");
 
-  // 讀取 Step 1 航班清單：優先新格式 scripts/flights/，fallback legacy flight-list.json
-  let allSummaries: FR24FlightSummary[];
+  // 安全網：沒帶 --max-credits、也沒帶 --limit、也沒帶 --dry-run
+  // → 自動進 dry-run，避免手滑無上限噴 credit
+  const autoDryRun =
+    !dryRun && maxCredits === null && limit === null;
+  if (autoDryRun) dryRun = true;
+
+  // 讀取 Step 1 航班清單：scripts/flights/（新格式）∪ flight-list.json（legacy），
+  // 按 fr24_id 去重合併成單一清單（讓 fetch-tracks 讀得到只在 legacy 累積器裡的資料，如台灣多天時刻表）
+  const byId = new Map<string, FR24FlightSummary>();
   const newFormat = loadNewFormatFlights();
+  const newCount = newFormat?.length ?? 0;
   if (newFormat) {
-    allSummaries = newFormat;
-    console.log(`來源: scripts/flights/（新格式，${allSummaries.length} 筆不重複）`);
-  } else if (existsSync(INPUT_FILE)) {
+    for (const f of newFormat) byId.set(f.fr24_id, f);
+  }
+  let legacyCount = 0;
+  if (existsSync(INPUT_FILE)) {
     const inputData = JSON.parse(readFileSync(INPUT_FILE, "utf-8"));
-    allSummaries = inputData.flights ?? inputData;
-    console.log(`來源: flight-list.json（legacy，${allSummaries.length} 筆）`);
-  } else {
+    const legacy: FR24FlightSummary[] = inputData.flights ?? inputData;
+    legacyCount = legacy.length;
+    for (const f of legacy) {
+      if (!byId.has(f.fr24_id)) byId.set(f.fr24_id, f); // 新格式優先，legacy 補位
+    }
+  }
+  if (byId.size === 0) {
     console.error(`❌ 找不到 ${FLIGHTS_DIR}/ 或 ${INPUT_FILE}，請先執行 Step 1`);
     process.exit(1);
   }
+  const allSummaries = [...byId.values()];
+  console.log(
+    `來源: scripts/flights ∪ flight-list.json（${allSummaries.length.toLocaleString()} 筆不重複；新格式 ${newCount.toLocaleString()} + legacy ${legacyCount.toLocaleString()}）`,
+  );
 
   // 篩選日期
   let targets: FR24FlightSummary[];
@@ -477,6 +528,7 @@ async function main() {
   );
 
   const todoBeforeLimit = todo.length;
+  const todoFull = todo; // slice() 會產生新陣列，此參照仍指向未截斷的完整待抓清單
   if (effectiveLimit !== null && todo.length > effectiveLimit) {
     todo = todo.slice(0, effectiveLimit);
     const capLabel =
@@ -488,10 +540,39 @@ async function main() {
   console.log();
 
   if (dryRun) {
+    if (autoDryRun) {
+      console.log(
+        "⚠️  未帶 --max-credits / --limit / --dry-run，自動進 dry-run（不打 API）。",
+      );
+      console.log("    確認後加 --max-credits N 實跑（N = 本次額度上限）。\n");
+    }
     console.log(
       `🧪 --dry-run：範圍內待處理 ${todoBeforeLimit.toLocaleString()} 筆` +
         `（預估 ~${(todoBeforeLimit * CREDITS_PER_TRACK).toLocaleString()} credits）`,
     );
+
+    // 按 datetime_takeoff 的 UTC 日期分桶（台北整日會跨兩個 UTC 日，漏抓一眼看出）
+    if (todoFull.length > 0) {
+      const buckets = new Map<string, number>();
+      for (const f of todoFull) {
+        const utcDay = (f.datetime_takeoff || f.first_seen || "").slice(0, 10);
+        const key = utcDay || "(無時間)";
+        buckets.set(key, (buckets.get(key) ?? 0) + 1);
+      }
+      console.log("           UTC 日分桶：");
+      for (const day of [...buckets.keys()].sort()) {
+        const n = buckets.get(day)!;
+        console.log(
+          `             ${day}Z: ${n.toLocaleString()} 待抓` +
+            `（~${(n * CREDITS_PER_TRACK).toLocaleString()} credits）`,
+        );
+      }
+      console.log(
+        `           合計 ${todoBeforeLimit.toLocaleString()} 筆` +
+          ` ≈ ${(todoBeforeLimit * CREDITS_PER_TRACK).toLocaleString()} credits`,
+      );
+    }
+
     if (todo.length !== todoBeforeLimit) {
       console.log(
         `           本次上限只會抓 ${todo.length.toLocaleString()} 筆` +

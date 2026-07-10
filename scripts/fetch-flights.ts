@@ -15,8 +15,9 @@
  *
  * 參數：
  *   --from / --to                日期範圍（YYYY-MM-DD 或 ISO）
- *   --airports A,B,C             覆蓋預設機場
+ *   --airports A,B,C             覆蓋預設機場（與 --airports-file / --group union）
  *   --airports-file path         讀 JSON 清單（[{ icao }] 或 [ICAO]）
+ *   --group NAME                 從 scripts/airport-groups.json 取 group（如 TW / TW-CIVIL）
  *   --direction outbound|inbound|both   預設 outbound（單向、零重複命中）
  *   --batch-size N               跑 N 座機場後自動停（0 = 不停，預設 0）
  *   --range A-B                  只跑清單中第 A~B 座（1-based 含頭含尾）
@@ -68,8 +69,30 @@ const DELAY_MS = 2200;         // 2.2s → 安全低於 30 次/分鐘
 const MAX_RETRIES = 5;
 const OUTPUT_FILE = resolve(ROOT, "scripts/flight-list.json");
 const FLIGHTS_DIR = resolve(ROOT, "scripts/flights"); // 新格式: {ICAO}/{YYYY-MM-DD}.json
+const GROUPS_FILE = resolve(ROOT, "scripts/airport-groups.json"); // 命名機場群（--group）
 
 type Direction = "outbound" | "inbound" | "both";
+
+/** 讀 scripts/airport-groups.json 取某 group 的 ICAO 清單；找不到報錯列出可用 group。 */
+function loadGroup(name: string): string[] {
+  if (!existsSync(GROUPS_FILE)) {
+    console.error(`❌ 找不到 ${GROUPS_FILE}`);
+    process.exit(1);
+  }
+  const groups = JSON.parse(readFileSync(GROUPS_FILE, "utf-8")) as Record<
+    string,
+    unknown
+  >;
+  const list = groups[name];
+  if (!Array.isArray(list)) {
+    const avail = Object.keys(groups)
+      .filter((k) => Array.isArray(groups[k]))
+      .join(", ");
+    console.error(`❌ 找不到 group "${name}"，可用: ${avail}`);
+    process.exit(1);
+  }
+  return (list as string[]).map((s) => String(s).toUpperCase());
+}
 
 // ── CLI 參數解析 ───────────────────────────────────────
 
@@ -90,20 +113,30 @@ function parseArgs(): ParsedArgs {
     return i !== -1 ? args[i + 1] : undefined;
   };
 
-  // ── 機場清單 ──
-  let airports: string[];
+  // ── 機場清單 ── --airports-file / --airports / --group 全部 union；皆無 → 預設台灣
   const apFile = get("--airports-file");
   const apInline = get("--airports");
+  const groupName = get("--group");
+  const collected: string[] = [];
   if (apFile) {
     const raw = JSON.parse(readFileSync(resolve(ROOT, apFile), "utf-8"));
-    airports = (Array.isArray(raw) ? raw : raw.airports ?? []).map((x: unknown) =>
-      typeof x === "string" ? x.toUpperCase() : String((x as { icao?: string }).icao || "").toUpperCase(),
-    ).filter((s: string) => s);
-  } else if (apInline) {
-    airports = apInline.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
-  } else {
-    airports = TAIWAN_AIRPORTS;
+    collected.push(
+      ...(Array.isArray(raw) ? raw : raw.airports ?? [])
+        .map((x: unknown) =>
+          typeof x === "string"
+            ? x.toUpperCase()
+            : String((x as { icao?: string }).icao || "").toUpperCase(),
+        )
+        .filter((s: string) => s),
+    );
   }
+  if (apInline) {
+    collected.push(...apInline.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean));
+  }
+  if (groupName) {
+    collected.push(...loadGroup(groupName));
+  }
+  const airports = collected.length > 0 ? [...new Set(collected)] : TAIWAN_AIRPORTS;
 
   // ── 方向 ──
   const dirRaw = (get("--direction") || "outbound").toLowerCase();
@@ -190,13 +223,29 @@ function writeNewFormat(
     const dir = join(FLIGHTS_DIR, airport);
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
     const path = join(dir, `${dt}.json`);
+
+    // merge-write：先讀既有檔（若有），按 fr24_id 聯集後再寫，避免同日期重抓整檔覆蓋
+    const byId = new Map<string, FR24FlightSummary>();
+    if (existsSync(path)) {
+      try {
+        const prev = JSON.parse(readFileSync(path, "utf-8")) as {
+          flights?: FR24FlightSummary[];
+        };
+        for (const f of prev.flights ?? []) byId.set(f.fr24_id, f);
+      } catch {
+        // 壞檔 → 直接以本次結果覆蓋
+      }
+    }
+    for (const f of arr) byId.set(f.fr24_id, f);
+    const merged = [...byId.values()];
+
     const payload = {
       airport,
       date: dt,
       direction,
       fetched_at: new Date().toISOString(),
-      count: arr.length,
-      flights: arr,
+      count: merged.length,
+      flights: merged,
     };
     writeFileSync(path, JSON.stringify(payload, null, 2));
   }

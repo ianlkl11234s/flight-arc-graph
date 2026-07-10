@@ -53,7 +53,10 @@ npx tsc --noEmit
 - 進度記錄：`scripts/track-done.ndjson`、`scripts/track-failed.ndjson`（append-only，gitignored）
   - 每行一個 `fr24_id`，fetch-tracks 用來跳過已抓過的航班
   - 取代舊的 `scripts/track-progress.json`（322MB，有 RangeError，已 migrate 到 NDJSON）
-- 航班清單（Step 1 產出，皆 gitignored）：新格式 `scripts/flights/{ICAO}/{YYYY-MM-DD}.json` 優先，legacy `scripts/flight-list.json` fallback
+- 航班清單（Step 1 產出，皆 gitignored）：fetch-tracks 讀「`scripts/flights/{ICAO}/{YYYY-MM-DD}.json` ∪ `scripts/flight-list.json`」聯集（按 fr24_id 去重）—— 兩個 store 都看得到，不再有「讀不到某批」問題。fetch-flights 寫 per-date 檔為 merge-write（不覆蓋）。
+- 命名機場群：`scripts/airport-groups.json`（如 `TW`），fetch-flights/fetch-tracks 都吃 `--group TW`
+- 庫存視圖：`npx tsx scripts/flights-inventory.ts --group TW` — 每座機場的時刻表/已抓軌跡/缺口/補完 credits（通用版，戰役專用是 campaign-status）
+- ⚠️ fetch-tracks 安全網：沒帶 `--max-credits`/`--limit`/`--dry-run` 任一 → 自動 dry-run，不會手滑噴 credit
 
 ## 部署流程
 
