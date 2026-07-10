@@ -1,0 +1,2 @@
+{"ts":"2026-07-10T04:51:10.302Z","label":"rank1-16","date":"2026-02-18","reason":"killed-partial-recovered","attempted":2039,"ok":2030,"empty":9,"failed":0,"requests":2039,"credits_est":81560,"done_total_after":46408}
+{"ts":"2026-07-10T09:35:19.317Z","label":"rank1-16","date":"2026-02-18","reason":"done","attempted":1181,"ok":1181,"empty":0,"failed":0,"requests":1181,"credits_est":47240,"done_total_after":51541}

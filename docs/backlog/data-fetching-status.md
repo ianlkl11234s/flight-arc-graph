@@ -34,6 +34,18 @@ npx tsx scripts/campaign-status.ts
 
 ## 🆕 最近完成
 
+### 2026-07-10: 戰役系統上線 + Batch 1 首批（rank 1-16）完成
+
+**戰役系統**（見上方接力點）：`campaign-status.ts` 一鍵簡報、`fetch-tracks` 加 `--airports-file`/`--rank`/`--max-credits`、帳本 `fetch-sessions.ndjson`（track-done 差值自癒）、`/track-round` 加「Top-1000 P2」專章。
+
+**Batch 1 首批 rank 1-16 完成**（16 座 megahub：馬尼拉/芝加哥/吉隆坡/西貢/波士頓/拉斯維加斯/廣州/達拉斯/河內/丹佛/澳門/深圳/鳳凰城/奧蘭多…）：
+- 畫 **7,163 條軌跡**，本月花 **~286,520 credits**（核准 30 萬內，剩 ~13.5K）
+- totalFlights 44,267 → **51,430**（track-done 51,541）；機場檔 1,416 → **1,594**（+178 新目的地）
+- region 成長：US 11,639→15,356、CN 5,483→7,346、other 20,312→22,628（新機場落入既有 region，無新 region → pull-from-s3.sh 不用改）
+- Top 15 新進榜：ZGGG 廣州 #13
+- **戰役總進度 7,163 / 65,421（10.9%）**
+- ⚠️ 過程教訓：(1) Mac 對 `~/Desktop` 的 TCC 存取權中途被系統收回（全目錄 EPERM），需重授「完整磁碟取用權」+ 重啟終端機 App；(2) 背景長工約 30-70 分被環境回收，靠 track-done 續跑零損失、帳本自癒免手補
+
 ### 2026-07-09: 全球前 1000 機場 2/18 時刻表掃描 + 帳目對帳
 
 **目標**：把全球運量前 1000 大機場在 2/18（台北整日）的所有起降織成一張全球網。
@@ -165,15 +177,16 @@ npx tsx scripts/campaign-status.ts
 | **主動機場 (active)** | 在 `flight-list.json.completed` 裡，曾用 fetch-flights 主動抓過該機場 |
 | **被動機場 (passive)** | 沒主動抓，但因航班另一端落地此處而生成 JSONL（會有資料但片面） |
 
-## 全域進度（2026-07-09 快照）
+## 全域進度（2026-07-10 快照）
 
 ```
 flight-list.json:       161,722 筆航班
-track-done:              44,378 筆
-track-failed:               117 筆
-JSONL 機場數:             1,416 座
-不重複軌跡(manifest):     44,267 筆
-Top-1000 2/18 待抓軌跡:   65,421 筆（~2.62M credits / ~4 個月）
+track-done:              51,541 筆
+track-failed:               140 筆
+JSONL 機場數:             1,594 座
+不重複軌跡(manifest):     51,430 筆
+Top-1000 戰役:           7,163 / 65,421 已抓（10.9%）｜Batch 1 rank 1-16 完成
+本月額度:                核准 30 萬，已花 ~286,520（剩 ~13.5K）
 ```
 
 ---

@@ -12,7 +12,7 @@
 
 ## 涵蓋範圍
 
-138 座機場 camera presets，1,416 個 JSONL 資料檔，**44,378 筆不重複軌跡航班**（dep + arr 雙向）。
+138 座機場 camera presets，1,594 個 JSONL 資料檔，**51,541 筆不重複軌跡航班**（dep + arr 雙向）。
 
 | 區域 | 機場數 | 說明 |
 |------|--------|------|
@@ -33,34 +33,35 @@ Region Pills UI 可切換 TW / JP / HK / **KR / TH** / **CN** / US / UK / World 
 
 ### 軌跡資料量（Track Coverage）
 
-> **最後更新：2026-07-09** ｜ 數據來源：`public/tracks/manifest.json`（每次跑 `split-tracks.ts` 後更新）
+> **最後更新：2026-07-10** ｜ 數據來源：`public/tracks/manifest.json`（每次跑 `split-tracks.ts` 後更新）
 > ⚠️ **抓完新軌跡後務必同步更新此表**（見下方維護說明）。
 
-- **不重複軌跡航班**：44,378 筆（`scripts/track-done.ndjson`）
-- **機場 JSONL 檔**：1,416 座
-- **主動查詢機場**：165 座（其餘為被動觸及）
+- **不重複軌跡航班**：51,541 筆（`scripts/track-done.ndjson`）
+- **機場 JSONL 檔**：1,594 座
+- **主動查詢機場**：181 座（165 core + Top-1000 戰役首批 16 座）
+- **進行中**：[Top-1000 全球網戰役](docs/backlog/data-fetching-status.md) — 2/18 全球前 1000 大機場軌跡，已 10.9%（rank 1-16 完成）
 
 | Region | 軌跡數（含雙向） | 大小 (gzip) |
 |--------|------:|------:|
-| other（未分區）| 20,312 | 13.09 MB |
-| US 美國 | 11,639 | 6.59 MB |
-| TW 台灣 | 9,090 | 5.17 MB |
-| CN 中國 | 5,483 | 2.20 MB |
-| JP 日本 | 4,924 | 2.48 MB |
-| UK 英國 | 3,615 | 2.09 MB |
-| TH 泰國 | 2,554 | 1.38 MB |
-| KR 韓國 | 2,533 | 1.26 MB |
-| HK 香港 | 1,493 | 0.92 MB |
+| other（未分區）| 22,628 | 14.26 MB |
+| US 美國 | 15,356 | 8.21 MB |
+| TW 台灣 | 9,110 | 5.18 MB |
+| CN 中國 | 7,346 | 2.81 MB |
+| JP 日本 | 4,941 | 2.49 MB |
+| UK 英國 | 3,618 | 2.10 MB |
+| TH 泰國 | 2,559 | 1.39 MB |
+| KR 韓國 | 2,539 | 1.27 MB |
+| HK 香港 | 1,515 | 0.93 MB |
 
 **軌跡數 Top 15 機場**（★ = 主動查詢）：
 
 | 機場 | 軌跡 | 機場 | 軌跡 | 機場 | 軌跡 |
 |------|---:|------|---:|------|---:|
-| ★RCTP 桃園 | 5,790 | ★ZSPD 浦東 | 1,656 | ★EGLL 倫敦 | 1,363 |
-| ★OMDB 杜拜 | 2,748 | ★VHHH 香港 | 1,493 | ★KJFK 甘迺迪 | 1,354 |
-| ★WSSS 新加坡 | 1,968 | ★KSFO 舊金山 | 1,473 | ★RJTT 羽田 | 1,328 |
-| ★KATL 亞特蘭大 | 1,839 | ★LTFM 伊斯坦堡 | 1,379 | ★VTBS 曼谷 | 1,316 |
-| ★KLAX 洛杉磯 | 1,773 | ★RKSI 仁川 | 1,379 | ★LFPG 巴黎 | 1,292 |
+| ★RCTP 桃園 | 5,807 | ★ZSPD 浦東 | 1,659 | ★EGLL 倫敦 | 1,364 |
+| ★OMDB 杜拜 | 2,760 | ★VHHH 香港 | 1,515 | ★KJFK 甘迺迪 | 1,354 |
+| ★WSSS 新加坡 | 1,976 | ★KSFO 舊金山 | 1,475 | ★ZGGG 廣州 | 1,337 |
+| ★KATL 亞特蘭大 | 1,842 | ★RKSI 仁川 | 1,385 | ★RJTT 羽田 | 1,335 |
+| ★KLAX 洛杉磯 | 1,785 | ★LTFM 伊斯坦堡 | 1,379 | ★VTBS 曼谷 | 1,320 |
 
 > 軌跡資料**不進 git**，存於 S3（`migu-gis-data-collector/flight-arc/`），部署時由 Zeabur 端 `pull-from-s3.sh` 拉取。完整抓取進度與下一步規劃見 [`docs/backlog/data-fetching-status.md`](docs/backlog/data-fetching-status.md)。
 
