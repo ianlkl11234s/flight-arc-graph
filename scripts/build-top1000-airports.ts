@@ -35,7 +35,9 @@ const OUT_PATH = join(ROOT, "scripts/top1000-airports.json");
 
 const TARGET_SIZE = 1000;
 const PAGE_SIZE = 300;        // FR24 Essential
-const CREDITS_PER_PAGE = 227; // 實測校準 2026-07-11（FR24 dashboard 254,821/1,122），舊值 38.7 低估 ~5.9×
+// ⚠️ 真實成本是 per-flight ≈ 3 credits/筆（見 fetch-flights.ts 註解）。此 per-page 值僅為本腳本
+// est_pages 概算沿用，不精確；要估時刻表成本請用「航班筆數 × 3」。
+const CREDITS_PER_PAGE = 227;
 
 // ── CSV parser (naive but works for OurAirports) ─────────────────────
 function parseCsv(content: string): Record<string, string>[] {

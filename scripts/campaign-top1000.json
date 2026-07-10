@@ -15,7 +15,7 @@
   "_budget_note": "每次抓取花多少由用戶啟動時確認。manual_remaining = 本期用戶核准額度；用完或換月時，用戶給新數字後更新 manual_remaining / as_of（不自動算週期重置）",
   "budget": {
     "monthly_credits": 666000,
-    "manual_remaining": 44823,
+    "manual_remaining": 8000,
     "manual_remaining_as_of": "2026-07-11"
   },
   "batches": [
