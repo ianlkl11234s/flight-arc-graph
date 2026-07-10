@@ -218,7 +218,7 @@ function getThemeColors(isDark: boolean): ThemeColors {
 
 /* ── Types ───────────────────────────────────────────────── */
 
-type PanelId = "settings" | "locations" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis";
+type PanelId = "settings" | "locations" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
 
 export interface IconRailSidebarProps {
   // Theme
@@ -321,6 +321,9 @@ export interface IconRailSidebarProps {
   onFlightFiltersChange: (f: FlightFilters) => void;
   scaleByAircraftSize: boolean;
   onScaleByAircraftSizeChange: (v: boolean) => void;
+  // Atlas 機場總覽（🗺️）
+  atlasVisible: boolean;
+  onAtlasVisibleChange: (v: boolean) => void;
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -2122,6 +2125,85 @@ function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays, them
 
 /* ── Airspace Panel ─────────────────────────────────────── */
 
+function AtlasPanel({
+  atlasVisible,
+  onAtlasVisibleChange,
+  airportCatalog,
+  theme,
+}: {
+  atlasVisible: boolean;
+  onAtlasVisibleChange: (v: boolean) => void;
+  airportCatalog: Record<string, AirportManifestEntry>;
+  theme: ThemeColors;
+}) {
+  const stats = useMemo(() => {
+    let complete = 0;
+    let corePartial = 0;
+    let partial = 0;
+    for (const e of Object.values(airportCatalog)) {
+      if ((e.fullDates?.length ?? 0) > 0) complete++;
+      else if (e.isCore) corePartial++;
+      else partial++;
+    }
+    return { complete, corePartial, partial };
+  }, [airportCatalog]);
+
+  const legend = [
+    { color: "#2ecc71", label: "完整資料", desc: `整天完整捕捉（${stats.complete}）` },
+    { color: "#f1c40f", label: "核心（部分）", desc: `主動抓但未滿整天（${stats.corePartial}）` },
+    { color: "#4a90d9", label: "部分（附帶）", desc: `因航線連到而附帶（${stats.partial}）` },
+    { color: "#8894a3", label: "僅規劃（未抓）", desc: "前 1000 目標、尚未抓" },
+  ];
+
+  return (
+    <div>
+      <SectionHeader theme={theme}>機場總覽 Atlas</SectionHeader>
+      <div style={{ fontSize: 11, color: theme.DIM, lineHeight: 1.6, marginBottom: 10 }}>
+        全球機場點位：圓圈大小＝單日流量、顏色＝資料完整度。點圓圈看該機場基本資料。
+      </div>
+
+      <button
+        onClick={() => onAtlasVisibleChange(!atlasVisible)}
+        style={{
+          width: "100%",
+          padding: "8px 12px",
+          marginBottom: 14,
+          borderRadius: 8,
+          cursor: "pointer",
+          border: `1px solid ${atlasVisible ? theme.ACTIVE_BORDER : theme.BORDER}`,
+          background: atlasVisible ? theme.ACTIVE_BTN_BG : theme.HOVER_BG,
+          color: atlasVisible ? theme.ACTIVE_TEXT : theme.DIM,
+          fontSize: 13,
+          fontWeight: 600,
+        }}
+      >
+        {atlasVisible ? "● 已顯示在地圖上" : "○ 在地圖上顯示機場點"}
+      </button>
+
+      <div style={{ fontSize: 11, color: theme.DIM, marginBottom: 8, fontWeight: 600 }}>顏色 = 資料完整度</div>
+      {legend.map((l) => (
+        <div key={l.label} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
+          <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, marginTop: 2, flexShrink: 0, border: `1px solid ${theme.BORDER}` }} />
+          <div>
+            <div style={{ fontSize: 12, color: theme.ACTIVE_TEXT, fontWeight: 600 }}>{l.label}</div>
+            <div style={{ fontSize: 10.5, color: theme.DIM }}>{l.desc}</div>
+          </div>
+        </div>
+      ))}
+
+      <div style={{ fontSize: 11, color: theme.DIM, marginTop: 12, marginBottom: 6, fontWeight: 600 }}>大小 = 單日流量</div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 14, paddingLeft: 2 }}>
+        {[3, 8, 16].map((r, i) => (
+          <div key={r} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <span style={{ width: r * 2, height: r * 2, borderRadius: "50%", background: theme.DIM, opacity: 0.5 }} />
+            <span style={{ fontSize: 9, color: theme.DIM }}>{["少", "中", "多"][i]}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AirspacePanel({
   settings,
   onChange,
@@ -2494,6 +2576,22 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           </svg>
         </RailIcon>
 
+        {/* Atlas 機場總覽 (🗺️) */}
+        <RailIcon
+          active={activePanel === "atlas" || props.atlasVisible}
+          onClick={() => togglePanel("atlas")}
+          title="Airport Atlas"
+          theme={theme}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <ellipse cx="12" cy="12" rx="4" ry="9" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="4.5" y1="7" x2="19.5" y2="7" />
+            <line x1="4.5" y1="17" x2="19.5" y2="17" />
+          </svg>
+        </RailIcon>
+
         {/* Stats */}
         <RailIcon
           active={false}
@@ -2612,6 +2710,14 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               scaleByAircraftSize={props.scaleByAircraftSize}
               onScaleByAircraftSizeChange={props.onScaleByAircraftSizeChange}
               isDarkTheme={props.isDarkTheme}
+              theme={theme}
+            />
+          )}
+          {activePanel === "atlas" && (
+            <AtlasPanel
+              atlasVisible={props.atlasVisible}
+              onAtlasVisibleChange={props.onAtlasVisibleChange}
+              airportCatalog={props.airportCatalog}
               theme={theme}
             />
           )}

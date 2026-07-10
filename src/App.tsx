@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Map as MapboxMap } from "mapbox-gl";
+import mapboxgl, { type Map as MapboxMap } from "mapbox-gl";
 import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay, SavedAirportSet } from "./types";
 import { computeFitBoundsForSet } from "./map/fitBoundsForSet";
 import { BUILTIN_SETS } from "./map/savedSets";
 import type { FlightScene } from "./three/FlightScene";
-import { MapView } from "./map/MapView";
+import { MapView, ATLAS_LAYER } from "./map/MapView";
 import { useFlightData } from "./hooks/useFlightData";
 import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -42,6 +42,48 @@ import { computeAnalysisColorMap, type AnalysisColorBy } from "./data/analysisCo
 import { getAircraftInfo, type AircraftCategory as AcCat } from "./data/aircraftDatabase";
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
+
+// ── Atlas 機場點：點擊 popup ──
+interface AtlasProps {
+  icao: string;
+  iata: string;
+  name: string;
+  country: string;
+  continent: string;
+  rank: number | null;
+  status: string;
+  dailyProxy: number;
+  capturedFlights: number | null;
+  estDaily: number | null;
+}
+const ATLAS_STATUS_META: Record<string, { label: string; color: string }> = {
+  complete: { label: "完整資料", color: "#2ecc71" },
+  "core-partial": { label: "核心（部分）", color: "#f1c40f" },
+  partial: { label: "部分（附帶）", color: "#4a90d9" },
+  planned: { label: "僅規劃（未抓）", color: "#8894a3" },
+};
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"]/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
+  );
+}
+function buildAtlasPopupHtml(p: AtlasProps): string {
+  const st = ATLAS_STATUS_META[p.status] ?? { label: p.status, color: "#888" };
+  const rankLine = p.rank
+    ? `Top-1000 排名 #${p.rank}`
+    : "非前 1000（被動觸及）";
+  const capt =
+    p.capturedFlights != null ? `${p.capturedFlights.toLocaleString()} 條` : "—";
+  const est = p.estDaily != null ? `${p.estDaily} 班/日（估）` : "—";
+  return `<div style="font-family:system-ui,-apple-system,sans-serif;min-width:180px;color:#1a1a1a">
+    <div style="font-weight:700;font-size:14px;margin-bottom:2px">${escapeHtml(p.name)}</div>
+    <div style="font-size:11px;color:#666;margin-bottom:6px">${p.icao}${p.iata ? " / " + p.iata : ""}${p.country ? " · " + p.country : ""}${p.continent ? " " + p.continent : ""}</div>
+    <div style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;margin-bottom:6px">
+      <span style="width:9px;height:9px;border-radius:50%;background:${st.color};display:inline-block"></span>${st.label}
+    </div>
+    <div style="font-size:12px;color:#333;line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
+  </div>`;
+}
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
   loadingProgress: { loaded: number; label: string } | null;
@@ -207,6 +249,7 @@ export default function App() {
     return defaultAirspaceSettings();
   });
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
+  const [atlasVisible, setAtlasVisible] = useState(false);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
   const { isMobile, isLandscape } = useIsMobile();
 
@@ -757,6 +800,7 @@ export default function App() {
   const airspaceSettingsRef = useRef(airspaceSettings);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
+  const atlasPopupRef = useRef<mapboxgl.Popup | null>(null);
 
   flightsRef.current = finalFlights;
   timeRef.current = timeline.currentTime;
@@ -903,6 +947,19 @@ export default function App() {
           return;
         }
         setTooltipInfo(null);
+        // Atlas 機場點 pick（飛機之後、空域之前）
+        atlasPopupRef.current?.remove();
+        if (map.getLayer(ATLAS_LAYER)) {
+          const atlasHits = map.queryRenderedFeatures(e.point, { layers: [ATLAS_LAYER] });
+          if (atlasHits.length > 0 && atlasHits[0]!.properties) {
+            atlasPopupRef.current = new mapboxgl.Popup({ offset: 10, maxWidth: "260px" })
+              .setLngLat(e.lngLat)
+              .setHTML(buildAtlasPopupHtml(atlasHits[0]!.properties as AtlasProps))
+              .addTo(map);
+            setAirspaceSelection(null);
+            return;
+          }
+        }
         // 嘗試 pick airspace
         const features = getCachedAirspace();
         if (features && features.length > 0) {
@@ -1053,6 +1110,7 @@ export default function App() {
         trailLineWidth={trailLineWidth}
         isDarkTheme={isDarkTheme}
         showTrails={showTrails}
+        atlasVisible={atlasVisible}
         compareColorMap={perFlightColorMap}
         onMapReady={handleMapReady}
       />
@@ -1446,6 +1504,8 @@ export default function App() {
             onFlightFiltersChange={setFlightFilters}
             scaleByAircraftSize={scaleByAircraftSize}
             onScaleByAircraftSizeChange={setScaleByAircraftSize}
+            atlasVisible={atlasVisible}
+            onAtlasVisibleChange={setAtlasVisible}
           />
 
           {/* 頂部控制列（sidebar 右邊） */}

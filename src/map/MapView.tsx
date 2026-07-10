@@ -14,6 +14,7 @@ interface MapViewProps {
   trailLineWidth?: number;
   isDarkTheme?: boolean;
   showTrails?: boolean;
+  atlasVisible?: boolean;
   compareColorMap?: Map<string, string>;
   onMapReady?: (map: mapboxgl.Map) => void;
 }
@@ -23,6 +24,52 @@ const AIRPORT_FILL = "airport-fill";
 const AIRPORT_LINE = "airport-outline";
 const AIRPORT_GLOW_1 = "airport-glow-1";
 const AIRPORT_GLOW_2 = "airport-glow-2";
+
+// Atlas 機場總覽點層（大小=dailyProxy、顏色=完整度）
+export const ATLAS_SOURCE = "atlas-points";
+export const ATLAS_LAYER = "atlas-points-circle";
+
+function atlasStrokeColor(isDark: boolean) {
+  return isDark ? "rgba(255,255,255,0.55)" : "rgba(20,20,20,0.45)";
+}
+
+function addAtlasPoints(map: mapboxgl.Map, isDark: boolean, visible: boolean) {
+  if (map.getSource(ATLAS_SOURCE)) return;
+  map.addSource(ATLAS_SOURCE, { type: "geojson", data: "./airport-points.geojson" });
+  map.addLayer({
+    id: ATLAS_LAYER,
+    type: "circle",
+    source: ATLAS_SOURCE,
+    layout: { visibility: visible ? "visible" : "none" },
+    paint: {
+      // 半徑：sqrt(日均代理值) 線性映射（面積正比流量）
+      "circle-radius": [
+        "interpolate", ["linear"],
+        ["sqrt", ["max", ["get", "dailyProxy"], 1]],
+        1, 2.5,
+        22, 18,
+      ],
+      // 顏色：完整度 4 級
+      "circle-color": [
+        "match", ["get", "status"],
+        "complete", "#2ecc71",
+        "core-partial", "#f1c40f",
+        "partial", "#4a90d9",
+        "planned", "#8894a3",
+        "#888888",
+      ],
+      "circle-opacity": ["match", ["get", "status"], "planned", 0.4, 0.82],
+      "circle-stroke-width": 1,
+      "circle-stroke-color": atlasStrokeColor(isDark),
+      "circle-stroke-opacity": ["match", ["get", "status"], "planned", 0.45, 0.8],
+    },
+  });
+}
+
+function setAtlasVisible(map: mapboxgl.Map, visible: boolean) {
+  if (!map.getLayer(ATLAS_LAYER)) return;
+  map.setLayoutProperty(ATLAS_LAYER, "visibility", visible ? "visible" : "none");
+}
 
 
 function addAirportOverlay(map: mapboxgl.Map, opacity: number, glow: number, isDark: boolean) {
@@ -131,7 +178,7 @@ function setupTerrain(map: mapboxgl.Map) {
   map.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
 }
 
-export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, compareColorMap, onMapReady }: MapViewProps) {
+export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, onMapReady }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const readyRef = useRef(false);
@@ -159,6 +206,9 @@ export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity,
   compareColorMapRef.current = compareColorMap;
   trailLineWidthRef.current = trailLineWidth;
 
+  const atlasVisibleRef = useRef(atlasVisible);
+  atlasVisibleRef.current = atlasVisible;
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -179,6 +229,7 @@ export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity,
     map.on("style.load", () => {
       setupTerrain(map);
       addAirportOverlay(map, airportOpacityRef.current, airportGlowRef.current, isDarkThemeRef.current);
+      addAtlasPoints(map, isDarkThemeRef.current, atlasVisibleRef.current);
 
       // 永遠保留 Mapbox 原生靜態軌跡
       const is3d = renderModeRef.current === "3d";
@@ -222,6 +273,13 @@ export function MapView({ preset, styleUrl, flights, renderMode, airportOpacity,
     map.setStyle(styleUrl);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleUrl]);
+
+  // 切換 Atlas 機場總覽點層顯示
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    setAtlasVisible(map, atlasVisible);
+  }, [atlasVisible]);
 
   // 切換機場時平滑飛行 + 更新標記
   useEffect(() => {
