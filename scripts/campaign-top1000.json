@@ -1,0 +1,24 @@
+{
+  "campaign": "top1000-tracks-2026-02-18",
+  "goal": "全球運量前 1000 大機場在 2026-02-18（台北整日）所有起降航跡，織成全球網",
+  "date": "2026-02-18",
+  "airports_file": "scripts/top1000-airports.json",
+  "credits_per_track": 40,
+  "target_total": 65421,
+  "scanned_unique": 74651,
+  "already_done_at_start": 9230,
+  "existing_net_before": 44267,
+  "_budget_note": "每次抓取花多少由用戶啟動時確認。manual_remaining = 本期用戶核准額度；用完或換月時，用戶給新數字後更新 manual_remaining / as_of（不自動算週期重置）",
+  "budget": {
+    "monthly_credits": 666000,
+    "manual_remaining": 300000,
+    "manual_remaining_as_of": "2026-07-10"
+  },
+  "batches": [
+    { "id": 1, "ranks": [1, 39], "planned": 15158 },
+    { "id": 2, "ranks": [40, 125], "planned": 15040 },
+    { "id": 3, "ranks": [126, 395], "planned": 15003 },
+    { "id": 4, "ranks": [396, 673], "planned": 15059 },
+    { "id": 5, "ranks": [674, 1000], "planned": 5161 }
+  ]
+}

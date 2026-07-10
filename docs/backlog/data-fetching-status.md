@@ -1,33 +1,56 @@
 # Flight Arc — 資料抓取狀態與計劃
 
-> **最後更新**: 2026-06-04
+> **最後更新**: 2026-07-09
 > **目的**: 追蹤每個目標機場的「時刻表 + 軌跡」抓取進度，避免重複規劃或忘記未完成項目。
 
 ## 🔖 下次接續（接力點 — 先讀這裡）
 
-> **狀態快照 @ 2026-06-04**：西雅圖 + 上海 + 北京 5 座主動抓了時刻表（台北時間 2/18），但**軌跡只抓完上海兩場，西雅圖+北京 3 場的軌跡還沒抓**。
+> **狀態快照 @ 2026-07-09**：全球前 1000 大機場的 **2/18 時刻表已全數掃完**（1000/1000，0 錯誤）。下一步＝分月抓這些航班的軌跡（P2），把整張全球網織滿。
 
-### ⏸️ 待抓軌跡：KSEA / ZBAA / ZBAD（時刻表✅，軌跡❌）
+### ⏸️ 待抓：Top-1000 軌跡分批（P2）— 從 Batch 1 開始
 
-時刻表已在 `flight-list.json` 標記 completed，**直接跑 fetch-tracks 即可**（會自動跳過已抓的）：
+時刻表在 `scripts/flights/{ICAO}/2026-02-18.json`（1000 座）＋ `flight-list.json`（累計 161,722 筆）。掃到 2/18 不重複航班 74,651，其中 9,230 已有軌跡 → **還要抓 65,421 班 ≈ 2.62M credits ≈ 4 個月**（每月 666K 上限）。按 rank 分 5 批，每批 ~15,000 班：
+
+| 批次 | rank 帶 | 待抓班次 | credits |
+|------|---------|---------|---------|
+| **Batch 1（先跑這批）** | 1–39 megahub | 15,158 | 606K |
+| Batch 2 | 40–125 | 15,040 | 602K |
+| Batch 3 | 126–395 | 15,003 | 600K |
+| Batch 4 | 396–673 | 15,059 | 602K |
+| Batch 5 | 674–1000 長尾 | 5,161 | 206K |
+
+**每個 session 只要一個指令看全局**（現算：進度/目前批次/本週期額度/漂移警告/建議指令）：
 
 ```bash
-# 台北時間 2/18 = UTC 2026-02-17T16:00 ~ 2026-02-18T16:00
-npx tsx scripts/fetch-tracks.ts \
-  --airports KSEA,ZBAA,ZBAD \
-  --from-time 2026-02-17T16:00:00Z --to-time 2026-02-18T16:00:00Z
+npx tsx scripts/campaign-status.ts
+# → 照它印的「建議指令」跑（--airports-file --rank --max-credits 都算好了；先加 --dry-run 確認）
+#   完整迴圈（caffeinate / retry / split / S3 / commit）見 /track-round skill「Top-1000 P2 長期模式」
 ```
 
-| 機場 | 總班次 | 待抓軌跡(新增) | Track credits 估 |
-|------|------|------|------|
-| ZBAA 北京首都 | 1,112 | ~916 | ~37K |
-| ZBAD 北京大興 | 1,045 | ~987 | ~39K |
-| KSEA 西雅圖 | 987 | ~789 | ~32K |
-| **合計** | 3,144 | **~2,692** | **~108K credits / ~90 分** |
-
-抓完後跑 `split-tracks.ts` 重建 manifest，再把這 3 座從本接力點移除、寫進下方「最近完成」。
+> 💡 因軌跡雙寫 dep+dest，先抓 Batch 1（39 座 megahub）就會順帶填滿大量輻條 → 網子最密的核心最先成形；只做前 1–2 批就已有極高視覺價值（長尾 Batch 5 邊際貢獻最低）。
+> ⚠️ 抓完每批務必跑 `split-tracks.ts`（`NODE_OPTIONS=--max-old-space-size=12288`）重建 manifest，並同步 README 覆蓋表 + 本檔。campaign-status 會自動偵測「沒 split / 沒上 S3」漂移。
+> 📒 額度帳：`scripts/fetch-sessions.ndjson`（fetch-tracks 自動寫、進 git）。月額度重置後更新 `scripts/campaign-top1000.json` 的 `budget.manual_remaining` / `as_of`（從 FR24 dashboard 讀）。
+> ⚙️ 系統（2026-07-10 建）：fetch-tracks 加了 `--airports-file` / `--rank` / `--max-credits` + session 帳本；`campaign-top1000.json` 存批次指針與額度錨點；`campaign-status.ts` 一鍵簡報。
 
 ## 🆕 最近完成
+
+### 2026-07-09: 全球前 1000 機場 2/18 時刻表掃描 + 帳目對帳
+
+**目標**：把全球運量前 1000 大機場在 2/18（台北整日）的所有起降織成一張全球網。
+
+**Step 0 對帳**：6/19 已抓的西雅圖 + 北京軌跡（KSEA/ZBAA/ZBAD，2,609 筆）先前沒重跑 split-tracks，manifest/README 落後。本次補跑 `split-tracks.ts` 入帳：
+- 不重複航班 41,655 → **44,267**（track-done 44,378）
+- CN region 3,638 → 5,483（北京入 region）、US 10,868 → 11,639（西雅圖入 region）
+- 舊接力點（KSEA/ZBAA/ZBAD 待抓軌跡）已於 6/19 完成，本次確認並移除
+
+**Step 1 掃時刻表**：`fetch-flights --airports-file scripts/top1000-airports.json --from 2026-02-17T16:00:00Z --to 2026-02-18T16:00:00Z --direction outbound`
+- **1000/1000 座完成，0 錯誤**（中途曾於 885 被外部中止，續跑自動跳過已完成、補完剩餘 115 座）
+- flight-list 不重複航班 97,944 → **161,722**（本輪淨增 63,778）
+- 掃到 2/18 不重複航班 **74,651**，其中 9,230 已有軌跡 → **待抓 65,421 班**
+- 產出新格式 `scripts/flights/{ICAO}/2026-02-18.json`（首次大規模啟用）
+- 清單來源：`scripts/top1000-airports.json`（`build-top1000-airports.ts` 產，已排除 160 座既有 core）
+
+**下一步**：P2 軌跡分批（見上方接力點，Batch 1 = rank 1–39）。
 
 ### 2026-06-04: 西雅圖 + 上海 + 北京 5 座主動化（台北時間 2/18）
 
@@ -142,14 +165,15 @@ npx tsx scripts/fetch-tracks.ts \
 | **主動機場 (active)** | 在 `flight-list.json.completed` 裡，曾用 fetch-flights 主動抓過該機場 |
 | **被動機場 (passive)** | 沒主動抓，但因航班另一端落地此處而生成 JSONL（會有資料但片面） |
 
-## 全域進度（2026-05-15 快照）
+## 全域進度（2026-07-09 快照）
 
 ```
-flight-list.json: 83,649 筆航班（265 個 sessionKey）
-track-done:       28,688 筆
-track-failed:        47 筆
-todo:             54,914 筆
-JSONL 機場數:      1,049 座
+flight-list.json:       161,722 筆航班
+track-done:              44,378 筆
+track-failed:               117 筆
+JSONL 機場數:             1,416 座
+不重複軌跡(manifest):     44,267 筆
+Top-1000 2/18 待抓軌跡:   65,421 筆（~2.62M credits / ~4 個月）
 ```
 
 ---

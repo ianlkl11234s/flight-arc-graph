@@ -8,6 +8,33 @@ user_invocable: true
 
 FR24 Essential 方案限制：**300 筆/次、30 次/分鐘、666,000 credits/月**。
 
+## 🌐 Top-1000 P2 長期模式（2/18 全球網，跨數月）
+
+若這次是在推進「全球前 1000 大機場 2/18 軌跡」戰役（65,421 條 ≈ 2.62M credits ≈ 4 個月），走這個特化迴圈：**跳過 Step 1（1000 座時刻表已全掃完）、日期固定 2026-02-18、按 rank 分批、`--max-credits` 封頂**。每個 session：
+
+```bash
+# 0. 一鍵看狀態（現算：進度/目前批次/本週期額度/漂移警告/建議指令）
+npx tsx scripts/campaign-status.ts
+#    有漂移警告（沒 split / 沒上 S3）→ 先補做再抓
+
+# 1. 照它印的「建議指令」跑（--rank 與 --max-credits 已算好）；務必先 --dry-run 確認 todo
+caffeinate -i npx tsx scripts/fetch-tracks.ts --airports-file scripts/top1000-airports.json \
+  --rank <目前批次> --date 2026-02-18 --max-credits <算好的值> 2>&1 | tee scripts/_p2-batch.log
+#    ⚠️ macOS 睡眠會殺 8 小時長跑 → caffeinate。track-done 保證中斷零損失，可隨時續跑
+
+# 2. 補救網路 blip：track-failed 新增的 id → scripts/retry-targets.txt → retry-failed-tracks.ts
+# 3. 重建 manifest：NODE_OPTIONS="--max-old-space-size=12288" npx tsx scripts/split-tracks.ts
+# 4. 同步 README 覆蓋表 + data-fetching-status.md（campaign 進度不用手改，campaign-status 現算）
+# 5. 上傳：npm run s3:upload（→ Zeabur 端 sh /app/scripts/pull-from-s3.sh）
+# 6. commit scripts/fetch-sessions.ndjson + campaign-top1000.json（帳本進 git = 跨月審計）
+```
+
+- **額度追蹤**：`fetch-tracks` 每次跑完自動 append 一行到 `scripts/fetch-sessions.ndjson`（含 SIGINT / circuit breaker）。月額度重置後，從 FR24 dashboard 讀實際餘額，更新 `campaign-top1000.json` 的 `budget.manual_remaining` / `manual_remaining_as_of`。
+- **進度真相永遠現算**：文件過期不影響，`campaign-status.ts` 掃 `scripts/flights` vs `track-done` 得出。
+- 細節與批次表 → `docs/backlog/data-fetching-status.md` 最上方「🔖 下次接續」。
+
+---
+
 ## Step 0: 先讀狀態（必做）
 
 讀 `docs/backlog/data-fetching-status.md`：

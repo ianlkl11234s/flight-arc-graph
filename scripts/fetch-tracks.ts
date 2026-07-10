@@ -8,9 +8,14 @@
  * 參數：
  *   --date YYYY-MM-DD                只處理該日期的航班（datetime_takeoff 起頭）
  *   --airports RCTP,RJTT,...         只處理 orig 或 dest 落在清單內的航班（推薦）
+ *   --airports-file path             從 JSON 清單取機場（[{icao,rank}] 或 [ICAO]）
+ *   --rank A-B                       搭配 --airports-file，只取 rank 在 A~B 的機場（Top-1000 分批用）
  *   --limit N                        最多處理 N 筆（測試用）
- *   --dry-run                        只印 todo 數量，不打 API
+ *   --max-credits N                  本次最多花 ~N credits（= 上限 floor(N/40) 筆），吃滿自動停
+ *   --dry-run                        只印 todo 數量 + 預估 credits，不打 API
  *   不帶參數 → 處理全部航班
+ *
+ *   每次實跑結束（含 SIGINT / circuit breaker）會 append 一行到 scripts/fetch-sessions.ndjson（額度帳）
  *
  * Essential 方案限制：300 筆/次、30 次/分鐘、666,000 credits/月
  *
@@ -45,11 +50,13 @@ const ROOT = resolve(__dirname, "..");
 const API_BASE = "https://fr24api.flightradar24.com/api";
 const DELAY_MS = 2050; // 2.05s → ~29 req/min，接近 Essential 30 req/min 上限
 const MAX_RETRIES = 5;
+const CREDITS_PER_TRACK = 40; // flight-tracks 每筆約 40 credits（估值，每月拿 FR24 dashboard 校準）
 
 const INPUT_FILE = resolve(ROOT, "scripts/flight-list.json");
 const FLIGHTS_DIR = resolve(ROOT, "scripts/flights"); // 新格式來源
 const DONE_NDJSON = resolve(ROOT, "scripts/track-done.ndjson");
 const FAILED_NDJSON = resolve(ROOT, "scripts/track-failed.ndjson");
+const SESSIONS_NDJSON = resolve(ROOT, "scripts/fetch-sessions.ndjson"); // 額度帳（append-only）
 const AIRPORTS_DIR = resolve(ROOT, "public/tracks/airports");
 const RAW_DIR = resolve(ROOT, "public/tracks/raw"); // {YYYY-MM}/{ab}/{fr24_id}.json.gz
 
@@ -340,19 +347,69 @@ async function main() {
 
   // 解析 --airports 參數（篩選 orig_icao 或 dest_icao）
   const airportsIdx = process.argv.indexOf("--airports");
-  const airportsFilter =
+  const inlineAirports =
     airportsIdx !== -1
-      ? new Set(
-          process.argv[airportsIdx + 1]!
-            .split(",")
-            .map((s) => s.trim().toUpperCase()),
-        )
+      ? process.argv[airportsIdx + 1]!.split(",").map((s) => s.trim().toUpperCase())
+      : [];
+
+  // --airports-file path [+ --rank A-B]：從 JSON 清單取 ICAO（Top-1000 分批用）
+  const airportsFileIdx = process.argv.indexOf("--airports-file");
+  const rankIdx = process.argv.indexOf("--rank");
+  const rankArg = rankIdx !== -1 ? process.argv[rankIdx + 1]! : null;
+  let fileAirports: string[] = [];
+  if (airportsFileIdx !== -1) {
+    const raw = JSON.parse(
+      readFileSync(resolve(ROOT, process.argv[airportsFileIdx + 1]!), "utf-8"),
+    );
+    let entries: { icao?: string; rank?: number }[] = (
+      Array.isArray(raw) ? raw : raw.airports ?? []
+    ).map((x: unknown) => (typeof x === "string" ? { icao: x } : x));
+    if (rankArg) {
+      const m = rankArg.match(/^(\d+)-(\d+)$/);
+      if (!m) {
+        console.error("❌ --rank 格式錯誤，需 A-B（如 1-39）");
+        process.exit(1);
+      }
+      const lo = parseInt(m[1]!, 10);
+      const hi = parseInt(m[2]!, 10);
+      entries = entries.filter(
+        (e) => typeof e.rank === "number" && e.rank >= lo && e.rank <= hi,
+      );
+    }
+    fileAirports = entries
+      .map((e) => String(e.icao || "").toUpperCase())
+      .filter(Boolean);
+  }
+
+  const airportsFilter =
+    inlineAirports.length > 0 || fileAirports.length > 0
+      ? new Set<string>([...inlineAirports, ...fileAirports])
       : null;
 
   // --limit N (測試用)
   const limitIdx = process.argv.indexOf("--limit");
   const limit =
     limitIdx !== -1 ? parseInt(process.argv[limitIdx + 1]!, 10) : null;
+
+  // --max-credits N：本次最多花 ~N credits（換算成筆數上限）
+  const maxCreditsIdx = process.argv.indexOf("--max-credits");
+  const maxCredits =
+    maxCreditsIdx !== -1 ? parseInt(process.argv[maxCreditsIdx + 1]!, 10) : null;
+
+  // 綜合 --limit 與 --max-credits，取較嚴格者
+  let effectiveLimit = limit;
+  if (maxCredits !== null) {
+    const creditLimit = Math.floor(maxCredits / CREDITS_PER_TRACK);
+    effectiveLimit =
+      effectiveLimit === null ? creditLimit : Math.min(effectiveLimit, creditLimit);
+  }
+
+  // 本次執行標籤（給 session 帳本）
+  const runLabel = rankArg
+    ? `rank${rankArg}`
+    : airportsFilter
+      ? [...airportsFilter].slice(0, 4).join(",") + (airportsFilter.size > 4 ? `+${airportsFilter.size - 4}` : "")
+      : "all";
 
   // --dry-run (不打 API)
   const dryRun = process.argv.includes("--dry-run");
@@ -419,14 +476,29 @@ async function main() {
     `   本次範圍: ${doneInTargets}/${targets.length} 已完成，待處理 ${todo.length} 筆`,
   );
 
-  if (limit !== null && todo.length > limit) {
-    todo = todo.slice(0, limit);
-    console.log(`   --limit ${limit}: 只處理前 ${todo.length} 筆`);
+  const todoBeforeLimit = todo.length;
+  if (effectiveLimit !== null && todo.length > effectiveLimit) {
+    todo = todo.slice(0, effectiveLimit);
+    const capLabel =
+      maxCredits !== null
+        ? `--max-credits ${maxCredits.toLocaleString()}（≈${effectiveLimit} 筆）`
+        : `--limit ${effectiveLimit}`;
+    console.log(`   ${capLabel}: 只處理前 ${todo.length} 筆`);
   }
   console.log();
 
   if (dryRun) {
-    console.log("🧪 --dry-run：不打 API，結束。");
+    console.log(
+      `🧪 --dry-run：範圍內待處理 ${todoBeforeLimit.toLocaleString()} 筆` +
+        `（預估 ~${(todoBeforeLimit * CREDITS_PER_TRACK).toLocaleString()} credits）`,
+    );
+    if (todo.length !== todoBeforeLimit) {
+      console.log(
+        `           本次上限只會抓 ${todo.length.toLocaleString()} 筆` +
+          `（~${(todo.length * CREDITS_PER_TRACK).toLocaleString()} credits）`,
+      );
+    }
+    console.log("           不打 API，結束。");
     return;
   }
 
@@ -439,6 +511,35 @@ async function main() {
   let failCount = 0;
   let emptyCount = 0;
   let firstLogged = totalDoneCount > 0; // 若已有進度，跳過首筆 log
+
+  // ── Session 額度帳（收工 / SIGINT / circuit breaker 都會寫一行）──
+  let sessionLogged = false;
+  const writeSessionLog = (reason: string) => {
+    if (sessionLogged) return;
+    sessionLogged = true;
+    const attempted = successCount + emptyCount + failCount;
+    if (attempted === 0) return; // 沒實際打 API 就不記
+    const line =
+      JSON.stringify({
+        ts: new Date().toISOString(),
+        label: runLabel,
+        date: dateFilter || (fromTime ? `${fromTime}~${toTime}` : "all"),
+        reason, // done | sigint | circuit-breaker
+        attempted,
+        ok: successCount,
+        empty: emptyCount,
+        failed: failCount,
+        requests: totalRequests,
+        credits_est: attempted * CREDITS_PER_TRACK,
+        done_total_after: progress.done.size, // 自癒錨點：可用 track-done 行數差值重建
+      }) + "\n";
+    appendFileSync(SESSIONS_NDJSON, line);
+  };
+  process.on("SIGINT", () => {
+    console.log("\n⏸️  收到 SIGINT，寫入 session 帳後結束。");
+    writeSessionLog("sigint");
+    process.exit(130);
+  });
 
   // ── Circuit breaker ──
   // A. 連續 15 筆失敗 → abort (網路死/API key 掛掉的徵兆)
@@ -557,6 +658,12 @@ async function main() {
   console.log(`累計 done:    ${progress.done.size} 筆`);
   console.log(`累計 failed:  ${progress.failed.size} 筆`);
   console.log(`API 請求次數: ${totalRequests}`);
+  const attempted = successCount + emptyCount + failCount;
+  console.log(
+    `本次估用 credits: ~${(attempted * CREDITS_PER_TRACK).toLocaleString()}（${attempted} 筆 × ${CREDITS_PER_TRACK}）`,
+  );
+  writeSessionLog("done");
+  if (attempted > 0) console.log(`📒 已記入 ${SESSIONS_NDJSON}`);
 }
 
 main().catch((err) => {
