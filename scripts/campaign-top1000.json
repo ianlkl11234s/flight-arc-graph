@@ -10,13 +10,13 @@
   "scanned_unique": 74651,
   "already_done_at_start": 9230,
   "existing_net_before": 44267,
-  "track_done_baseline": 44378,
-  "_baseline_note": "戰役開抓軌跡前的 track-done 行數。花費以 (現行 track-done − baseline) × credits_per_track 自癒推導，被 kill 也不用手補帳本",
+  "track_done_baseline": 51541,
+  "_baseline_note": "花費錨點 track-done 行數。2026-07-11 重設：因發現時刻表成本被低估 6×，改以 FR24 dashboard 實際餘額 44,823 重新錨定（baseline=當時 track-done 51541，manual_remaining=44823）",
   "_budget_note": "每次抓取花多少由用戶啟動時確認。manual_remaining = 本期用戶核准額度；用完或換月時，用戶給新數字後更新 manual_remaining / as_of（不自動算週期重置）",
   "budget": {
     "monthly_credits": 666000,
-    "manual_remaining": 300000,
-    "manual_remaining_as_of": "2026-07-10"
+    "manual_remaining": 44823,
+    "manual_remaining_as_of": "2026-07-11"
   },
   "batches": [
     { "id": 1, "ranks": [1, 39], "planned": 15158 },

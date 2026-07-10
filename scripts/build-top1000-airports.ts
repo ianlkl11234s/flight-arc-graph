@@ -35,7 +35,7 @@ const OUT_PATH = join(ROOT, "scripts/top1000-airports.json");
 
 const TARGET_SIZE = 1000;
 const PAGE_SIZE = 300;        // FR24 Essential
-const CREDITS_PER_PAGE = 38.7;
+const CREDITS_PER_PAGE = 227; // 實測校準 2026-07-11（FR24 dashboard 254,821/1,122），舊值 38.7 低估 ~5.9×
 
 // ── CSV parser (naive but works for OurAirports) ─────────────────────
 function parseCsv(content: string): Record<string, string>[] {

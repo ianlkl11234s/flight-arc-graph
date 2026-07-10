@@ -554,8 +554,11 @@ async function main() {
   const totalNew = validStats.reduce((sum, s) => sum + s.new, 0);
   const totalPages = validStats.reduce((sum, s) => sum + s.pages, 0);
   const totalEstPages = validStats.reduce((sum, s) => sum + s.est_pages, 0);
-  const actualCredits = Math.round(totalPages * 38.7);
-  const estCredits = Math.round(totalEstPages * 38.7);
+  // ⚠️ 實測校準（2026-07-11 FR24 dashboard）：flight-summary/light ≈ 227 credits/page，
+  // 不是舊估的 38.7（差 ~5.9×）。dashboard: 254,821 credits / 1,122 calls。
+  const CREDITS_PER_PAGE = 227;
+  const actualCredits = Math.round(totalPages * CREDITS_PER_PAGE);
+  const estCredits = Math.round(totalEstPages * CREDITS_PER_PAGE);
 
   console.log("\n=== 對帳 ===");
   console.log(`本批機場處理: ${validStats.length} 成功 / ${errCount} 失敗`);
