@@ -4,10 +4,11 @@ uniform vec3 uColor;
 uniform float uOpacity;
 
 varying float vProgress;
+varying float vCull;
 
 void main() {
-  // 非線性衰減：前端明亮，尾端快速衰減
-  float alpha = pow(vProgress, 2.0) * uOpacity;
+  // 非線性衰減：前端明亮，尾端快速衰減（vCull = 球體背面淡出）
+  float alpha = pow(vProgress, 2.0) * uOpacity * vCull;
 
   // 前端附近增加亮度（模擬發光核心）
   float glow = smoothstep(0.85, 1.0, vProgress) * 0.5;

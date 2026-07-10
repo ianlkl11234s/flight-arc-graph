@@ -1,6 +1,8 @@
 import * as THREE from "three";
+import { mercatorToGlobe, type GlobeResolved } from "./shaders/globeProject";
 
 const MAX_INSTANCES = 1024;
+const _g: GlobeResolved = { x: 0, y: 0, z: 0, cull: 1 };
 
 interface OrbLayer {
   mesh: THREE.InstancedMesh;
@@ -32,6 +34,11 @@ export class InstancedOrbs {
   private orbScale = 0.000005;
   /** Per-instance scale multiplier（fr24_id → multiplier）；null = 全 1.0 */
   private scaleMap: Map<string, number> | null = null;
+
+  /** 貼球參數（由 FlightScene.setGlobe 傳入）；globeToMerc=null → 平面 mercator */
+  private globeToMerc: THREE.Matrix4 | null = null;
+  private globeTransition = 1;
+  private globeCam: THREE.Vector3 | null = null;
 
   constructor(scene: THREE.Scene, color: THREE.Color, blending: THREE.Blending) {
     this.geo = new THREE.IcosahedronGeometry(1, 2);
@@ -93,9 +100,14 @@ export class InstancedOrbs {
     for (let i = 0; i < this.count; i++) {
       const e = entries[i]!;
       this.flightIds[i] = e.id;
-      this.positions[i * 3] = e.x;
-      this.positions[i * 3 + 1] = e.y;
-      this.positions[i * 3 + 2] = e.z;
+
+      // 貼球：mercator → globe（含背面 cull）；平面模式直接回傳 mercator
+      mercatorToGlobe(e.x, e.y, e.z, this.globeToMerc, this.globeTransition, this.globeCam, _g);
+      const gx = _g.x, gy = _g.y, gz = _g.z, cull = _g.cull;
+      // 存貼球後座標供點擊拾取（與渲染一致）
+      this.positions[i * 3] = gx;
+      this.positions[i * 3 + 1] = gy;
+      this.positions[i * 3 + 2] = gz;
 
       const phase = this.phaseOffsets[i]!;
 
@@ -105,10 +117,10 @@ export class InstancedOrbs {
       // Per-instance multiplier（按機型等分類調整大小，未設定則 1.0）
       const mul = this.scaleMap?.get(e.id) ?? 1.0;
 
-      // Orb layers
+      // Orb layers（cull：球體背面的光球縮到 0 隱藏）
       for (const layer of this.layers) {
-        const s = this.orbScale * layer.scaleRatio * pulse * mul;
-        _dummy.position.set(e.x, e.y, e.z);
+        const s = this.orbScale * layer.scaleRatio * pulse * mul * cull;
+        _dummy.position.set(gx, gy, gz);
         _dummy.scale.set(s, s, s);
         _dummy.updateMatrix();
         layer.mesh.setMatrixAt(i, _dummy.matrix);
@@ -120,8 +132,8 @@ export class InstancedOrbs {
       const blink2 = cycle > 0.15 && cycle < 0.25 ? 0.7 : 0.0;
       const blinkOpacity = Math.max(blink1, blink2);
 
-      const bs = this.orbScale * this.blinkLayer.scaleRatio * mul;
-      _dummy.position.set(e.x, e.y, e.z + 0.0000015);
+      const bs = this.orbScale * this.blinkLayer.scaleRatio * mul * cull;
+      _dummy.position.set(gx, gy, gz);
       _dummy.scale.set(bs, bs, bs);
       _dummy.updateMatrix();
       this.blinkLayer.mesh.setMatrixAt(i, _dummy.matrix);
@@ -146,6 +158,13 @@ export class InstancedOrbs {
   /** 設定光球大小（全域基準） */
   setScale(scale: number) {
     this.orbScale = scale;
+  }
+
+  /** 設定貼球參數（每幀由 FlightScene.setGlobe 傳入） */
+  setGlobe(globeToMerc: THREE.Matrix4 | null, transition: number, cam: THREE.Vector3 | null) {
+    this.globeToMerc = globeToMerc;
+    this.globeTransition = transition;
+    this.globeCam = cam;
   }
 
   /** 設定 per-instance scale multiplier；null = 還原為全 1.0 */

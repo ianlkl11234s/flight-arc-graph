@@ -4,6 +4,14 @@ import { toMercator } from "../utils/coordinates";
 
 import trailVert from "./shaders/trail.vert?raw";
 import trailFrag from "./shaders/trail.frag?raw";
+import { GLOBE_PROJECT_GLSL } from "./shaders/globeProject";
+
+/** 貼球共用 uniform（跨材質共用同一組 value 物件，每幀由 FlightScene 更新一次） */
+export interface GlobeUniforms {
+  uGlobeToMerc: { value: THREE.Matrix4 };
+  uTransition: { value: number };
+  uCameraEcef: { value: THREE.Vector3 };
+}
 
 /**
  * 光軌：漸層透明的彗尾效果
@@ -19,6 +27,7 @@ export class LightTrail {
     color: THREE.Color = new THREE.Color(0.4, 0.7, 1.0),
     maxPoints = 512,
     blending: THREE.Blending = THREE.AdditiveBlending,
+    globeUniforms?: GlobeUniforms,
   ) {
     this.maxPoints = maxPoints;
 
@@ -31,15 +40,21 @@ export class LightTrail {
     this.geometry.setDrawRange(0, 0);
 
     this.material = new THREE.ShaderMaterial({
-      vertexShader: trailVert,
+      vertexShader: GLOBE_PROJECT_GLSL + trailVert,
       fragmentShader: trailFrag,
       uniforms: {
         uColor: { value: color },
         uOpacity: { value: 0.8 },
+        ...(globeUniforms ?? {
+          uGlobeToMerc: { value: new THREE.Matrix4() },
+          uTransition: { value: 1 },
+          uCameraEcef: { value: new THREE.Vector3() },
+        }),
       },
       transparent: true,
       blending,
       depthWrite: false,
+      depthTest: false, // globe 底圖 depth（far=∞）會誤遮貼球航跡，故關閉；背面靠 shader cull 藏
     });
 
     this.mesh = new THREE.Line(this.geometry, this.material);

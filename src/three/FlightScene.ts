@@ -9,6 +9,7 @@ import { InstancedOrbs } from "./InstancedOrbs";
 
 import staticTrailVert from "./shaders/staticTrail.vert?raw";
 import staticTrailFrag from "./shaders/staticTrail.frag?raw";
+import { GLOBE_PROJECT_GLSL } from "./shaders/globeProject";
 
 /** 預計算的 Mercator 座標快取：[mx, my, mz, timestamp] */
 type MercatorPoint = [number, number, number, number];
@@ -48,6 +49,13 @@ export class FlightScene {
 
   private trails = new Map<string, TrailEntry>();
   private instancedOrbs: InstancedOrbs | null = null;
+  /** 貼球共用 uniform（靜態/發光/所有動畫軌跡材質共用同一組 value 物件，每幀更新一次） */
+  private globeUniforms = {
+    uGlobeToMerc: { value: new THREE.Matrix4() },
+    uTransition: { value: 1 },
+    uCameraEcef: { value: new THREE.Vector3() },
+  };
+  private globeInvMatrix = new THREE.Matrix4();
   private mercatorCache = new Map<string, MercatorPoint[]>();
   private colorIndex = 0;
   private frameCounter = 0;
@@ -267,24 +275,26 @@ export class FlightScene {
       : Math.min(this.currentStaticOpacity * 2.5, 0.7);
 
     const mat = new THREE.ShaderMaterial({
-      vertexShader: staticTrailVert,
+      vertexShader: GLOBE_PROJECT_GLSL + staticTrailVert,
       fragmentShader: staticTrailFrag,
-      uniforms: { uOpacity: { value: staticOpacity } },
+      uniforms: { uOpacity: { value: staticOpacity }, ...this.globeUniforms },
       transparent: true,
       blending: this.blending,
       depthWrite: false,
+      depthTest: false, // globe 底圖 depth（far=∞）會誤遮貼球航跡，故關閉；背面靠 shader cull 藏
     });
     this.staticMesh = new THREE.LineSegments(geometry, mat);
     this.staticMesh.frustumCulled = false;
     this.scene.add(this.staticMesh);
 
     const glowMat = new THREE.ShaderMaterial({
-      vertexShader: staticTrailVert,
+      vertexShader: GLOBE_PROJECT_GLSL + staticTrailVert,
       fragmentShader: staticTrailFrag,
-      uniforms: { uOpacity: { value: staticOpacity * 0.3 } },
+      uniforms: { uOpacity: { value: staticOpacity * 0.3 }, ...this.globeUniforms },
       transparent: true,
       blending: this.blending,
       depthWrite: false,
+      depthTest: false, // globe 底圖 depth（far=∞）會誤遮貼球航跡，故關閉；背面靠 shader cull 藏
     });
     this.staticGlowMesh = new THREE.LineSegments(glowGeo, glowMat);
     this.staticGlowMesh.frustumCulled = false;
@@ -577,6 +587,37 @@ export class FlightScene {
     this.mercatorCache.clear();
   }
 
+  /**
+   * 設定貼球參數（每幀由 custom layer 在 update() 前呼叫）。
+   * globeToMerc = Mapbox projectionToMercatorMatrix；null 或 transition≥1 → 平面 mercator（現狀）。
+   */
+  setGlobe(
+    globeToMerc: number[] | null,
+    transition: number,
+    cam: { x: number; y: number; z: number } | null,
+  ) {
+    if (globeToMerc && globeToMerc.length >= 16) {
+      this.globeUniforms.uGlobeToMerc.value.fromArray(globeToMerc);
+      this.globeUniforms.uTransition.value = Math.max(0, Math.min(1, transition));
+      // 相機轉回 ECEF：inverse(globeToMerc) · camMerc（背面剔除在真球面空間做才穩健）
+      if (cam) {
+        this.globeInvMatrix.copy(this.globeUniforms.uGlobeToMerc.value).invert();
+        this.globeUniforms.uCameraEcef.value
+          .set(cam.x, cam.y, cam.z)
+          .applyMatrix4(this.globeInvMatrix);
+      }
+    } else {
+      this.globeUniforms.uGlobeToMerc.value.identity();
+      this.globeUniforms.uTransition.value = 1;
+    }
+    const active = this.globeUniforms.uTransition.value < 1;
+    this.instancedOrbs?.setGlobe(
+      active ? this.globeUniforms.uGlobeToMerc.value : null,
+      this.globeUniforms.uTransition.value,
+      active ? this.globeUniforms.uCameraEcef.value : null,
+    );
+  }
+
   update(activeFlights: Flight[], currentTime: number) {
     this.frameCounter++;
     const activeIds = new Set<string>();
@@ -642,7 +683,7 @@ export class FlightScene {
     const color = override ?? this.colors[this.colorIndex % this.colors.length]!;
     if (!override) this.colorIndex++;
 
-    const trail = new LightTrail(color, 512, this.blending);
+    const trail = new LightTrail(color, 512, this.blending, this.globeUniforms);
     this.scene.add(trail.mesh);
 
     const entry: TrailEntry = { trail, lastUsedFrame: this.frameCounter };

@@ -87,5 +87,6 @@ sh /app/scripts/pull-from-s3.sh
 - [Color Theme System](docs/features/color-theme-system.md) — 6 組 preset、多色停漸層、即時微調
 - [Recording Overlay](docs/features/recording-overlay.md) — 動態 overlay、右下角資訊、4K 錄製
 - [Dynamic Viewshed](docs/features/dynamic-viewshed.md) — Track Single 視域扇形 / 掃描線
+- [Atlas Bloom · Globe](docs/features/atlas-bloom-globe.md) — 機場總覽 Three.js additive bloom 星圖 + custom layer 貼合 Mapbox 球體（可跨專案移植）
 
 YouTube 影片錄製 + 後製流程 → `/video-production` skill（`.claude/skills/video-production/SKILL.md`）。

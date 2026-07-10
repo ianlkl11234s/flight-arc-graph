@@ -47,7 +47,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       opts.onSceneReady?.(flightScene);
     },
 
-    render(_gl: WebGLRenderingContext, matrix: number[]) {
+    render(_gl, matrix, projection, projectionToMercatorMatrix, projectionToMercatorTransition) {
       const flights = opts.getFlights();
       const time = opts.getCurrentTime();
       const mode = opts.getRenderMode();
@@ -128,6 +128,15 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
 
       flightScene.setStaticOpacity(opts.getStaticOpacity());
       flightScene.setOrbScale(opts.getOrbScale());
+
+      // globe 貼球：Mapbox 每幀給 globe→mercator 矩陣 + 過渡係數（低 zoom 為球體）
+      const isGlobe = projection?.name === "globe" && !!projectionToMercatorMatrix;
+      const cam = map?.getFreeCameraOptions().position ?? null;
+      flightScene.setGlobe(
+        isGlobe ? projectionToMercatorMatrix! : null,
+        projectionToMercatorTransition ?? 0,
+        cam ? { x: cam.x, y: cam.y, z: cam.z } : null,
+      );
 
       // 用時間索引取得活躍航班
       const activeFlights = timeIndex.getActiveFlights(time);

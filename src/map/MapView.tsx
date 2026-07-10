@@ -150,20 +150,13 @@ function updateAirportStyle(map: mapboxgl.Map, opacity: number, glow: number, is
 }
 
 /**
- * 3D 模式下，根據 zoom 計算 2D 軌跡應有的透明度
- * zoom >= FADE_OUT → 完全隱藏（只看 3D）
- * zoom <= FADE_IN  → 完全顯示（3D 自然不可見）
+ * 3D 模式下原生 2D flat 線的透明度。
+ * 3D 軌跡貼球後不再需要拉遠切 2D，全程回傳 0（隱藏）。
  */
-const ZOOM_FADE_IN = 3;
-const ZOOM_FADE_OUT = 5;
-
-function calc2dTrailOpacity(zoom: number, isDark: boolean) {
-  const t = Math.max(0, Math.min(1, (zoom - ZOOM_FADE_IN) / (ZOOM_FADE_OUT - ZOOM_FADE_IN)));
-  const fade = 1 - t;
-  return {
-    line: (isDark ? 0.25 : 0.5) * fade,
-    glow: (isDark ? 0.08 : 0.15) * fade,
-  };
+function calc2dTrailOpacity(_zoom: number, _isDark: boolean) {
+  // 3D 軌跡已貼合球體，拉遠不再需要淡入原生 2D flat 線 → 3D 模式全程隱藏 2D 線。
+  // （保留函式結構便於回復；要恢復舊 crossfade 把下面兩行還原成 fade 版即可）
+  return { line: 0, glow: 0 };
 }
 
 function setupTerrain(map: mapboxgl.Map) {

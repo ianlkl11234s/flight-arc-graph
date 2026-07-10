@@ -10,6 +10,7 @@ import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo } from "./map/cameraPresets";
 import { createFlightLayer } from "./map/customLayer";
+import { createAtlasGlowLayer, ATLAS_GLOW_LAYER_ID, type AtlasColorMode } from "./map/atlasGlowLayer";
 import { createAirspaceLayer } from "./map/airspaceAurora";
 import { addMedianLineLayer, removeMedianLineLayer, setMedianLineVisibility, setMedianLineTheme } from "./map/medianLine";
 import { defaultAirspaceSettings, type AirspaceSettings } from "./types/airspace";
@@ -250,6 +251,9 @@ export default function App() {
   });
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
   const [atlasVisible, setAtlasVisible] = useState(false);
+  const [atlasGlowVisible, setAtlasGlowVisible] = useState(false);
+  const [atlasColorMode, setAtlasColorMode] = useState<AtlasColorMode>("flow");
+  const [atlasGlowSize, setAtlasGlowSize] = useState(1.6);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
   const { isMobile, isLandscape } = useIsMobile();
 
@@ -801,6 +805,9 @@ export default function App() {
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
   const atlasPopupRef = useRef<mapboxgl.Popup | null>(null);
+  const atlasGlowVisibleRef = useRef(atlasGlowVisible);
+  const atlasColorModeRef = useRef(atlasColorMode);
+  const atlasGlowSizeRef = useRef(atlasGlowSize);
 
   flightsRef.current = finalFlights;
   timeRef.current = timeline.currentTime;
@@ -817,6 +824,9 @@ export default function App() {
   viewshedOpacityRef.current = viewshedOpacity;
   viewshedSharpnessRef.current = viewshedSharpness;
   airspaceSettingsRef.current = airspaceSettings;
+  atlasGlowVisibleRef.current = atlasGlowVisible;
+  atlasColorModeRef.current = atlasColorMode;
+  atlasGlowSizeRef.current = atlasGlowSize;
 
   // 持久化 airspace 設定
   useEffect(() => {
@@ -903,10 +913,23 @@ export default function App() {
     map.addLayer(layer);
   };
 
+  const addAtlasGlowLayer = (map: MapboxMap) => {
+    if (map.getLayer(ATLAS_GLOW_LAYER_ID)) {
+      map.removeLayer(ATLAS_GLOW_LAYER_ID);
+    }
+    const layer = createAtlasGlowLayer({
+      getIsVisible: () => atlasGlowVisibleRef.current,
+      getColorMode: () => atlasColorModeRef.current,
+      getSizeMul: () => atlasGlowSizeRef.current,
+    });
+    map.addLayer(layer);
+  };
+
   const handleMapReady = (map: MapboxMap) => {
     mapRef.current = map;
     addAirspaceLayer(map);
     addFlightLayer(map);
+    addAtlasGlowLayer(map);
     if (showTerminatorRef.current) {
       initTerminatorLayer(map, () => timeRef.current, isDarkThemeRef.current);
     }
@@ -1506,6 +1529,12 @@ export default function App() {
             onScaleByAircraftSizeChange={setScaleByAircraftSize}
             atlasVisible={atlasVisible}
             onAtlasVisibleChange={setAtlasVisible}
+            atlasGlowVisible={atlasGlowVisible}
+            onAtlasGlowVisibleChange={setAtlasGlowVisible}
+            atlasColorMode={atlasColorMode}
+            onAtlasColorModeChange={setAtlasColorMode}
+            atlasGlowSize={atlasGlowSize}
+            onAtlasGlowSizeChange={setAtlasGlowSize}
           />
 
           {/* 頂部控制列（sidebar 右邊） */}

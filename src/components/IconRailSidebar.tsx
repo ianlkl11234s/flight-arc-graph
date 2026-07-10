@@ -10,6 +10,7 @@ import type { AnalysisColorBy } from "../data/analysisColors";
 import type { FlightFilters } from "../data/classify";
 import type { AirportManifestEntry } from "../data/flightLoader";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
+import type { AtlasColorMode } from "../map/atlasGlowLayer";
 import {
   getDepArrCount,
   computeTopRoutes,
@@ -324,6 +325,12 @@ export interface IconRailSidebarProps {
   // Atlas 機場總覽（🗺️）
   atlasVisible: boolean;
   onAtlasVisibleChange: (v: boolean) => void;
+  atlasGlowVisible: boolean;
+  onAtlasGlowVisibleChange: (v: boolean) => void;
+  atlasColorMode: AtlasColorMode;
+  onAtlasColorModeChange: (m: AtlasColorMode) => void;
+  atlasGlowSize: number;
+  onAtlasGlowSizeChange: (v: number) => void;
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -2128,11 +2135,23 @@ function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays, them
 function AtlasPanel({
   atlasVisible,
   onAtlasVisibleChange,
+  atlasGlowVisible,
+  onAtlasGlowVisibleChange,
+  atlasColorMode,
+  onAtlasColorModeChange,
+  atlasGlowSize,
+  onAtlasGlowSizeChange,
   airportCatalog,
   theme,
 }: {
   atlasVisible: boolean;
   onAtlasVisibleChange: (v: boolean) => void;
+  atlasGlowVisible: boolean;
+  onAtlasGlowVisibleChange: (v: boolean) => void;
+  atlasColorMode: AtlasColorMode;
+  onAtlasColorModeChange: (m: AtlasColorMode) => void;
+  atlasGlowSize: number;
+  onAtlasGlowSizeChange: (v: number) => void;
   airportCatalog: Record<string, AirportManifestEntry>;
   theme: ThemeColors;
 }) {
@@ -2199,6 +2218,107 @@ function AtlasPanel({
             <span style={{ fontSize: 9, color: theme.DIM }}>{["少", "中", "多"][i]}</span>
           </div>
         ))}
+      </div>
+
+      {/* ── 夜空 Bloom 星圖（與上方 circle 點並存的獨立開關）── */}
+      <div style={{ borderTop: `1px solid ${theme.BORDER}`, marginTop: 18, paddingTop: 14 }}>
+        <div style={{ fontSize: 12.5, color: theme.ACTIVE_TEXT, fontWeight: 700, marginBottom: 4 }}>
+          ✦ 夜空 Bloom 星圖
+        </div>
+        <div style={{ fontSize: 11, color: theme.DIM, lineHeight: 1.6, marginBottom: 10 }}>
+          把機場畫成夜空中發光的星點：越大＝流量越高。可與上方圓點並存。
+        </div>
+
+        <button
+          onClick={() => onAtlasGlowVisibleChange(!atlasGlowVisible)}
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            marginBottom: 12,
+            borderRadius: 8,
+            cursor: "pointer",
+            border: `1px solid ${atlasGlowVisible ? theme.ACTIVE_BORDER : theme.BORDER}`,
+            background: atlasGlowVisible ? theme.ACTIVE_BTN_BG : theme.HOVER_BG,
+            color: atlasGlowVisible ? theme.ACTIVE_TEXT : theme.DIM,
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          {atlasGlowVisible ? "✦ Bloom 已開啟" : "✧ 開啟 Bloom 星圖"}
+        </button>
+
+        {/* 星點大小滑桿 */}
+        <div style={{ marginBottom: 12 }}>
+          <SliderRow
+            label="星點大小"
+            value={atlasGlowSize}
+            min={0.3}
+            max={4}
+            step={0.1}
+            format={(v) => `${v.toFixed(1)}×`}
+            onChange={onAtlasGlowSizeChange}
+            theme={theme}
+          />
+        </div>
+
+        {/* 顏色維度切換 */}
+        <div style={{ fontSize: 11, color: theme.DIM, marginBottom: 6, fontWeight: 600 }}>顏色維度</div>
+        <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+          {([
+            { key: "flow", label: "流量 白→橘→紅" },
+            { key: "completeness", label: "資料完整度" },
+          ] as const).map((opt) => {
+            const active = atlasColorMode === opt.key;
+            return (
+              <button
+                key={opt.key}
+                onClick={() => onAtlasColorModeChange(opt.key)}
+                style={{
+                  flex: 1,
+                  padding: "6px 8px",
+                  borderRadius: 7,
+                  cursor: "pointer",
+                  border: `1px solid ${active ? theme.ACTIVE_BORDER : theme.BORDER}`,
+                  background: active ? theme.ACTIVE_BTN_BG : theme.HOVER_BG,
+                  color: active ? theme.ACTIVE_TEXT : theme.DIM,
+                  fontSize: 11,
+                  fontWeight: 600,
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 動態圖例 */}
+        {atlasColorMode === "flow" ? (
+          <div>
+            <div
+              style={{
+                height: 12,
+                borderRadius: 6,
+                marginBottom: 5,
+                background: "linear-gradient(90deg, #ffffff 0%, #ff8c1a 50%, #ff1e1e 100%)",
+              }}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: theme.DIM }}>
+              <span>流量低 · 白</span>
+              <span>中 · 橘</span>
+              <span>樞紐 · 紅</span>
+            </div>
+          </div>
+        ) : (
+          legend.map((l) => (
+            <div key={l.label} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
+              <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, marginTop: 2, flexShrink: 0, border: `1px solid ${theme.BORDER}` }} />
+              <div>
+                <div style={{ fontSize: 12, color: theme.ACTIVE_TEXT, fontWeight: 600 }}>{l.label}</div>
+                <div style={{ fontSize: 10.5, color: theme.DIM }}>{l.desc}</div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -2717,6 +2837,12 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             <AtlasPanel
               atlasVisible={props.atlasVisible}
               onAtlasVisibleChange={props.onAtlasVisibleChange}
+              atlasGlowVisible={props.atlasGlowVisible}
+              onAtlasGlowVisibleChange={props.onAtlasGlowVisibleChange}
+              atlasColorMode={props.atlasColorMode}
+              onAtlasColorModeChange={props.onAtlasColorModeChange}
+              atlasGlowSize={props.atlasGlowSize}
+              onAtlasGlowSizeChange={props.onAtlasGlowSizeChange}
               airportCatalog={props.airportCatalog}
               theme={theme}
             />
