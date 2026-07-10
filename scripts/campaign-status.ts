@@ -93,6 +93,8 @@ if (existsSync(FLIGHTS_DIR)) {
     const dir = join(FLIGHTS_DIR, icao);
     if (!statSync(dir).isDirectory()) continue;
     const rank = rankOf.get(icao);
+    // 只算 top1000 機場（排除台灣多天時刻表等非戰役資料寫進 scripts/flights/ 造成的污染）
+    if (rank === undefined) continue;
     for (const file of readdirSync(dir)) {
       if (!file.endsWith(".json")) continue;
       let payload: { flights?: { fr24_id: string }[] };
