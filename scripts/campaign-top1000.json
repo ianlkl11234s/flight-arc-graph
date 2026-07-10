@@ -2,6 +2,8 @@
   "campaign": "top1000-tracks-2026-02-18",
   "goal": "全球運量前 1000 大機場在 2026-02-18（台北整日）所有起降航跡，織成全球網",
   "date": "2026-02-18",
+  "window": { "from": "2026-02-17T16:00:00Z", "to": "2026-02-18T16:00:00Z" },
+  "_window_note": "台北 2/18 整日 = UTC 2/17T16:00 ~ 2/18T16:00，跨兩個 UTC 日期。抓取務必用 --from-time/--to-time（非 --date，會漏掉 UTC 2/17 那 1/3）。與既有 160 core 機場的窗一致",
   "airports_file": "scripts/top1000-airports.json",
   "credits_per_track": 40,
   "target_total": 65421,

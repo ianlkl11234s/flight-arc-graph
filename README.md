@@ -39,7 +39,7 @@ Region Pills UI 可切換 TW / JP / HK / **KR / TH** / **CN** / US / UK / World 
 - **不重複軌跡航班**：51,541 筆（`scripts/track-done.ndjson`）
 - **機場 JSONL 檔**：1,594 座
 - **主動查詢機場**：181 座（165 core + Top-1000 戰役首批 16 座）
-- **進行中**：[Top-1000 全球網戰役](docs/backlog/data-fetching-status.md) — 2/18 全球前 1000 大機場軌跡，已 10.9%（rank 1-16 完成）
+- **進行中**：[Top-1000 全球網戰役](docs/backlog/data-fetching-status.md) — 2/18 全球前 1000 大機場軌跡，已 10.9%（rank 1-16 抓了 68%；台北清晨段 UTC 2/17 待補）
 
 | Region | 軌跡數（含雙向） | 大小 (gzip) |
 |--------|------:|------:|

@@ -18,9 +18,11 @@ npx tsx scripts/campaign-status.ts
 #    有漂移警告（沒 split / 沒上 S3）→ 先補做再抓
 
 # 1. 照它印的「建議指令」跑（--rank 與 --max-credits 已算好）；務必先 --dry-run 確認 todo
-caffeinate -i npx tsx scripts/fetch-tracks.ts --airports-file scripts/top1000-airports.json \
-  --rank <目前批次> --date 2026-02-18 --max-credits <算好的值> 2>&1 | tee scripts/_p2-batch.log
-#    ⚠️ macOS 睡眠會殺 8 小時長跑 → caffeinate。track-done 保證中斷零損失，可隨時續跑
+caffeinate -dims npx tsx scripts/fetch-tracks.ts --airports-file scripts/top1000-airports.json \
+  --rank <目前批次> --from-time 2026-02-17T16:00:00Z --to-time 2026-02-18T16:00:00Z \
+  --max-credits <算好的值> 2>&1 | tee scripts/_p2-batch.log
+#    ⚠️ 用 --from-time/--to-time（台北整日跨兩個 UTC 日），別用 --date（會漏掉 UTC 2/17 那 1/3）
+#    ⚠️ macOS 睡眠 → caffeinate；背景長工約 30-70 分被環境回收，track-done 保證中斷零損失、可隨時續跑
 
 # 2. 補救網路 blip：track-failed 新增的 id → scripts/retry-targets.txt → retry-failed-tracks.ts
 # 3. 重建 manifest：NODE_OPTIONS="--max-old-space-size=12288" npx tsx scripts/split-tracks.ts

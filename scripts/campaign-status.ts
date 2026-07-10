@@ -33,6 +33,7 @@ interface Batch {
 }
 interface Campaign {
   date: string;
+  window?: { from: string; to: string };
   airports_file: string;
   credits_per_track: number;
   target_total: number;
@@ -256,11 +257,15 @@ if (!current) {
     `  本週期額度用盡（或錨點需更新）。額度重置後更新 campaign-top1000.json 的 manual_remaining / as_of，再跑。`,
   );
 } else {
+  const winFrom = camp.window?.from ?? `${camp.date}T00:00:00Z`;
+  const winTo = camp.window?.to ?? `${camp.date}T23:59:59Z`;
   console.log(`  npx tsx scripts/fetch-tracks.ts \\`);
   console.log(
     `    --airports-file ${camp.airports_file} --rank ${current.ranks[0]}-${current.ranks[1]} \\`,
   );
-  console.log(`    --date ${camp.date} --max-credits ${cap}`);
+  console.log(
+    `    --from-time ${winFrom} --to-time ${winTo} --max-credits ${cap}`,
+  );
   console.log(
     `  （先加 --dry-run 看實際 todo；跑完照 /track-round「Top-1000 P2」收尾）`,
   );
