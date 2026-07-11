@@ -16,35 +16,29 @@ import * as THREE from "three";
  */
 
 const GB_EXTENT = 8192;
-const GB_R = GB_EXTENT / (2 * Math.PI); // GLOBE_RADIUS ≈ 1303.797
+export const GB_R = GB_EXTENT / (2 * Math.PI); // GLOBE_RADIUS ≈ 1303.797
 
 export const GLOBE_PROJECT_GLSL = /* glsl */ `
 uniform mat4 uGlobeToMerc;   // Mapbox projectionToMercatorMatrix（ECEF → mercator world）
 uniform float uTransition;   // projectionToMercatorTransition：0=球體、1=平面 mercator
 uniform vec3 uCameraEcef;    // 相機位置（ECEF），背面剔除用
 
-const float GB_PI = 3.141592653589793;
-const float GB_EXTENT = 8192.0;
-const float GB_R = GB_EXTENT / (2.0 * GB_PI);
+const float GB_R = 8192.0 / (2.0 * 3.141592653589793); // GLOBE_RADIUS ≈ 1303.797
 
-// mercPos: x=(lng+180)/360, y=mercatorY(lat), z=高度(mercator z)
+// mercPos: 平面 mercator 座標（uTransition>=1 時直接回傳，保留原行為）
+// aEcef: CPU 預存的 ECEF 球面座標（含高度徑向偏移），取代每幀 exp/atan/sin/cos 反推
 // 回傳貼球世界座標；out cull = 背面淡出係數(0..1，球體背面→0)
-vec3 globeWorldPosition(vec3 mercPos, out float cull) {
+vec3 globeWorldPosition(vec3 mercPos, vec3 aEcef, out float cull) {
   cull = 1.0;
   if (uTransition >= 1.0) return mercPos; // mercator（拉近）：跳過所有球面運算，零額外成本
-  float lngRad = (mercPos.x - 0.5) * 2.0 * GB_PI;
-  float latRad = 2.0 * atan(exp(GB_PI * (1.0 - 2.0 * mercPos.y))) - GB_PI * 0.5;
-  float cosLat = cos(latRad);
-  float sinLat = sin(latRad);
-  vec3 dir = vec3(cosLat * sin(lngRad), -sinLat, cosLat * cos(lngRad)); // 單位球面外法線
-  vec3 ecefSurf = dir * GB_R;
-  float hEcef = mercPos.z * GB_EXTENT * cosLat;    // 高度 → 徑向偏移
-  vec3 ecef = ecefSurf * (1.0 + hEcef / GB_R);
-  vec3 globeMerc = (uGlobeToMerc * vec4(ecef, 1.0)).xyz;
+  vec3 globeMerc = (uGlobeToMerc * vec4(aEcef, 1.0)).xyz;
 
   // 背面剔除（ECEF 真球面空間，fable 源碼+數值驗證正確）：地表法線 vs 指向相機。
+  // dir 為單位外法線；aEcef = dir·GB_R·(1+h/GB_R) 是 dir 的正純量倍，normalize 還原。
   // 材質為 depthTest:false（globe depth 會誤遮貼球線），故背面完全靠這個 cull 藏。
   // uCameraEcef = inverse(uGlobeToMerc)·camMerc（CPU 端算，見 FlightScene.setGlobe）。
+  vec3 dir = normalize(aEcef);
+  vec3 ecefSurf = dir * GB_R;
   vec3 toCam = normalize(uCameraEcef - ecefSurf);
   float globeCull = smoothstep(-0.08, 0.02, dot(dir, toCam)); // d=0 即真地平線
   cull = mix(globeCull, 1.0, uTransition);
@@ -108,4 +102,27 @@ export function mercatorToGlobe(
   out.y = gy + (my - gy) * transition;
   out.z = gz + (mz - gz) * transition;
   out.cull = cull;
+}
+
+/**
+ * mercatorToEcef：把 mercator 座標 (mx,my,mz) 反推成 ECEF 球面座標（含高度徑向偏移），
+ * 寫入 out[offset..offset+2]。數學與 GLSL globeWorldPosition / mercatorToGlobe 的 ECEF
+ * 一致，供靜態/動態軌跡在 CPU 端一次性預存 aEcef，shader 便不再每幀做 exp/atan/sin/cos。
+ */
+export function mercatorToEcef(
+  mx: number,
+  my: number,
+  mz: number,
+  out: Float32Array | number[],
+  offset = 0,
+): void {
+  const lngRad = (mx - 0.5) * 2 * Math.PI;
+  const latRad = 2 * Math.atan(Math.exp(Math.PI * (1 - 2 * my))) - Math.PI / 2;
+  const cosLat = Math.cos(latRad);
+  const sinLat = Math.sin(latRad);
+  const hEcef = mz * GB_EXTENT * cosLat;
+  const k = GB_R * (1 + hEcef / GB_R);
+  out[offset] = cosLat * Math.sin(lngRad) * k;
+  out[offset + 1] = -sinLat * k;
+  out[offset + 2] = cosLat * Math.cos(lngRad) * k;
 }
