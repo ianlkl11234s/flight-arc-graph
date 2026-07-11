@@ -8,6 +8,10 @@ interface Props {
   selectedDate: string;
   rangeDays: number;
   availableDates?: string[];
+  /** 抓「滿」的日期（區分 Compare 清單裡的 full vs partial） */
+  fullDates?: string[];
+  /** 每日筆數（tooltip 顯示用，單一機場模式才有） */
+  dateCounts?: Record<string, number>;
   selectedDates?: string[];
   isMultiDateMode?: boolean;
   isDarkTheme?: boolean;
@@ -84,6 +88,8 @@ export function TimelineControls({
   selectedDate,
   rangeDays,
   availableDates = [],
+  fullDates = [],
+  dateCounts,
   selectedDates = [],
   isMultiDateMode = false,
   isDarkTheme = true,
@@ -183,22 +189,44 @@ export function TimelineControls({
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 6 }}>
           {availableDates.map((d) => {
             const active = selectedDates.includes(d);
+            // 有 fullDates 資訊時，部分資料的日期調暗以區分（比照 CalendarPanel 視覺語言）
+            const isFull = fullDates.includes(d);
+            const isPartial = !isFull && fullDates.length > 0;
+            const count = dateCounts?.[d];
+            const title = count !== undefined
+              ? `${count} flights${isFull ? "（完整）" : "（部分）"}`
+              : isFull ? "完整資料" : isPartial ? "部分資料" : undefined;
             return (
               <button
                 key={d}
+                title={title}
                 onClick={() => onToggleMultiDate?.(d)}
                 style={{
                   ...getBtnStyle(isDarkTheme),
                   padding: "3px 7px",
                   fontSize: 11,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
                   background: active
                     ? (isDarkTheme ? "rgba(99,102,241,0.6)" : "rgba(99,102,241,0.8)")
                     : (isDarkTheme ? "rgba(80,80,80,0.3)" : "rgba(30,30,30,0.5)"),
                   borderColor: active ? "rgba(99,102,241,0.9)" : undefined,
-                  opacity: active ? 1 : 0.55,
+                  opacity: active ? 1 : isPartial ? 0.4 : 0.55,
                 }}
               >
                 {formatDateLabel(d)}
+                {isFull && (
+                  <span
+                    style={{
+                      width: 4,
+                      height: 4,
+                      borderRadius: "50%",
+                      background: isDarkTheme ? "rgba(220,220,220,0.8)" : "#fff",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
               </button>
             );
           })}
@@ -233,6 +261,8 @@ export function TimelineControls({
           <option value={120}>120x</option>
           <option value={300}>300x</option>
           <option value={600}>600x</option>
+          <option value={1800}>1800x</option>
+          <option value={3600}>3600x</option>
         </select>
 
         <span

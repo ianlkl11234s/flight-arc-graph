@@ -109,6 +109,7 @@ export class GlowPointsScene {
   private points: THREE.Points | null = null;
   private geometry: THREE.BufferGeometry | null = null;
   private material: THREE.ShaderMaterial | null = null;
+  private projMatrix = new THREE.Matrix4(); // render() 每幀重用，避免 new Matrix4
   private instances: Instance[] = [];
   private ownsRenderer = false;
   private startTime = performance.now();
@@ -273,7 +274,7 @@ export class GlowPointsScene {
     const blendSrcA = gl.getParameter(gl.BLEND_SRC_ALPHA);
     const blendDstA = gl.getParameter(gl.BLEND_DST_ALPHA);
 
-    this.camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix);
+    this.camera.projectionMatrix = this.projMatrix.fromArray(matrix);
     this.material.uniforms.uTime!.value = (performance.now() - this.startTime) / 1000;
 
     this.renderer.resetState();

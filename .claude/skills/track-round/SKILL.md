@@ -102,6 +102,7 @@ npx tsx scripts/split-tracks.ts --manifest-only
 - 掃 `airports/*.jsonl` 做 dedupe + 產生 `regions/*.jsonl` + `manifest.json`
 - `--manifest-only` 不重寫 region 檔（regions 沿用既有值）；有新增 region 機場時要跑完整版
 - ⚠️ **產出新 region 時**：`scripts/pull-from-s3.sh` 的 `for R in ...` 是 hardcode 清單，**必須同步加上新 region**，否則 Zeabur 拉不到（UK、CN 都曾漏加）
+- 重建 manifest 後跑 `npx tsx scripts/build-airport-points.ts` 更新 `public/airport-points.geojson`（機場 metadata，Location 面板 + Atlas 星圖共用；讀 manifest.json，須在 split 之後）
 
 ## Step 3.5: 新機場 UI 三層同步（僅當這輪有「新」主動機場）
 

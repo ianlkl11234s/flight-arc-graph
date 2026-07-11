@@ -1373,3 +1373,29 @@ export const CAMERA_PRESETS: CameraPreset[] = [
 export function getPresetByIcao(icao: string): CameraPreset | undefined {
   return CAMERA_PRESETS.find((p) => p.icao === icao);
 }
+
+/**
+ * 取得機場相機視角：有 curated preset 就用 preset，否則用 metadata 座標現算一個。
+ * 用於「有軌跡資料但沒 preset」的機場（點下去不再飛到桃園）。
+ * 座標缺失時回 undefined，由呼叫端 no-op（不亂飛）。
+ */
+export function cameraForAirport(
+  icao: string,
+  meta?: { lat: number; lng: number; name?: string; flights?: number },
+): CameraPreset | undefined {
+  const preset = getPresetByIcao(icao);
+  if (preset) return preset;
+  if (!meta || !Number.isFinite(meta.lat) || !Number.isFinite(meta.lng)) {
+    return undefined;
+  }
+  // 大機場拉遠一點看得到周邊航線，小機場拉近一點
+  const zoom = (meta.flights ?? 0) >= 300 ? 11 : 12;
+  return {
+    name: meta.name || icao,
+    icao,
+    center: [meta.lng, meta.lat],
+    zoom,
+    pitch: 48,
+    bearing: 0,
+  };
+}

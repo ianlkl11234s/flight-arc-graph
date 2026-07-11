@@ -3,13 +3,14 @@
 // globeWorldPosition() 由 GLOBE_PROJECT_GLSL prepend 提供（貼球）
 attribute vec3 color;
 attribute float alpha;
+attribute vec3 aEcef;
 varying vec3 vVertColor;
 varying float vAlpha;
 
 void main() {
   vVertColor = color;
   float cull;
-  vec3 world = globeWorldPosition(position, cull);
+  vec3 world = globeWorldPosition(position, aEcef, cull);
   vAlpha = alpha * cull;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(world, 1.0);
 }

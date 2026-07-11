@@ -14,6 +14,8 @@ export interface FlightLayerOptions {
   getAltExaggeration: () => number;
   getAltOffset: () => number;
   getStaticOpacity: () => number;
+  getStaticWidth: () => number;
+  getGlowIntensity: () => number;
   getOrbScale: () => number;
   getIsDarkTheme: () => boolean;
   getShowTrails: () => boolean;
@@ -35,6 +37,15 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   let lastShowTrails = true;
   let lastFlightsKey = "";
   let lastVisibilityKey = "";
+  // ±12h 可見度掃描的 1 秒 bucket（事件化，避免每幀 O(N) 全掃）
+  let lastScanBucket = NaN;
+  // repaint 閘控狀態
+  let lastRepaintTime = NaN;
+  let lastControlSig = "";
+  let keepAliveFrames = 0;
+  const KEEP_ALIVE_FRAMES = 12; // 動作停止後的續繪窗，橋接 timeRef 落後一幀避免播放 stall
+  // setGlobe 的 cam scratch，每幀重用避免物件字面量 alloc
+  const camScratch = { x: 0, y: 0, z: 0 };
 
   return {
     id: "flight-3d",
@@ -78,6 +89,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       if (flightsKey !== lastFlightsKey) {
         lastFlightsKey = flightsKey;
         lastVisibilityKey = ""; // 強制重新計算可見度
+        lastScanBucket = NaN;   // 新幾何：強制重掃可見集合
         timeIndex.build(flights);
         flightScene.invalidateMercatorCache();
       }
@@ -88,25 +100,32 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       // ±12h 靜態軌跡可見度（在 render loop 中計算，不經過 React）
       const timeWindow = opts.getTimeWindow();
       if (timeWindow) {
-        const tMin = time - VISIBILITY_WINDOW_SEC;
-        const tMax = time + VISIBILITY_WINDOW_SEC;
-        const visibleIds = new Set<string>();
-        for (const f of flights) {
-          if (f.path.length === 0) continue;
-          const pathStart = f.path[0]![3];
-          const pathEnd = f.path[f.path.length - 1]![3];
-          if (pathEnd >= tMin && pathStart <= tMax) {
-            visibleIds.add(f.fr24_id);
+        // 事件化：可見集合只在時間跨過 1 秒 bucket 時重掃（sim-time ≤1s 落差，
+        // ±12h 窗邊緣不可辨），取代每幀 O(N) 全量掃描 + Set 配置。
+        const scanBucket = Math.floor(time);
+        if (scanBucket !== lastScanBucket) {
+          lastScanBucket = scanBucket;
+          const tMin = time - VISIBILITY_WINDOW_SEC;
+          const tMax = time + VISIBILITY_WINDOW_SEC;
+          const visibleIds = new Set<string>();
+          for (const f of flights) {
+            if (f.path.length === 0) continue;
+            const pathStart = f.path[0]![3];
+            const pathEnd = f.path[f.path.length - 1]![3];
+            if (pathEnd >= tMin && pathStart <= tMax) {
+              visibleIds.add(f.fr24_id);
+            }
           }
-        }
-        const visKey = `${visibleIds.size}`;
-        if (visKey !== lastVisibilityKey) {
-          lastVisibilityKey = visKey;
-          flightScene.updateStaticVisibility(visibleIds);
+          const visKey = `${visibleIds.size}`;
+          if (visKey !== lastVisibilityKey) {
+            lastVisibilityKey = visKey;
+            flightScene.updateStaticVisibility(visibleIds);
+          }
         }
       } else if (lastVisibilityKey !== "all") {
         // 關閉時間窗口 → 全部可見
         lastVisibilityKey = "all";
+        lastScanBucket = NaN; // 重新開啟 timeWindow 時強制重掃
         const allIds = new Set<string>();
         for (const f of flights) allIds.add(f.fr24_id);
         flightScene.updateStaticVisibility(allIds);
@@ -126,24 +145,61 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
         flightScene.updateProgressiveVisibility(time);
       }
 
-      flightScene.setStaticOpacity(opts.getStaticOpacity());
-      flightScene.setOrbScale(opts.getOrbScale());
+      const staticOpacity = opts.getStaticOpacity();
+      const staticWidth = opts.getStaticWidth();
+      const glowIntensity = opts.getGlowIntensity();
+      const orbScale = opts.getOrbScale();
+      flightScene.setStaticOpacity(staticOpacity);
+      flightScene.setStaticWidth(staticWidth);
+      flightScene.setGlowIntensity(glowIntensity);
+      flightScene.setOrbScale(orbScale);
 
       // globe 貼球：Mapbox 每幀給 globe→mercator 矩陣 + 過渡係數（低 zoom 為球體）
       const isGlobe = projection?.name === "globe" && !!projectionToMercatorMatrix;
-      const cam = map?.getFreeCameraOptions().position ?? null;
-      flightScene.setGlobe(
-        isGlobe ? projectionToMercatorMatrix! : null,
-        projectionToMercatorTransition ?? 0,
-        cam ? { x: cam.x, y: cam.y, z: cam.z } : null,
-      );
+      const transition = projectionToMercatorTransition ?? 0;
+      // cam 只在 globe 模式需要（背面剔除）；mercator 模式 setGlobe 會忽略，故跳過 fetch。
+      // scratch 物件重用避免每幀 alloc（setGlobe 同步讀取，不保留參考）。
+      let camArg: { x: number; y: number; z: number } | null = null;
+      if (isGlobe) {
+        const cam = map?.getFreeCameraOptions().position;
+        if (cam) {
+          camScratch.x = cam.x;
+          camScratch.y = cam.y;
+          camScratch.z = cam.z;
+          camArg = camScratch;
+        }
+      }
+      flightScene.setGlobe(isGlobe ? projectionToMercatorMatrix! : null, transition, camArg);
 
       // 用時間索引取得活躍航班
       const activeFlights = timeIndex.getActiveFlights(time);
       flightScene.update(activeFlights, time);
       flightScene.render(matrix);
 
-      map?.triggerRepaint();
+      // ── repaint 閘控 ─────────────────────────────────────────────
+      // 只在「有東西在動」時續繪；相機移動 Mapbox 會自己重繪，不需我們觸發。
+      // KEEP_ALIVE 續繪窗確保播放不因 timeRef 落後一幀而 stall。
+      const timeChanged = time !== lastRepaintTime;
+      lastRepaintTime = time;
+      const transitioning = isGlobe && transition > 0 && transition < 1;
+      // 控制項簽章：多數 slider/toggle 不觸發重建，靠這個在 loop 熱著時撿到變更
+      const controlSig = `${isDark}|${altExag}|${altOff}|${showTrails}|${timeWindow}|${trailDisplay}|${staticOpacity}|${staticWidth}|${glowIntensity}|${orbScale}|${mode}|${flightsKey}`;
+      const controlsChanged = controlSig !== lastControlSig;
+      lastControlSig = controlSig;
+
+      if (
+        timeChanged ||                    // 播放中（動畫時鐘前進）
+        transitioning ||                  // globe↔mercator 過渡中
+        flightScene.isStaticBuilding() || // 靜態軌跡漸進建構中（buffer 待更新）
+        flightScene.hasActiveOrbs() ||    // 有光球呼吸/閃爍動畫
+        controlsChanged                   // 控制項剛變更
+      ) {
+        keepAliveFrames = KEEP_ALIVE_FRAMES;
+      }
+      if (keepAliveFrames > 0) {
+        keepAliveFrames--;
+        map?.triggerRepaint();
+      }
     },
 
     onRemove() {

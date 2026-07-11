@@ -1,219 +1,351 @@
 import * as THREE from "three";
-import type { TrailPoint } from "../types";
-import { toMercator } from "../utils/coordinates";
+import { GLOBE_PROJECT_GLSL, mercatorToEcef } from "./shaders/globeProject";
 
-import batchedVert from "./shaders/batchedTrail.vert?raw";
-import batchedFrag from "./shaders/batchedTrail.frag?raw";
+import trailVert from "./shaders/trail.vert?raw";
+import trailFrag from "./shaders/trail.frag?raw";
 
-const MAX_SLOTS = 1024;
-const POINTS_PER_SLOT = 64;
-// LineSegments: 每段需要 2 個頂點
-const VERTS_PER_SLOT = (POINTS_PER_SLOT - 1) * 2;
-const TOTAL_VERTS = MAX_SLOTS * VERTS_PER_SLOT;
+/** 貼球共用 uniform（跨材質共用同一組 value 物件，每幀由 FlightScene 更新一次） */
+export interface GlobeUniforms {
+  uGlobeToMerc: { value: THREE.Matrix4 };
+  uTransition: { value: number };
+  uCameraEcef: { value: THREE.Vector3 };
+}
+
+/** 預計算的 Mercator 座標點：[mx, my, mz, timestamp] */
+type MercPoint = readonly [number, number, number, number];
+
+/** 光軌時間窗（秒）—— 同舊 getTrailUpToTime(path, time, 600) 的語意 */
+const TRAIL_DURATION_SEC = 600;
+
+/** 每 slot 實點上限。視窗 600s / FR24 密集取樣 ~5s ≈ 120 點；LOD 資料 ≤40 點 */
+const SLOT_POINTS = 128;
+/** 每 slot 頂點數：實點 + 頭尾各一個 opacity=0 的 guard（隔開 line strip 相鄰 slot） */
+const SLOT_VERTS = SLOT_POINTS + 2;
+/** slot 上限：全球尖峰同時空中數（數千）加安全餘裕。記憶體 ≈ 6000×130×44B ≈ 34MB */
+const MAX_SLOTS = 6000;
 
 interface SlotState {
-  active: boolean;
-  vertCount: number;
+  flightId: string;
+  /** 航班路徑最後時間戳（逐出策略：踢最接近抵達者） */
+  endTime: number;
+  /** 上一幀寫入的實點數（縮短時要把多出來的舊頂點 opacity 歸零） */
+  lastCount: number;
 }
 
 /**
- * 批次光軌管理器
- * 單一 LineSegments mesh 容納所有活躍光軌
- * draw calls: 從 N 降到 1
+ * 批次光軌管理器：所有動畫光軌合併成單一 THREE.Line（line strip）。
+ *
+ * - 每條 trail 佔一個固定 slot（SLOT_VERTS 頂點）；slot 之間以 opacity=0 的 guard
+ *   頂點隔開（guard 與相鄰實點同座標 → 零長度段 + 跨 slot 橋接段兩端 opacity 0 → 不可見）。
+ * - draw call 恆為 1；上傳用 addUpdateRange 只傳本幀髒 slot 的連續區段
+ *   （freeSlots 低位優先配置，活躍 slot 聚集在 buffer 前端）。
+ * - 顏色/不透明度為 per-vertex attribute（彗尾漸層數學與單條版 shader 完全一致）。
+ * - 視窗切片邏輯移植自 utils/interpolation.getTrailUpToTime（頭尾插值語意相同），
+ *   直接吃 FlightScene 快取的 mercator path + ECEF —— 每幀三角函數只剩頭尾 2 個插值點。
  */
 export class BatchedTrails {
-  mesh: THREE.LineSegments;
+  mesh: THREE.Line;
   private geometry: THREE.BufferGeometry;
   private material: THREE.ShaderMaterial;
   private posAttr: THREE.BufferAttribute;
   private progAttr: THREE.BufferAttribute;
-  private colorIdxAttr: THREE.BufferAttribute;
+  private colorAttr: THREE.BufferAttribute;
+  private opacityAttr: THREE.BufferAttribute;
+  private ecefAttr: THREE.BufferAttribute;
+  private positions: Float32Array;
+  private progress: Float32Array;
+  private colors: Float32Array;
+  private opacities: Float32Array;
+  private ecefs: Float32Array;
 
-  private slots: SlotState[] = [];
-  /** flightId → slot index */
-  private slotMap = new Map<string, number>();
-  /** 下一個可用 slot 的搜尋起點 */
-  private nextFreeSlot = 0;
-  /** slot 排序：活躍的排前面，用於 drawRange 連續 */
-  private slotOrder: number[] = [];
-  /** 反向映射：sorted position → actual slot */
-  private slotToSorted: number[] = [];
-  private sortedToSlot: number[] = [];
+  private states: (SlotState | null)[] = new Array(MAX_SLOTS).fill(null);
+  private slotByFlight = new Map<string, number>();
+  /** 空 slot 池（降冪排列，pop() 取最低 index → 活躍 slot 聚集低位，上傳區段緊湊） */
+  private freeSlots: number[] = [];
+  /** 歷史最高使用 slot（drawRange 上限；低於此的空 slot opacity 全 0，頂點成本可忽略） */
+  private maxEverUsed = -1;
+  // 本幀髒區（slot 粒度），commit 時合併成單一 updateRange
+  private minDirtySlot = Infinity;
+  private maxDirtySlot = -1;
 
-  constructor(colors: THREE.Color[], blending: THREE.Blending) {
+  constructor(globeUniforms: GlobeUniforms, blending: THREE.Blending) {
+    const totalVerts = MAX_SLOTS * SLOT_VERTS;
+    this.positions = new Float32Array(totalVerts * 3);
+    this.progress = new Float32Array(totalVerts);
+    this.colors = new Float32Array(totalVerts * 3);
+    this.opacities = new Float32Array(totalVerts); // 初始全 0 → 全部不可見
+    this.ecefs = new Float32Array(totalVerts * 3);
+
+    this.posAttr = new THREE.BufferAttribute(this.positions, 3);
+    this.progAttr = new THREE.BufferAttribute(this.progress, 1);
+    this.colorAttr = new THREE.BufferAttribute(this.colors, 3);
+    this.opacityAttr = new THREE.BufferAttribute(this.opacities, 1);
+    this.ecefAttr = new THREE.BufferAttribute(this.ecefs, 3);
+
     this.geometry = new THREE.BufferGeometry();
-
-    const positions = new Float32Array(TOTAL_VERTS * 3);
-    const progress = new Float32Array(TOTAL_VERTS);
-    const colorIndex = new Float32Array(TOTAL_VERTS);
-
-    this.posAttr = new THREE.BufferAttribute(positions, 3);
-    this.progAttr = new THREE.BufferAttribute(progress, 1);
-    this.colorIdxAttr = new THREE.BufferAttribute(colorIndex, 1);
-
     this.geometry.setAttribute("position", this.posAttr);
     this.geometry.setAttribute("progress", this.progAttr);
-    this.geometry.setAttribute("colorIndex", this.colorIdxAttr);
+    this.geometry.setAttribute("aColor", this.colorAttr);
+    this.geometry.setAttribute("aOpacity", this.opacityAttr);
+    this.geometry.setAttribute("aEcef", this.ecefAttr);
     this.geometry.setDrawRange(0, 0);
 
-    const colorVecs = colors.map(c => new THREE.Vector3(c.r, c.g, c.b));
-    // 補齊到 5 個
-    while (colorVecs.length < 5) {
-      colorVecs.push(colorVecs[colorVecs.length - 1]!.clone());
-    }
-
     this.material = new THREE.ShaderMaterial({
-      vertexShader: batchedVert,
-      fragmentShader: batchedFrag,
-      uniforms: {
-        uColors: { value: colorVecs },
-        uOpacity: { value: 0.8 },
-      },
+      vertexShader: GLOBE_PROJECT_GLSL + trailVert,
+      fragmentShader: trailFrag,
+      uniforms: { ...globeUniforms },
       transparent: true,
       blending,
       depthWrite: false,
+      depthTest: false, // globe 底圖 depth（far=∞）會誤遮貼球線，故關閉；背面靠 shader cull 藏
     });
 
-    this.mesh = new THREE.LineSegments(this.geometry, this.material);
+    this.mesh = new THREE.Line(this.geometry, this.material);
     this.mesh.frustumCulled = false;
+    // 靜態軌跡桶 mesh 建立時間晚於本 mesh（object id 較大）；renderOrder=1 維持
+    // 「動畫光軌畫在靜態軌跡之後」的既有順序（light theme NormalBlending 順序有感）
+    this.mesh.renderOrder = 1;
 
-    // 初始化 slots
-    for (let i = 0; i < MAX_SLOTS; i++) {
-      this.slots.push({ active: false, vertCount: 0 });
-      this.slotOrder.push(i);
-      this.slotToSorted.push(i);
-      this.sortedToSlot.push(i);
-    }
+    for (let i = MAX_SLOTS - 1; i >= 0; i--) this.freeSlots.push(i);
   }
 
   /**
-   * 更新一條光軌
-   * @returns 分配的 colorIndex（用於視覺一致性）
+   * 寫入一條光軌（含 slot 配置/逐出、時間窗切片、頭尾插值）。
+   * @param pts  快取的 mercator path（[mx,my,mz,t]，t 遞增）
+   * @param ecef 快取的 per-point ECEF（3 floats/點，與 pts 對齊）
+   * @param headOut 軌跡頭部座標（光球位置），寫入成功時填入
+   * @returns true = 已寫入（≥2 點）；false = 點數不足（slot 維持上一幀內容，同舊行為）
    */
-  updateTrail(flightId: string, trail: TrailPoint[], colorIdx: number): void {
-    let slot = this.slotMap.get(flightId);
+  writeTrail(
+    flightId: string,
+    endTime: number,
+    pts: MercPoint[],
+    ecef: Float32Array,
+    time: number,
+    color: THREE.Color,
+    opacity: number,
+    headOut: { x: number; y: number; z: number },
+  ): boolean {
+    const n = pts.length;
+    if (n === 0) return false;
+
+    // ── 時間窗切片（同 getTrailUpToTime 語意）────────────────────
+    const cutoff = time - TRAIL_DURATION_SEC;
+    // startIdx = 第一個 t >= cutoff（binary search，取代原線性掃描，結果相同）
+    let lo = 0, hi = n;
+    while (lo < hi) {
+      const m = (lo + hi) >> 1;
+      if (pts[m]![3] < cutoff) lo = m + 1;
+      else hi = m;
+    }
+    let startIdx = lo;
+    // endIdx = 最後一個 t <= time
+    lo = startIdx; hi = n;
+    while (lo < hi) {
+      const m = (lo + hi) >> 1;
+      if (pts[m]![3] <= time) lo = m + 1;
+      else hi = m;
+    }
+    const endIdx = lo - 1;
+
+    let hasTail = startIdx > 0 && startIdx < n; // 尾端插值：cutoff 落在兩點之間
+    const origCount = Math.max(0, endIdx - startIdx + 1);
+    const lastT = origCount > 0 ? pts[endIdx]![3] : (hasTail ? cutoff : -Infinity);
+    const hasHead = (hasTail || origCount > 0) && time > lastT; // 頭端插值：當前精確位置
+    let count = (hasTail ? 1 : 0) + origCount + (hasHead ? 1 : 0);
+    if (count < 2) return false;
+
+    // 超出 slot 容量：丟最舊的點（尾端 progress→0 幾乎透明，肉眼不可辨）
+    let overflow = count - SLOT_POINTS;
+    if (overflow > 0) {
+      if (hasTail) { hasTail = false; overflow--; }
+      startIdx += overflow;
+      count = SLOT_POINTS;
+    }
+
+    // ── slot 配置 ────────────────────────────────────────────────
+    let slot = this.slotByFlight.get(flightId);
     if (slot === undefined) {
-      slot = this.allocSlot(flightId);
-      if (slot === -1) return; // 已滿
+      slot = this.acquireSlot(flightId, endTime);
+      if (slot === -1) return false; // 理論上不會（逐出後必有空位）
     }
+    const state = this.states[slot]!;
 
-    const count = Math.min(trail.length, POINTS_PER_SLOT);
-    if (count < 2) {
-      this.deactivateSlot(slot);
-      return;
+    // ── 寫入頂點 ────────────────────────────────────────────────
+    const t0 = hasTail ? cutoff : pts[startIdx]![3];
+    const tEnd = hasHead ? time : pts[endIdx]![3];
+    const tRange = tEnd - t0;
+    const inv = tRange > 0 ? 1 / tRange : 0;
+    const cr = color.r, cg = color.g, cb = color.b;
+    const base = slot * SLOT_VERTS;
+
+    let v = base + 1; // [base] 是 leading guard，最後補
+    if (hasTail) {
+      const a = pts[startIdx - 1]!, b = pts[startIdx]!;
+      const r = (cutoff - a[3]) / (b[3] - a[3]);
+      const x = a[0] + (b[0] - a[0]) * r;
+      const y = a[1] + (b[1] - a[1]) * r;
+      const z = a[2] + (b[2] - a[2]) * r;
+      this.writeVert(v, x, y, z, tRange > 0 ? 0 : 1, cr, cg, cb, opacity);
+      mercatorToEcef(x, y, z, this.ecefs, v * 3); // 插值點：唯二需要三角函數的地方之一
+      v++;
     }
-
-    // 計算 segment 頂點（LineSegments 格式：每段 AB 各一個頂點）
-    const segCount = count - 1;
-    const vertCount = segCount * 2;
-    const baseVert = slot * VERTS_PER_SLOT;
-
-    const tStart = trail[0]![3];
-    const tEnd = trail[count - 1]![3];
-    const tRange = tEnd - tStart;
-
-    for (let i = 0; i < segCount; i++) {
-      const a = trail[i]!;
-      const b = trail[i + 1]!;
-      const ma = toMercator(a[0], a[1], a[2]);
-      const mb = toMercator(b[0], b[1], b[2]);
-
-      const vi = baseVert + i * 2;
-      this.posAttr.setXYZ(vi, ma.x, ma.y, ma.z);
-      this.posAttr.setXYZ(vi + 1, mb.x, mb.y, mb.z);
-
-      const pa = tRange > 0 ? (a[3] - tStart) / tRange : 1;
-      const pb = tRange > 0 ? (b[3] - tStart) / tRange : 1;
-      this.progAttr.setX(vi, pa);
-      this.progAttr.setX(vi + 1, pb);
-
-      this.colorIdxAttr.setX(vi, colorIdx);
-      this.colorIdxAttr.setX(vi + 1, colorIdx);
+    for (let i = startIdx; i <= endIdx; i++) {
+      const p = pts[i]!;
+      this.writeVert(v, p[0], p[1], p[2], tRange > 0 ? (p[3] - t0) * inv : 1, cr, cg, cb, opacity);
+      // ECEF 直接抄快取（零三角函數）
+      const s3 = i * 3, d3 = v * 3;
+      this.ecefs[d3] = ecef[s3]!;
+      this.ecefs[d3 + 1] = ecef[s3 + 1]!;
+      this.ecefs[d3 + 2] = ecef[s3 + 2]!;
+      v++;
     }
-
-    // 把剩餘頂點歸零（避免殘留）
-    for (let i = vertCount; i < VERTS_PER_SLOT; i++) {
-      const vi = baseVert + i;
-      this.posAttr.setXYZ(vi, 0, 0, 0);
-      this.progAttr.setX(vi, 0);
-    }
-
-    this.slots[slot]!.active = true;
-    this.slots[slot]!.vertCount = vertCount;
-  }
-
-  /** 標記一組 flightId 以外的所有 slot 為不活躍 */
-  deactivateExcept(activeIds: Set<string>) {
-    for (const [id, slot] of this.slotMap) {
-      if (!activeIds.has(id)) {
-        this.deactivateSlot(slot);
-        this.slotMap.delete(id);
+    if (hasHead) {
+      let x: number, y: number, z: number;
+      if (endIdx < n - 1) {
+        const a = pts[endIdx]!, b = pts[endIdx + 1]!;
+        const r = (time - a[3]) / (b[3] - a[3]);
+        x = a[0] + (b[0] - a[0]) * r;
+        y = a[1] + (b[1] - a[1]) * r;
+        z = a[2] + (b[2] - a[2]) * r;
+      } else {
+        // time 超出路徑末端：夾在最後一點（同 interpolatePosition 的 clamp 行為）
+        const p = pts[n - 1]!;
+        x = p[0]; y = p[1]; z = p[2];
       }
+      this.writeVert(v, x, y, z, 1, cr, cg, cb, opacity);
+      mercatorToEcef(x, y, z, this.ecefs, v * 3);
+      v++;
+    }
+
+    // guard 頂點：與相鄰實點同座標、opacity 0（零長度段 + 橋接段不可見）
+    const first3 = (base + 1) * 3;
+    const last = v - 1, last3 = last * 3;
+    this.copyVertPos(base, first3);
+    this.opacities[base] = 0;
+    this.copyVertPos(v, last3);
+    this.opacities[v] = 0;
+
+    // trail 縮短：舊的多餘實點 opacity 歸零（位置殘留無妨，不可見）
+    for (let k = count + 2; k <= state.lastCount + 1; k++) {
+      this.opacities[base + k] = 0;
+    }
+    state.lastCount = count;
+
+    this.markDirty(slot);
+    headOut.x = this.positions[last3]!;
+    headOut.y = this.positions[last3 + 1]!;
+    headOut.z = this.positions[last3 + 2]!;
+    return true;
+  }
+
+  private writeVert(
+    v: number, x: number, y: number, z: number,
+    prog: number, r: number, g: number, b: number, opacity: number,
+  ) {
+    const v3 = v * 3;
+    this.positions[v3] = x;
+    this.positions[v3 + 1] = y;
+    this.positions[v3 + 2] = z;
+    this.progress[v] = prog;
+    this.colors[v3] = r;
+    this.colors[v3 + 1] = g;
+    this.colors[v3 + 2] = b;
+    this.opacities[v] = opacity;
+  }
+
+  /** guard 用：把 src3（float offset）的 position/ecef 複製到頂點 v */
+  private copyVertPos(v: number, src3: number) {
+    const d3 = v * 3;
+    this.positions[d3] = this.positions[src3]!;
+    this.positions[d3 + 1] = this.positions[src3 + 1]!;
+    this.positions[d3 + 2] = this.positions[src3 + 2]!;
+    this.ecefs[d3] = this.ecefs[src3]!;
+    this.ecefs[d3 + 1] = this.ecefs[src3 + 1]!;
+    this.ecefs[d3 + 2] = this.ecefs[src3 + 2]!;
+  }
+
+  /** 釋放不在 activeIds 中的 slot（航班落地/離開時間窗 → 立即隱藏，同舊 setOpacity(0)） */
+  releaseMissing(activeIds: Set<string>) {
+    for (const [id, slot] of this.slotByFlight) {
+      if (!activeIds.has(id)) this.release(id, slot);
     }
   }
 
-  /** 提交更新，更新 drawRange 和 needsUpdate */
+  private release(flightId: string, slot: number) {
+    const state = this.states[slot];
+    if (state) {
+      const base = slot * SLOT_VERTS;
+      for (let k = 0; k <= state.lastCount + 1; k++) this.opacities[base + k] = 0;
+      this.markDirty(slot);
+    }
+    this.states[slot] = null;
+    this.slotByFlight.delete(flightId);
+    // 降冪排序插回（維持低位優先配置）
+    let lo = 0, hi = this.freeSlots.length;
+    while (lo < hi) {
+      const m = (lo + hi) >> 1;
+      if (this.freeSlots[m]! > slot) lo = m + 1;
+      else hi = m;
+    }
+    this.freeSlots.splice(lo, 0, slot);
+  }
+
+  private acquireSlot(flightId: string, endTime: number): number {
+    if (this.freeSlots.length === 0) {
+      // 池滿：踢「最接近抵達」的航班（本來就快落地消失，視覺衝擊最小）
+      let victimId: string | null = null;
+      let victimSlot = -1;
+      let minEnd = Infinity;
+      for (const [id, s] of this.slotByFlight) {
+        const st = this.states[s];
+        if (st && st.endTime < minEnd) {
+          minEnd = st.endTime;
+          victimId = id;
+          victimSlot = s;
+        }
+      }
+      if (victimId === null) return -1;
+      this.release(victimId, victimSlot);
+    }
+    const slot = this.freeSlots.pop()!;
+    this.states[slot] = { flightId, endTime, lastCount: 0 };
+    this.slotByFlight.set(flightId, slot);
+    if (slot > this.maxEverUsed) this.maxEverUsed = slot;
+    return slot;
+  }
+
+  private markDirty(slot: number) {
+    if (slot < this.minDirtySlot) this.minDirtySlot = slot;
+    if (slot > this.maxDirtySlot) this.maxDirtySlot = slot;
+  }
+
+  /** 每幀一次：合併髒區為單一 updateRange 上傳 + 更新 drawRange */
   commit() {
-    // 簡單方案：用所有活躍 slot 中最大的結束位置
-    // 不做 slot 重排，因為 GPU 跳過空 slot 的開銷很低
-    let maxVert = 0;
-    for (let i = 0; i < MAX_SLOTS; i++) {
-      const s = this.slots[i]!;
-      if (s.active && s.vertCount > 0) {
-        const end = i * VERTS_PER_SLOT + s.vertCount;
-        if (end > maxVert) maxVert = end;
-      }
-    }
+    if (this.maxDirtySlot < 0) return;
+    const startV = this.minDirtySlot * SLOT_VERTS;
+    const countV = (this.maxDirtySlot + 1) * SLOT_VERTS - startV;
 
-    this.geometry.setDrawRange(0, maxVert);
-    this.posAttr.needsUpdate = true;
-    this.progAttr.needsUpdate = true;
-    this.colorIdxAttr.needsUpdate = true;
+    this.applyRange(this.posAttr, startV, countV, 3);
+    this.applyRange(this.progAttr, startV, countV, 1);
+    this.applyRange(this.colorAttr, startV, countV, 3);
+    this.applyRange(this.opacityAttr, startV, countV, 1);
+    this.applyRange(this.ecefAttr, startV, countV, 3);
+
+    this.geometry.setDrawRange(0, (this.maxEverUsed + 1) * SLOT_VERTS);
+    this.minDirtySlot = Infinity;
+    this.maxDirtySlot = -1;
   }
 
-  setOpacity(opacity: number) {
-    this.material.uniforms["uOpacity"]!.value = opacity;
-  }
-
-  setColors(colors: THREE.Color[]) {
-    const vecs = colors.map(c => new THREE.Vector3(c.r, c.g, c.b));
-    while (vecs.length < 5) vecs.push(vecs[vecs.length - 1]!.clone());
-    this.material.uniforms["uColors"]!.value = vecs;
+  private applyRange(attr: THREE.BufferAttribute, startV: number, countV: number, itemSize: number) {
+    attr.clearUpdateRanges();
+    attr.addUpdateRange(startV * itemSize, countV * itemSize);
+    attr.needsUpdate = true;
   }
 
   setBlending(blending: THREE.Blending) {
     this.material.blending = blending;
     this.material.needsUpdate = true;
-  }
-
-  private allocSlot(flightId: string): number {
-    for (let i = 0; i < MAX_SLOTS; i++) {
-      const idx = (this.nextFreeSlot + i) % MAX_SLOTS;
-      if (!this.slots[idx]!.active && !this.hasSlotOwner(idx)) {
-        this.slotMap.set(flightId, idx);
-        this.nextFreeSlot = (idx + 1) % MAX_SLOTS;
-        return idx;
-      }
-    }
-    return -1; // 全滿
-  }
-
-  private hasSlotOwner(slot: number): boolean {
-    for (const s of this.slotMap.values()) {
-      if (s === slot) return true;
-    }
-    return false;
-  }
-
-  private deactivateSlot(slot: number) {
-    this.slots[slot]!.active = false;
-    this.slots[slot]!.vertCount = 0;
-    // 把該 slot 的頂點歸零
-    const base = slot * VERTS_PER_SLOT;
-    for (let i = 0; i < VERTS_PER_SLOT; i++) {
-      this.posAttr.setXYZ(base + i, 0, 0, 0);
-      this.progAttr.setX(base + i, 0);
-    }
   }
 
   dispose() {

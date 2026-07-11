@@ -72,11 +72,11 @@ for ICAO in $AIRPORTS; do
 done
 echo "  done: total=${COUNT} fetched=${FETCHED} skipped=${SKIPPED} failed=${FAILED}"
 
-# 3. 下載 regions（含 KR / TH）
+# 3. 下載 regions（LOD 檔，含 KR / TH / all）
 echo ""
 echo "[3/4] Tracks regions..."
-# regions 強制重抓（容量小、且常變動）
-for R in TW JP HK KR TH US UK CN other; do
+# regions 強制重抓（容量小、且常變動）。all = 全球 union LOD（world/all scope 用）
+for R in TW JP HK KR TH US UK CN other all; do
   DST="${DATA_DIR}/tracks/regions/${R}.jsonl"
   rm -f "$DST"
   if fetch "${S3_BASE}/tracks/regions/${R}.jsonl" "$DST"; then

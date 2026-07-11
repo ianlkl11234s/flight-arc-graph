@@ -2,8 +2,13 @@
  * split-tracks.ts
  *
  * 掃描 public/tracks/airports/{ICAO}.jsonl，產出：
- *   1. public/tracks/regions/{REGION}.jsonl — 每個 region 的 DP 降採樣版
- *   2. public/tracks/manifest.json          — 索引檔（airports + regions）
+ *   1. public/tracks/regions/{REGION}.jsonl — 每個 region 的 LOD（DP 2km + 40 點上限）版
+ *   2. public/tracks/regions/all.jsonl       — 全球 union LOD（world/all scope 用）
+ *   3. public/tracks/manifest.json          — 索引檔（airports + regions，regions 含 "all"）
+ *
+ * LOD 分層：regions/*.jsonl 是給 world/all/region scope 用的抽稀版（每航班 ≤40 點，
+ *   世界視角肉眼不可辨）；單機場 scope 仍走 airports/{ICAO}.jsonl 全解析度。前端依 scope
+ *   在 flightLoader.ts 選層（loadRegionFullFlights → LOD 檔；loadAirportFlights → 全解析度）。
  *
  * 注意：airports/{ICAO}.jsonl 是 fetch-tracks.ts 直接寫入的最終輸出，
  *       本腳本只做 dedupe（排序 + 去重）+ 產生 region + manifest。
@@ -12,6 +17,9 @@
  *   - isCore:    是否為主動查詢機場（來源 scripts/core-airports.json，由 build-core-airports.ts 產生）
  *   - dates:     該機場每日（台灣時間 UTC+8）軌跡筆數 { "2026-02-18": 614, ... }
  *   - fullDates: 抓「滿」的日期（core-airports.json 的 fullDates ∩ 實際有軌跡的日期）
+ *
+ * manifest.regionDates / manifest.regionFullDates：上述 dates/fullDates 依機場 getRegion()
+ * 歸屬做聯集，給 region/組合模式的行事曆用（src/data/flightLoader.ts getRegionDates/getRegionFullDates）。
  *
  * Usage:
  *   npx tsx scripts/split-tracks.ts
@@ -85,6 +93,32 @@ function dpSimplify(path: number[][], epsilon: number): number[][] {
     return left.slice(0, -1).concat(right);
   }
   return [a, b];
+}
+
+// ── LOD 抽稀（region / world / all scope 用）──
+// 單機場 scope 走全解析度 per-airport JSONL，這裡只影響 region LOD 檔。
+const LOD_EPSILON_KM = 2; // DP 垂距門檻；region scope ~2-3km/px，2km < 1px，世界視角肉眼不可辨
+const LOD_MAX_POINTS = 40; // 每航班點數硬上限；長程大圓線用 epsilon 也降不到，需要安全網
+const LOD_ESCALATE = 1.5; // 超過上限時的 epsilon 放大倍率
+
+/**
+ * DP 抽稀 + 硬點數上限。先用 epsilon 抽稀；長程大圓線常仍超過 maxPoints，
+ * 逐次放大 epsilon 重跑直到 ≤ maxPoints。DP 永遠保留起訖點（起降點不掉）。
+ */
+function dpSimplifyCapped(
+  path: number[][],
+  epsilon: number,
+  maxPoints: number,
+): number[][] {
+  let eps = epsilon;
+  let simplified = dpSimplify(path, eps);
+  let guard = 0;
+  while (simplified.length > maxPoints && guard < 24) {
+    eps *= LOD_ESCALATE;
+    simplified = dpSimplify(path, eps);
+    guard++;
+  }
+  return simplified;
 }
 
 // ── Region matching ──
@@ -215,11 +249,15 @@ function main() {
   const manifest: {
     airports: Record<string, AirportManifestEntry>;
     regions: Record<string, { flights: number; gzipBytes: number }>;
+    regionDates: Record<string, string[]>;
+    regionFullDates: Record<string, string[]>;
     totalFlights: number;
     generatedAt: string;
   } = {
     airports: {},
     regions: {},
+    regionDates: {},
+    regionFullDates: {},
     totalFlights: 0,
     generatedAt: new Date().toISOString(),
   };
@@ -241,6 +279,21 @@ function main() {
   }
   console.log(`   ${files.length} 機場，${totalFlightsIndexed} 筆（含重複歸屬）\n`);
 
+  // regionDates / regionFullDates：機場依 getRegion() 歸屬，dates/fullDates 做聯集
+  // （同一航班會同時記在 dep + arr 兩座機場的 dates 裡，但這裡只取「有無資料」的日期集合，
+  //   聯集本身天然去重，不需要另外處理 flights 層級的重複計數）
+  const regionDatesSet = new Map<string, Set<string>>();
+  const regionFullDatesSet = new Map<string, Set<string>>();
+  for (const [icao, entry] of Object.entries(manifest.airports)) {
+    const r = getRegion(icao);
+    if (!regionDatesSet.has(r)) regionDatesSet.set(r, new Set());
+    if (!regionFullDatesSet.has(r)) regionFullDatesSet.set(r, new Set());
+    for (const d of Object.keys(entry.dates)) regionDatesSet.get(r)!.add(d);
+    for (const d of entry.fullDates) regionFullDatesSet.get(r)!.add(d);
+  }
+  for (const [r, s] of regionDatesSet) manifest.regionDates[r] = [...s].sort();
+  for (const [r, s] of regionFullDatesSet) manifest.regionFullDates[r] = [...s].sort();
+
   if (dedupeOnly) {
     console.log("(--dedupe-only, 跳過 region + manifest)");
     return;
@@ -261,7 +314,7 @@ function main() {
     return;
   }
 
-  // 2. 按 Region 分（DP 0.5km 降採樣）
+  // 2. 產 LOD（DP 2km + 40 點上限）：region 檔 + 全球 all 檔
   mkdirSync(REGIONS_DIR, { recursive: true });
 
   const uniqueFlights = new Map<string, Flight>();
@@ -270,6 +323,23 @@ function main() {
   }
   manifest.totalFlights = uniqueFlights.size;
   console.log(`🛫 不重複航班: ${uniqueFlights.size}\n`);
+
+  // 每筆 unique flight 只抽稀一次，region + all 檔共用（省掉重複 DP）
+  const lodPathById = new Map<string, number[][]>();
+  let origPtsSum = 0;
+  let lodPtsSum = 0;
+  let lodMaxPts = 0;
+  for (const f of uniqueFlights.values()) {
+    const lod = dpSimplifyCapped(f.path, LOD_EPSILON_KM, LOD_MAX_POINTS);
+    lodPathById.set(f.fr24_id, lod);
+    origPtsSum += f.path.length;
+    lodPtsSum += lod.length;
+    if (lod.length > lodMaxPts) lodMaxPts = lod.length;
+  }
+  const n = uniqueFlights.size || 1;
+  console.log(
+    `📉 LOD 抽稀 (DP ${LOD_EPSILON_KM}km, cap ${LOD_MAX_POINTS}): 原始平均 ${(origPtsSum / n).toFixed(1)} 點 → LOD 平均 ${(lodPtsSum / n).toFixed(1)} 點 (最多 ${lodMaxPts})\n`,
+  );
 
   const byRegion = new Map<string, Flight[]>();
   for (const f of uniqueFlights.values()) {
@@ -283,25 +353,29 @@ function main() {
     }
   }
 
+  const writeLodFile = (name: string, flights: Flight[]) => {
+    const arr = [...flights].sort((a, b) => a.dep_time - b.dep_time);
+    const jsonl =
+      arr
+        .map((f) => JSON.stringify({ ...f, path: lodPathById.get(f.fr24_id)! }))
+        .join("\n") + "\n";
+    const outPath = join(REGIONS_DIR, `${name}.jsonl`);
+    writeFileSync(outPath, jsonl);
+    const gzSize = gzipSync(jsonl).length;
+    manifest.regions[name] = { flights: arr.length, gzipBytes: gzSize };
+    console.log(
+      `✅ ${name}: ${arr.length} flights (LOD) → gzip ${(gzSize / 1024 / 1024).toFixed(2)} MB`,
+    );
+  };
+
   for (const [region, regionFlights] of byRegion) {
     const unique = new Map<string, Flight>();
     for (const f of regionFlights) unique.set(f.fr24_id, f);
-    const arr = [...unique.values()].sort((a, b) => a.dep_time - b.dep_time);
-
-    const dpFlights = arr.map((f) => ({
-      ...f,
-      path: dpSimplify(f.path, 0.5),
-    }));
-
-    const jsonl = dpFlights.map((f) => JSON.stringify(f)).join("\n") + "\n";
-    const outPath = join(REGIONS_DIR, `${region}.jsonl`);
-    writeFileSync(outPath, jsonl);
-    const gzSize = gzipSync(jsonl).length;
-    manifest.regions[region] = { flights: arr.length, gzipBytes: gzSize };
-    console.log(
-      `✅ ${region}: ${arr.length} flights (DP 0.5km) → gzip ${(gzSize / 1024 / 1024).toFixed(2)} MB`,
-    );
+    writeLodFile(region, [...unique.values()]);
   }
+
+  // 全球 union LOD（world/all scope 用；前端 loadRegionFullFlights 對 all/world 讀此檔）
+  writeLodFile("all", [...uniqueFlights.values()]);
 
   // 3. manifest
   writeFileSync(MANIFEST_FILE, JSON.stringify(manifest, null, 2));
@@ -318,7 +392,7 @@ function main() {
   );
   console.log(`\n=== 統計 ===`);
   console.log(`機場檔案: ${files.length} 個 (gzip ${(totalAirportGz / 1024 / 1024).toFixed(1)} MB)`);
-  console.log(`Region:   ${byRegion.size} 個 (gzip ${(totalRegionGz / 1024 / 1024).toFixed(1)} MB)`);
+  console.log(`Region:   ${Object.keys(manifest.regions).length} 個含 all (gzip ${(totalRegionGz / 1024 / 1024).toFixed(1)} MB)`);
   console.log(`不重複航班: ${uniqueFlights.size}`);
 }
 

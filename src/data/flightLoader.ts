@@ -165,10 +165,36 @@ export function preprocessFlights(flights: Flight[]): Flight[] {
 let cachedTracks: Flight[] | null = null;
 let cachedAirspace: Flight[] | null = null;
 
-/** 按機場快取的軌跡 */
+/** 按機場快取的軌跡（全解析度，LRU 上限 AIRPORT_CACHE_MAX 座） */
 const airportCache = new Map<string, Flight[]>();
-/** 按 region 快取的軌跡 */
+/** 按 region 快取的 LOD 軌跡（LRU 上限 REGION_CACHE_MAX 個） */
 const regionCache = new Map<string, Flight[]>();
+
+// LRU 治理：快取只增不減會撐爆記憶體，逐出後重新 fetch 即可。
+// 單機場一次看一座（保留最近造訪的 50 座）；region LOD 只有 ~10 種（保留 6 個）。
+const AIRPORT_CACHE_MAX = 50;
+const REGION_CACHE_MAX = 6;
+
+/** 命中時把 key 移到最近使用端（Map 以插入序為 LRU 序） */
+function lruTouch<V>(cache: Map<string, V>, key: string): V | undefined {
+  const v = cache.get(key);
+  if (v !== undefined) {
+    cache.delete(key);
+    cache.set(key, v);
+  }
+  return v;
+}
+
+/** 寫入後逐出最舊的 key 直到不超過上限 */
+function lruSet<V>(cache: Map<string, V>, key: string, value: V, max: number): void {
+  cache.delete(key);
+  cache.set(key, value);
+  while (cache.size > max) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
+  }
+}
 
 const S3_BASE =
   "https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc";
@@ -375,10 +401,10 @@ export async function loadAirportFlights(
   icao: string,
   onProgress?: (flights: Flight[], total: number) => void,
 ): Promise<Flight[]> {
-  if (airportCache.has(icao)) {
-    const cached = airportCache.get(icao)!;
-    if (onProgress) onProgress(cached, cached.length);
-    return cached;
+  const hit = lruTouch(airportCache, icao);
+  if (hit) {
+    if (onProgress) onProgress(hit, hit.length);
+    return hit;
   }
 
   // 嘗試 Zeabur /data volume → 本地 public/ → S3
@@ -394,7 +420,7 @@ export async function loadAirportFlights(
     if (flights.length > 0) break;
   }
   console.log(`[Loader] Airport ${icao}: ${flights.length} flights`);
-  airportCache.set(icao, flights);
+  lruSet(airportCache, icao, flights, AIRPORT_CACHE_MAX);
   return flights;
 }
 
@@ -405,10 +431,10 @@ export async function loadRegionFlights(
   region: string,
   onProgress?: (flights: Flight[], total: number) => void,
 ): Promise<Flight[]> {
-  if (regionCache.has(region)) {
-    const cached = regionCache.get(region)!;
-    if (onProgress) onProgress(cached, cached.length);
-    return cached;
+  const hit = lruTouch(regionCache, region);
+  if (hit) {
+    if (onProgress) onProgress(hit, hit.length);
+    return hit;
   }
 
   const paths = [
@@ -423,7 +449,8 @@ export async function loadRegionFlights(
     if (flights.length > 0) break;
   }
   console.log(`[Loader] Region ${region}: ${flights.length} flights`);
-  regionCache.set(region, flights);
+  // 只有真的載到才寫快取，避免 LOD 檔缺失時（過渡期）把空陣列黏在快取裡擋 fallback
+  if (flights.length > 0) lruSet(regionCache, region, flights, REGION_CACHE_MAX);
   return flights;
 }
 
@@ -437,23 +464,37 @@ const REGION_PREFIXES: Record<string, string[]> = {
   TH: ["VT"],
   US: ["K"],
   UK: ["EG"],
+  CN: ["Z"],
 };
 
 function icaoMatchesRegion(icao: string, region: string): boolean {
   const prefixes = REGION_PREFIXES[region];
   if (!prefixes) return false;
+  // 中國大陸：Z 開頭但排除北韓 ZK、蒙古 ZM（照抄 split-tracks getRegion）
+  if (region === "CN" && (icao.startsWith("ZK") || icao.startsWith("ZM"))) return false;
   return prefixes.some((p) => icao.startsWith(p));
 }
 
 /**
- * 載入 Region 的完整軌跡（依序載入各機場 JSONL，去重）
- * All Region 時載入所有機場
+ * 載入 world / all / region scope 的軌跡。
+ *
+ * 優先讀 LOD 檔（regions/*.jsonl，每航班 ≤40 點，單檔串流、記憶體可控）：
+ *   - world / all → 全球 union regions/all.jsonl
+ *   - 具名 region → regions/{REGION}.jsonl
+ * LOD 檔缺失時（S3 尚未更新的過渡期）graceful fallback 到「逐機場合併全解析度 JSONL」，
+ * 即舊行為（All 時載入所有機場並去重）。
  */
 export async function loadRegionFullFlights(
   region: string,
   onProgress?: (flights: Flight[], total: number) => void,
   abortCheck?: () => boolean,
 ): Promise<Flight[]> {
+  // ── LOD 前置路徑 ──
+  const lodName = region === "all" || region === "world" ? "all" : region;
+  const lod = await loadRegionFlights(lodName, onProgress);
+  if (lod.length > 0) return lod;
+
+  // ── Fallback：逐機場合併全解析度（LOD 檔還沒上 S3 的過渡期）──
   if (!cachedManifest) await loadManifest();
   const manifest = cachedManifest!;
 

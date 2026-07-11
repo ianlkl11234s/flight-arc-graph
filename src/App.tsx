@@ -8,7 +8,8 @@ import { MapView, ATLAS_LAYER } from "./map/MapView";
 import { useFlightData } from "./hooks/useFlightData";
 import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
-import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo } from "./map/cameraPresets";
+import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo, cameraForAirport } from "./map/cameraPresets";
+import { loadAirportMeta, type AirportMeta } from "./data/airportMeta";
 import { createFlightLayer } from "./map/customLayer";
 import { createAtlasGlowLayer, ATLAS_GLOW_LAYER_ID, type AtlasColorMode } from "./map/atlasGlowLayer";
 import { createAirspaceLayer } from "./map/airspaceAurora";
@@ -175,6 +176,13 @@ export default function App() {
     regionDatesMap,
     regionFullDatesMap,
   } = useFlightData(dataSource, scope, region, airspaceDate, airspaceRangeDays);
+
+  // 機場 metadata（座標/名稱/國家，含無 preset 的長尾機場）— 一次性載入，失敗回空物件
+  const [airportMeta, setAirportMeta] = useState<Record<string, AirportMeta>>({});
+  useEffect(() => {
+    loadAirportMeta().then(setAirportMeta);
+  }, []);
+
   const [trackMode, setTrackMode] = useState<TrackMode>("stack");
   const [timeWindow, setTimeWindow] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
@@ -793,6 +801,8 @@ export default function App() {
   const altExagRef = useRef(altExaggeration);
   const altOffsetRef = useRef(altOffset);
   const staticOpacityRef = useRef(staticOpacity);
+  const trailLineWidthRef = useRef(trailLineWidth);
+  const airportGlowRef = useRef(airportGlow);
   const orbScaleRef = useRef(orbScale);
   const isDarkThemeRef = useRef(isDarkTheme);
   const showTrailsRef = useRef(displayMode === "trails");
@@ -815,6 +825,8 @@ export default function App() {
   altExagRef.current = altExaggeration;
   altOffsetRef.current = altOffset;
   staticOpacityRef.current = staticOpacity;
+  trailLineWidthRef.current = trailLineWidth;
+  airportGlowRef.current = airportGlow;
   orbScaleRef.current = orbScale;
   isDarkThemeRef.current = isDarkTheme;
   showTrailsRef.current = displayMode === "trails";
@@ -827,6 +839,17 @@ export default function App() {
   atlasGlowVisibleRef.current = atlasGlowVisible;
   atlasColorModeRef.current = atlasColorMode;
   atlasGlowSizeRef.current = atlasGlowSize;
+
+  // repaint 閘控（customLayer）後，Mapbox 不再永續重繪；custom layer 每幀 pull 的狀態
+  // 變更時要主動踢一下 repaint，否則完全 idle 時拖 slider / 按播放不會立即反應。
+  useEffect(() => {
+    mapRef.current?.triggerRepaint();
+  }, [
+    timeline.currentTime, finalFlights, renderMode, altExaggeration, altOffset,
+    staticOpacity, trailLineWidth, airportGlow, orbScale, isDarkTheme, displayMode, timeWindow, trailDisplay,
+    atlasGlowVisible, atlasColorMode, atlasGlowSize, viewshedOpacity, viewshedSharpness,
+    colorThemeKey, colorThemeOverride, perFlightColorMap, perFlightScaleMap,
+  ]);
 
   // 持久化 airspace 設定
   useEffect(() => {
@@ -864,10 +887,21 @@ export default function App() {
 
   const showTrails = displayMode === "trails";
 
-  const preset = useMemo(
-    () => getPresetByIcao(selectedAirport) ?? CAMERA_PRESETS[0]!,
-    [selectedAirport],
-  );
+  // 沒 preset 也沒座標時，保留上一個有效視角（不飛回桃園 CAMERA_PRESETS[0]）
+  const lastPresetRef = useRef(CAMERA_PRESETS[0]!);
+  const preset = useMemo(() => {
+    const m = airportMeta[selectedAirport];
+    const cam = cameraForAirport(
+      selectedAirport,
+      m ? { lat: m.lat, lng: m.lng, name: m.name, flights: airportCatalog[selectedAirport]?.flights } : undefined,
+    );
+    if (cam) {
+      lastPresetRef.current = cam;
+      return cam;
+    }
+    console.warn(`[Camera] ${selectedAirport} 無 preset 也無座標，維持目前視角`);
+    return lastPresetRef.current;
+  }, [selectedAirport, airportMeta, airportCatalog]);
 
   const styleUrl = useMemo(() => getStyleUrl(mapStyleId), [mapStyleId]);
 
@@ -899,6 +933,8 @@ export default function App() {
       getAltExaggeration: () => altExagRef.current,
       getAltOffset: () => altOffsetRef.current,
       getStaticOpacity: () => staticOpacityRef.current,
+      getStaticWidth: () => trailLineWidthRef.current,
+      getGlowIntensity: () => airportGlowRef.current,
       getOrbScale: () => orbScaleRef.current,
       getIsDarkTheme: () => isDarkThemeRef.current,
       getShowTrails: () => showTrailsRef.current,
@@ -1434,18 +1470,25 @@ export default function App() {
             onFlightSelect={setSelectedFlightId}
             airports={airports}
             airportCatalog={airportCatalog}
+            airportMeta={airportMeta}
             selectedAirport={selectedAirport}
             onAirportChange={selectAirportSingle}
             onLocationJump={(icao) => {
-              const p = getPresetByIcao(icao);
-              if (p && mapRef.current) {
+              const m = airportMeta[icao];
+              const cam = cameraForAirport(
+                icao,
+                m ? { lat: m.lat, lng: m.lng, name: m.name, flights: airportCatalog[icao]?.flights } : undefined,
+              );
+              if (cam && mapRef.current) {
                 mapRef.current.flyTo({
-                  center: p.center,
-                  zoom: p.zoom,
-                  pitch: p.pitch,
-                  bearing: p.bearing,
+                  center: cam.center,
+                  zoom: cam.zoom,
+                  pitch: cam.pitch,
+                  bearing: cam.bearing,
                   duration: 2000,
                 });
+              } else if (!cam) {
+                console.warn(`[LocationJump] 找不到 ${icao} 的座標，略過`);
               }
             }}
             onSceneSelect={(scene: ScenePreset) => {
@@ -1656,6 +1699,8 @@ export default function App() {
             selectedDate={timeline.selectedDate}
             rangeDays={timeline.rangeDays}
             availableDates={availableDates}
+            fullDates={fullDates}
+            dateCounts={airportDateCounts ?? undefined}
             selectedDates={timeline.selectedDates}
             isMultiDateMode={timeline.isMultiDateMode}
             isDarkTheme={isDarkTheme}
@@ -1776,6 +1821,11 @@ export default function App() {
             <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)", fontSize: 11, fontFamily: "monospace" }}>
               {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
             </div>
+            {!loading && !loadingProgress && displayedFlights.length === 0 && (
+              <div style={{ color: isDarkTheme ? "rgba(255,180,80,0.55)" : "rgba(180,120,0,0.6)", fontSize: 10, fontFamily: "monospace", marginTop: 2 }}>
+                此日期範圍無航班資料
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1900,6 +1950,8 @@ export default function App() {
               selectedDate={timeline.selectedDate}
               rangeDays={timeline.rangeDays}
               availableDates={availableDates}
+              fullDates={fullDates}
+              dateCounts={airportDateCounts ?? undefined}
               selectedDates={timeline.selectedDates}
               isMultiDateMode={timeline.isMultiDateMode}
               isDarkTheme={true}
