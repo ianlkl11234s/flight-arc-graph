@@ -2,6 +2,8 @@ import type { MapStyle } from "../types";
 
 export const MAP_STYLES: MapStyle[] = [
   { id: "dark", name: "Dark", url: "mapbox://styles/mapbox/dark-v11" },
+  // Pure Black 與 Dark 共用 dark-v11，靠 MapView 的 paint override 壓成純黑
+  { id: "black", name: "Pure Black", url: "mapbox://styles/mapbox/dark-v11" },
   { id: "light", name: "Light", url: "mapbox://styles/mapbox/light-v11" },
   { id: "satellite", name: "Satellite", url: "mapbox://styles/mapbox/satellite-v9" },
   { id: "satellite-streets", name: "Satellite Streets", url: "mapbox://styles/mapbox/satellite-streets-v12" },

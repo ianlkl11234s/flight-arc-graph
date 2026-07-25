@@ -1171,6 +1171,7 @@ export default function App() {
       <MapView
         preset={preset}
         styleUrl={styleUrl}
+        pureBlack={mapStyleId === "black"}
         flights={finalFlights}
         renderMode={renderMode}
         airportOpacity={airportOpacity}
