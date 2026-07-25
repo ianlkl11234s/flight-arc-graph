@@ -177,6 +177,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       flightScene.setStaticOpacity(Math.min(1, staticOpacity * (farView ? 3 : 1)));
       flightScene.setStaticWidth(staticWidth);
       flightScene.setGlowIntensity(glowIntensity);
+      flightScene.setLimbFade(farView);
 
       // globe 貼球：Mapbox 每幀給 globe→mercator 矩陣 + 過渡係數（低 zoom 為球體）
       const isGlobe = projection?.name === "globe" && !!projectionToMercatorMatrix;

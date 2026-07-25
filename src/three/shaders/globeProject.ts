@@ -22,6 +22,7 @@ export const GLOBE_PROJECT_GLSL = /* glsl */ `
 uniform mat4 uGlobeToMerc;   // Mapbox projectionToMercatorMatrix（ECEF → mercator world）
 uniform float uTransition;   // projectionToMercatorTransition：0=球體、1=平面 mercator
 uniform vec3 uCameraEcef;    // 相機位置（ECEF），背面剔除用
+uniform float uLimbFade;     // Far View 球緣寬淡出：0=窄帶（既有視覺）、1=寬帶（>70° 開始淡）
 
 const float GB_R = 8192.0 / (2.0 * 3.141592653589793); // GLOBE_RADIUS ≈ 1303.797
 
@@ -40,7 +41,11 @@ vec3 globeWorldPosition(vec3 mercPos, vec3 aEcef, out float cull) {
   vec3 dir = normalize(aEcef);
   vec3 ecefSurf = dir * GB_R;
   vec3 toCam = normalize(uCameraEcef - ecefSurf);
-  float globeCull = smoothstep(-0.08, 0.02, dot(dir, toCam)); // d=0 即真地平線
+  float d = dot(dir, toCam);
+  float globeCull = smoothstep(-0.08, 0.02, d); // d=0 即真地平線
+  // Far View：窄帶的地平線殘影在 alpha 加成後像「穿到地球背面」→ 改寬淡出帶
+  //（>70° 開始淡、~85° 歸零，與 InstancedOrbs 的 limbFade 一致）
+  globeCull = mix(globeCull, min(globeCull, smoothstep(0.08, 0.35, d)), uLimbFade);
   cull = mix(globeCull, 1.0, uTransition);
 
   return mix(globeMerc, mercPos, uTransition);
