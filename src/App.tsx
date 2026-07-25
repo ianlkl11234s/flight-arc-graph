@@ -198,7 +198,7 @@ export default function App() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
   // Far View 遠景增強：低 zoom 時光點按 zoom 反比補償放大 + 軌跡 alpha 加成
   const [farView, setFarView] = useState(false);
-  const [farViewBoost, setFarViewBoost] = useState(1);
+  const [farViewBoost, setFarViewBoost] = useState(7.5);
   // Multi-condition filters（Deep Analysis 面板掌控；scene preset 也會寫入）
   const [flightFilters, setFlightFilters] = useState<FlightFilters>(EMPTY_FILTERS);
   const [depArrFilter, setDepArrFilter] = useState<DepArrFilter>("all");
