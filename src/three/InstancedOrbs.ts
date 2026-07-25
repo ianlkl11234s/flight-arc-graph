@@ -62,6 +62,8 @@ export class InstancedOrbs {
         opacity: cfg.opacity,
         blending,
         depthWrite: false,
+        // globe 地形會先寫進 depth buffer，光球與軌跡同樣只靠 ECEF cull 藏背面
+        depthTest: false,
         side: THREE.DoubleSide,
       });
       const mesh = new THREE.InstancedMesh(this.geo, mat, MAX_INSTANCES);
@@ -79,6 +81,7 @@ export class InstancedOrbs {
       opacity: 0,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
+      depthTest: false, // 同上：globe 地形的 depth 會殺掉光球
     });
     const blinkMesh = new THREE.InstancedMesh(blinkGeo, blinkMat, MAX_INSTANCES);
     blinkMesh.count = 0;
@@ -107,7 +110,10 @@ export class InstancedOrbs {
       // 光球比 1px 軌跡線大得多，沿用軌跡的窄剔除帶（-0.08~0.02）會在球緣「戳出」輪廓外
       // → 光球改用寬淡出帶：與相機夾角 >70°（dot<0.35）開始縮小、~85°（0.08）歸零
       const limbFade = _g.dot >= 0.35 ? 1 : Math.max(0, (_g.dot - 0.08) / 0.27);
-      const cull = Math.min(_g.cull, limbFade);
+      // 與 shader 的 mix(globeCull, 1.0, uTransition) 對齊：過渡帶接近平面時
+      // 球面地平線剔除逐步失效，修 z5.9 附近遠處光球被錯誤藏掉的問題
+      const globeCull = Math.min(_g.cull, limbFade);
+      const cull = globeCull + (1 - globeCull) * this.globeTransition;
       // 存貼球後座標供點擊拾取（與渲染一致）
       this.positions[i * 3] = gx;
       this.positions[i * 3 + 1] = gy;
