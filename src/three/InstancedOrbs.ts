@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { mercatorToGlobe, type GlobeResolved } from "./shaders/globeProject";
 
 const MAX_INSTANCES = 1024;
-const _g: GlobeResolved = { x: 0, y: 0, z: 0, cull: 1 };
+const _g: GlobeResolved = { x: 0, y: 0, z: 0, cull: 1, dot: 1 };
 
 interface OrbLayer {
   mesh: THREE.InstancedMesh;
@@ -103,7 +103,11 @@ export class InstancedOrbs {
 
       // 貼球：mercator → globe（含背面 cull）；平面模式直接回傳 mercator
       mercatorToGlobe(e.x, e.y, e.z, this.globeToMerc, this.globeTransition, this.globeCam, _g);
-      const gx = _g.x, gy = _g.y, gz = _g.z, cull = _g.cull;
+      const gx = _g.x, gy = _g.y, gz = _g.z;
+      // 光球比 1px 軌跡線大得多，沿用軌跡的窄剔除帶（-0.08~0.02）會在球緣「戳出」輪廓外
+      // → 光球改用寬淡出帶：與相機夾角 >70°（dot<0.35）開始縮小、~85°（0.08）歸零
+      const limbFade = _g.dot >= 0.35 ? 1 : Math.max(0, (_g.dot - 0.08) / 0.27);
+      const cull = Math.min(_g.cull, limbFade);
       // 存貼球後座標供點擊拾取（與渲染一致）
       this.positions[i * 3] = gx;
       this.positions[i * 3 + 1] = gy;

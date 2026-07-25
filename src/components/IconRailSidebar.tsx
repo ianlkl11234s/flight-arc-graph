@@ -228,6 +228,8 @@ export interface IconRailSidebarProps {
   // Settings panel controls
   displayMode: DisplayMode;
   renderMode: RenderMode;
+  farView: boolean;
+  farViewBoost: number;
   mapStyleId: string;
   // Slider values
   altExaggeration: number;
@@ -240,6 +242,8 @@ export interface IconRailSidebarProps {
   // Callbacks
   onDisplayModeChange: (mode: DisplayMode) => void;
   onRenderModeChange: (mode: RenderMode) => void;
+  onFarViewChange: (v: boolean) => void;
+  onFarViewBoostChange: (v: number) => void;
   onMapStyleChange: (id: string) => void;
   onAltExaggerationChange: (v: number) => void;
   onAltOffsetChange: (v: number) => void;
@@ -689,6 +693,38 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
         onChange={props.onRenderModeChange}
         theme={theme}
       />
+      {/* Far View：拉遠時光點按 zoom 補償放大 + 軌跡加亮 */}
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          fontSize: 11,
+          fontFamily: "monospace",
+          color: props.farView ? theme.ACTIVE_TEXT : theme.ACCENT,
+          cursor: "pointer",
+          marginBottom: 8,
+          marginLeft: 4,
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={props.farView}
+          onChange={(e) => props.onFarViewChange(e.target.checked)}
+          style={{ accentColor: theme.ACCENT_BLUE, width: 14, height: 14, cursor: "pointer" }}
+        />
+        Far View 遠景增強
+      </label>
+      {props.farView && (
+        <SliderRow
+          label="Boost"
+          value={props.farViewBoost}
+          min={0.5} max={15} step={0.5}
+          format={(v) => `×${v.toFixed(1)}`}
+          onChange={props.onFarViewBoostChange}
+          theme={theme}
+        />
+      )}
 
       <SectionHeader theme={theme}>Map</SectionHeader>
       <div style={{ marginBottom: 8 }}>

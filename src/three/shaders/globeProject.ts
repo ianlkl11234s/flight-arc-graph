@@ -54,6 +54,8 @@ export interface GlobeResolved {
   y: number;
   z: number;
   cull: number;
+  /** 地表法線與指向相機的點積（1=正對相機、0=地平線、負=背面）；平面模式恆 1 */
+  dot: number;
 }
 
 /**
@@ -75,6 +77,7 @@ export function mercatorToGlobe(
     out.y = my;
     out.z = mz;
     out.cull = 1;
+    out.dot = 1;
     return;
   }
   const lngRad = (mx - 0.5) * 2 * Math.PI;
@@ -91,17 +94,19 @@ export function mercatorToGlobe(
 
   // 背面剔除（ECEF 空間）：dir 為單位法線，直接點積指向相機的方向
   let cull = 1;
+  let dot = 1;
   if (cameraEcef) {
     const sx = dx * GB_R, sy = dy * GB_R, sz = dz * GB_R;
     const tx = cameraEcef.x - sx, ty = cameraEcef.y - sy, tz = cameraEcef.z - sz;
     const tl = Math.hypot(tx, ty, tz) || 1;
-    const d = (dx * tx + dy * ty + dz * tz) / tl;
-    cull = Math.max(0, Math.min(1, (d + 0.08) / 0.1)); // smoothstep(-0.08,0.02) 的線性近似
+    dot = (dx * tx + dy * ty + dz * tz) / tl;
+    cull = Math.max(0, Math.min(1, (dot + 0.08) / 0.1)); // smoothstep(-0.08,0.02) 的線性近似
   }
   out.x = gx + (mx - gx) * transition;
   out.y = gy + (my - gy) * transition;
   out.z = gz + (mz - gz) * transition;
   out.cull = cull;
+  out.dot = dot;
 }
 
 /**

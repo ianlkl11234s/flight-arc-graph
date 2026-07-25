@@ -1,11 +1,31 @@
 import type { CustomLayerInterface, Map as MapboxMap } from "mapbox-gl";
+import mapboxgl from "mapbox-gl";
+import * as THREE from "three";
 import type { Flight, RenderMode } from "../types";
 import { FlightScene } from "../three/FlightScene";
+import { mercatorToGlobe, type GlobeResolved } from "../three/shaders/globeProject";
 import { setAltExaggeration, getAltExaggeration, setAltOffset, getAltOffset } from "../utils/coordinates";
 import { FlightTimeIndex } from "../utils/flightIndex";
 
 /** ±12h 時間窗口（秒） */
 const VISIBILITY_WINDOW_SEC = 12 * 3600;
+
+/** Far View 像素密度實測用的 mercator 偏移量與 scratch（render 同步使用，模組級重用） */
+const MEASURE_EPS = 1e-5;
+const _measureMat = new THREE.Matrix4();
+const _gpA: GlobeResolved = { x: 0, y: 0, z: 0, cull: 0, dot: 1 };
+const _gpB: GlobeResolved = { x: 0, y: 0, z: 0, cull: 0, dot: 1 };
+
+/** 用 render matrix（column-major）把兩個世界座標投影到螢幕，回傳像素距離 */
+function screenDistPx(m: number[], a: GlobeResolved, b: GlobeResolved, w: number, h: number): number {
+  const wa = m[3]! * a.x + m[7]! * a.y + m[11]! * a.z + m[15]!;
+  const xa = (m[0]! * a.x + m[4]! * a.y + m[8]! * a.z + m[12]!) / wa;
+  const ya = (m[1]! * a.x + m[5]! * a.y + m[9]! * a.z + m[13]!) / wa;
+  const wb = m[3]! * b.x + m[7]! * b.y + m[11]! * b.z + m[15]!;
+  const xb = (m[0]! * b.x + m[4]! * b.y + m[8]! * b.z + m[12]!) / wb;
+  const yb = (m[1]! * b.x + m[5]! * b.y + m[9]! * b.z + m[13]!) / wb;
+  return Math.hypot((xb - xa) * w * 0.5, (yb - ya) * h * 0.5);
+}
 
 export interface FlightLayerOptions {
   getCurrentTime: () => number;
@@ -17,6 +37,8 @@ export interface FlightLayerOptions {
   getStaticWidth: () => number;
   getGlowIntensity: () => number;
   getOrbScale: () => number;
+  getFarView: () => boolean;
+  getFarViewBoost: () => number;
   getIsDarkTheme: () => boolean;
   getShowTrails: () => boolean;
   getTimeWindow: () => boolean;
@@ -149,10 +171,12 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       const staticWidth = opts.getStaticWidth();
       const glowIntensity = opts.getGlowIntensity();
       const orbScale = opts.getOrbScale();
-      flightScene.setStaticOpacity(staticOpacity);
+      // Far View 遠景增強：軌跡 alpha ×3；orb 補償在下方 isGlobe/transition 確定後實測計算
+      const farView = opts.getFarView();
+      const farViewBoost = opts.getFarViewBoost();
+      flightScene.setStaticOpacity(Math.min(1, staticOpacity * (farView ? 3 : 1)));
       flightScene.setStaticWidth(staticWidth);
       flightScene.setGlowIntensity(glowIntensity);
-      flightScene.setOrbScale(orbScale);
 
       // globe 貼球：Mapbox 每幀給 globe→mercator 矩陣 + 過渡係數（低 zoom 為球體）
       const isGlobe = projection?.name === "globe" && !!projectionToMercatorMatrix;
@@ -171,6 +195,30 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       }
       flightScene.setGlobe(isGlobe ? projectionToMercatorMatrix! : null, transition, camArg);
 
+      // Far View orb 補償：orb 的 scale 是套在「貼球轉換後」的座標空間（InstancedOrbs
+      // 對轉換後座標 set scale），所以像素密度必須在同一個空間量——把畫面中心轉換到
+      // post-globe 空間後，直接在該空間偏移 eps 投影實測（x/y 各量一次取大者，避免
+      // 偏移方向恰與視線平行）。對齊 z7 平面基準（512×2^7 = 65,536 px/unit）。
+      let orbMul = 1;
+      if (farView && map) {
+        const mc = mapboxgl.MercatorCoordinate.fromLngLat(map.getCenter());
+        const gMat = isGlobe ? _measureMat.fromArray(projectionToMercatorMatrix!) : null;
+        mercatorToGlobe(mc.x, mc.y, 0, gMat, transition, null, _gpA);
+        const canvas = map.getCanvas();
+        const w = canvas.clientWidth || canvas.width;
+        const h = canvas.clientHeight || canvas.height;
+        _gpB.x = _gpA.x + MEASURE_EPS; _gpB.y = _gpA.y; _gpB.z = _gpA.z;
+        const pxX = screenDistPx(matrix, _gpA, _gpB, w, h);
+        _gpB.x = _gpA.x; _gpB.y = _gpA.y + MEASURE_EPS;
+        const pxY = screenDistPx(matrix, _gpA, _gpB, w, h);
+        const pxPerUnit = Math.max(pxX, pxY) / MEASURE_EPS;
+        if (pxPerUnit > 1e-6) {
+          orbMul = Math.min(64, Math.max(1, 65536 / pxPerUnit));
+        }
+        orbMul *= farViewBoost;
+      }
+      flightScene.setOrbScale(orbScale * orbMul);
+
       // 用時間索引取得活躍航班
       const activeFlights = timeIndex.getActiveFlights(time);
       flightScene.update(activeFlights, time);
@@ -183,7 +231,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       lastRepaintTime = time;
       const transitioning = isGlobe && transition > 0 && transition < 1;
       // 控制項簽章：多數 slider/toggle 不觸發重建，靠這個在 loop 熱著時撿到變更
-      const controlSig = `${isDark}|${altExag}|${altOff}|${showTrails}|${timeWindow}|${trailDisplay}|${staticOpacity}|${staticWidth}|${glowIntensity}|${orbScale}|${mode}|${flightsKey}`;
+      const controlSig = `${isDark}|${altExag}|${altOff}|${showTrails}|${timeWindow}|${trailDisplay}|${staticOpacity}|${staticWidth}|${glowIntensity}|${orbScale}|${farView}|${farViewBoost}|${mode}|${flightsKey}`;
       const controlsChanged = controlSig !== lastControlSig;
       lastControlSig = controlSig;
 
