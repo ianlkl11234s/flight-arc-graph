@@ -196,6 +196,9 @@ export default function App() {
   const [airportGlow, setAirportGlow] = useState(0.8);
   const [trailLineWidth, setTrailLineWidth] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
+  // Far View 遠景增強：低 zoom 時光點按 zoom 反比補償放大 + 軌跡 alpha 加成
+  const [farView, setFarView] = useState(false);
+  const [farViewBoost, setFarViewBoost] = useState(7.5);
   // Multi-condition filters（Deep Analysis 面板掌控；scene preset 也會寫入）
   const [flightFilters, setFlightFilters] = useState<FlightFilters>(EMPTY_FILTERS);
   const [depArrFilter, setDepArrFilter] = useState<DepArrFilter>("all");
@@ -804,6 +807,8 @@ export default function App() {
   const trailLineWidthRef = useRef(trailLineWidth);
   const airportGlowRef = useRef(airportGlow);
   const orbScaleRef = useRef(orbScale);
+  const farViewRef = useRef(farView);
+  const farViewBoostRef = useRef(farViewBoost);
   const isDarkThemeRef = useRef(isDarkTheme);
   const showTrailsRef = useRef(displayMode === "trails");
   const timeWindowRef = useRef(timeWindow);
@@ -828,6 +833,8 @@ export default function App() {
   trailLineWidthRef.current = trailLineWidth;
   airportGlowRef.current = airportGlow;
   orbScaleRef.current = orbScale;
+  farViewRef.current = farView;
+  farViewBoostRef.current = farViewBoost;
   isDarkThemeRef.current = isDarkTheme;
   showTrailsRef.current = displayMode === "trails";
   timeWindowRef.current = timeWindow;
@@ -846,7 +853,7 @@ export default function App() {
     mapRef.current?.triggerRepaint();
   }, [
     timeline.currentTime, finalFlights, renderMode, altExaggeration, altOffset,
-    staticOpacity, trailLineWidth, airportGlow, orbScale, isDarkTheme, displayMode, timeWindow, trailDisplay,
+    staticOpacity, trailLineWidth, airportGlow, orbScale, farView, farViewBoost, isDarkTheme, displayMode, timeWindow, trailDisplay,
     atlasGlowVisible, atlasColorMode, atlasGlowSize, viewshedOpacity, viewshedSharpness,
     colorThemeKey, colorThemeOverride, perFlightColorMap, perFlightScaleMap,
   ]);
@@ -936,6 +943,8 @@ export default function App() {
       getStaticWidth: () => trailLineWidthRef.current,
       getGlowIntensity: () => airportGlowRef.current,
       getOrbScale: () => orbScaleRef.current,
+      getFarView: () => farViewRef.current,
+      getFarViewBoost: () => farViewBoostRef.current,
       getIsDarkTheme: () => isDarkThemeRef.current,
       getShowTrails: () => showTrailsRef.current,
       getTimeWindow: () => timeWindowRef.current,
@@ -1162,6 +1171,7 @@ export default function App() {
       <MapView
         preset={preset}
         styleUrl={styleUrl}
+        pureBlack={mapStyleId === "black"}
         flights={finalFlights}
         renderMode={renderMode}
         airportOpacity={airportOpacity}
@@ -1434,6 +1444,10 @@ export default function App() {
             airportOpacity={airportOpacity}
             airportGlow={airportGlow}
             trailLineWidth={trailLineWidth}
+            farView={farView}
+            onFarViewChange={setFarView}
+            farViewBoost={farViewBoost}
+            onFarViewBoostChange={setFarViewBoost}
             onDisplayModeChange={(m) => { setDisplayMode(m); setTooltipInfo(null); }}
             onRenderModeChange={setRenderMode}
             onMapStyleChange={setMapStyleId}
@@ -1708,6 +1722,7 @@ export default function App() {
             onSpeedChange={timeline.setSpeed}
             onSeekByProgress={timeline.seekByProgress}
             onDateShift={timeline.shiftDate}
+            onDateSelect={timeline.setSelectedDate}
             onRangeDaysChange={timeline.setRangeDays}
             onToggleMultiDate={timeline.toggleMultiDate}
             onClearMultiDates={timeline.clearMultiDates}
@@ -1960,6 +1975,7 @@ export default function App() {
               onSpeedChange={timeline.setSpeed}
               onSeekByProgress={timeline.seekByProgress}
               onDateShift={timeline.shiftDate}
+              onDateSelect={timeline.setSelectedDate}
               onRangeDaysChange={timeline.setRangeDays}
               onToggleMultiDate={timeline.toggleMultiDate}
               onClearMultiDates={timeline.clearMultiDates}

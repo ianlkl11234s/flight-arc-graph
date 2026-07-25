@@ -106,6 +106,7 @@ export class FlightScene {
     uGlobeToMerc: { value: new THREE.Matrix4() },
     uTransition: { value: 1 },
     uCameraEcef: { value: new THREE.Vector3() },
+    uLimbFade: { value: 0 },
   };
   private globeInvMatrix = new THREE.Matrix4();
   private mercatorCache = new Map<string, FlightPathCache>();
@@ -601,6 +602,11 @@ export class FlightScene {
       this.staticGlowMat.uniforms["uWidth"]!.value = w * w;
     }
     this.recomputeGlowVisibility();
+  }
+
+  /** Far View 球緣寬淡出（軌跡 shader 用，與 InstancedOrbs limbFade 一致）；0=關、1=開 */
+  setLimbFade(on: boolean) {
+    this.globeUniforms.uLimbFade.value = on ? 1 : 0;
   }
 
   /** Glow slider（airportGlow）值；驅動 glow mesh 的整層跳過閘控 */

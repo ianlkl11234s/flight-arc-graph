@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 interface Props {
   playing: boolean;
   speed: number;
@@ -20,6 +22,8 @@ interface Props {
   onSpeedChange: (speed: number) => void;
   onSeekByProgress: (p: number) => void;
   onDateShift: (delta: number) => void;
+  /** 月曆直接跳指定日期（點日期標籤開月曆） */
+  onDateSelect?: (date: string) => void;
   onRangeDaysChange: (n: number) => void;
   onToggleMultiDate?: (date: string) => void;
   onClearMultiDates?: () => void;
@@ -98,10 +102,43 @@ export function TimelineControls({
   onSpeedChange,
   onSeekByProgress,
   onDateShift,
+  onDateSelect,
   onRangeDaysChange,
   onToggleMultiDate,
   onClearMultiDates,
 }: Props) {
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [viewYM, setViewYM] = useState<[number, number]>(() => {
+    const [y, m] = selectedDate.split("-").map(Number);
+    return [y || new Date().getFullYear(), (m || 1) - 1];
+  });
+
+  const openCalendar = () => {
+    if (!onDateSelect) return;
+    if (!calendarOpen) {
+      const [y, m] = selectedDate.split("-").map(Number);
+      setViewYM([y || new Date().getFullYear(), (m || 1) - 1]);
+    }
+    setCalendarOpen(!calendarOpen);
+  };
+
+  const availableSet = new Set(availableDates);
+  const fullSet = new Set(fullDates);
+  const [viewYear, viewMonth] = viewYM;
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const calTextMain = isDarkTheme ? "rgba(230,230,230,0.95)" : "rgba(40,40,40,0.9)";
+  const calTextDim = isDarkTheme ? "rgba(180,180,180,0.5)" : "rgba(0,0,0,0.4)";
+  const calNavBtnStyle: React.CSSProperties = {
+    background: "none",
+    border: "none",
+    color: calTextMain,
+    cursor: "pointer",
+    fontSize: 14,
+    padding: "2px 8px",
+    fontFamily: "monospace",
+  };
+
   return (
     <div
       style={isMobile ? {} : {
@@ -119,6 +156,7 @@ export function TimelineControls({
           gap: 6,
           alignItems: "center",
           marginBottom: 6,
+          position: "relative",
         }}
       >
         <button
@@ -131,8 +169,13 @@ export function TimelineControls({
         >
           ◀
         </button>
-        <span
+        <button
+          onClick={openCalendar}
+          title={onDateSelect ? "開月曆選日期" : undefined}
           style={{
+            background: "none",
+            border: "none",
+            padding: 0,
             color: isDarkTheme ? "#fff" : "rgba(50,50,50,0.9)",
             fontSize: isMobile ? 14 : 13,
             fontFamily: "monospace",
@@ -140,10 +183,140 @@ export function TimelineControls({
             letterSpacing: 0.5,
             minWidth: isMobile ? 90 : 80,
             textAlign: "center",
+            cursor: onDateSelect ? "pointer" : "default",
+            textDecoration: onDateSelect ? "underline dotted" : "none",
+            textUnderlineOffset: 3,
           }}
         >
           {formatDateLabel(selectedDate)}
-        </span>
+        </button>
+        {calendarOpen && (
+          <>
+            {/* 點外面關閉 */}
+            <div
+              onClick={() => setCalendarOpen(false)}
+              style={{ position: "fixed", inset: 0, zIndex: 29 }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                bottom: "calc(100% + 8px)",
+                left: 0,
+                zIndex: 30,
+                background: isDarkTheme ? "rgba(25,25,25,0.95)" : "rgba(255,255,255,0.96)",
+                border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"}`,
+                borderRadius: 8,
+                padding: 10,
+                backdropFilter: "blur(8px)",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.35)",
+              }}
+            >
+              {/* 月份切換 */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 6,
+                }}
+              >
+                <button
+                  onClick={() => setViewYM(viewMonth === 0 ? [viewYear - 1, 11] : [viewYear, viewMonth - 1])}
+                  style={calNavBtnStyle}
+                >
+                  ‹
+                </button>
+                <span style={{ fontSize: 12, fontFamily: "monospace", fontWeight: 600, color: calTextMain }}>
+                  {viewYear}/{String(viewMonth + 1).padStart(2, "0")}
+                </span>
+                <button
+                  onClick={() => setViewYM(viewMonth === 11 ? [viewYear + 1, 0] : [viewYear, viewMonth + 1])}
+                  style={calNavBtnStyle}
+                >
+                  ›
+                </button>
+              </div>
+              {/* 星期標頭 */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 28px)", gap: 2 }}>
+                {WEEKDAYS.map((w) => (
+                  <div
+                    key={w}
+                    style={{ textAlign: "center", fontSize: 10, fontFamily: "monospace", color: calTextDim }}
+                  >
+                    {w}
+                  </div>
+                ))}
+              </div>
+              {/* 日期格 */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 28px)", gap: 2, marginTop: 2 }}>
+                {Array.from({ length: firstDay }).map((_, i) => (
+                  <div key={`e${i}`} />
+                ))}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                  const hasData = availableSet.has(dateStr);
+                  const isFull = fullSet.has(dateStr);
+                  const isPartial = hasData && !isFull && fullDates.length > 0;
+                  const isSelected = dateStr === selectedDate;
+                  const count = dateCounts?.[dateStr];
+                  return (
+                    <button
+                      key={day}
+                      title={
+                        hasData
+                          ? count !== undefined
+                            ? `${count} flights${isFull ? "（完整）" : "（部分）"}`
+                            : isFull ? "完整資料" : isPartial ? "部分資料" : undefined
+                          : undefined
+                      }
+                      onClick={() => {
+                        if (!hasData) return;
+                        onDateSelect?.(dateStr);
+                        setCalendarOpen(false);
+                      }}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 11,
+                        fontFamily: "monospace",
+                        border: "none",
+                        borderRadius: 6,
+                        position: "relative",
+                        background: isSelected
+                          ? (isDarkTheme ? "rgba(99,102,241,0.55)" : "rgba(99,102,241,0.75)")
+                          : "transparent",
+                        color: hasData
+                          ? calTextMain
+                          : (isDarkTheme ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.15)"),
+                        opacity: isPartial && !isSelected ? 0.55 : 1,
+                        cursor: hasData ? "pointer" : "default",
+                        fontWeight: isSelected ? 700 : 400,
+                      }}
+                    >
+                      {day}
+                      {isFull && (
+                        <span
+                          style={{
+                            position: "absolute",
+                            bottom: 2,
+                            width: 3,
+                            height: 3,
+                            borderRadius: "50%",
+                            background: isDarkTheme ? "rgba(220,220,220,0.8)" : "rgba(99,102,241,0.9)",
+                          }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
         <button
           onClick={() => onDateShift(1)}
           style={{

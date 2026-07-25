@@ -115,7 +115,7 @@ render(gl, matrix,
 
 ### ⚠️ 兩個血淚教訓（debug 花最久的地方）
 
-1. **Mapbox globe 底圖會寫 depth buffer** —— `drawTerrainForGlobe` 用 `DepthMode(LEQUAL, ReadWrite)` 把實心球畫進主 framebuffer，**在 custom layer 之前**。所以 Three 的 3D 線材質只要 depthTest 開著（THREE 預設 true），**貼球的線會被實心球遮掉、整片消失**（連正面都被遮，因為球面用 `far=∞` 的矩陣畫、線用有限 far，同點深度有 ~0.005 NDC 差）。**解法：航跡材質一律 `depthTest: false`**。（光球是立體球、前緣凸出，depth 較近逃過，所以只有線消失、光球還在——這是關鍵鑑別線索。）
+1. **Mapbox globe 底圖會寫 depth buffer** —— `drawTerrainForGlobe` 用 `DepthMode(LEQUAL, ReadWrite)` 把實心球畫進主 framebuffer，**在 custom layer 之前**。所以 Three 的 3D 線材質只要 depthTest 開著（THREE 預設 true），**貼球的線會被實心球遮掉、整片消失**（連正面都被遮，因為球面用 `far=∞` 的矩陣畫、線用有限 far，同點深度有 ~0.005 NDC 差）。**解法：globe 下所有 Three 材質一律 `depthTest: false`**（背面靠 ECEF cull 藏）。（當時光球因前緣凸出暫時逃過、只有線消失，被當成鑑別線索——但 2026-07-25 Far View 事件證明光球在跨 z6 進 globe 時同樣整批被 depth 殺掉，「光球還在」不可靠；InstancedOrbs 材質已補 `depthTest: false`。）
 2. **背面剔除在 ECEF 真球面空間做**，別在 mercator 空間憑感覺。相機取 `map.getFreeCameraOptions().position`（globe 模式可用、與投影同空間），CPU 端用 `inverse(uGlobeToMerc)·camMerc` 轉回 ECEF 存 `uCameraEcef`；shader `smoothstep(-0.08, 0.02, dot(dir, toCam))`。因為 depthTest:false，背面**完全靠這個 cull 藏**。**時序陷阱**：一定先 `fromArray(matrix)` 再 `invert()`；若忘了設相機 uniform → `uCameraEcef=(0,0,0)`=球心 → `dot≡−1` → **cull 全 0、整片消失**（跟 depth 遮擋長得一樣，容易誤判）。
 
 （Mapbox 自家 symbol shader 的做法：`u_camera_forward` + 球心平面二值剔除，比真地平線寬鬆；我們用 ECEF 點積 + 柔邊，更嚴格。）
