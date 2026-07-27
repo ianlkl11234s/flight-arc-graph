@@ -45,6 +45,7 @@ npx tsc --noEmit
 
 ## 資料架構
 
+- **高度單位**：所有軌跡 `path[i][2]` 一律**公尺**。2026-07-27 修正 fetch-tracks 舊 bug（`alt>1000` 才轉換，≤1000 ft 以生英呎落地）並以 `scripts/oneoff/migrate-alt-units.ts` 全量反解存量資料（marker：`public/tracks/.alt-units-migrated`，不可重跑）；前端 loader 不再做任何單位轉換
 - 航線軌跡：`tracks/airports/{ICAO}.jsonl`（NDJSON 格式，per-airport lazy loading）
   - fetch-tracks.ts **直接 append** 寫入此檔（dep + dest 各一份），不再經過 aviation_data.json
   - split-tracks.ts 掃 JSONL 做 dedupe + 產生 region + manifest

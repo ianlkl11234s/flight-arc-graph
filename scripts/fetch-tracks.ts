@@ -224,8 +224,10 @@ function parseTrackPoints(
     );
 
     if (lat !== 0 && lng !== 0 && ts !== 0) {
-      // FR24 通常回傳 feet，>1000 則視為 feet 轉 meters
-      const altM = alt > 1000 ? Math.round(alt * 0.3048) : alt;
+      // FR24 flight-tracks 的 alt 一律是英呎（實測 100% 為 25 ft 倍數），無條件轉公尺。
+      // ⚠️ 2026-07 前的舊碼是 `alt > 1000 ? 轉換 : 原值`，導致 ≤1000 ft 的點以生英呎落地
+      //    （同一條 path 混用兩種單位）；存量資料已由 scripts/oneoff/migrate-alt-units.ts 反解。
+      const altM = Math.round(alt * 0.3048);
       points.push([lat, lng, altM, ts]);
     }
   }

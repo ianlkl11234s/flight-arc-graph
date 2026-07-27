@@ -37,17 +37,26 @@ function isoToUnix(s: string | undefined): number {
   return Math.floor(new Date(s).getTime() / 1000);
 }
 
+/** 4 位小數 + 整數高度（與 fetch-tracks.ts reducePrecision 一致，寫的是同一批 JSONL） */
 function reducePrecision(
   points: [number, number, number, number][],
 ): [number, number, number, number][] {
-  return points.map(([lat, lon, alt, spd]) => [
-    Math.round(lat * 1e5) / 1e5,
-    Math.round(lon * 1e5) / 1e5,
-    alt,
-    spd,
+  return points.map(([lat, lon, alt, ts]) => [
+    +lat.toFixed(4),
+    +lon.toFixed(4),
+    Math.round(alt),
+    ts,
   ]);
 }
 
+/**
+ * 解析 flight-tracks 回傳，輸出 [lat, lon, alt(公尺), unix_ts]
+ * ——與 fetch-tracks.ts parseTrackPoints 同一份契約。
+ *
+ * ⚠️ 2026-07 前的舊碼寫成 [lat, lon, alt(生英呎，未轉換), gspeed]：高度單位錯、
+ *    第 4 欄放的是地速不是時間戳。存量資料（全庫約 3.3%）的高度已由
+ *    scripts/oneoff/migrate-alt-units.ts 反解為公尺；時間戳無法回復，維持原樣。
+ */
 function parseTrackPoints(
   raw: unknown,
 ): [number, number, number, number][] | null {
@@ -65,17 +74,30 @@ function parseTrackPoints(
     tracks = (data as Record<string, unknown>).tracks as unknown[];
   }
   if (!tracks.length) return null;
-  return tracks
+  const points = tracks
     .map((p) => {
       const o = p as Record<string, unknown>;
-      const lat = Number(o.lat);
-      const lon = Number(o.lon);
-      const alt = Number(o.alt);
-      const spd = Number(o.gspeed ?? o.speed ?? 0);
-      if (isNaN(lat) || isNaN(lon)) return null;
-      return [lat, lon, alt, spd] as [number, number, number, number];
+      const lat = Number(o.lat ?? o.latitude ?? 0);
+      const lon = Number(o.lng ?? o.lon ?? o.longitude ?? 0);
+      // FR24 flight-tracks 的 alt 一律是英呎（實測 100% 為 25 ft 倍數），無條件轉公尺
+      const alt = Number(o.alt ?? o.altitude ?? o.alt_baro ?? o.altitude_m ?? 0);
+      const ts = Number(
+        o.timestamp
+          ? typeof o.timestamp === "string"
+            ? isoToUnix(o.timestamp)
+            : o.timestamp
+          : o.ts ?? 0,
+      );
+      if (lat === 0 || lon === 0 || ts === 0) return null;
+      return [lat, lon, Math.round(alt * 0.3048), ts] as [
+        number,
+        number,
+        number,
+        number,
+      ];
     })
     .filter((p): p is [number, number, number, number] => p !== null);
+  return points.length > 0 ? points : null;
 }
 
 let totalRequests = 0;

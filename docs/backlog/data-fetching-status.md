@@ -36,6 +36,13 @@ npx tsx scripts/campaign-status.ts
 
 ## 🆕 最近完成
 
+### 2026-07-27: 🔧 高度單位全量遷移（非抓取，資料修復）
+
+- **根因**：fetch-tracks 舊碼 `alt > 1000 ? 轉公尺 : 保留`，≤1000 ft 的點以生英呎落地；前端 `fixAltitudeUnits()` heuristic 在 LOD 稀疏路徑上雙重轉換 → region/World scope 軌跡壓扁 ~10.8 倍。
+- **修復**：`scripts/oneoff/migrate-alt-units.ts` 確定性反解（25 ft 倍數判別式）全量 1,594 檔 / 108,094 筆 / 轉換 3.43M 點；fetch-tracks / retry-failed-tracks 源頭修正；前端 heuristic 移除；regions LOD 重建（54,533 不重複航班數不變）。
+- **⚠️ 待補抓（新發現）**：舊 `retry-failed-tracks.ts` 寫壞的 **3,603 筆記錄（3.33%）時間戳遺失**（第 4 欄是地速），高度已修但**動畫不可用**（靜態軌跡正常）。重災區：KLGA 885/972（91%）、KEWR 778/1008（77%）、KLAX 158/1822、KMIA/KFLL/KRIC/KPBI 21-47%，共散佈 188 檔。補抓成本 ≈ 3,603 × 40 ≈ **144K credits**，建議排入未來批次（識別方式：path 第 4 欄 max < 1e9）。
+- **部署注意**：Zeabur pull 對已存在 airport 檔會跳過，這次要用 `sh /app/scripts/pull-from-s3.sh --force-airports` 全檔重拉。
+
 ### 2026-07-25: 🌀 巴威颱風資料集 — 台灣 7/9–7/12 全機場起降軌跡（完結，無接力點）
 
 **目標**：重現巴威颱風（2026/7/10 晚–7/11 侵台，中心未登陸、掠過北部海面）期間台灣機場「停飛 → 疏散出國 → 回歸」的完整故事。
