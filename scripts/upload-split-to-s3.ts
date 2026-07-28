@@ -79,6 +79,8 @@ async function rawUpload(localPath: string, s3Key: string) {
   totalBytes += body.length;
   state[s3Key] = statSync(localPath).mtimeMs;
   uploaded++;
+  // 斷點續傳：每 50 檔落盤一次 state，中斷後重跑只補殘餘（多 GB 上傳必備）
+  if (uploaded % 50 === 0) saveState(state);
 }
 
 /** 上傳前比對 mtime，未變動就跳過 */
