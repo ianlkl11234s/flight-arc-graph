@@ -54,7 +54,8 @@ echo "  done"
 # 2. 從 manifest 解析機場列表，逐一下載（跳過已存在）
 echo ""
 echo "[2/4] Tracks airports..."
-AIRPORTS=$(grep -o '"[A-Z][A-Z0-9]\{3\}": {' "${DATA_DIR}/tracks/manifest.json" | sed 's/": {//' | sed 's/"//' | sort)
+# [A-Z0-9]{4}：美國私人機場代碼可能數字開頭（如 65GA），別用 [A-Z] 開頭的窄 regex
+AIRPORTS=$(grep -o '"[A-Z0-9]\{4\}": {' "${DATA_DIR}/tracks/manifest.json" | sed 's/": {//' | sed 's/"//' | sort)
 
 COUNT=0
 SKIPPED=0
