@@ -1,6 +1,6 @@
 # Flight Arc — 資料抓取狀態與計劃
 
-> **最後更新**: 2026-07-25
+> **最後更新**: 2026-07-28
 > **目的**: 追蹤每個目標機場的「時刻表 + 軌跡」抓取進度，避免重複規劃或忘記未完成項目。
 
 ## 🔖 下次接續（接力點 — 先讀這裡）
@@ -36,11 +36,15 @@ npx tsx scripts/campaign-status.ts
 
 ## 🆕 最近完成
 
+### 2026-07-28: ✅ retry 壞記錄補抓完成 + no-ICAO 堵蟲
+
+- **補抓完結**：昨日發現的壞時間戳記錄（3,603 份副本 = **1,803 班不重複**）已全數重抓，`scripts/oneoff/refetch-retry-broken.ts`，**1,803/1,803 成功、零失敗**，實花 **72,120 credits**（1,803 × 40；FR24 五個月前的歷史軌跡全部可得）。split-tracks dedupe 已汰換舊壞記錄。⚠️ 對帳注意：兩段執行被中斷未寫 session 帳，fetch-sessions.ndjson 的 refetch session 只涵蓋 528 班，**實際花費以 1,803 × 40 = 72,120 為準**，請與 FR24 dashboard 核對。
+- **🐛 no-ICAO 靜默丟棄蟲（審計新發現，已堵）**：`fetch-tracks.ts` 對兩端 ICAO 皆空的航班（未申報公務機/直升機）會花錢抓、`writeFlightToJsonl` 一行都寫不出去、仍標記 done → **已沉沒 111 班 ≈ 4,440 credits**（無法回復，raw 備份上線前的抓取）。flight-list.json 還有 **3,568 筆同型航班**。現在 fetch-tracks / retry-failed-tracks 都會**抓取前跳過**並記入 `scripts/track-skipped-no-icao.ndjson`（0 credits），寫入零目標也改為 throw 防呆。
+
 ### 2026-07-27: 🔧 高度單位全量遷移（非抓取，資料修復）
 
 - **根因**：fetch-tracks 舊碼 `alt > 1000 ? 轉公尺 : 保留`，≤1000 ft 的點以生英呎落地；前端 `fixAltitudeUnits()` heuristic 在 LOD 稀疏路徑上雙重轉換 → region/World scope 軌跡壓扁 ~10.8 倍。
 - **修復**：`scripts/oneoff/migrate-alt-units.ts` 確定性反解（25 ft 倍數判別式）全量 1,594 檔 / 108,094 筆 / 轉換 3.43M 點；fetch-tracks / retry-failed-tracks 源頭修正；前端 heuristic 移除；regions LOD 重建（54,533 不重複航班數不變）。
-- **⚠️ 待補抓（新發現）**：舊 `retry-failed-tracks.ts` 寫壞的 **3,603 筆記錄（3.33%）時間戳遺失**（第 4 欄是地速），高度已修但**動畫不可用**（靜態軌跡正常）。重災區：KLGA 885/972（91%）、KEWR 778/1008（77%）、KLAX 158/1822、KMIA/KFLL/KRIC/KPBI 21-47%，共散佈 188 檔。補抓成本 ≈ 3,603 × 40 ≈ **144K credits**，建議排入未來批次（識別方式：path 第 4 欄 max < 1e9）。
 - **部署注意**：Zeabur pull 對已存在 airport 檔會跳過，這次要用 `sh /app/scripts/pull-from-s3.sh --force-airports` 全檔重拉。
 
 ### 2026-07-25: 🌀 巴威颱風資料集 — 台灣 7/9–7/12 全機場起降軌跡（完結，無接力點）

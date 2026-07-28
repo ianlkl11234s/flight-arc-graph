@@ -24,6 +24,8 @@ const FLIGHT_LIST = "scripts/flight-list.json";
 const RETRY_TARGETS = "scripts/retry-targets.txt";
 const DONE_FILE = "scripts/track-done.ndjson";
 const FAILED_FILE = "scripts/track-failed.ndjson";
+// 兩端 ICAO 皆空 → 無檔可寫，抓取前跳過（與 fetch-tracks.ts 共用同一本帳）
+const SKIPPED_NO_ICAO_FILE = "scripts/track-skipped-no-icao.ndjson";
 const AIRPORTS_DIR = "public/tracks/airports";
 const DELAY_MS = 2200;
 const NETWORK_MAX_RETRIES = 3;
@@ -180,15 +182,22 @@ function buildOutput(flight: FlightMeta, points: [number, number, number, number
   };
 }
 
-function writeFlightToJsonl(flight: FlightMeta, output: object) {
+/** 有效的寫入目標機場（4 碼 ICAO；orig + dest + 轉降的 dest_actual） */
+function writeTargets(flight: FlightMeta): Set<string> {
   const targets = new Set<string>();
-  if (flight.orig_icao) targets.add(flight.orig_icao);
-  if (flight.dest_icao) targets.add(flight.dest_icao);
-  if (flight.dest_icao_actual && flight.dest_icao_actual !== flight.dest_icao) {
-    targets.add(flight.dest_icao_actual);
+  for (const icao of [flight.orig_icao, flight.dest_icao, flight.dest_icao_actual]) {
+    if (icao && icao !== "—" && icao.length === 4) targets.add(icao);
+  }
+  return targets;
+}
+
+function writeFlightToJsonl(flight: FlightMeta, output: object) {
+  const targets = writeTargets(flight);
+  if (targets.size === 0) {
+    // 一行都寫不出去卻標 done → credits 白花。擋下來當失敗處理。
+    throw new Error(`no ICAO to write for ${flight.fr24_id}`);
   }
   for (const icao of targets) {
-    if (!icao || icao === "—" || icao.length !== 4) continue;
     appendFileSync(`${AIRPORTS_DIR}/${icao}.jsonl`, JSON.stringify(output) + "\n");
   }
 }
@@ -238,6 +247,13 @@ async function main() {
     if (!flight) {
       console.log(`⚠️ no metadata`);
       notFoundMeta++;
+      continue;
+    }
+
+    // 無任何有效 ICAO 可寫 → 抓了也存不了，跳過不花 credits
+    if (writeTargets(flight).size === 0) {
+      appendFileSync(SKIPPED_NO_ICAO_FILE, fid + "\n");
+      console.log(`⏭️ 無 ICAO，跳過（0 credits）`);
       continue;
     }
 
