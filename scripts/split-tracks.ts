@@ -197,6 +197,24 @@ function buildAirportEntry(
   };
 }
 
+// ── 高度單位 sanity（path[i][2] 一律公尺）──
+// 公尺下不可能 >16,000（≈52,500 ft，遠高於民航升限）；出現代表又有生英呎漏進資料流。
+const ALT_SANITY_MAX_M = 16000;
+let altOutliers = 0;
+const altOutlierSamples: { fr24_id: string; alt: number }[] = [];
+
+function checkAltSanity(f: Flight) {
+  for (const p of f.path) {
+    const alt = p[2];
+    if (alt !== undefined && alt > ALT_SANITY_MAX_M) {
+      altOutliers++;
+      if (altOutlierSamples.length < 3) {
+        altOutlierSamples.push({ fr24_id: f.fr24_id, alt });
+      }
+    }
+  }
+}
+
 // ── 讀取一個 JSONL 檔，dedupe 並回寫 ──
 
 function readAndDedupe(icao: string): Flight[] {
@@ -213,6 +231,7 @@ function readAndDedupe(icao: string): Flight[] {
     }
   }
   const arr = [...byId.values()].sort((a, b) => a.dep_time - b.dep_time);
+  for (const f of arr) checkAltSanity(f);
 
   // 若原檔有重複（dedupe 有效果）才回寫
   if (arr.length !== lines.length) {
@@ -278,6 +297,16 @@ function main() {
     }
   }
   console.log(`   ${files.length} 機場，${totalFlightsIndexed} 筆（含重複歸屬）\n`);
+
+  if (altOutliers > 0) {
+    console.warn(
+      `⚠️  高度單位可疑：${altOutliers} 個點 alt > ${ALT_SANITY_MAX_M} m（公尺下不可能，疑似生英呎漏入）`,
+    );
+    for (const s of altOutlierSamples) {
+      console.warn(`     ${s.fr24_id}: ${s.alt}`);
+    }
+    console.warn("");
+  }
 
   // regionDates / regionFullDates：機場依 getRegion() 歸屬，dates/fullDates 做聯集
   // （同一航班會同時記在 dep + arr 兩座機場的 dates 裡，但這裡只取「有無資料」的日期集合，

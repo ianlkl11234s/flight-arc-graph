@@ -18,6 +18,9 @@ scripts/track-progress.json
 scripts/track-progress.json.bak
 scripts/track-done.ndjson
 scripts/track-failed.ndjson
+scripts/refetch-broken-done.ndjson
+scripts/refetch-broken-failed.ndjson
+scripts/track-skipped-no-icao.ndjson
 scripts/retry-targets.txt
 logs/
 scripts/airports-cache.csv

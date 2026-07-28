@@ -2,13 +2,20 @@
 # pull-from-s3.sh
 # 從 S3 拉取分拆後的 tracks/airspace 資料到 /data volume
 # 在 Zeabur 終端機上執行：sh /app/scripts/pull-from-s3.sh
+#   全檔重拉 airports（S3 端資料整批更新時用，如 2026-07 高度單位遷移）：
+#   sh /app/scripts/pull-from-s3.sh --force-airports
 #
 # Alpine 相容（BusyBox wget，不依賴 curl/bash）
-# - 可重複執行（已下載的非空檔案會跳過）
+# - 可重複執行（已下載的非空檔案會跳過；--force-airports 例外）
 # - 單檔失敗不會中斷整個腳本（會 echo 警告）
 # - wget 加上 retry + timeout
 
 # 注意：不用 set -e，個別檔案失敗時要繼續
+
+FORCE_AIRPORTS=0
+if [ "$1" = "--force-airports" ]; then
+  FORCE_AIRPORTS=1
+fi
 
 S3_BASE="https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc"
 DATA_DIR="/data"
@@ -57,6 +64,9 @@ TOTAL=$(echo "$AIRPORTS" | wc -l | tr -d ' ')
 for ICAO in $AIRPORTS; do
   COUNT=$((COUNT + 1))
   DST="${DATA_DIR}/tracks/airports/${ICAO}.jsonl"
+  if [ "$FORCE_AIRPORTS" = "1" ]; then
+    rm -f "$DST"
+  fi
   if [ -s "$DST" ]; then
     SKIPPED=$((SKIPPED + 1))
   else

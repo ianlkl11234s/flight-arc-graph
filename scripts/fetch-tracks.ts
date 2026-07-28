@@ -61,6 +61,9 @@ const GROUPS_FILE = resolve(ROOT, "scripts/airport-groups.json"); // 命名機�
 const DONE_NDJSON = resolve(ROOT, "scripts/track-done.ndjson");
 const FAILED_NDJSON = resolve(ROOT, "scripts/track-failed.ndjson");
 const SESSIONS_NDJSON = resolve(ROOT, "scripts/fetch-sessions.ndjson"); // 額度帳（append-only）
+// 兩端 ICAO 皆空的航班（多為未申報公務機/直升機）：無檔可寫，抓了也存不了。
+// 抓取前跳過並記入此帳（不花 credits）。2026-07-28 前無此防護，已靜默沉沒 111 筆（~4,440 credits）。
+const SKIPPED_NO_ICAO_NDJSON = resolve(ROOT, "scripts/track-skipped-no-icao.ndjson");
 const AIRPORTS_DIR = resolve(ROOT, "public/tracks/airports");
 const RAW_DIR = resolve(ROOT, "public/tracks/raw"); // {YYYY-MM}/{ab}/{fr24_id}.json.gz
 
@@ -224,8 +227,10 @@ function parseTrackPoints(
     );
 
     if (lat !== 0 && lng !== 0 && ts !== 0) {
-      // FR24 通常回傳 feet，>1000 則視為 feet 轉 meters
-      const altM = alt > 1000 ? Math.round(alt * 0.3048) : alt;
+      // FR24 flight-tracks 的 alt 一律是英呎（實測 100% 為 25 ft 倍數），無條件轉公尺。
+      // ⚠️ 2026-07 前的舊碼是 `alt > 1000 ? 轉換 : 原值`，導致 ≤1000 ft 的點以生英呎落地
+      //    （同一條 path 混用兩種單位）；存量資料已由 scripts/oneoff/migrate-alt-units.ts 反解。
+      const altM = Math.round(alt * 0.3048);
       points.push([lat, lng, altM, ts]);
     }
   }
@@ -351,6 +356,10 @@ function writeFlightToJsonl(output: FlightOutput) {
   const icaos = new Set<string>();
   if (output.origin_icao) icaos.add(output.origin_icao);
   if (output.dest_icao) icaos.add(output.dest_icao);
+  if (icaos.size === 0) {
+    // 一行都寫不出去卻回報成功 → 上層會 markDone，credits 就白花了。擋下來當失敗處理。
+    throw new Error(`no ICAO to write for ${output.fr24_id}`);
+  }
   for (const icao of icaos) {
     appendFileSync(join(AIRPORTS_DIR, `${icao}.jsonl`), line);
   }
@@ -591,6 +600,15 @@ async function main() {
   let successCount = 0;
   let failCount = 0;
   let emptyCount = 0;
+  let skippedNoIcaoCount = 0;
+  const skippedNoIcao = new Set<string>(
+    existsSync(SKIPPED_NO_ICAO_NDJSON)
+      ? readFileSync(SKIPPED_NO_ICAO_NDJSON, "utf-8")
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+      : [],
+  );
   let firstLogged = totalDoneCount > 0; // 若已有進度，跳過首筆 log
 
   // ── Session 額度帳（收工 / SIGINT / circuit breaker 都會寫一行）──
@@ -641,6 +659,17 @@ async function main() {
     process.stdout.write(
       `[${doneInTargets + i + 1}/${targets.length}] ${pct}% ${flight.callsign || flight.flight} (${flight.fr24_id}) ... `,
     );
+
+    // 兩端 ICAO 皆空 → 無檔可寫，先跳過不花 credits（記入 skipped 帳，重跑不重複記）
+    if (!flight.orig_icao && !flight.dest_icao) {
+      if (!skippedNoIcao.has(flight.fr24_id)) {
+        appendFileSync(SKIPPED_NO_ICAO_NDJSON, `${flight.fr24_id}\n`);
+        skippedNoIcao.add(flight.fr24_id);
+      }
+      skippedNoIcaoCount++;
+      console.log("⏭️ 無 ICAO，跳過（0 credits）");
+      continue;
+    }
 
     let thisRequestFailed = false;
     try {
@@ -736,6 +765,9 @@ async function main() {
   console.log(`成功取得軌跡: ${successCount} 筆（本次）`);
   console.log(`無軌跡資料:   ${emptyCount} 筆`);
   console.log(`失敗:         ${failCount} 筆`);
+  if (skippedNoIcaoCount > 0) {
+    console.log(`跳過（無 ICAO）: ${skippedNoIcaoCount} 筆（0 credits，見 track-skipped-no-icao.ndjson）`);
+  }
   console.log(`累計 done:    ${progress.done.size} 筆`);
   console.log(`累計 failed:  ${progress.failed.size} 筆`);
   console.log(`API 請求次數: ${totalRequests}`);
