@@ -36,7 +36,10 @@ npx tsx scripts/campaign-status.ts
 
 ## 🆕 最近完成
 
-### 2026-07-28: ✅ retry 壞記錄補抓完成 + no-ICAO 堵蟲
+### 2026-07-28: ✅ retry 壞記錄補抓完成 + no-ICAO 堵蟲 + 全鏈部署上線
+
+- **部署完結（同日）**：S3 全量上傳 2,412 MB → Zeabur CLI exec 容器內 `pull-from-s3.sh --force-airports` 重拉 1,594/1,594 檔 → 線上 HTTP + 瀏覽器視覺驗證通過（flight-arc.itsmigu.com 已是修復後資料）。順帶修 pull regex 吃不到數字開頭 ICAO（65GA）+ upload 腳本斷點續傳。事故全記錄 → `.claude/pitfalls/altitude-units-incident-2026-07.md`。
+- **💰 待對帳**：本次補抓 72,120 credits（fetch-sessions 只記到 528 班，以 done 帳 1,803×40 為準）+ 颱風輪 135.5K，`campaign-top1000.json` 的 `manual_remaining` 仍是 7/11 舊值，續抓戰役前先跟 FR24 dashboard 對帳更新。
 
 - **補抓完結**：昨日發現的壞時間戳記錄（3,603 份副本 = **1,803 班不重複**）已全數重抓，`scripts/oneoff/refetch-retry-broken.ts`，**1,803/1,803 成功、零失敗**，實花 **72,120 credits**（1,803 × 40；FR24 五個月前的歷史軌跡全部可得）。split-tracks dedupe 已汰換舊壞記錄。⚠️ 對帳注意：兩段執行被中斷未寫 session 帳，fetch-sessions.ndjson 的 refetch session 只涵蓋 528 班，**實際花費以 1,803 × 40 = 72,120 為準**，請與 FR24 dashboard 核對。
 - **🐛 no-ICAO 靜默丟棄蟲（審計新發現，已堵）**：`fetch-tracks.ts` 對兩端 ICAO 皆空的航班（未申報公務機/直升機）會花錢抓、`writeFlightToJsonl` 一行都寫不出去、仍標記 done → **已沉沒 111 班 ≈ 4,440 credits**（無法回復，raw 備份上線前的抓取）。flight-list.json 還有 **3,568 筆同型航班**。現在 fetch-tracks / retry-failed-tracks 都會**抓取前跳過**並記入 `scripts/track-skipped-no-icao.ndjson`（0 credits），寫入零目標也改為 throw 防呆。
