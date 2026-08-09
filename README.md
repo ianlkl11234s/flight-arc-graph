@@ -33,36 +33,36 @@ Region Pills UI 可切換 TW / JP / HK / **KR / TH** / **CN** / US / UK / World 
 
 ### 軌跡資料量（Track Coverage）
 
-> **最後更新：2026-07-25** ｜ 數據來源：`public/tracks/manifest.json`（每次跑 `split-tracks.ts` 後更新）
+> **最後更新：2026-08-09** ｜ 數據來源：`public/tracks/manifest.json`（每次跑 `split-tracks.ts` 後更新）
 > ⚠️ **抓完新軌跡後務必同步更新此表**（見下方維護說明）。
 
-- **不重複軌跡航班**：54,644 筆（`scripts/track-done.ndjson`）
-- **機場 JSONL 檔**：1,594 座
-- **主動查詢機場**：181 座（165 core + Top-1000 戰役首批 16 座）
+- **不重複軌跡航班**：65,429 筆（`scripts/track-done.ndjson`）
+- **機場 JSONL 檔**：1,829 座
+- **主動查詢機場**：204 座（165 core + Top-1000 戰役 Batch 1 的 39 座 megahub）
 - **🌀 巴威颱風資料集**（2026-07-25 新增）：台灣 22 座機場 7/9–7/12 全時段起降軌跡 3,103 筆（7/11 桃機 760 架次全取消、出入境 0 人的「空白日」與前後疏散/回歸潮）
-- **進行中**：[Top-1000 全球網戰役](docs/backlog/data-fetching-status.md) — 2/18 全球前 1000 大機場軌跡，已 10.9%（rank 1-16 抓了 68%；台北清晨段 UTC 2/17 待補）
+- **進行中**：[Top-1000 全球網戰役](docs/backlog/data-fetching-status.md) — 2/18 全球前 1000 大機場軌跡，已 **27.4%**（8/09 抓 10,785 筆／432K credits；Batch 1 剩 3,057。⚠️ 亞洲 megahub 因字母序排在尾端幾乎沒抓到，下輪優先）
 
 | Region | 軌跡數（含雙向） | 大小 (gzip) |
 |--------|------:|------:|
-| other（未分區）| 23,305 | 8.03 MB |
-| US 美國 | 15,494 | 4.76 MB |
-| TW 台灣 | 12,213 | 3.78 MB |
-| CN 中國 | 7,588 | 1.88 MB |
-| JP 日本 | 5,595 | 1.66 MB |
-| UK 英國 | 3,621 | 1.12 MB |
-| KR 韓國 | 2,819 | 0.82 MB |
+| other（未分區）| 28,548 | 9.61 MB |
+| US 美國 | 22,314 | 6.57 MB |
+| TW 台灣 | 12,215 | 3.78 MB |
+| CN 中國 | 7,609 | 1.89 MB |
+| JP 日本 | 5,600 | 1.66 MB |
+| UK 英國 | 3,899 | 1.20 MB |
+| KR 韓國 | 2,820 | 0.82 MB |
 | TH 泰國 | 2,691 | 0.87 MB |
-| HK 香港 | 1,833 | 0.60 MB |
+| HK 香港 | 1,838 | 0.60 MB |
 
 **軌跡數 Top 15 機場**（★ = 主動查詢）：
 
 | 機場 | 軌跡 | 機場 | 軌跡 | 機場 | 軌跡 |
 |------|---:|------|---:|------|---:|
-| ★RCTP 桃園 | 7,678 | ★KLAX 洛杉磯 | 1,822 | ★RKSI 仁川 | 1,499 |
-| ★OMDB 杜拜 | 2,769 | ★RCKH 高雄 | 1,805 | ★VTBS 曼谷 | 1,414 |
-| ★WSSS 新加坡 | 2,039 | ★ZSPD 浦東 | 1,719 | ★LTFM 伊斯坦堡 | 1,394 |
-| ★KATL 亞特蘭大 | 1,842 | ★RCSS 松山 | 1,526 | ★RJTT 羽田 | 1,393 |
-| ★VHHH 香港 | 1,833 | ★KSFO 舊金山 | 1,512 | ★EGLL 倫敦 | 1,367 |
+| ★RCTP 桃園 | 7,680 | ★VHHH 香港 | 1,838 | KDFW 達拉斯 | 1,517 |
+| ★OMDB 杜拜 | 2,860 | ★KLAX 洛杉磯 | 1,831 | ★KSFO 舊金山 | 1,516 |
+| ★WSSS 新加坡 | 2,039 | ★RCKH 高雄 | 1,805 | KDEN 丹佛 | 1,504 |
+| KORD 芝加哥 | 1,996 | ★ZSPD 浦東 | 1,719 | ★RKSI 仁川 | 1,500 |
+| ★KATL 亞特蘭大 | 1,865 | ★RCSS 松山 | 1,526 | ★VTBS 曼谷 | 1,414 |
 
 > 軌跡資料**不進 git**，存於 S3（`migu-gis-data-collector/flight-arc/`），部署時由 Zeabur 端 `pull-from-s3.sh` 拉取。完整抓取進度與下一步規劃見 [`docs/backlog/data-fetching-status.md`](docs/backlog/data-fetching-status.md)。
 
