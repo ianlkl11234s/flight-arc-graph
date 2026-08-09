@@ -5,7 +5,7 @@
 
 ## 🔖 下次接續（接力點 — 先讀這裡）
 
-> **狀態快照 @ 2026-08-09**：本日兩輪共花 **464,320 credits**、抓 **11,545 筆**，戰役進度 **10.9% → 28.6%**（18,706/65,421）。額度剩 ~2,960，本期用盡；**下次開工先跟 FR24 dashboard 對帳，再更新 `campaign-top1000.json` 的 `manual_remaining` / `as_of` / `track_done_baseline`（三個都要，baseline 不同步會把上期花費重複扣一次）**。
+> **狀態快照 @ 2026-08-09**：本日兩輪共花 **464,320 credits**、抓 **11,545 筆**，戰役進度 **10.9% → 28.6%**（18,706/65,421）。**✅ 全鏈已上線**（S3 → push → Zeabur 1,845/1,845，端到端驗證通過，線上站台即最新，**沒有待部署的東西**）。額度剩 ~2,960，本期用盡；**下次開工先跟 FR24 dashboard 對帳，再更新 `campaign-top1000.json` 的 `manual_remaining` / `as_of` / `track_done_baseline`（三個都要，baseline 不同步會把上期花費重複扣一次）**。
 > ⚠️ 錨點的 `as_of` 是「日」粒度 —— 同一天二次重設額度會讓帳本重複計入（本日就踩到：先報 455K、跑完又報 dashboard 尚餘 35K，只能把本月總額回推成 467,280 一次寫入）。要中途加碼請等跨日，或連 `track_done_baseline` 一起重設。
 > 開工先跑 `npx tsx scripts/campaign-status.ts`。⚠️ **成本記牢**：時刻表 = **3 credits/筆**、軌跡 = 40 credits/筆。估算一律以 FR24 dashboard 為準。
 
@@ -67,6 +67,14 @@ npx tsx scripts/campaign-status.ts
 - 成果：CN region **7,609 → 8,369**（+760 全是成都）；ZUTF manifest 994 筆（2/18 佔 967）；track-done 65,429 → **66,189**；機場檔 1,829 → 1,845；Atlas 2,235 → 2,250；戰役 27.4% → **28.6%**。
 - **空軌跡率 5.2%（42/802）** 遠高於前一段的 0.2% —— 中國空域 ADS-B 地面站覆蓋較稀，FR24 有班表但收不到訊號。這 42 筆照樣計費、重抓也不會有資料，**不要 retry**。
 - 剩餘額度 ~2,960（74 筆）。
+
+### 2026-08-09（部署）: ✅ 全鏈上線完結 — 線上站台已是最新
+
+S3 增量上傳 **1,066 檔／2,306 MB**（35 分）→ plan-art + .gis-agent-system 兩 repo push → Zeabur `pull-from-s3.sh --force-airports` 拉 **1,845/1,845 檔**（首輪 `EPMO.jsonl` 失敗 1 檔，**不帶 `--force-airports` 重跑即補上**：`fetched=1 skipped=1844 failed=0`）。
+
+**端到端驗證通過**：首頁 + manifest 皆 200；線上 manifest 1,845 座 / 66,078 筆；ZUTF **233 → 994 行**；CN region 8,369 行；抽查 6 座（ZUTF/KORD/CYYZ/KCLT/VIDP/BIKF）容器內行數與本地全數吻合。
+
+> 🔴 **踩到的坑（會重演，已寫 pitfalls）**：`zeabur service exec` **前景**跑 pull 會被 Cloudflare **524** 掐斷。因為腳本是「先拉 manifest → 再逐檔拉機場」，掐在中間會留下 **manifest 已更新、資料檔仍是舊的**的不一致 —— 站台照樣回 200，**只驗 HTTP 完全發現不了**（是比對線上 ZUTF 行數 233 vs 本地 994 才抓到）。對策：exec 只負責 `nohup ... &` 背景啟動，長工在容器內跑。完整記錄 + 另兩個附帶坑（`pgrep -f` 匹配到自己、env-id 不必動全域 context）→ [`.claude/pitfalls/zeabur-exec-524-timeout-2026-08.md`](../../.claude/pitfalls/zeabur-exec-524-timeout-2026-08.md)
 
 ### 2026-08-09（第一段）: 🌐 Batch 1 大推進 — 10,785 筆 / 432K credits，戰役 10.9% → 27.4%
 
