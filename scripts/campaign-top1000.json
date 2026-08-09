@@ -11,11 +11,11 @@
   "already_done_at_start": 9230,
   "existing_net_before": 44267,
   "track_done_baseline": 54644,
-  "_baseline_note": "花費錨點 track-done 行數。2026-08-09 重設：用戶確認本期可用額度 455,000（baseline=當時 track-done 54644，manual_remaining=455000）。前次 2026-07-11 錨點 baseline 51541 / manual_remaining 44823（因時刻表成本被低估 6× 而重錨）",
+  "_baseline_note": "花費錨點 track-done 行數。2026-08-09 重設：baseline=當日開工前 track-done 54644。額度分兩次確認——先報 455,000（跑 rank1-39 花 432,280），跑完用戶回報 dashboard 尚餘 35,000（我方估算是 22,720，差額 12,280 以 dashboard 為準），故本月總額回推為 467,280 寫入 manual_remaining。第二段 ZUTF 花 32,080 後餘 ~2,960。⚠️ 錨點 as_of 是「日」粒度，同一天二次重設會讓帳本重複計入——要改額度請等跨日，或連 baseline 一起重設。前次 2026-07-11 錨點 baseline 51541 / manual_remaining 44823",
   "_budget_note": "每次抓取花多少由用戶啟動時確認。manual_remaining = 本期用戶核准額度；用完或換月時，用戶給新數字後更新 manual_remaining / as_of（不自動算週期重置）",
   "budget": {
     "monthly_credits": 666000,
-    "manual_remaining": 455000,
+    "manual_remaining": 467280,
     "manual_remaining_as_of": "2026-08-09"
   },
   "batches": [
