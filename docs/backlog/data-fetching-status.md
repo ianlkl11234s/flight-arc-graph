@@ -37,7 +37,7 @@
 caffeinate -dims nohup npx tsx scripts/fetch-tracks.ts \
   --airports-file scripts/top1000-airports.json --rank 1-39 \
   --from-time 2026-02-17T16:00:00Z --to-time 2026-02-18T16:00:00Z \
-  --max-credits 130920 > scripts/_seg1.log 2>&1 &
+  --max-credits 132000 > scripts/_seg1.log 2>&1 &   # cap 給一點 headroom（todo 上限就 3,273 筆）
 
 # 段 2：Batch 2 亞太尾端 27 座（先 --dry-run 複驗，段 1 跑完 todo 會略降）
 caffeinate -dims nohup npx tsx scripts/fetch-tracks.ts \
@@ -51,8 +51,9 @@ npx tsx scripts/campaign-status.ts   # 看剩餘額度，再算 cap
 
 **計劃內建的三個提醒**：
 1. **段 2 預期 3–5% 空軌跡**（中國空域 ADS-B 地面站覆蓋稀，ZUTF 8/09 實測 5.2%）——照樣計費、**絕不 retry**，跑完看到 ~300 筆空單是正常的。
-2. **段 3 的數字現在不準**：段 1／2 跑完後重疊（~750 筆）會讓 todo 變動，開跑前一定重新 `--dry-run`。
-3. **每段後各跑一次 `split-tracks`**（`NODE_OPTIONS=--max-old-space-size=12288`），別攢到月底——本月增量比 8/09 那輪大 45%。**部署做兩次**：段 2 後（亞洲里程碑上線、提早暴露 524 類問題）＋ 月底段 3 後。
+2. **段 1 跑完要複驗「待處理 0 筆」**：`--rank 1-39 --dry-run` 看到 0 才算 Batch 1 100%（ZUTF 就是這樣驗的）；若有 502 失敗，寫進 `retry-targets.txt` 補完再驗。
+3. **段 3 的數字現在不準**：段 1／2 跑完後重疊（~750 筆）會讓 todo 變動，開跑前一定重新 `--dry-run`。
+4. **每段後各跑一次 `split-tracks`**（`NODE_OPTIONS=--max-old-space-size=12288`），別攢到月底——本月增量比 8/09 那輪大 45%。**部署做兩次**：段 2 後（亞洲里程碑上線、提早暴露 524 類問題）＋ 月底段 3 後。
 
 ### 🔴 字母序陷阱（Batch 2 版本 — 比上輪更嚴重）
 
