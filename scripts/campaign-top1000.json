@@ -10,13 +10,13 @@
   "scanned_unique": 74651,
   "already_done_at_start": 9230,
   "existing_net_before": 44267,
-  "track_done_baseline": 66189,
-  "_baseline_note": "花費錨點 track-done 行數。2026-08-20 重設（新計費週期，用戶回報 dashboard 滿額 666,000）：baseline=66189（8/09 兩段跑完後的 track-done）。⚠️ 三欄必須一起改（baseline / manual_remaining / as_of），只改額度不改 baseline 會把上期花費重複扣一次。⚠️ as_of 是「日」粒度，同一天二次重設額度會讓帳本重複計入——中途加碼請等跨日或連 baseline 一起重設。歷史錨點：2026-08-09 baseline 54644 / manual_remaining 467280（實花 464,320）；2026-07-11 baseline 51541 / manual_remaining 44823",
+  "track_done_baseline": 82202,
+  "_baseline_note": "花費錨點 track-done 行數。2026-08-21 重設（跨日，安全）：三段跑完後用戶回報 dashboard 尚餘 12,000（我方帳本估 7,720，差額 4,280 以 dashboard 為準），baseline=82202。⚠️ 三欄必須一起改（baseline / manual_remaining / as_of）。⚠️ as_of 是「日」粒度，同一天二次重設會讓帳本重複計入。歷史：2026-08-20 baseline 66189 / 核准 666,000（三段實花 658,480）；2026-08-09 baseline 54644 / 467,280；2026-07-11 baseline 51541 / 44823",
   "_budget_note": "每次抓取花多少由用戶啟動時確認。manual_remaining = 本期用戶核准額度；用完或換月時，用戶給新數字後更新 manual_remaining / as_of（不自動算週期重置）",
   "budget": {
     "monthly_credits": 666000,
-    "manual_remaining": 666000,
-    "manual_remaining_as_of": "2026-08-20"
+    "manual_remaining": 12000,
+    "manual_remaining_as_of": "2026-08-21"
   },
   "batches": [
     { "id": 1, "ranks": [1, 39], "planned": 15158 },
