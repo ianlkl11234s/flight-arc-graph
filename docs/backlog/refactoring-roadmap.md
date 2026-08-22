@@ -201,7 +201,7 @@ Phase 3 與 Phase 2 幾乎不相依，可並行或穿插。
 | Phase | 狀態 | 分支 | 備註 |
 |-------|------|------|------|
 | Phase 1 manifest 目錄 | ✅ 完成（2026-06-13，待用戶驗收 + 上傳 S3） | `refactor/phase1-manifest-catalog` | 細項見 [refactoring-status.md](./refactoring-status.md) |
-| Phase 2 Region/Scope 解耦 | ⬜ 未開始 | — | 建議獨立分支；含「非 preset 機場鏡頭跳轉」待辦 |
+| Phase 2 Region/Scope 解耦 | ⬜ 未開始 | — | 建議獨立分支；含「非 preset 機場鏡頭跳轉」待辦。**2026-08-22 補上 2,303 座規模下的實證盤點與方案 → [`airport-selection-ux.md`](airport-selection-ux.md)（新 session 從那份開場）** |
 | Phase 3 比較/配色統一 | ⬜ 未開始 | — | |
 | Phase 4 日期分檔 | ⬜ 未開始 | — | 依賴 Phase 1（已就緒） |
 | 順手做清單 | 🔶 部分（.gitignore log 修正；2026-07-07 scripts 歸位 oneoff/ + s3:upload 指向修正 + 死檔清 196MB） | 同上 | |
