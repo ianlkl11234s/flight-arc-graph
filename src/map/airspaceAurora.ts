@@ -45,9 +45,11 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
   let topLineMat: THREE.ShaderMaterial | null = null;
   let bottomLine: THREE.LineSegments | null = null;
   let bottomLineMat: THREE.ShaderMaterial | null = null;
+  const projectionMatrix = new THREE.Matrix4();
 
   let built = false;
   let building = false;
+  let removed = false;
 
   const startTime = performance.now();
 
@@ -270,6 +272,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
     renderingMode: "3d" as const,
 
     onAdd(map: MapboxMap, gl: WebGLRenderingContext) {
+      removed = false;
       mapRef = map;
       renderer = new THREE.WebGLRenderer({
         canvas: gl.canvas as HTMLCanvasElement,
@@ -282,6 +285,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
         building = true;
         loadAirspace()
           .then((features) => {
+            if (removed) return;
             buildGeometry(features);
             applyUniforms();
             mapRef?.triggerRepaint();
@@ -297,19 +301,25 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
       if (!renderer) return;
       const settings = opts.getSettings();
       if (!settings.enabled || !built) return;
+      const hasVisibleCategory = CATEGORY_ORDER.some((cat) => settings.visibility[cat]);
+      const hasVisibleOutput = hasVisibleCategory && (settings.opacity > 0 || settings.edgeGlow > 0);
+      if (!hasVisibleOutput) return;
 
       applyUniforms();
 
-      camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix);
+      camera.projectionMatrix = projectionMatrix.fromArray(matrix);
       renderer.resetState();
       renderer.render(scene, camera);
       renderer.resetState();
 
       // shimmer 需要持續重繪
-      mapRef?.triggerRepaint();
+      // 沒有可見分類或輸出透明度時不維持動畫 repaint；開啟狀態仍由上層的
+      // control change / map interaction 觸發下一次 render。
+      if (hasVisibleOutput) mapRef?.triggerRepaint();
     },
 
     onRemove() {
+      removed = true;
       if (wallMesh) {
         scene.remove(wallMesh);
         wallMesh.geometry.dispose();

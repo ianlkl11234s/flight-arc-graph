@@ -10,6 +10,12 @@ import type { AnalysisColorBy } from "../data/analysisColors";
 import type { FlightFilters } from "../data/classify";
 import type { AirportManifestEntry } from "../data/flightLoader";
 import type { AirportMeta } from "../data/airportMeta";
+import {
+  getContinentLabel,
+  getCountryLabel,
+  searchAirports,
+  type AirportSearchCandidate,
+} from "../data/airportSearch";
 import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
 import type { AtlasColorMode } from "../map/atlasGlowLayer";
 import {
@@ -150,7 +156,7 @@ export const SCENE_PRESETS: ScenePreset[] = [
 /* ── Style constants ─────────────────────────────────────── */
 
 const RAIL_WIDTH = 56;
-const PANEL_WIDTH = 240;
+const PANEL_WIDTH = 300;
 
 interface ThemeColors {
   ACCENT: string;
@@ -221,6 +227,22 @@ function getThemeColors(isDark: boolean): ThemeColors {
 /* ── Types ───────────────────────────────────────────────── */
 
 type PanelId = "settings" | "locations" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
+type WorkspaceId = "explore" | "selection" | "view" | "analyze";
+
+const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
+  explore: "atlas",
+  selection: "sets",
+  view: "settings",
+  analyze: "summary",
+};
+
+function getWorkspace(panel: PanelId | null): WorkspaceId | null {
+  if (panel === "locations" || panel === "atlas") return "explore";
+  if (panel === "sets" || panel === "calendar") return "selection";
+  if (panel === "settings" || panel === "colors" || panel === "airspace") return "view";
+  if (panel === "summary" || panel === "analysis") return "analyze";
+  return null;
+}
 
 export interface IconRailSidebarProps {
   // Theme
@@ -291,6 +313,7 @@ export interface IconRailSidebarProps {
   rangeDays: number;
   // Stats
   onStatsClick: () => void;
+  onCaptureClick: () => void;
   // Info
   onInfoClick: () => void;
   // Day/Night
@@ -380,12 +403,14 @@ function RailIcon({
   active: boolean;
   onClick: () => void;
   children: ReactNode;
-  title?: string;
+  title: string;
   theme: ThemeColors;
 }) {
   return (
     <button
       title={title}
+      aria-label={title}
+      aria-pressed={active}
       onClick={onClick}
       style={{
         position: "relative",
@@ -549,49 +574,60 @@ function SliderRow({
 
 /* ── SVG Icons ───────────────────────────────────────────── */
 
-function IconActivity() {
+function IconPlaneMark() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      <path d="M17.8 19 16 11l3.5-3.5c1.5-1.5 2-3.5 1-4.5s-3-.5-4.5 1L12.5 7.5 4.5 5.7 3 7.2l6.5 3.8L6 14.5 3.5 14l-1 1 3.5 2 2 3.5 1-1-.5-2.5 3.5-3.5 3.8 6.5Z" />
     </svg>
   );
 }
 
-function IconSettings() {
+function IconGlobeNetwork() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3.5 9h17M3.5 15h17M12 3c2.4 2.5 3.5 5.5 3.5 9S14.4 18.5 12 21M12 3C9.6 5.5 8.5 8.5 8.5 12S9.6 18.5 12 21" />
+      <circle cx="7" cy="9" r="1.2" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="14.5" r="1.2" fill="currentColor" stroke="none" />
     </svg>
   );
 }
 
-function IconMapPin() {
+function IconPinPlus() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-      <circle cx="12" cy="10" r="3" />
+      <path d="M17 10c0 4.2-5 8.4-5 8.4S7 14.2 7 10a5 5 0 0110 0z" />
+      <circle cx="12" cy="10" r="1.6" />
+      <path d="M18.5 16.5v5M16 19h5" />
     </svg>
   );
 }
 
-function IconCalendar() {
+function IconLayers() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
+      <path d="M12 3 3 8l9 5 9-5-9-5z" />
+      <path d="m3 12 9 5 9-5M3 16l9 5 9-5" />
     </svg>
   );
 }
 
-function IconBarChart() {
+function IconRouteAnalysis() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
+      <circle cx="5" cy="17" r="2" />
+      <circle cx="12" cy="7" r="2" />
+      <circle cx="19" cy="14" r="2" />
+      <path d="M6.2 15.4 10.8 8.6M13.7 8.2l3.6 4.6" />
+    </svg>
+  );
+}
+
+function IconCamera() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2z" />
+      <circle cx="12" cy="13" r="4" />
     </svg>
   );
 }
@@ -600,18 +636,35 @@ function IconBarChart() {
 
 function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
   const { theme } = props;
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   return (
     <>
       <SectionHeader theme={theme}>Scope</SectionHeader>
-      <ToggleButtons<Scope>
-        options={[
-          { value: "airport", label: "This Airport" },
-          { value: "region", label: props.region === "all" ? "All Regions" : props.region === "world" ? "All World" : `All ${REGION_LABELS[props.region] ?? props.region}` },
-        ]}
-        value={props.scope}
-        onChange={props.onScopeChange}
-        theme={theme}
-      />
+      {props.airportSet !== null ? (
+        <div style={{
+          marginBottom: 8,
+          padding: "7px 9px",
+          border: `1px solid ${theme.ACTIVE_BORDER}`,
+          borderRadius: 6,
+          background: theme.ACTIVE_BTN_BG,
+          color: theme.ACCENT,
+          fontSize: 10,
+          fontFamily: "monospace",
+          lineHeight: 1.45,
+        }}>
+          Current selection · {props.airportSet.length} airport{props.airportSet.length === 1 ? "" : "s"}
+        </div>
+      ) : (
+        <ToggleButtons<Scope>
+          options={[
+            { value: "airport", label: "This Airport" },
+            { value: "region", label: props.region === "all" ? "All Regions" : props.region === "world" ? "All World" : `All ${REGION_LABELS[props.region] ?? props.region}` },
+          ]}
+          value={props.scope}
+          onChange={props.onScopeChange}
+          theme={theme}
+        />
+      )}
       <ToggleButtons<TrackMode>
         options={[
           { value: "stack", label: "Stack All" },
@@ -741,6 +794,28 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
         </label>
       )}
 
+      <button
+        onClick={() => setAdvancedOpen((open) => !open)}
+        style={{
+          width: "100%",
+          marginTop: 4,
+          padding: "8px 10px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderRadius: 7,
+          border: `1px solid ${theme.BORDER}`,
+          background: theme.SELECT_BG,
+          color: theme.ACCENT,
+          fontSize: 10,
+          fontFamily: "monospace",
+          cursor: "pointer",
+        }}
+      >
+        <span>Advanced visual settings</span>
+        <span>{advancedOpen ? "−" : "+"}</span>
+      </button>
+      {advancedOpen && <>
       <SectionHeader theme={theme}>Visual</SectionHeader>
       <SliderRow
         label="Alt"
@@ -818,6 +893,7 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
           />
         </>
       )}
+      </>}
     </>
   );
 }
@@ -1227,10 +1303,24 @@ function SetChip({ icao, onRemove, theme }: {
   );
 }
 
-function AirportCheckboxRow({ icao, name, checked, onToggle, theme }: {
+function AirportCheckboxRow({
+  icao,
+  name,
+  iata,
+  checked,
+  coverage,
+  matchReason,
+  disabled = false,
+  onToggle,
+  theme,
+}: {
   icao: string;
   name: string;
+  iata?: string;
   checked: boolean;
+  coverage?: string;
+  matchReason?: string;
+  disabled?: boolean;
   onToggle: () => void;
   theme: ThemeColors;
 }) {
@@ -1238,6 +1328,8 @@ function AirportCheckboxRow({ icao, name, checked, onToggle, theme }: {
   return (
     <button
       onClick={onToggle}
+      disabled={disabled}
+      title={disabled ? "目前尚無可載入的軌跡資料" : undefined}
       style={{
         display: "flex",
         alignItems: "center",
@@ -1246,13 +1338,14 @@ function AirportCheckboxRow({ icao, name, checked, onToggle, theme }: {
         background: checked ? theme.ACTIVE_BTN_BG : "transparent",
         border: "none",
         borderRadius: 6,
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
         textAlign: "left",
         width: "100%",
         transition: "background 0.15s",
+        opacity: disabled ? 0.52 : 1,
       }}
-      onMouseEnter={(e) => { if (!checked) e.currentTarget.style.background = theme.HOVER_BG; }}
-      onMouseLeave={(e) => { if (!checked) e.currentTarget.style.background = "transparent"; }}
+      onMouseEnter={(e) => { if (!checked && !disabled) e.currentTarget.style.background = theme.HOVER_BG; }}
+      onMouseLeave={(e) => { if (!checked && !disabled) e.currentTarget.style.background = "transparent"; }}
     >
       <span
         style={{
@@ -1271,8 +1364,13 @@ function AirportCheckboxRow({ icao, name, checked, onToggle, theme }: {
           {info?.name ?? name}
         </div>
         <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
-          {info?.iata ?? icao} / {icao}
+          {info?.iata || iata || icao} / {icao}{coverage ? ` · ${coverage}` : ""}
         </div>
+        {matchReason && (
+          <div style={{ fontSize: 9, color: theme.DIM, marginTop: 2 }}>
+            符合：{matchReason}
+          </div>
+        )}
       </div>
     </button>
   );
@@ -1280,45 +1378,117 @@ function AirportCheckboxRow({ icao, name, checked, onToggle, theme }: {
 
 function SetsPanel({
   airports,
+  airportCatalog,
+  airportMeta,
   region,
   airportSet,
+  setMode,
   setName,
   savedSets,
   onApplySet,
   onToggleAirport,
   onClearSet,
   onExitSetMode,
+  onSceneSelect,
   theme,
 }: {
   airports: string[];
+  airportCatalog: Record<string, AirportManifestEntry>;
+  airportMeta: Record<string, AirportMeta>;
   region: Region;
   airportSet: string[];
+  setMode: boolean;
   setName: string | null;
   savedSets: SavedAirportSet[];
   onApplySet: (set: SavedAirportSet) => void;
   onToggleAirport: (icao: string) => void;
   onClearSet: () => void;
   onExitSetMode: () => void;
+  onSceneSelect: (scene: ScenePreset) => void;
   theme: ThemeColors;
 }) {
   const available = new Set(airports);
   const selectedSet = new Set(airportSet);
-  const defaultRegionKey = region === "all" || region === "world" ? "world" : region;
-  const [openRegions, setOpenRegions] = useState<Set<string>>(new Set([defaultRegionKey]));
+  const [search, setSearch] = useState("");
+  const [scenesOpen, setScenesOpen] = useState(false);
+  const firstAirportMeta = airportMeta[airportSet[0] ?? ""];
+  const defaultCatalogGroup = firstAirportMeta?.country === "TW" || firstAirportMeta?.country === "JP"
+    ? firstAirportMeta.country
+    : firstAirportMeta?.continent || (region === "US" ? "NA" : region === "UK" ? "EU" : "AS");
+  const [openContinents, setOpenContinents] = useState<Set<string>>(new Set([defaultCatalogGroup]));
+  const [openCountries, setOpenCountries] = useState<Set<string>>(new Set());
 
-  const groupedByRegion = (["TW", "JP", "HK", "KR", "TH", "US", "UK", "world"] as const).map((r) => ({
-    key: r as string,
-    label: REGION_LABELS[r] ?? r,
-    presets: CAMERA_PRESETS.filter((p) => available.has(p.icao) && REGION_ICAO_MATCH[r]!(p.icao)),
-  })).filter((g) => g.presets.length > 0);
+  const catalogIcaos = useMemo(
+    () => Array.from(new Set([...Object.keys(airportMeta), ...airports])).sort(),
+    [airportMeta, airports],
+  );
 
-  const toggleRegion = (key: string) => {
-    setOpenRegions((prev) => {
+  const searchCandidates = useMemo<AirportSearchCandidate[]>(
+    () => catalogIcaos.map((icao) => ({
+      icao,
+      meta: airportMeta[icao],
+      curatedName: getAirportInfo(icao)?.name,
+      selectable: available.has(icao),
+      flights: airportCatalog[icao]?.flights ?? 0,
+    })),
+    [catalogIcaos, airportMeta, airportCatalog, airports],
+  );
+
+  const searchResults = useMemo(() => {
+    return searchAirports(search, searchCandidates);
+  }, [search, searchCandidates]);
+
+  const groupedCatalog = useMemo(() => {
+    const byGroup = new Map<string, Map<string, string[]>>();
+    for (const icao of catalogIcaos) {
+      const meta = airportMeta[icao];
+      const continent = meta?.continent || "ZZ";
+      const country = meta?.country || "ZZ";
+      const group = country === "TW" || country === "JP" ? country : continent;
+      const countries = byGroup.get(group) ?? new Map<string, string[]>();
+      const countryAirports = countries.get(country) ?? [];
+      countryAirports.push(icao);
+      countries.set(country, countryAirports);
+      byGroup.set(group, countries);
+    }
+
+    const groupOrder = ["TW", "JP", "AS", "EU", "NA", "SA", "AF", "OC", "ZZ"];
+    const groupLabels: Record<string, string> = { TW: "台灣", JP: "日本", AS: "亞洲其他" };
+    return Array.from(byGroup.entries())
+      .map(([group, countries]) => ({
+        key: group,
+        label: groupLabels[group] ?? getContinentLabel(group),
+        flattenCountries: group === "TW" || group === "JP",
+        countries: Array.from(countries.entries())
+          .map(([country, icaos]) => {
+            const sortedIcaos = icaos.sort((a, b) =>
+              Number(available.has(b)) - Number(available.has(a)) ||
+              (airportCatalog[b]?.flights ?? 0) - (airportCatalog[a]?.flights ?? 0) ||
+              a.localeCompare(b));
+            return {
+              key: `${group}:${country}`,
+              code: country,
+              label: getCountryLabel(country),
+              icaos: sortedIcaos,
+              flightCount: sortedIcaos.reduce((sum, icao) => sum + (airportCatalog[icao]?.flights ?? 0), 0),
+            };
+          })
+          .sort((a, b) => b.flightCount - a.flightCount || a.label.localeCompare(b.label, "zh-Hant")),
+      }))
+      .sort((a, b) => groupOrder.indexOf(a.key) - groupOrder.indexOf(b.key));
+  }, [catalogIcaos, airportMeta, airportCatalog, airports]);
+
+  const toggleSetKey = (setter: typeof setOpenContinents, key: string) => {
+    setter((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
       return next;
     });
   };
+
+  const filteredScenes = SCENE_PRESETS.filter(
+    (scene) => !scene.region || scene.region === region || region === "all",
+  );
 
   const matchedSavedSetId = setName
     ? savedSets.find((s) => s.shortName === setName)?.id ?? null
@@ -1326,55 +1496,156 @@ function SetsPanel({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {/* Header: 已選 + 動作 */}
-      <div style={{ padding: "4px 8px 6px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ fontSize: 11, color: theme.ACCENT, lineHeight: 1.3 }}>
-          已選 <strong style={{ color: theme.ACTIVE_TEXT }}>{airportSet.length}</strong> 座
-          {setName && (
-            <span style={{ marginLeft: 6, fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>· {setName}</span>
-          )}
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 2,
+          flexShrink: 0,
+          paddingBottom: 2,
+          background: theme.BG_RAIL,
+          boxShadow: `0 1px 0 ${theme.BORDER}`,
+        }}
+      >
+        {/* Header: 已選 + 動作 */}
+        <div style={{ padding: "4px 8px 6px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <div style={{ fontSize: 11, color: theme.ACCENT, lineHeight: 1.3 }}>
+            已選 <strong style={{ color: theme.ACTIVE_TEXT }}>{airportSet.length}</strong> 座
+            {setName && (
+              <span style={{ marginLeft: 6, fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>· {setName}</span>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button
+              onClick={onClearSet}
+              disabled={airportSet.length === 0}
+              style={{
+                padding: "2px 8px", fontSize: 10, borderRadius: 4,
+                background: "transparent", border: `1px solid ${theme.BORDER}`,
+                color: airportSet.length === 0 ? theme.DISABLED_TEXT : theme.DIM,
+                cursor: airportSet.length === 0 ? "default" : "pointer",
+              }}
+            >
+              清空
+            </button>
+            {setMode && (
+              <button
+                onClick={onExitSetMode}
+                style={{
+                  padding: "2px 8px", fontSize: 10, borderRadius: 4,
+                  background: "transparent", border: `1px solid ${theme.BORDER}`,
+                  color: theme.DIM, cursor: "pointer",
+                }}
+                title="退出組合模式（回到單一機場）"
+              >
+                退出
+              </button>
+            )}
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          <button
-            onClick={onClearSet}
-            disabled={airportSet.length === 0}
+
+        {/* Selected chips */}
+        {airportSet.length > 0 && (
+          <div style={{ padding: "4px 8px 8px", display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {airportSet.map((icao) => (
+              <SetChip key={icao} icao={icao} onRemove={() => onToggleAirport(icao)} theme={theme} />
+            ))}
+          </div>
+        )}
+
+        <div style={{ height: 1, background: theme.BORDER, margin: "2px 8px 6px" }} />
+
+        <div style={{ padding: "2px 8px 8px" }}>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="搜尋機場、國家、洲別、ICAO / IATA"
+            aria-label="搜尋機場"
             style={{
-              padding: "2px 8px", fontSize: 10, borderRadius: 4,
-              background: "transparent", border: `1px solid ${theme.BORDER}`,
-              color: airportSet.length === 0 ? theme.DISABLED_TEXT : theme.DIM,
-              cursor: airportSet.length === 0 ? "default" : "pointer",
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "8px 10px",
+              borderRadius: 7,
+              border: `1px solid ${theme.BORDER}`,
+              background: theme.SELECT_BG,
+              color: theme.ACTIVE_TEXT,
+              fontFamily: "monospace",
+              fontSize: 11,
+              outline: "none",
             }}
-          >
-            清空
-          </button>
-          <button
-            onClick={onExitSetMode}
-            style={{
-              padding: "2px 8px", fontSize: 10, borderRadius: 4,
-              background: "transparent", border: `1px solid ${theme.BORDER}`,
-              color: theme.DIM, cursor: "pointer",
-            }}
-            title="退出組合模式（回到單一機場）"
-          >
-            退出
-          </button>
+          />
         </div>
       </div>
 
-      {/* Selected chips */}
-      {airportSet.length > 0 && (
-        <div style={{ padding: "4px 8px 8px", display: "flex", flexWrap: "wrap", gap: 4 }}>
-          {airportSet.map((icao) => (
-            <SetChip key={icao} icao={icao} onRemove={() => onToggleAirport(icao)} theme={theme} />
+      {search.trim() && (
+        <div style={{ padding: "0 4px 8px" }}>
+          <div style={{ fontSize: 10, color: theme.DIM, padding: "0 4px 4px" }}>
+            {searchResults.length > 0
+              ? searchResults.length > 60
+                ? `顯示前 60 座／共 ${searchResults.length} 座`
+                : `找到 ${searchResults.length} 座機場`
+              : "找不到機場"}
+          </div>
+          {searchResults.slice(0, 60).map((result) => {
+            const meta = airportMeta[result.icao];
+            return (
+              <AirportCheckboxRow
+                key={result.icao}
+                icao={result.icao}
+                name={meta?.nameZh || meta?.name || result.icao}
+                iata={meta?.iata}
+                checked={selectedSet.has(result.icao)}
+                coverage={result.selectable ? "可加入" : "尚無軌跡"}
+                matchReason={result.matchReason}
+                disabled={!result.selectable}
+                onToggle={() => onToggleAirport(result.icao)}
+                theme={theme}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {filteredScenes.length > 0 && (
+        <div style={{ margin: "0 4px 6px" }}>
+          <button
+            onClick={() => setScenesOpen((open) => !open)}
+            aria-expanded={scenesOpen}
+            style={{
+              display: "flex", alignItems: "center", width: "100%", gap: 7,
+              padding: "6px 4px", background: "transparent", border: "none",
+              color: theme.DIM, cursor: "pointer", textAlign: "left", fontSize: 10,
+            }}
+          >
+            <span style={{ width: 9 }}>{scenesOpen ? "▼" : "▶"}</span>
+            <span style={{ flex: 1, letterSpacing: 1.1 }}>場景預設</span>
+            <span style={{ fontFamily: "monospace" }}>{filteredScenes.length}</span>
+          </button>
+          {scenesOpen && filteredScenes.map((scene) => (
+            <button
+              key={scene.id}
+              onClick={() => onSceneSelect(scene)}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, width: "100%",
+                padding: "6px 8px", background: "transparent", border: "none",
+                borderRadius: 6, cursor: "pointer", textAlign: "left",
+              }}
+              onMouseEnter={(event) => { event.currentTarget.style.background = theme.HOVER_BG; }}
+              onMouseLeave={(event) => { event.currentTarget.style.background = "transparent"; }}
+            >
+              <span style={{ width: 3, height: 24, borderRadius: 2, background: theme.SCENE_BAR, flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 12, color: theme.ACCENT }}>{scene.name}</div>
+                <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>{scene.desc}</div>
+              </div>
+            </button>
           ))}
         </div>
       )}
 
-      <div style={{ height: 1, background: theme.BORDER, margin: "2px 8px 6px" }} />
-
       {/* Saved Sets */}
-      <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 4px" }}>
-        預設組合 Saved Sets
+      <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, padding: "2px 8px 4px" }}>
+        預設組合
       </div>
       {savedSets.map((s) => {
         const isActive = s.id === matchedSavedSetId;
@@ -1408,17 +1679,21 @@ function SetsPanel({
 
       <div style={{ height: 1, background: theme.BORDER, margin: "8px 8px 6px" }} />
 
-      {/* All airports (collapsible by region) */}
-      <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 4px" }}>
-        全部機場 All Airports
+      {/* Complete airport directory: Taiwan / Japan / continent → country → airport */}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "2px 8px 4px" }}>
+        <span style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2 }}>全部機場</span>
+        <span style={{ fontSize: 9, color: theme.DIM, fontFamily: "monospace" }}>
+          {catalogIcaos.length.toLocaleString()} 座 · {airports.length.toLocaleString()} 座可加入
+        </span>
       </div>
-      {groupedByRegion.map((g) => {
-        const open = openRegions.has(g.key);
-        const selectedInGroup = g.presets.filter((p) => selectedSet.has(p.icao)).length;
+      {groupedCatalog.map((continent) => {
+        const open = openContinents.has(continent.key);
+        const continentIcaos = continent.countries.flatMap((country) => country.icaos);
+        const selectedInGroup = continentIcaos.filter((icao) => selectedSet.has(icao)).length;
         return (
-          <div key={g.key}>
+          <div key={continent.key}>
             <button
-              onClick={() => toggleRegion(g.key)}
+              onClick={() => toggleSetKey(setOpenContinents, continent.key)}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "4px 8px", width: "100%",
@@ -1432,22 +1707,69 @@ function SetsPanel({
                 {open ? "▼" : "▶"}
               </span>
               <span style={{ fontSize: 11, color: theme.ACCENT, flex: 1 }}>
-                {g.label}
+                {continent.label}
               </span>
               <span style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
-                {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{g.presets.length}
+                {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{continentIcaos.length}
               </span>
             </button>
-            {open && g.presets.map((p) => (
-              <AirportCheckboxRow
-                key={p.icao}
-                icao={p.icao}
-                name={p.name}
-                checked={selectedSet.has(p.icao)}
-                onToggle={() => onToggleAirport(p.icao)}
-                theme={theme}
-              />
-            ))}
+            {open && continent.flattenCountries && continentIcaos.map((icao) => {
+              const meta = airportMeta[icao];
+              const selectable = available.has(icao);
+              return (
+                <div key={icao} style={{ paddingLeft: 8 }}>
+                  <AirportCheckboxRow
+                    icao={icao}
+                    name={meta?.nameZh || meta?.name || icao}
+                    iata={meta?.iata}
+                    checked={selectedSet.has(icao)}
+                    coverage={selectable ? undefined : "尚無軌跡"}
+                    disabled={!selectable}
+                    onToggle={() => onToggleAirport(icao)}
+                    theme={theme}
+                  />
+                </div>
+              );
+            })}
+            {open && !continent.flattenCountries && continent.countries.map((country) => {
+              const countryOpen = openCountries.has(country.key);
+              const selectedInCountry = country.icaos.filter((icao) => selectedSet.has(icao)).length;
+              return (
+                <div key={country.key} style={{ paddingLeft: 8 }}>
+                  <button
+                    onClick={() => toggleSetKey(setOpenCountries, country.key)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6, width: "100%",
+                      padding: "4px 8px", background: "transparent", border: "none",
+                      cursor: "pointer", textAlign: "left",
+                    }}
+                  >
+                    <span style={{ fontSize: 8, color: theme.DIM, width: 8 }}>{countryOpen ? "▼" : "▶"}</span>
+                    <span style={{ fontSize: 10, color: theme.ACCENT, flex: 1 }}>{country.label}</span>
+                    <span style={{ fontSize: 9, color: theme.DIM, fontFamily: "monospace" }}>
+                      {selectedInCountry > 0 ? `${selectedInCountry}/` : ""}{country.icaos.length}
+                    </span>
+                  </button>
+                  {countryOpen && country.icaos.map((icao) => {
+                    const meta = airportMeta[icao];
+                    const selectable = available.has(icao);
+                    return (
+                      <AirportCheckboxRow
+                        key={icao}
+                        icao={icao}
+                        name={meta?.nameZh || meta?.name || icao}
+                        iata={meta?.iata}
+                        checked={selectedSet.has(icao)}
+                        coverage={selectable ? undefined : "尚無軌跡"}
+                        disabled={!selectable}
+                        onToggle={() => onToggleAirport(icao)}
+                        theme={theme}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         );
       })}
@@ -2606,25 +2928,36 @@ function AirspacePanel({
   );
 }
 
-function IconAirspace() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 3 20 8 20 16 12 21 4 16 4 8 12 3" />
-      <path d="M12 3v18" opacity="0.5" />
-      <path d="M4 8l16 8" opacity="0.3" />
-      <path d="M20 8L4 16" opacity="0.3" />
-    </svg>
-  );
-}
-
 /* ── Main Component ──────────────────────────────────────── */
 
 export function IconRailSidebar(props: IconRailSidebarProps) {
-  const [activePanel, setActivePanel] = useState<PanelId | null>("settings");
+  const [activePanel, setActivePanel] = useState<PanelId | null>("sets");
   const theme = getThemeColors(props.isDarkTheme);
+  const activeWorkspace = getWorkspace(activePanel);
+  const activeSelection = props.airportSet ?? [props.selectedAirport];
+  const selectedDate = props.selectedDate;
+  const selectedAvailable = selectedDate
+    ? activeSelection.filter((icao) => Boolean(props.airportCatalog[icao]?.dates?.[selectedDate])).length
+    : 0;
+  const workspaceTabs: Array<{ id: PanelId | "stats"; label: string }> = activeWorkspace === "explore"
+    ? [{ id: "atlas", label: "地圖總覽" }]
+    : activeWorkspace === "selection"
+      ? [{ id: "sets", label: "機場" }, { id: "calendar", label: "日期" }]
+      : activeWorkspace === "view"
+        ? [{ id: "settings", label: "顯示" }, { id: "colors", label: "色彩" }, { id: "airspace", label: "空域" }]
+        : [{ id: "summary", label: "總覽" }, { id: "analysis", label: "篩選" }, { id: "stats", label: "統計" }];
+  const workspaceTitle = activeWorkspace === "explore"
+    ? "探索機場"
+    : activeWorkspace === "selection"
+      ? props.setName ?? (props.airportSet ? "自訂機場組合" : props.selectedAirport)
+      : activeWorkspace === "view"
+        ? "呈現與空域"
+        : "航班分析";
 
-  const togglePanel = (id: PanelId) => {
-    setActivePanel((prev) => (prev === id ? null : id));
+  const toggleWorkspace = (workspace: WorkspaceId) => {
+    setActivePanel((prev) => (
+      getWorkspace(prev) === workspace ? null : WORKSPACE_DEFAULT_PANEL[workspace]
+    ));
   };
 
   const panelStyle: CSSProperties = {
@@ -2634,7 +2967,9 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
     zIndex: 20,
     width: PANEL_WIDTH,
     maxHeight: "70vh",
-    overflowY: "auto",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
     background: theme.BG_PANEL,
     backdropFilter: "blur(16px)",
     WebkitBackdropFilter: "blur(16px)",
@@ -2679,7 +3014,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             color: theme.ACCENT_BLUE,
           }}
         >
-          <IconActivity />
+          <IconPlaneMark />
         </div>
 
         {/* Separator */}
@@ -2692,120 +3027,49 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           }}
         />
 
-        {/* Settings */}
         <RailIcon
-          active={activePanel === "settings"}
-          onClick={() => togglePanel("settings")}
-          title="Settings"
+          active={activeWorkspace === "explore"}
+          onClick={() => toggleWorkspace("explore")}
+          title="探索地圖總覽"
           theme={theme}
         >
-          <IconSettings />
+          <IconGlobeNetwork />
         </RailIcon>
 
-        {/* Locations */}
         <RailIcon
-          active={activePanel === "locations"}
-          onClick={() => togglePanel("locations")}
-          title="Locations"
+          active={activeWorkspace === "selection"}
+          onClick={() => toggleWorkspace("selection")}
+          title="選擇機場與日期"
           theme={theme}
         >
-          <IconMapPin />
+          <IconPinPlus />
         </RailIcon>
 
-        {/* Sets (multi-airport view) */}
         <RailIcon
-          active={activePanel === "sets" || props.airportSet !== null}
-          onClick={() => togglePanel("sets")}
-          title="Multi-Airport Sets"
+          active={activeWorkspace === "view"}
+          onClick={() => toggleWorkspace("view")}
+          title="顯示、色彩與空域"
           theme={theme}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-          </svg>
+          <IconLayers />
         </RailIcon>
 
-        {/* Calendar */}
         <RailIcon
-          active={activePanel === "calendar"}
-          onClick={() => togglePanel("calendar")}
-          title="Calendar"
+          active={activeWorkspace === "analyze"}
+          onClick={() => toggleWorkspace("analyze")}
+          title="分析航班"
           theme={theme}
         >
-          <IconCalendar />
+          <IconRouteAnalysis />
         </RailIcon>
 
-        {/* Colors */}
-        <RailIcon
-          active={activePanel === "colors"}
-          onClick={() => togglePanel("colors")}
-          title="Color Theme"
-          theme={theme}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="13.5" r="2.5"/><circle cx="6.5" cy="10.5" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>
-        </RailIcon>
-
-        {/* Airspace */}
-        <RailIcon
-          active={activePanel === "airspace"}
-          onClick={() => togglePanel("airspace")}
-          title="Airspace"
-          theme={theme}
-        >
-          <IconAirspace />
-        </RailIcon>
-
-        {/* Summary */}
-        <RailIcon
-          active={activePanel === "summary"}
-          onClick={() => togglePanel("summary")}
-          title="Summary"
-          theme={theme}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-          </svg>
-        </RailIcon>
-
-        {/* Deep Analysis (🔬) */}
-        <RailIcon
-          active={activePanel === "analysis" || props.analysisColorBy !== "none"}
-          onClick={() => togglePanel("analysis")}
-          title="Deep Analysis"
-          theme={theme}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="7" />
-            <line x1="16.5" y1="16.5" x2="21" y2="21" />
-            <line x1="11" y1="8" x2="11" y2="14" />
-            <line x1="8" y1="11" x2="14" y2="11" />
-          </svg>
-        </RailIcon>
-
-        {/* Atlas 機場總覽 (🗺️) */}
-        <RailIcon
-          active={activePanel === "atlas" || props.atlasVisible}
-          onClick={() => togglePanel("atlas")}
-          title="Airport Atlas"
-          theme={theme}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <ellipse cx="12" cy="12" rx="4" ry="9" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="4.5" y1="7" x2="19.5" y2="7" />
-            <line x1="4.5" y1="17" x2="19.5" y2="17" />
-          </svg>
-        </RailIcon>
-
-        {/* Stats */}
         <RailIcon
           active={false}
-          onClick={props.onStatsClick}
-          title="Statistics"
+          onClick={props.onCaptureClick}
+          title="擷取與錄製"
           theme={theme}
         >
-          <IconBarChart />
+          <IconCamera />
         </RailIcon>
       </div>
 
@@ -2835,6 +3099,50 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           >
             ✕
           </button>
+          <div style={{ paddingRight: 26, marginBottom: 12, flexShrink: 0 }}>
+            <div style={{ fontSize: 9, letterSpacing: 1.6, color: theme.ACCENT_BLUE, fontFamily: "monospace" }}>
+              FLIGHT ARC / {activeWorkspace?.toUpperCase()}
+            </div>
+            <div style={{ marginTop: 4, fontSize: 16, fontWeight: 600, color: theme.ACTIVE_TEXT }}>
+              {workspaceTitle}
+            </div>
+            {(activeWorkspace === "selection" || activeWorkspace === "explore") && (
+              <div style={{ marginTop: 5, fontSize: 10, color: theme.DIM, fontFamily: "monospace", lineHeight: 1.45 }}>
+                {activeSelection.length} 座機場
+                {selectedDate ? ` · ${selectedDate}` : ""}
+                {selectedDate && selectedAvailable < activeSelection.length
+                  ? ` · ${activeSelection.length - selectedAvailable} 座無此日期`
+                  : ""}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 4, marginTop: 10, flexWrap: "wrap" }}>
+              {workspaceTabs.map((tab) => {
+                const active = tab.id === activePanel;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      if (tab.id === "stats") props.onStatsClick();
+                      else setActivePanel(tab.id);
+                    }}
+                    style={{
+                      padding: "5px 9px",
+                      borderRadius: 6,
+                      border: `1px solid ${active ? theme.ACTIVE_BORDER : theme.BORDER}`,
+                      background: active ? theme.ACTIVE_BTN_BG : "transparent",
+                      color: active ? theme.ACTIVE_TEXT : theme.DIM,
+                      cursor: "pointer",
+                      fontSize: 10,
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{ minHeight: 0, overflowY: "auto", flex: "1 1 auto" }}>
           {activePanel === "settings" && <SettingsPanel {...props} theme={theme} />}
           {activePanel === "locations" && (
             <LocationsPanel
@@ -2852,14 +3160,18 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           {activePanel === "sets" && (
             <SetsPanel
               airports={props.airports}
+              airportCatalog={props.airportCatalog}
+              airportMeta={props.airportMeta}
               region={props.region}
-              airportSet={props.airportSet ?? []}
+              airportSet={activeSelection}
+              setMode={props.airportSet !== null}
               setName={props.setName}
               savedSets={props.savedSets}
               onApplySet={props.onApplySet}
               onToggleAirport={props.onToggleAirportInSet}
               onClearSet={props.onClearSet}
               onExitSetMode={props.onExitSetMode}
+              onSceneSelect={props.onSceneSelect}
               theme={theme}
             />
           )}
@@ -2934,6 +3246,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               theme={theme}
             />
           )}
+          </div>
         </div>
       )}
     </>

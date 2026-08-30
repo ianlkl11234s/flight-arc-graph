@@ -84,6 +84,7 @@ function buildAtlasPopupHtml(p: AtlasProps): string {
       <span style="width:9px;height:9px;border-radius:50%;background:${st.color};display:inline-block"></span>${st.label}
     </div>
     <div style="font-size:12px;color:#333;line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
+    ${p.status !== "planned" ? `<button data-atlas-add="${escapeHtml(p.icao)}" style="margin-top:8px;width:100%;padding:6px 8px;border:1px solid #3b82f6;border-radius:6px;background:#eaf3ff;color:#174ea6;font:600 11px monospace;cursor:pointer">+ 加入 Selection</button>` : ""}
   </div>`;
 }
 
@@ -154,14 +155,93 @@ function LoadingIndicator({ loadingProgress, isDarkTheme }: {
   );
 }
 
+function OrientationOrb({
+  bearing,
+  pitch,
+  isDarkTheme,
+  avoidAirspaceCard,
+  onReset,
+}: {
+  bearing: number;
+  pitch: number;
+  isDarkTheme: boolean;
+  avoidAirspaceCard: boolean;
+  onReset: () => void;
+}) {
+  const axisScale = Math.max(0.38, Math.cos((pitch * Math.PI) / 180));
+  const bearingRad = (bearing * Math.PI) / 180;
+  const axisLength = 15 * axisScale;
+  const labelLength = axisLength + 4;
+  const northX = 22 - axisLength * Math.sin(bearingRad);
+  const northY = 22 - axisLength * Math.cos(bearingRad);
+  const southX = 22 + axisLength * Math.sin(bearingRad);
+  const southY = 22 + axisLength * Math.cos(bearingRad);
+  const northLabelX = 22 - labelLength * Math.sin(bearingRad);
+  const northLabelY = 22 - labelLength * Math.cos(bearingRad) + 1.8;
+  const southLabelX = 22 + labelLength * Math.sin(bearingRad);
+  const southLabelY = 22 + labelLength * Math.cos(bearingRad) + 1.8;
+  const isUpright = Math.abs(bearing) < 1 && Math.abs(pitch) < 1;
+  const stroke = isDarkTheme ? "rgba(255,255,255,0.34)" : "rgba(20,30,45,0.35)";
+  const dim = isDarkTheme ? "rgba(255,255,255,0.18)" : "rgba(20,30,45,0.16)";
+  const text = isDarkTheme ? "rgba(255,255,255,0.82)" : "rgba(20,30,45,0.82)";
+
+  return (
+    <button
+      type="button"
+      onClick={onReset}
+      aria-label="恢復北上南下、無傾斜的地球方向"
+      title="Reset orientation · North up"
+      style={{
+        position: "absolute",
+        right: avoidAirspaceCard ? 398 : 18,
+        bottom: 92,
+        zIndex: 12,
+        width: 52,
+        height: 52,
+        padding: 3,
+        borderRadius: "50%",
+        border: `1px solid ${isUpright ? "rgba(100,170,255,0.65)" : stroke}`,
+        background: isDarkTheme
+          ? "radial-gradient(circle at 34% 28%, rgba(100,170,255,0.16), rgba(0,0,0,0.55) 66%)"
+          : "radial-gradient(circle at 34% 28%, rgba(100,170,255,0.2), rgba(255,255,255,0.7) 66%)",
+        boxShadow: isDarkTheme
+          ? "0 5px 18px rgba(0,0,0,0.34), inset 0 0 12px rgba(100,170,255,0.08)"
+          : "0 5px 18px rgba(30,60,90,0.14), inset 0 0 12px rgba(100,170,255,0.12)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        cursor: "pointer",
+        transition: "right 220ms ease, border-color 180ms ease, transform 180ms ease, background 180ms ease",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+    >
+      <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" style={{ display: "block" }}>
+        <circle cx="22" cy="22" r="18.5" fill="none" stroke={stroke} strokeWidth="1" />
+        <ellipse cx="22" cy="22" rx="17" ry="6" fill="none" stroke={dim} strokeWidth="0.8" />
+        <path d="M5 22h34" fill="none" stroke={dim} strokeWidth="0.65" strokeDasharray="1.5 2.5" />
+        <line x1={northX} y1={northY} x2={southX} y2={southY} stroke="rgba(100,170,255,0.72)" strokeWidth="1" />
+        <circle cx={northX} cy={northY} r="2.5" fill="#64aaff" />
+        <circle cx={southX} cy={southY} r="2" fill={isDarkTheme ? "rgba(255,255,255,0.58)" : "rgba(20,30,45,0.52)"} />
+        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill="#9acbff" fontSize="6" fontFamily="monospace" fontWeight="700">N</text>
+        <text x={southLabelX} y={southLabelY} textAnchor="middle" fill={text} fontSize="5.5" fontFamily="monospace">S</text>
+        <circle cx="22" cy="22" r="1.5" fill={isUpright ? "#64aaff" : text} />
+      </svg>
+    </button>
+  );
+}
+
 export default function App() {
   const [dataSource, setDataSource] = useState<DataSource>("api");
   const [scope, setScope] = useState<Scope>("airport");
   const [region, setRegion] = useState<Region>("TW");
+  // Selection-first：null = 單一機場，陣列 = 明確的多機場 selection。
+  const [airportSet, setAirportSet] = useState<string[] | null>(null);
+  const [setName, setSetName] = useState<string | null>(null);
 
-  // airspace 日期追蹤（避免與 timeline 循環依賴）
-  const [airspaceDate, setAirspaceDate] = useState<string | undefined>();
+  // 與 timeline 解耦的 loader 日期快照；初始主資料日先走日期 shard／日期篩選。
+  const [airspaceDate, setAirspaceDate] = useState<string | undefined>("2026-02-18");
   const [airspaceRangeDays, setAirspaceRangeDays] = useState(1);
+  const [airspaceSelectedDates, setAirspaceSelectedDates] = useState<string[]>([]);
 
   const {
     allFlights,
@@ -175,7 +255,20 @@ export default function App() {
     airspaceDates,
     regionDatesMap,
     regionFullDatesMap,
-  } = useFlightData(dataSource, scope, region, airspaceDate, airspaceRangeDays);
+  } = useFlightData(
+    dataSource,
+    scope,
+    region,
+    airspaceDate,
+    airspaceRangeDays,
+    airportSet,
+    airspaceSelectedDates,
+  );
+  const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
+
+  useEffect(() => {
+    if (!loading) setHasCompletedInitialLoad(true);
+  }, [loading]);
 
   // 機場 metadata（座標/名稱/國家，含無 preset 的長尾機場）— 一次性載入，失敗回空物件
   const [airportMeta, setAirportMeta] = useState<Record<string, AirportMeta>>({});
@@ -202,9 +295,6 @@ export default function App() {
   // Multi-condition filters（Deep Analysis 面板掌控；scene preset 也會寫入）
   const [flightFilters, setFlightFilters] = useState<FlightFilters>(EMPTY_FILTERS);
   const [depArrFilter, setDepArrFilter] = useState<DepArrFilter>("all");
-  // 多機場組合檢視：null = single mode（讀 selectedAirport），非 null = set mode（忽略 selectedAirport）
-  const [airportSet, setAirportSet] = useState<string[] | null>(null);
-  const [setName, setSetName] = useState<string | null>(null);
   const [captureMode, setCaptureMode] = useState(false);
   const [showTerminator, setShowTerminator] = useState(false);
   // 每次載入皆從 default theme + Compare Airports off 開始（不沿用 localStorage 偏好）
@@ -380,6 +470,20 @@ export default function App() {
   };
 
   const regionTitle = REGION_CONFIG[region].title;
+  const selectionTitle = airportSet
+    ? setName ?? (airportSet.length > 0
+      ? `Flight Network · ${airportSet.length} Airport${airportSet.length === 1 ? "" : "s"}`
+      : "Build a Flight Network")
+    : airportMeta[selectedAirport]?.name ?? getAirportInfo(selectedAirport)?.name ?? selectedAirport;
+  const selectionEyebrow = airportSet
+    ? "FLIGHT ARC / NETWORK STUDY"
+    : "FLIGHT ARC / AIRPORT VIEW";
+  const selectionCodeLabel = airportSet
+    ? airportSet.join(" · ")
+    : (() => {
+        const info = getAirportInfo(selectedAirport);
+        return info ? `${info.name} / ${info.iata} / ${selectedAirport}` : selectedAirport;
+      })();
 
   // 單一機場模式下的目錄資訊（manifest 的 isCore / dates / fullDates）
   const isAirportScope = dataSource !== "fused" && scope === "airport" && !airportSet;
@@ -388,6 +492,28 @@ export default function App() {
     () => (airportEntry?.dates && Object.keys(airportEntry.dates).length > 0 ? airportEntry.dates : null),
     [airportEntry],
   );
+  const selectionDateCounts = useMemo(() => {
+    if (airportSet === null) return null;
+    const counts: Record<string, number> = {};
+    for (const icao of airportSet) {
+      for (const [date, count] of Object.entries(airportCatalog[icao]?.dates ?? {})) {
+        counts[date] = (counts[date] ?? 0) + count;
+      }
+    }
+    return counts;
+  }, [airportSet, airportCatalog]);
+  const selectionFullDates = useMemo(() => {
+    if (airportSet === null || airportSet.length === 0) return [];
+    const [first, ...rest] = airportSet;
+    const intersection = new Set(airportCatalog[first!]?.fullDates ?? []);
+    for (const icao of rest) {
+      const dates = new Set(airportCatalog[icao]?.fullDates ?? []);
+      for (const date of intersection) {
+        if (!dates.has(date)) intersection.delete(date);
+      }
+    }
+    return [...intersection].sort();
+  }, [airportSet, airportCatalog]);
 
   // 可用日期：單一機場模式用該機場的日期目錄，region/airspace 模式維持原邏輯
   const availableDates = useMemo(() => {
@@ -396,6 +522,8 @@ export default function App() {
     if (dataSource === "fused") {
       // 空域快照日期
       for (const d of airspaceDates) dates.add(d);
+    } else if (selectionDateCounts) {
+      return Object.keys(selectionDateCounts).sort();
     } else if (airportDateCounts) {
       // 單一機場：manifest 目錄即為權威日期清單
       return Object.keys(airportDateCounts).sort();
@@ -416,44 +544,51 @@ export default function App() {
     }
 
     return [...dates].sort();
-  }, [dataSource, region, airspaceDates, regionDatesMap, allFlights, airportDateCounts]);
+  }, [dataSource, region, airspaceDates, regionDatesMap, allFlights, airportDateCounts, selectionDateCounts]);
 
   // 完整抓取日期：單一機場用該機場 fullDates，其餘維持 region 邏輯
   const fullDates = useMemo(() => {
     if (dataSource === "fused") return airspaceDates;
+    if (airportSet !== null) return selectionFullDates;
     if (isAirportScope) return airportEntry?.fullDates ?? [];
     return regionFullDatesMap[region === "all" ? "TW" : region] ?? [];
-  }, [dataSource, airspaceDates, isAirportScope, airportEntry, regionFullDatesMap, region]);
+  }, [dataSource, airspaceDates, airportSet, selectionFullDates, isAirportScope, airportEntry, regionFullDatesMap, region]);
 
   // 預設日期：優先 2026-02-18（主資料日），不在該機場 fullDates 時取第一個 fullDate，
   // 再 fallback 到該機場筆數最多的日期
   const preferredDate = useMemo(() => {
     if (fullDates.includes("2026-02-18")) return "2026-02-18";
     if (fullDates.length > 0) return fullDates[0]!;
-    if (airportDateCounts) {
+    const counts = selectionDateCounts ?? airportDateCounts;
+    if (counts) {
       let best: string | null = null;
       let bestCount = 0;
-      for (const [d, c] of Object.entries(airportDateCounts)) {
+      for (const [d, c] of Object.entries(counts)) {
         if (c > bestCount) { best = d; bestCount = c; }
       }
       if (best) return best;
     }
     return "2026-02-18";
-  }, [fullDates, airportDateCounts]);
+  }, [fullDates, airportDateCounts, selectionDateCounts]);
 
   const timeline = useTimeline({ availableDates, preferredDate });
 
   // 切換機場時：若目前日期不是新機場的完整資料日，跳到該機場的 preferredDate。
   // 只在「機場改變」時觸發 —— 使用者手動點部分資料日期不會被蓋掉。
   const prevAirportRef = useRef(selectedAirport);
+  const prevSelectionRef = useRef<string | null>(null);
   useEffect(() => {
-    if (prevAirportRef.current === selectedAirport) return;
+    const selectionKey = airportSet?.join(",") ?? null;
+    const airportChanged = prevAirportRef.current !== selectedAirport;
+    const selectionChanged = prevSelectionRef.current !== selectionKey;
+    if (!airportChanged && !selectionChanged) return;
     prevAirportRef.current = selectedAirport;
-    if (!isAirportScope) return;
-    if (fullDates.length > 0 && !fullDates.includes(timeline.selectedDate)) {
+    prevSelectionRef.current = selectionKey;
+    if (!isAirportScope && airportSet === null) return;
+    if (!availableDates.includes(timeline.selectedDate)) {
       timeline.setSelectedDate(preferredDate);
     }
-  }, [selectedAirport, isAirportScope, fullDates, preferredDate, timeline]);
+  }, [selectedAirport, airportSet, isAirportScope, availableDates, preferredDate, timeline]);
   const mapRef = useRef<MapboxMap | null>(null);
   const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode });
   const recorder = useCanvasRecorder({ map: mapRef.current });
@@ -462,19 +597,16 @@ export default function App() {
 
   // ── Dynamic overlay provider: reads live map state each frame ──
   const selectedAirportRef = useRef(selectedAirport);
-  const regionTitleRef = useRef(regionTitle);
+  const overlayTitleRef = useRef(airportSet !== null ? selectionTitle : regionTitle);
+  const overlaySelectionLabelRef = useRef(selectionCodeLabel);
   const speedRef = useRef(timeline.speed);
   selectedAirportRef.current = selectedAirport;
-  regionTitleRef.current = regionTitle;
+  overlayTitleRef.current = airportSet !== null ? selectionTitle : regionTitle;
+  overlaySelectionLabelRef.current = selectionCodeLabel;
   speedRef.current = timeline.speed;
 
   const getOverlay = useCallback(() => {
     const map = mapRef.current;
-    const airport = selectedAirportRef.current;
-    const info = getAirportInfo(airport);
-    const airportLabel = info
-      ? `${info.name} / ${info.iata} / ${airport}`
-      : airport;
     const timeLabel = new Date(timeRef.current * 1000).toLocaleString("zh-TW", {
       timeZone: "Asia/Taipei",
       year: "numeric",
@@ -490,8 +622,8 @@ export default function App() {
       cameraLabel = `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)} z${map.getZoom().toFixed(1)} pitch ${map.getPitch().toFixed(0)} bearing ${map.getBearing().toFixed(0)}`;
     }
     return {
-      regionTitle: regionTitleRef.current,
-      airportLabel,
+      regionTitle: overlayTitleRef.current,
+      airportLabel: overlaySelectionLabelRef.current,
       timeLabel,
       cameraLabel,
       speed: speedRef.current,
@@ -536,13 +668,14 @@ export default function App() {
     );
   }, [recorder, cinema.keyframes, cinema.loop, cinema.pingpong, getOverlay]);
 
-  // 同步 timeline 日期給 airspace 載入
+  // 同步 timeline 日期給 loader；航線模式也使用同一份日期快照，避免初始先載 flat 全量。
   useEffect(() => {
-    if (dataSource === "fused") {
-      setAirspaceDate(timeline.selectedDate);
-      setAirspaceRangeDays(timeline.rangeDays);
-    }
-  }, [dataSource, timeline.selectedDate, timeline.rangeDays]);
+    // availableDates 尚未建立時 useTimeline 會暫時使用今天，不能因此觸發第二次全檔 fallback。
+    if (availableDates.length === 0 || !availableDates.includes(timeline.selectedDate)) return;
+    setAirspaceDate(timeline.selectedDate);
+    setAirspaceRangeDays(timeline.rangeDays);
+    setAirspaceSelectedDates(timeline.selectedDates);
+  }, [availableDates, timeline.selectedDate, timeline.rangeDays, timeline.selectedDates]);
 
   // Airspace Scan 預設：切換時自動設定 All Taiwan、7d、拉遠視角、低 opacity
   const prevDataSourceRef = useRef(dataSource);
@@ -686,7 +819,7 @@ export default function App() {
 
   const toggleAirportInSet = useCallback((icao: string) => {
     setAirportSet((prev) => {
-      const base = prev ?? [];
+      const base = prev ?? [selectedAirport];
       const has = base.includes(icao);
       const next = has ? base.filter((i) => i !== icao) : [...base, icao];
       return next;
@@ -695,7 +828,7 @@ export default function App() {
     setSetName(null);
     // 切到 region scope（如果還在 airport scope，新加機場可能沒資料）
     setScope((s) => (s === "region" ? s : "region"));
-  }, []);
+  }, [selectedAirport]);
 
   const clearSet = useCallback(() => {
     setAirportSet([]);
@@ -855,7 +988,7 @@ export default function App() {
     timeline.currentTime, finalFlights, renderMode, altExaggeration, altOffset,
     staticOpacity, trailLineWidth, airportGlow, orbScale, farView, farViewBoost, isDarkTheme, displayMode, timeWindow, trailDisplay,
     atlasGlowVisible, atlasColorMode, atlasGlowSize, viewshedOpacity, viewshedSharpness,
-    colorThemeKey, colorThemeOverride, perFlightColorMap, perFlightScaleMap,
+    colorThemeKey, colorThemeOverride, perFlightColorMap, perFlightScaleMap, airspaceSettings,
   ]);
 
   // 持久化 airspace 設定
@@ -1020,10 +1153,21 @@ export default function App() {
         if (map.getLayer(ATLAS_LAYER)) {
           const atlasHits = map.queryRenderedFeatures(e.point, { layers: [ATLAS_LAYER] });
           if (atlasHits.length > 0 && atlasHits[0]!.properties) {
-            atlasPopupRef.current = new mapboxgl.Popup({ offset: 10, maxWidth: "260px" })
+            const atlasProps = atlasHits[0]!.properties as AtlasProps;
+            const popup = new mapboxgl.Popup({ offset: 10, maxWidth: "260px" })
               .setLngLat(e.lngLat)
-              .setHTML(buildAtlasPopupHtml(atlasHits[0]!.properties as AtlasProps))
+              .setHTML(buildAtlasPopupHtml(atlasProps))
               .addTo(map);
+            atlasPopupRef.current = popup;
+            popup.getElement()?.querySelector<HTMLButtonElement>("[data-atlas-add]")?.addEventListener("click", () => {
+              setAirportSet((current) => {
+                const base = current ?? [selectedAirportRef.current];
+                return base.includes(atlasProps.icao) ? base : [...base, atlasProps.icao];
+              });
+              setSetName(null);
+              setScope("region");
+              popup.remove();
+            });
             setAirspaceSelection(null);
             return;
           }
@@ -1162,7 +1306,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, availableDates.length]);
 
-  if (loading && allFlights.length === 0) {
+  if (!hasCompletedInitialLoad && loading && allFlights.length === 0) {
     return <LoadingScreen />;
   }
 
@@ -1221,7 +1365,7 @@ export default function App() {
                   textShadow: "0 2px 12px rgba(0,0,0,0.6)",
                 }}
               >
-                {regionTitle}
+                {airportSet !== null ? selectionTitle : regionTitle}
               </div>
               <div
                 style={{
@@ -1234,12 +1378,7 @@ export default function App() {
                   textShadow: "0 1px 8px rgba(0,0,0,0.5)",
                 }}
               >
-                {(() => {
-                  const info = getAirportInfo(selectedAirport);
-                  return info
-                    ? `${info.name} / ${info.iata} / ${selectedAirport}`
-                    : selectedAirport;
-                })()}
+                {selectionCodeLabel}
               </div>
               <div
                 style={{
@@ -1511,6 +1650,7 @@ export default function App() {
               setDataSource(scene.dataSource);
               setScope(scene.scope);
               if (scene.airport) selectAirportSingle(scene.airport);
+              else exitSetMode();
               if (scene.opacity != null) setStaticOpacity(scene.opacity);
               // 把 scene 的舊 aircraftFilter 翻譯成 multi-select set
               setFlightFilters((prev) => ({
@@ -1540,12 +1680,13 @@ export default function App() {
             }}
             availableDates={availableDates}
             fullDates={fullDates}
-            dateCounts={airportDateCounts ?? undefined}
+            dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
             selectedDate={timeline.selectedDate}
             onDateSelect={timeline.setSelectedDate}
-            summaryFlights={displayedFlights}
+            summaryFlights={finalFlights}
             rangeDays={timeline.rangeDays}
             onStatsClick={() => setShowStats(true)}
+            onCaptureClick={() => setCaptureMode(true)}
             onInfoClick={() => setShowInfo(true)}
             showTerminator={showTerminator}
             onTerminatorChange={setShowTerminator}
@@ -1607,34 +1748,39 @@ export default function App() {
             }}
           >
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: 18,
-                  color: isDarkTheme ? "#fff" : "#333",
-                  fontFamily: "monospace",
-                  letterSpacing: 2,
-                }}
-              >
-                {regionTitle}
-              </h1>
-              {airportSet && (
-                <div
+              <div style={{ minWidth: 210 }}>
+                <div style={{ fontSize: 9, color: "#64aaff", fontFamily: "monospace", letterSpacing: 1.8 }}>
+                  {selectionEyebrow}
+                </div>
+                <h1
                   style={{
-                    padding: "4px 8px 4px 10px",
-                    background: isDarkTheme ? "rgba(100,170,255,0.18)" : "rgba(59,130,246,0.12)",
-                    border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.45)" : "#3B82F6"}`,
-                    borderRadius: 14,
-                    fontSize: 12,
+                    margin: "2px 0 0",
+                    fontSize: 26,
+                    color: isDarkTheme ? "#fff" : "#333",
                     fontFamily: "monospace",
-                    color: isDarkTheme ? "#fff" : "#1a1a1a",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
+                    letterSpacing: 0.5,
                   }}
-                  title={airportSet.join(", ")}
                 >
-                  <span>🔗 {setName ?? "Custom"} ({airportSet.length} 座 · {finalFlights.length} flights)</span>
+                  {selectionTitle}
+                </h1>
+              </div>
+              <div
+                style={{
+                  padding: "4px 8px 4px 10px",
+                  background: isDarkTheme ? "rgba(100,170,255,0.14)" : "rgba(59,130,246,0.1)",
+                  border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.36)" : "#3B82F6"}`,
+                  borderRadius: 14,
+                  fontSize: 10,
+                  fontFamily: "monospace",
+                  color: isDarkTheme ? "rgba(255,255,255,0.78)" : "#1a1a1a",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                }}
+                title={airportSet?.join(", ") ?? selectedAirport}
+              >
+                <span>{airportSet?.length ?? 1} airport{(airportSet?.length ?? 1) === 1 ? "" : "s"} · {finalFlights.length} flights · {timeline.selectedDate}</span>
+                {airportSet && (
                   <button
                     onClick={exitSetMode}
                     style={{
@@ -1650,8 +1796,8 @@ export default function App() {
                   >
                     ✕
                   </button>
-                </div>
-              )}
+                )}
+              </div>
               <DataSourceToggle
                 dataSource={dataSource}
                 hasFused={hasFused}
@@ -1664,8 +1810,8 @@ export default function App() {
                 onChange={setDepArrFilter}
               />
             </div>
-            {/* Region Pills */}
-            <div style={{ display: "flex", gap: 4 }}>
+            {/* Region shortcuts only appear while explicitly browsing a region. */}
+            {scope === "region" && airportSet === null && <div style={{ display: "flex", gap: 4 }}>
               {(["TW", "JP", "HK", "KR", "TH", "US", "UK", "CN", "world", "all"] as Region[]).map((r) => {
                 const isActive = region === r;
                 return (
@@ -1699,7 +1845,7 @@ export default function App() {
                   </button>
                 );
               })}
-            </div>
+            </div>}
           </div>
 
           {/* 時間軸 */}
@@ -1714,7 +1860,7 @@ export default function App() {
             rangeDays={timeline.rangeDays}
             availableDates={availableDates}
             fullDates={fullDates}
-            dateCounts={airportDateCounts ?? undefined}
+            dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
             selectedDates={timeline.selectedDates}
             isMultiDateMode={timeline.isMultiDateMode}
             isDarkTheme={isDarkTheme}
@@ -1726,6 +1872,20 @@ export default function App() {
             onRangeDaysChange={timeline.setRangeDays}
             onToggleMultiDate={timeline.toggleMultiDate}
             onClearMultiDates={timeline.clearMultiDates}
+          />
+
+          <OrientationOrb
+            bearing={cameraInfo.bearing}
+            pitch={cameraInfo.pitch}
+            isDarkTheme={isDarkTheme}
+            avoidAirspaceCard={airspaceSelection !== null}
+            onReset={() => {
+              mapRef.current?.easeTo({
+                bearing: 0,
+                pitch: 0,
+                duration: 800,
+              });
+            }}
           />
 
           {/* 右上角按鈕群 */}
@@ -1806,7 +1966,9 @@ export default function App() {
                 letterSpacing: 0.5,
               }}
             >
-              Right-drag to rotate · Scroll to zoom
+              {cameraInfo.zoom < 3
+                ? "Drag globe · Scroll to zoom"
+                : "Right-drag to rotate · Scroll to zoom"}
             </div>
           </div>
 
@@ -1828,7 +1990,9 @@ export default function App() {
           >
             <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: "monospace" }}>
               {finalFlights.length} flights
-              {scope === "region" && ` (${REGION_CONFIG[region].label})`}
+              {airportSet !== null
+                ? ` (${setName ?? `${airportSet.length} airports`})`
+                : scope === "region" && ` (${REGION_CONFIG[region].label})`}
               {loadingProgress && ` · loading ${loadingProgress.loaded}...`}
               {` · ${timeline.selectedDate}`}
               {timeline.rangeDays > 1 && ` +${timeline.rangeDays - 1}d`}
@@ -1966,7 +2130,7 @@ export default function App() {
               rangeDays={timeline.rangeDays}
               availableDates={availableDates}
               fullDates={fullDates}
-              dateCounts={airportDateCounts ?? undefined}
+              dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
               selectedDates={timeline.selectedDates}
               isMultiDateMode={timeline.isMultiDateMode}
               isDarkTheme={true}

@@ -4,6 +4,7 @@ import type { Flight } from "../types";
 const SOURCE_ID = "static-trails";
 const LAYER_ID = "static-trails-line";
 const GLOW_LAYER_ID = "static-trails-glow";
+const EMPTY_GEOJSON: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
 
 /**
  * 將 fr24_id hash 成 0~1 的穩定值
@@ -92,8 +93,6 @@ export function updateStaticTrails(
   background = false,
   compareColorMap?: Map<string, string>,
 ) {
-  const geojson = flightsToGeoJSON(flights, isDark, compareColorMap);
-
   const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
 
   const scale = background ? 0 : 1.0;
@@ -101,7 +100,9 @@ export function updateStaticTrails(
   const glowOpacity = (isDark ? 0.08 : 0.15) * scale;
 
   if (source) {
-    source.setData(geojson);
+    // 目前 3D 全程由 Three.js 畫軌跡，calc2dTrailOpacity 也固定為 0。
+    // 清空 Mapbox source 避免同一批完整 path 同時佔用兩套 GPU/JS buffers。
+    source.setData(background ? EMPTY_GEOJSON : flightsToGeoJSON(flights, isDark, compareColorMap));
     if (map.getLayer(LAYER_ID)) {
       map.setPaintProperty(LAYER_ID, "line-opacity", lineOpacity);
     }
@@ -109,6 +110,7 @@ export function updateStaticTrails(
       map.setPaintProperty(GLOW_LAYER_ID, "line-opacity", glowOpacity);
     }
   } else {
+    const geojson = background ? EMPTY_GEOJSON : flightsToGeoJSON(flights, isDark, compareColorMap);
     map.addSource(SOURCE_ID, {
       type: "geojson",
       data: geojson,
