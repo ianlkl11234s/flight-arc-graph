@@ -2996,7 +2996,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         </RailIcon>
 
         <RailIcon
-          active={activeWorkspace === "selection" || props.airportSet !== null}
+          active={activeWorkspace === "selection"}
           onClick={() => toggleWorkspace("selection")}
           title="選擇機場與日期"
           theme={theme}
@@ -3014,7 +3014,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         </RailIcon>
 
         <RailIcon
-          active={activeWorkspace === "analyze" || props.analysisColorBy !== "none"}
+          active={activeWorkspace === "analyze"}
           onClick={() => toggleWorkspace("analyze")}
           title="分析航班"
           theme={theme}

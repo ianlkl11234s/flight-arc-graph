@@ -105,15 +105,61 @@ export function preprocessFlights(flights: Flight[]): Flight[] {
 let cachedTracks: Flight[] | null = null;
 let cachedAirspace: Flight[] | null = null;
 
-/** 按機場快取的軌跡（全解析度，LRU 上限 AIRPORT_CACHE_MAX 座） */
+export interface FlightLoadOptions {
+  /** 只載入這些台灣日期；未提供時維持完整檔案行為。 */
+  dates?: readonly string[];
+  signal?: AbortSignal;
+}
+
+/** 按機場／日期快取的軌跡（全解析度，LRU + path 點數上限） */
 const airportCache = new Map<string, Flight[]>();
 /** 按 region 快取的 LOD 軌跡（LRU 上限 REGION_CACHE_MAX 個） */
 const regionCache = new Map<string, Flight[]>();
 
-// LRU 治理：快取只增不減會撐爆記憶體，逐出後重新 fetch 即可。
-// 單機場一次看一座（保留最近造訪的 50 座）；region LOD 只有 ~10 種（保留 6 個）。
-const AIRPORT_CACHE_MAX = 50;
-const REGION_CACHE_MAX = 6;
+// LRU + 點數治理：逐出後重新 fetch 即可，避免切換機場／日期時只看 entry 數仍撐爆記憶體。
+const AIRPORT_CACHE_MAX = 24;
+const AIRPORT_CACHE_MAX_POINTS = 1_000_000;
+const REGION_CACHE_MAX = 4;
+const REGION_CACHE_MAX_POINTS = 500_000;
+
+interface CacheBudget {
+  points: number;
+  pointsByKey: Map<string, number>;
+}
+
+function flightPointCount(flights: Flight[]): number {
+  let total = 0;
+  for (const flight of flights) total += flight.path.length;
+  return total;
+}
+
+function boundedSet(
+  cache: Map<string, Flight[]>,
+  budget: CacheBudget,
+  key: string,
+  value: Flight[],
+  maxEntries: number,
+  maxPoints: number,
+): void {
+  const previous = budget.pointsByKey.get(key);
+  if (previous !== undefined) budget.points -= previous;
+  cache.delete(key);
+  const points = flightPointCount(value);
+  cache.set(key, value);
+  budget.pointsByKey.set(key, points);
+  budget.points += points;
+
+  while (cache.size > maxEntries || budget.points > maxPoints) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
+    budget.points -= budget.pointsByKey.get(oldest) ?? 0;
+    budget.pointsByKey.delete(oldest);
+  }
+}
+
+const airportCacheBudget: CacheBudget = { points: 0, pointsByKey: new Map() };
+const regionCacheBudget: CacheBudget = { points: 0, pointsByKey: new Map() };
 
 /** 命中時把 key 移到最近使用端（Map 以插入序為 LRU 序） */
 function lruTouch<V>(cache: Map<string, V>, key: string): V | undefined {
@@ -126,14 +172,29 @@ function lruTouch<V>(cache: Map<string, V>, key: string): V | undefined {
 }
 
 /** 寫入後逐出最舊的 key 直到不超過上限 */
-function lruSet<V>(cache: Map<string, V>, key: string, value: V, max: number): void {
-  cache.delete(key);
-  cache.set(key, value);
-  while (cache.size > max) {
-    const oldest = cache.keys().next().value;
-    if (oldest === undefined) break;
-    cache.delete(oldest);
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new DOMException("The operation was aborted", "AbortError");
   }
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
+function normalizeDates(dates?: readonly string[]): string[] {
+  return [...new Set((dates ?? []).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)))].sort();
+}
+
+function datesKey(dates?: readonly string[]): string {
+  const normalized = normalizeDates(dates);
+  return normalized.length > 0 ? normalized.join(",") : "all";
+}
+
+function flightDateTW(flight: Flight): string | null {
+  const timestamp = flight.dep_time || flight.path[0]?.[3];
+  if (!timestamp || timestamp <= 1e9) return null;
+  return new Date(timestamp * 1000 + 8 * 3600_000).toISOString().slice(0, 10);
 }
 
 const S3_BASE =
@@ -208,6 +269,13 @@ export interface AirportManifestEntry {
   dates?: Record<string, number>;
   /** 抓「滿」的日期（done ≥ 50 且完成度 ≥ 80%） */
   fullDates?: string[];
+  /** 日期分片目錄；存在且涵蓋所選日期時優先讀取。 */
+  dailyFiles?: Record<string, {
+    path: string;
+    flights: number;
+    bytes: number;
+    gzipBytes?: number;
+  }>;
 }
 
 interface TrackManifest {
@@ -246,25 +314,31 @@ export function isAirportCore(manifest: TrackManifest, icao: string): boolean {
 }
 
 let cachedManifest: TrackManifest | null = null;
+let cachedManifestPromise: Promise<TrackManifest> | null = null;
 
 /** 載入 tracks manifest（機場列表 + 檔案大小） */
 export async function loadManifest(): Promise<TrackManifest> {
   if (cachedManifest) return cachedManifest;
-  for (const path of ["/data/tracks/manifest.json", "/tracks/manifest.json"]) {
-    try {
-      const res = await fetch(path);
-      if (!res.ok) continue;
-      const text = await res.text();
-      if (text.trimStart().startsWith("<")) continue;
-      cachedManifest = JSON.parse(text);
-      console.log(`[Loader] Manifest: ${Object.keys(cachedManifest!.airports).length} airports`);
-      return cachedManifest!;
-    } catch {
-      continue;
-    }
+  if (!cachedManifestPromise) {
+    cachedManifestPromise = (async () => {
+      for (const path of ["/data/tracks/manifest.json", "/tracks/manifest.json"]) {
+        try {
+          const res = await fetch(path);
+          if (!res.ok) continue;
+          const text = await res.text();
+          if (text.trimStart().startsWith("<")) continue;
+          cachedManifest = JSON.parse(text);
+          console.log(`[Loader] Manifest: ${Object.keys(cachedManifest!.airports).length} airports`);
+          return cachedManifest!;
+        } catch {
+          continue;
+        }
+      }
+      cachedManifest = { airports: {}, regions: {}, totalFlights: 0 };
+      return cachedManifest;
+    })();
   }
-  cachedManifest = { airports: {}, regions: {}, totalFlights: 0 };
-  return cachedManifest;
+  return cachedManifestPromise;
 }
 
 /** 從 manifest 取得所有機場 ICAO */
@@ -280,19 +354,23 @@ export function getManifestAirports(manifest: TrackManifest): string[] {
  */
 async function streamLoadJsonl(
   url: string,
-  onBatch?: (flights: Flight[], total: number) => void,
+  onProgress?: (total: number) => void,
+  options?: FlightLoadOptions,
 ): Promise<Flight[]> {
-  const res = await fetch(url);
+  throwIfAborted(options?.signal);
+  const res = await fetch(url, { signal: options?.signal });
   if (!res.ok || !res.body) return [];
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   const flights: Flight[] = [];
+  const requestedDates = new Set(normalizeDates(options?.dates));
   let buffer = "";
-  let batchBuffer: Flight[] = [];
   const BATCH_SIZE = 30; // 每 30 筆通知一次
+  let sinceProgress = 0;
 
   while (true) {
+    throwIfAborted(options?.signal);
     const { done, value } = await reader.read();
     if (done) break;
 
@@ -305,18 +383,18 @@ async function streamLoadJsonl(
       if (!trimmed) continue;
       try {
         const f = preprocessFlight(JSON.parse(trimmed) as Flight);
-        if (f.path.length > 0) {
+        if (f.path.length > 0 && (requestedDates.size === 0 || requestedDates.has(flightDateTW(f) ?? ""))) {
           flights.push(f);
-          batchBuffer.push(f);
+          sinceProgress++;
         }
       } catch {
         // 略過無效行
       }
     }
 
-    if (batchBuffer.length >= BATCH_SIZE && onBatch) {
-      onBatch([...flights], flights.length);
-      batchBuffer = [];
+    if (sinceProgress >= BATCH_SIZE && onProgress) {
+      onProgress(flights.length);
+      sinceProgress = 0;
     }
   }
 
@@ -324,56 +402,127 @@ async function streamLoadJsonl(
   if (buffer.trim()) {
     try {
       const f = preprocessFlight(JSON.parse(buffer) as Flight);
-      if (f.path.length > 0) flights.push(f);
+      if (f.path.length > 0 && (requestedDates.size === 0 || requestedDates.has(flightDateTW(f) ?? ""))) flights.push(f);
     } catch {
       // ignore
     }
   }
 
-  if (onBatch) onBatch([...flights], flights.length);
+  if (onProgress) onProgress(flights.length);
   return flights;
 }
 
 /**
- * 載入單一機場的完整軌跡（串流 + 漸進式）
+ * 將 manifest 的相對路徑展開成 local → S3 fallback 順序。
+ * dailyFiles 可能記錄 tracks/...、airports/... 或 /data/...，皆兼容。
+ */
+function assetCandidates(path: string, source: "tracks" | "airspace"): string[] {
+  if (/^https?:\/\//.test(path)) return [path];
+  const normalized = path.replace(/^\/+/, "");
+  const withoutData = normalized.replace(/^data\//, "");
+  const withoutTracks = withoutData.replace(/^tracks\//, "");
+  const localRelative = source === "tracks" ? `tracks/${withoutTracks}` : `airspace/${withoutTracks}`;
+  return [...new Set([
+    `/data/${localRelative}`,
+    `/${localRelative}`,
+    `/${normalized}`,
+    `${S3_BASE}/${localRelative}`,
+  ])];
+}
+
+async function streamFirstAvailable(
+  urls: readonly string[],
+  onProgress?: (total: number) => void,
+  options?: FlightLoadOptions,
+): Promise<Flight[]> {
+  for (const url of urls) {
+    throwIfAborted(options?.signal);
+    try {
+      const flights = await streamLoadJsonl(url, onProgress, options);
+      if (flights.length > 0) return flights;
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+    }
+  }
+  return [];
+}
+
+/**
+ * 載入單一機場軌跡：有 dailyFiles 時優先讀日期分片，否則串流 flat 檔並只保留指定日期。
  */
 export async function loadAirportFlights(
   icao: string,
-  onProgress?: (flights: Flight[], total: number) => void,
+  onProgress?: (total: number) => void,
+  options?: FlightLoadOptions,
 ): Promise<Flight[]> {
-  const hit = lruTouch(airportCache, icao);
+  const dates = normalizeDates(options?.dates);
+  const cacheKey = `${icao}|${datesKey(dates)}`;
+  const hit = lruTouch(airportCache, cacheKey);
   if (hit) {
-    if (onProgress) onProgress(hit, hit.length);
+    onProgress?.(hit.length);
     return hit;
   }
 
-  // 嘗試 Zeabur /data volume → 本地 public/ → S3
-  const paths = [
-    `/data/tracks/airports/${icao}.jsonl`,
-    `/tracks/airports/${icao}.jsonl`,
-  ];
+  throwIfAborted(options?.signal);
   console.log(`[Loader] Airport ${icao}: streaming...`);
 
   let flights: Flight[] = [];
-  for (const url of paths) {
-    flights = await streamLoadJsonl(url, onProgress);
-    if (flights.length > 0) break;
+  if (dates.length > 0) {
+    const manifest = await loadManifest();
+    const dailyFiles = manifest.airports[icao]?.dailyFiles;
+    const shardEntries = dates.map((date) => dailyFiles?.[date]).filter(
+      (entry): entry is NonNullable<typeof entry> => Boolean(entry),
+    );
+    // 只有完整涵蓋 requested dates 才採用 shard；缺任何一天就回 flat，避免靜默漏資料。
+    if (shardEntries.length === dates.length) {
+      console.log(`[Loader] Airport ${icao}: ${dates.length} daily shard${dates.length === 1 ? "" : "s"}`);
+      const shardResults: Flight[] = [];
+      let completedFlights = 0;
+      for (const entry of shardEntries) {
+        const shard = await streamFirstAvailable(
+          assetCandidates(entry.path, "tracks"),
+          (total) => onProgress?.(completedFlights + total),
+          options,
+        );
+        if (shard.length === 0) {
+          shardResults.length = 0;
+          break;
+        }
+        shardResults.push(...shard);
+        completedFlights += shard.length;
+      }
+      flights = shardResults;
+    }
   }
+
+  if (flights.length === 0) {
+    console.log(`[Loader] Airport ${icao}: flat fallback${dates.length > 0 ? " with date filter" : ""}`);
+    // flat fallback 仍以串流方式讀取，只保留 requested dates，避免整份資料進入 state/cache。
+    flights = await streamFirstAvailable(
+      [
+        `/data/tracks/airports/${icao}.jsonl`,
+        `/tracks/airports/${icao}.jsonl`,
+        `${S3_BASE}/tracks/airports/${icao}.jsonl`,
+      ],
+      onProgress,
+      { ...options, dates: dates.length > 0 ? dates : undefined },
+    );
+  }
+
   console.log(`[Loader] Airport ${icao}: ${flights.length} flights`);
-  lruSet(airportCache, icao, flights, AIRPORT_CACHE_MAX);
+  boundedSet(airportCache, airportCacheBudget, cacheKey, flights, AIRPORT_CACHE_MAX, AIRPORT_CACHE_MAX_POINTS);
   return flights;
 }
 
 /**
  * 載入任意機場組合的完整軌跡（每座機場串流 + 有限並行 + union 去重）。
  *
- * 取消不會中止已開始的單機場 fetch（loadAirportFlights 尚未接受 AbortSignal），
- * 但會停止後續排程，並回傳取消前已完成的 union 結果。
+ * 每座機場按日期載入後 union 去重；AbortSignal 會中止 active fetch 與後續排程。
  */
 export async function loadAirportSelectionFlights(
   icaos: readonly string[],
-  onProgress?: (flights: Flight[], total: number) => void,
-  isCancelled?: () => boolean,
+  onProgress?: (total: number) => void,
+  options?: FlightLoadOptions,
 ): Promise<Flight[]> {
   const selection = [...new Set(
     icaos
@@ -384,29 +533,29 @@ export async function loadAirportSelectionFlights(
   const seen = new Set<string>();
 
   if (selection.length === 0) {
-    onProgress?.([], 0);
+    onProgress?.(0);
     return accumulated;
   }
 
-  onProgress?.([], 0);
+  onProgress?.(0);
 
   // 每座機場檔案可能很大；限制並行避免同時壓垮瀏覽器連線與記憶體。
   const concurrency = Math.min(4, selection.length);
   let nextIndex = 0;
 
   const loadNext = async (): Promise<void> => {
-    while (!isCancelled?.()) {
+    while (!options?.signal?.aborted) {
       const index = nextIndex++;
       if (index >= selection.length) return;
 
-      const flights = await loadAirportFlights(selection[index]!);
-      if (isCancelled?.()) return;
+      const flights = await loadAirportFlights(selection[index]!, undefined, options);
+      throwIfAborted(options?.signal);
       for (const flight of flights) {
         if (seen.has(flight.fr24_id)) continue;
         seen.add(flight.fr24_id);
         accumulated.push(flight);
       }
-      onProgress?.([...accumulated], accumulated.length);
+      onProgress?.(accumulated.length);
     }
   };
 
@@ -421,28 +570,30 @@ export async function loadAirportSelectionFlights(
  */
 export async function loadRegionFlights(
   region: string,
-  onProgress?: (flights: Flight[], total: number) => void,
+  onProgress?: (total: number) => void,
+  options?: FlightLoadOptions,
 ): Promise<Flight[]> {
-  const hit = lruTouch(regionCache, region);
+  const dates = normalizeDates(options?.dates);
+  const cacheKey = `${region}|${datesKey(dates)}`;
+  const hit = lruTouch(regionCache, cacheKey);
   if (hit) {
-    if (onProgress) onProgress(hit, hit.length);
+    onProgress?.(hit.length);
     return hit;
   }
 
+  throwIfAborted(options?.signal);
   const paths = [
     `/data/tracks/regions/${region}.jsonl`,
     `/tracks/regions/${region}.jsonl`,
   ];
   console.log(`[Loader] Region ${region}: streaming...`);
 
-  let flights: Flight[] = [];
-  for (const url of paths) {
-    flights = await streamLoadJsonl(url, onProgress);
-    if (flights.length > 0) break;
-  }
+  const flights = await streamFirstAvailable(paths, onProgress, options);
   console.log(`[Loader] Region ${region}: ${flights.length} flights`);
   // 只有真的載到才寫快取，避免 LOD 檔缺失時（過渡期）把空陣列黏在快取裡擋 fallback
-  if (flights.length > 0) lruSet(regionCache, region, flights, REGION_CACHE_MAX);
+  if (flights.length > 0) {
+    boundedSet(regionCache, regionCacheBudget, cacheKey, flights, REGION_CACHE_MAX, REGION_CACHE_MAX_POINTS);
+  }
   return flights;
 }
 
@@ -478,12 +629,12 @@ function icaoMatchesRegion(icao: string, region: string): boolean {
  */
 export async function loadRegionFullFlights(
   region: string,
-  onProgress?: (flights: Flight[], total: number) => void,
-  abortCheck?: () => boolean,
+  onProgress?: (total: number) => void,
+  options?: FlightLoadOptions,
 ): Promise<Flight[]> {
   // ── LOD 前置路徑 ──
   const lodName = region === "all" || region === "world" ? "all" : region;
-  const lod = await loadRegionFlights(lodName, onProgress);
+  const lod = await loadRegionFlights(lodName, onProgress, options);
   if (lod.length > 0) return lod;
 
   // ── Fallback：逐機場合併全解析度（LOD 檔還沒上 S3 的過渡期）──
@@ -505,11 +656,10 @@ export async function loadRegionFullFlights(
 
   const seen = new Set<string>();
   const accumulated: Flight[] = [];
-
   for (const icao of airportIcaos) {
-    if (abortCheck?.()) return accumulated;
+    throwIfAborted(options?.signal);
 
-    const airportFlights = await loadAirportFlights(icao);
+    const airportFlights = await loadAirportFlights(icao, undefined, options);
     // 去重
     for (const f of airportFlights) {
       if (!seen.has(f.fr24_id)) {
@@ -518,7 +668,7 @@ export async function loadRegionFullFlights(
       }
     }
 
-    if (onProgress) onProgress([...accumulated], accumulated.length);
+    onProgress?.(accumulated.length);
   }
 
   return accumulated;
@@ -531,49 +681,63 @@ interface AirspaceManifest {
 }
 
 let airspaceManifest: AirspaceManifest | null = null;
+let airspaceManifestPromise: Promise<AirspaceManifest> | null = null;
 const airspaceDayCache = new Map<string, Flight[]>();
+const airspaceDayCacheBudget: CacheBudget = { points: 0, pointsByKey: new Map() };
+const AIRSPACE_DAY_CACHE_MAX = 14;
+const AIRSPACE_DAY_CACHE_MAX_POINTS = 600_000;
 
 /** 載入 airspace manifest（可用日期列表） */
 export async function loadAirspaceManifest(): Promise<AirspaceManifest> {
   if (airspaceManifest) return airspaceManifest;
-  for (const path of ["/data/airspace/manifest.json", "/airspace/manifest.json"]) {
-    try {
-      const res = await fetch(path);
-      if (!res.ok) continue;
-      const text = await res.text();
-      if (text.trimStart().startsWith("<")) continue;
-      airspaceManifest = JSON.parse(text);
-      console.log(`[Loader] Airspace manifest: ${airspaceManifest!.dates.length} dates`);
-      return airspaceManifest!;
-    } catch { continue; }
+  if (!airspaceManifestPromise) {
+    airspaceManifestPromise = (async () => {
+      for (const path of ["/data/airspace/manifest.json", "/airspace/manifest.json"]) {
+        try {
+          const res = await fetch(path);
+          if (!res.ok) continue;
+          const text = await res.text();
+          if (text.trimStart().startsWith("<")) continue;
+          airspaceManifest = JSON.parse(text);
+          console.log(`[Loader] Airspace manifest: ${airspaceManifest!.dates.length} dates`);
+          return airspaceManifest!;
+        } catch { continue; }
+      }
+      airspaceManifest = { dates: [] };
+      return airspaceManifest;
+    })();
   }
-  airspaceManifest = { dates: [] };
-  return airspaceManifest;
+  return airspaceManifestPromise;
 }
 
 /** 載入指定日期的 airspace 資料 */
-async function loadAirspaceDay(date: string): Promise<Flight[]> {
-  if (airspaceDayCache.has(date)) return airspaceDayCache.get(date)!;
+async function loadAirspaceDay(date: string, options?: FlightLoadOptions): Promise<Flight[]> {
+  const hit = lruTouch(airspaceDayCache, date);
+  if (hit) return hit;
+  throwIfAborted(options?.signal);
 
   // 嘗試 Zeabur /data → 本地 public/
   for (const url of [`/data/airspace/days/${date}.jsonl`, `/airspace/days/${date}.jsonl`]) {
-    const flights = await streamLoadJsonl(url);
+    const flights = await streamLoadJsonl(url, undefined, options);
     if (flights.length > 0) {
-      airspaceDayCache.set(date, flights);
+      boundedSet(airspaceDayCache, airspaceDayCacheBudget, date, flights, AIRSPACE_DAY_CACHE_MAX, AIRSPACE_DAY_CACHE_MAX_POINTS);
       return flights;
     }
   }
 
   // fallback: 嘗試 S3
   try {
+    throwIfAborted(options?.signal);
     const [y, m, d] = date.split("-");
-    const res = await fetch(`${S3_BASE}/airspace/${y}/${m}/${d}/data.json`);
+    const res = await fetch(`${S3_BASE}/airspace/${y}/${m}/${d}/data.json`, { signal: options?.signal });
     if (res.ok) {
       const data = preprocessFlights(await res.json());
-      airspaceDayCache.set(date, data);
+      boundedSet(airspaceDayCache, airspaceDayCacheBudget, date, data, AIRSPACE_DAY_CACHE_MAX, AIRSPACE_DAY_CACHE_MAX_POINTS);
       return data;
     }
-  } catch { /* ignore */ }
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+  }
 
   return [];
 }
@@ -585,15 +749,17 @@ async function loadAirspaceDay(date: string): Promise<Flight[]> {
  */
 export async function loadAirspaceDays(
   dates: string[],
-  onProgress?: (flights: Flight[], total: number) => void,
+  onProgress?: (total: number) => void,
+  options?: FlightLoadOptions,
 ): Promise<Flight[]> {
   const all: Flight[] = [];
   for (const date of dates) {
-    const dayFlights = await loadAirspaceDay(date);
+    throwIfAborted(options?.signal);
+    const dayFlights = await loadAirspaceDay(date, options);
     all.push(...dayFlights);
-    if (onProgress) onProgress([...all], all.length);
+    onProgress?.(all.length);
   }
-  cachedAirspace = all;
+  throwIfAborted(options?.signal);
   return all;
 }
 

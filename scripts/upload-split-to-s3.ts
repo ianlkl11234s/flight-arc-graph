@@ -1,6 +1,7 @@
 /**
  * upload-split-to-s3.ts
- * 上傳分拆後的 tracks/airports/*.jsonl + tracks/regions/*.jsonl + manifest 到 S3
+ * 上傳分拆後的 tracks/airports/ 底下所有 JSONL（flat fallback + daily shards）、
+ * tracks/regions/*.jsonl + manifest 到 S3
  *
  * **增量上傳**：對照 scripts/upload-state.json 的 mtime，只上傳本地檔案
  * 修改時間晚於上次上傳的檔案。manifest / regions / airspace manifest 永遠重傳。
@@ -17,7 +18,7 @@ import {
   statSync,
   writeFileSync,
 } from "fs";
-import { resolve, dirname } from "path";
+import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import "dotenv/config";
@@ -98,6 +99,21 @@ async function uploadAlways(localPath: string, s3Key: string) {
   await rawUpload(localPath, s3Key);
 }
 
+/** airports 目錄含 {ICAO}.jsonl 與 {ICAO}/{YYYY-MM-DD}.jsonl，需遞迴保留相對路徑。 */
+function listJsonlFiles(dir: string, prefix = ""): { localPath: string; relativePath: string }[] {
+  const files: { localPath: string; relativePath: string }[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const localPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...listJsonlFiles(localPath, relativePath));
+    } else if (entry.isFile() && entry.name.endsWith(".jsonl")) {
+      files.push({ localPath, relativePath });
+    }
+  }
+  return files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+}
+
 // ── Main ───────────────────────────────────────────────
 
 async function main() {
@@ -109,27 +125,18 @@ async function main() {
     console.log("⚠️  --force: 全部重傳，忽略 upload-state.json\n");
   }
 
-  // 1. tracks/manifest.json — 一定重傳
-  console.log("=== Tracks Manifest ===");
-  await uploadAlways(
-    resolve(tracksDir, "manifest.json"),
-    `${S3_PREFIX}/tracks/manifest.json`,
-  );
-
-  // 2. tracks/airports/*.jsonl — 增量
+  // 1. tracks/airports/**/*.jsonl（flat fallback + daily shards）— 增量
   const airportsDir = resolve(tracksDir, "airports");
   if (existsSync(airportsDir)) {
-    const files = readdirSync(airportsDir)
-      .filter((f) => f.endsWith(".jsonl"))
-      .sort();
+    const files = listJsonlFiles(airportsDir);
     console.log(`\n=== Tracks Airports (${files.length} files, incremental) ===`);
     const startUploaded = uploaded;
     const startSkipped = skipped;
     for (let i = 0; i < files.length; i++) {
       const file = files[i]!;
       await uploadIfChanged(
-        resolve(airportsDir, file),
-        `${S3_PREFIX}/tracks/airports/${file}`,
+        file.localPath,
+        `${S3_PREFIX}/tracks/airports/${file.relativePath}`,
       );
       // 每處理 200 個檔印一次進度
       if ((i + 1) % 200 === 0) {
@@ -143,7 +150,7 @@ async function main() {
     console.log(`  ✓ done: uploaded=${u} skipped=${s}`);
   }
 
-  // 3. tracks/regions/*.jsonl — 一定重傳（split-tracks 每次重產）
+  // 2. tracks/regions/*.jsonl — 一定重傳（split-tracks 每次重產）
   const regionsDir = resolve(tracksDir, "regions");
   if (existsSync(regionsDir)) {
     const files = readdirSync(regionsDir)
@@ -159,14 +166,17 @@ async function main() {
     }
   }
 
-  // 4. airspace — 增量
+  // 3. manifest 最後發布：先確保所有新 daily / region object 已存在，
+  // 避免線上 client 在上傳窗口讀到新 metadata 卻命中舊 shard。
+  console.log("\n=== Tracks Manifest (publish last) ===");
+  await uploadAlways(
+    resolve(tracksDir, "manifest.json"),
+    `${S3_PREFIX}/tracks/manifest.json`,
+  );
+
+  // 4. airspace — 日檔先上傳，manifest 同樣最後發布
   if (existsSync(resolve(airspaceDir, "manifest.json"))) {
     console.log("\n=== Airspace ===");
-    await uploadAlways(
-      resolve(airspaceDir, "manifest.json"),
-      `${S3_PREFIX}/airspace/manifest.json`,
-    );
-
     const daysDir = resolve(airspaceDir, "days");
     if (existsSync(daysDir)) {
       const files = readdirSync(daysDir)
@@ -184,6 +194,10 @@ async function main() {
         `  airspace days: uploaded=${uploaded - startUploaded} skipped=${skipped - startSkipped}`,
       );
     }
+    await uploadAlways(
+      resolve(airspaceDir, "manifest.json"),
+      `${S3_PREFIX}/airspace/manifest.json`,
+    );
   }
 
   // Save state

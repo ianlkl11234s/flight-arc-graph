@@ -238,9 +238,10 @@ export default function App() {
   const [airportSet, setAirportSet] = useState<string[] | null>(null);
   const [setName, setSetName] = useState<string | null>(null);
 
-  // airspace 日期追蹤（避免與 timeline 循環依賴）
-  const [airspaceDate, setAirspaceDate] = useState<string | undefined>();
+  // 與 timeline 解耦的 loader 日期快照；初始主資料日先走日期 shard／日期篩選。
+  const [airspaceDate, setAirspaceDate] = useState<string | undefined>("2026-02-18");
   const [airspaceRangeDays, setAirspaceRangeDays] = useState(1);
+  const [airspaceSelectedDates, setAirspaceSelectedDates] = useState<string[]>([]);
 
   const {
     allFlights,
@@ -261,6 +262,7 @@ export default function App() {
     airspaceDate,
     airspaceRangeDays,
     airportSet,
+    airspaceSelectedDates,
   );
 
   // 機場 metadata（座標/名稱/國家，含無 preset 的長尾機場）— 一次性載入，失敗回空物件
@@ -656,13 +658,14 @@ export default function App() {
     );
   }, [recorder, cinema.keyframes, cinema.loop, cinema.pingpong, getOverlay]);
 
-  // 同步 timeline 日期給 airspace 載入
+  // 同步 timeline 日期給 loader；航線模式也使用同一份日期快照，避免初始先載 flat 全量。
   useEffect(() => {
-    if (dataSource === "fused") {
-      setAirspaceDate(timeline.selectedDate);
-      setAirspaceRangeDays(timeline.rangeDays);
-    }
-  }, [dataSource, timeline.selectedDate, timeline.rangeDays]);
+    // availableDates 尚未建立時 useTimeline 會暫時使用今天，不能因此觸發第二次全檔 fallback。
+    if (availableDates.length === 0 || !availableDates.includes(timeline.selectedDate)) return;
+    setAirspaceDate(timeline.selectedDate);
+    setAirspaceRangeDays(timeline.rangeDays);
+    setAirspaceSelectedDates(timeline.selectedDates);
+  }, [availableDates, timeline.selectedDate, timeline.rangeDays, timeline.selectedDates]);
 
   // Airspace Scan 預設：切換時自動設定 All Taiwan、7d、拉遠視角、低 opacity
   const prevDataSourceRef = useRef(dataSource);
@@ -975,7 +978,7 @@ export default function App() {
     timeline.currentTime, finalFlights, renderMode, altExaggeration, altOffset,
     staticOpacity, trailLineWidth, airportGlow, orbScale, farView, farViewBoost, isDarkTheme, displayMode, timeWindow, trailDisplay,
     atlasGlowVisible, atlasColorMode, atlasGlowSize, viewshedOpacity, viewshedSharpness,
-    colorThemeKey, colorThemeOverride, perFlightColorMap, perFlightScaleMap,
+    colorThemeKey, colorThemeOverride, perFlightColorMap, perFlightScaleMap, airspaceSettings,
   ]);
 
   // 持久化 airspace 設定

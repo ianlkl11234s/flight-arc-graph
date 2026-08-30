@@ -21,7 +21,7 @@ export const COLOR_THEMES: Record<string, ColorTheme> = {
   default: {
     name: "Default",
     trailColors: ["#4d99ff", "#33ccee", "#8066ff", "#4de6b3", "#9980ff"],
-    staticGradient: ["#ffcc80", "#e6a060", "#80bfff"],
+    staticGradient: ["#fbe2bc", "#ffc880", "#80bfff"],
     orbGlow: "#4d99ff",
     mapTrailA: "#ffffff",
     mapTrailB: "#ff8833",

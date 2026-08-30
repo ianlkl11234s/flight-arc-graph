@@ -2,6 +2,7 @@
  * split-tracks.ts
  *
  * 掃描 public/tracks/airports/{ICAO}.jsonl，產出：
+ *   0. public/tracks/airports/{ICAO}/{YYYY-MM-DD}.jsonl — 每日全解析度分檔（保留 flat fallback）
  *   1. public/tracks/regions/{REGION}.jsonl — 每個 region 的 LOD（DP 2km + 40 點上限）版
  *   2. public/tracks/regions/all.jsonl       — 全球 union LOD（world/all scope 用）
  *   3. public/tracks/manifest.json          — 索引檔（airports + regions，regions 含 "all"）
@@ -10,12 +11,14 @@
  *   世界視角肉眼不可辨）；單機場 scope 仍走 airports/{ICAO}.jsonl 全解析度。前端依 scope
  *   在 flightLoader.ts 選層（loadRegionFullFlights → LOD 檔；loadAirportFlights → 全解析度）。
  *
- * 注意：airports/{ICAO}.jsonl 是 fetch-tracks.ts 直接寫入的最終輸出，
- *       本腳本只做 dedupe（排序 + 去重）+ 產生 region + manifest。
+ * 注意：airports/{ICAO}.jsonl 是 fetch-tracks.ts 持續寫入的相容性 fallback。
+ *       預設模式會以它為 canonical source，dedupe 後產生每日分檔、region 與 manifest；
+ *       若 flat 檔不存在，則可從既有 daily shards 重建 manifest / region。
  *
  * manifest.airports 額外欄位（資料目錄，給前端日期選單 / 機場清單分層用）：
  *   - isCore:    是否為主動查詢機場（來源 scripts/core-airports.json，由 build-core-airports.ts 產生）
  *   - dates:     該機場每日（台灣時間 UTC+8）軌跡筆數 { "2026-02-18": 614, ... }
+ *   - dailyFiles: 實際存在且與 canonical 資料一致的每日檔 metadata（可選，供新 loader 漸進採用）
  *   - fullDates: 抓「滿」的日期（core-airports.json 的 fullDates ∩ 實際有軌跡的日期）
  *
  * manifest.regionDates / manifest.regionFullDates：上述 dates/fullDates 依機場 getRegion()
@@ -24,7 +27,7 @@
  * Usage:
  *   npx tsx scripts/split-tracks.ts
  *   npx tsx scripts/split-tracks.ts --dedupe-only     # 只去重 airports/*.jsonl，不動 region
- *   npx tsx scripts/split-tracks.ts --manifest-only   # 只重建 manifest（串流統計、不重寫 region 檔、低記憶體）
+ *   npx tsx scripts/split-tracks.ts --manifest-only   # 只重建 manifest，不重寫 daily / region 檔
  */
 
 import {
@@ -33,6 +36,7 @@ import {
   readdirSync,
   mkdirSync,
   existsSync,
+  renameSync,
 } from "fs";
 import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -146,6 +150,15 @@ interface AirportManifestEntry {
   isCore: boolean;
   dates: Record<string, number>;
   fullDates: string[];
+  dailyFiles?: Record<string, DailyFileMetadata>;
+}
+
+interface DailyFileMetadata {
+  /** 相對於 public/tracks/ 的路徑，供 /data/tracks 與 public/tracks 共用。 */
+  path: string;
+  flights: number;
+  bytes: number;
+  gzipBytes?: number;
 }
 
 function loadCoreAirports(): Map<string, string[]> {
@@ -164,14 +177,17 @@ function toTwDate(depTime: number): string {
   return new Date(depTime * 1000 + 8 * 3600_000).toISOString().slice(0, 10);
 }
 
+function getFlightTwDate(flight: Flight): string | null {
+  // 與前端 App.tsx availableDates 同邏輯，並擋掉 epoch 附近的壞時間戳。
+  const timestamp = flight.dep_time || flight.path[0]?.[3];
+  return timestamp && timestamp >= 1e9 ? toTwDate(timestamp) : null;
+}
+
 function countDates(flights: Flight[]): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const f of flights) {
-    // 與前端 App.tsx availableDates 同邏輯：dep_time 無效時 fallback 到 path 首點時間戳
-    // sanity floor 1e9（2001 年）：擋掉接近 epoch 的壞時間戳（如 path[0][3]=98）
-    const t = f.dep_time || f.path[0]?.[3];
-    if (!t || t < 1e9) continue;
-    const d = toTwDate(t);
+    const d = getFlightTwDate(f);
+    if (!d) continue;
     counts[d] = (counts[d] ?? 0) + 1;
   }
   // 按日期排序輸出，manifest diff 才穩定
@@ -183,18 +199,21 @@ function buildAirportEntry(
   flights: Flight[],
   gzipBytes: number,
   coreAirports: Map<string, string[]>,
+  dailyFiles?: Record<string, DailyFileMetadata>,
 ): AirportManifestEntry {
   const dates = countDates(flights);
   const candidates = coreAirports.get(icao);
   // fullDates 取 candidates ∩ 實際有足量軌跡的日期（防「時刻表抓了、軌跡沒抓」誤標）
   const fullDates = (candidates ?? []).filter((d) => (dates[d] ?? 0) >= 50);
-  return {
+  const entry: AirportManifestEntry = {
     flights: flights.length,
     gzipBytes,
     isCore: coreAirports.has(icao),
     dates,
     fullDates,
   };
+  if (dailyFiles && Object.keys(dailyFiles).length > 0) entry.dailyFiles = dailyFiles;
+  return entry;
 }
 
 // ── 高度單位 sanity（path[i][2] 一律公尺）──
@@ -215,11 +234,12 @@ function checkAltSanity(f: Flight) {
   }
 }
 
-// ── 讀取一個 JSONL 檔，dedupe 並回寫 ──
+// ── Airport source / daily shards ──
 
-function readAndDedupe(icao: string): Flight[] {
-  const path = join(AIRPORTS_DIR, `${icao}.jsonl`);
-  const content = readFileSync(path, "utf-8");
+const ICAO_FILE_RE = /^[A-Z0-9]{4}$/;
+const DATE_FILE_RE = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
+
+function parseJsonl(content: string): { lines: string[]; flights: Flight[] } {
   const lines = content.split("\n").filter(Boolean);
   const byId = new Map<string, Flight>();
   for (const line of lines) {
@@ -230,15 +250,126 @@ function readAndDedupe(icao: string): Flight[] {
       /* skip bad line */
     }
   }
-  const arr = [...byId.values()].sort((a, b) => a.dep_time - b.dep_time);
-  for (const f of arr) checkAltSanity(f);
+  return { lines, flights: [...byId.values()].sort((a, b) => a.dep_time - b.dep_time) };
+}
 
-  // 若原檔有重複（dedupe 有效果）才回寫
-  if (arr.length !== lines.length) {
-    const jsonl = arr.map((f) => JSON.stringify(f)).join("\n") + "\n";
-    writeFileSync(path, jsonl);
+/** 列出 flat 與 daily 兩種格式中可讀的機場；不把日期目錄誤當機場。 */
+function listAirportIcaos(): string[] {
+  const icaos = new Set<string>();
+  for (const entry of readdirSync(AIRPORTS_DIR, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith(".jsonl")) {
+      const icao = entry.name.slice(0, -".jsonl".length);
+      if (ICAO_FILE_RE.test(icao)) icaos.add(icao);
+    }
+    if (entry.isDirectory() && ICAO_FILE_RE.test(entry.name)) icaos.add(entry.name);
   }
+  return [...icaos].sort();
+}
+
+/**
+ * flat 檔存在時一律以它為 canonical source；每日檔只是其可切換的投影。
+ * 未來若已移除 flat，才把 daily shards 作為 fallback source。這避免雙寫期間
+ * 同一航班被兩種格式重複掃描，也避免部分 migration 產物覆蓋完整 flat 資料。
+ */
+function readAndDedupe(icao: string, rewriteFlat = true): Flight[] {
+  const flatPath = join(AIRPORTS_DIR, `${icao}.jsonl`);
+  let lines: string[];
+  let arr: Flight[];
+  if (existsSync(flatPath)) {
+    const parsed = parseJsonl(readFileSync(flatPath, "utf-8"));
+    lines = parsed.lines;
+    arr = parsed.flights;
+
+    // 若原檔有重複（dedupe 有效果）才回寫；不因排序改寫既有 flat 資料。
+    if (rewriteFlat && arr.length !== lines.length) {
+      const jsonl = arr.map((f) => JSON.stringify(f)).join("\n") + "\n";
+      writeFileSync(flatPath, jsonl);
+    }
+  } else {
+    const dailyDir = join(AIRPORTS_DIR, icao);
+    const byId = new Map<string, Flight>();
+    for (const file of readdirSync(dailyDir).filter((name) => DATE_FILE_RE.test(name)).sort()) {
+      const parsed = parseJsonl(readFileSync(join(dailyDir, file), "utf-8"));
+      for (const flight of parsed.flights) byId.set(flight.fr24_id, flight);
+    }
+    lines = [];
+    arr = [...byId.values()].sort((a, b) => a.dep_time - b.dep_time);
+  }
+
+  for (const f of arr) checkAltSanity(f);
   return arr;
+}
+
+function groupFlightsByDate(flights: Flight[]): Map<string, Flight[]> {
+  const groups = new Map<string, Flight[]>();
+  for (const flight of flights) {
+    const date = getFlightTwDate(flight);
+    if (!date) continue;
+    const group = groups.get(date) ?? [];
+    group.push(flight);
+    groups.set(date, group);
+  }
+  return groups;
+}
+
+function dailyMetadata(date: string, icao: string, jsonl: string, flights: number): DailyFileMetadata {
+  return {
+    path: `airports/${icao}/${date}.jsonl`,
+    flights,
+    bytes: Buffer.byteLength(jsonl),
+    gzipBytes: gzipSync(jsonl).length,
+  };
+}
+
+/** 從 canonical flights 重建每日檔；永不刪除 flat 或舊日期檔。 */
+function writeDailyShards(icao: string, flights: Flight[]): Record<string, DailyFileMetadata> {
+  const dailyDir = join(AIRPORTS_DIR, icao);
+  mkdirSync(dailyDir, { recursive: true });
+  const metadata: Record<string, DailyFileMetadata> = {};
+  for (const [date, group] of [...groupFlightsByDate(flights)].sort(([a], [b]) => a.localeCompare(b))) {
+    const sorted = [...group].sort((a, b) => a.dep_time - b.dep_time);
+    const jsonl = sorted.map((flight) => JSON.stringify(flight)).join("\n") + "\n";
+    writeFileSync(join(dailyDir, `${date}.jsonl`), jsonl);
+    metadata[date] = dailyMetadata(date, icao, jsonl, sorted.length);
+  }
+  return metadata;
+}
+
+/**
+ * --manifest-only 不應悄悄重寫分檔。只在所有 expected 日期檔都存在且 ID 集合一致時
+ * 才公布 dailyFiles，避免 loader 讀到中斷 migration 或過時補抓留下的半套檔案。
+ */
+function readVerifiedDailyMetadata(icao: string, flights: Flight[]): Record<string, DailyFileMetadata> | undefined {
+  const expected = groupFlightsByDate(flights);
+  if (expected.size === 0) return undefined;
+  const dailyDir = join(AIRPORTS_DIR, icao);
+  if (!existsSync(dailyDir)) return undefined;
+  const metadata: Record<string, DailyFileMetadata> = {};
+  for (const [date, expectedFlights] of expected) {
+    const path = join(dailyDir, `${date}.jsonl`);
+    if (!existsSync(path)) return undefined;
+    const content = readFileSync(path, "utf-8");
+    const parsed = parseJsonl(content);
+    if (parsed.lines.length !== parsed.flights.length || parsed.flights.length !== expectedFlights.length) {
+      return undefined;
+    }
+    const expectedPayloads = new Map(expectedFlights.map((flight) => [flight.fr24_id, JSON.stringify(flight)]));
+    const actualPayloads = new Map(parsed.flights.map((flight) => [flight.fr24_id, JSON.stringify(flight)]));
+    if (
+      expectedPayloads.size !== actualPayloads.size
+      || [...expectedPayloads].some(([id, payload]) => actualPayloads.get(id) !== payload)
+    ) {
+      return undefined;
+    }
+    metadata[date] = dailyMetadata(date, icao, content, parsed.flights.length);
+  }
+  return metadata;
+}
+
+function writeManifestAtomically(manifest: unknown): void {
+  const temporary = `${MANIFEST_FILE}.tmp-${process.pid}`;
+  writeFileSync(temporary, JSON.stringify(manifest, null, 2));
+  renameSync(temporary, MANIFEST_FILE);
 }
 
 // ── Main ──
@@ -257,10 +388,10 @@ function main() {
   const coreAirports = loadCoreAirports();
   console.log(`📖 core-airports: ${coreAirports.size} 座主動查詢機場\n`);
 
-  // 1. 掃 airports/*.jsonl，dedupe + 建 manifest
-  //    --manifest-only 模式：串流統計，不在記憶體保留 flights（避免 OOM）
-  console.log("📖 載入 airports/*.jsonl...");
-  const files = readdirSync(AIRPORTS_DIR).filter((f) => f.endsWith(".jsonl"));
+  // 1. 掃 airports flat/daily sources，dedupe + 建 manifest。
+  //    flat 存在時它是 canonical source；daily-only 機場仍可被保留在 catalog。
+  console.log("📖 載入 airports（flat + daily fallback）...");
+  const icaos = listAirportIcaos();
   const byAirport = new Map<string, Flight[]>();
   const uniqueIds = new Set<string>();
   let totalFlightsIndexed = 0;
@@ -281,14 +412,18 @@ function main() {
     generatedAt: new Date().toISOString(),
   };
 
-  for (const file of files) {
-    const icao = file.replace(".jsonl", "");
-    const flights = readAndDedupe(icao);
+  for (const icao of icaos) {
+    const flights = readAndDedupe(icao, !manifestOnly);
     totalFlightsIndexed += flights.length;
 
     const jsonl = flights.map((f) => JSON.stringify(f)).join("\n") + "\n";
     const gzSize = gzipSync(jsonl).length;
-    manifest.airports[icao] = buildAirportEntry(icao, flights, gzSize, coreAirports);
+    const dailyFiles = dedupeOnly
+      ? undefined
+      : manifestOnly
+        ? readVerifiedDailyMetadata(icao, flights)
+        : writeDailyShards(icao, flights);
+    manifest.airports[icao] = buildAirportEntry(icao, flights, gzSize, coreAirports, dailyFiles);
 
     if (manifestOnly) {
       for (const f of flights) uniqueIds.add(f.fr24_id);
@@ -296,7 +431,7 @@ function main() {
       byAirport.set(icao, flights);
     }
   }
-  console.log(`   ${files.length} 機場，${totalFlightsIndexed} 筆（含重複歸屬）\n`);
+  console.log(`   ${icaos.length} 機場，${totalFlightsIndexed} 筆（含重複歸屬）\n`);
 
   if (altOutliers > 0) {
     console.warn(
@@ -337,7 +472,7 @@ function main() {
       };
       manifest.regions = old.regions ?? {};
     }
-    writeFileSync(MANIFEST_FILE, JSON.stringify(manifest, null, 2));
+    writeManifestAtomically(manifest);
     console.log(`🛫 不重複航班: ${uniqueIds.size}`);
     console.log(`✅ manifest.json（--manifest-only，regions 沿用既有值）`);
     return;
@@ -407,7 +542,7 @@ function main() {
   writeLodFile("all", [...uniqueFlights.values()]);
 
   // 3. manifest
-  writeFileSync(MANIFEST_FILE, JSON.stringify(manifest, null, 2));
+  writeManifestAtomically(manifest);
   console.log(`\n✅ manifest.json`);
 
   // 統計
@@ -420,7 +555,7 @@ function main() {
     0,
   );
   console.log(`\n=== 統計 ===`);
-  console.log(`機場檔案: ${files.length} 個 (gzip ${(totalAirportGz / 1024 / 1024).toFixed(1)} MB)`);
+  console.log(`機場檔案: ${icaos.length} 個 (gzip ${(totalAirportGz / 1024 / 1024).toFixed(1)} MB)`);
   console.log(`Region:   ${Object.keys(manifest.regions).length} 個含 all (gzip ${(totalRegionGz / 1024 / 1024).toFixed(1)} MB)`);
   console.log(`不重複航班: ${uniqueFlights.size}`);
 }

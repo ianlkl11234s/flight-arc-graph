@@ -25,7 +25,8 @@
  * 資料流（v2, NDJSON append-only）：
  *   scripts/flights/{ICAO}/{YYYY-MM-DD}.json ∪ flight-list.json → 航班清單 (Step 1 產出，按 fr24_id 聯集去重)
  *   track-done.ndjson / track-failed.ndjson → progress (append-only，不 re-serialize)
- *   public/tracks/airports/{ICAO}.jsonl     → 軌跡 (直接 append, dep + dest 各一份)
+ *   public/tracks/airports/{ICAO}.jsonl     → 相容性 fallback（直接 append, dep + dest 各一份）
+ *   public/tracks/airports/{ICAO}/{DATE}.jsonl → 每日分檔（與 fallback 同步 append）
  *
  * 支援中斷續接：已取得軌跡的航班會自動跳過
  */
@@ -347,7 +348,20 @@ function writeRawBackup(
   writeFileSync(path, buf);
 }
 
-/** 把 output append 到 origin 和 dest 的 JSONL */
+/** unix 秒 → 台灣時間日期；與 split-tracks / UI 的日期語義一致。 */
+function toTwDateFromOutput(output: FlightOutput): string | null {
+  const timestamp = output.dep_time || output.path[0]?.[3];
+  if (!timestamp || timestamp < 1e9) return null;
+  return new Date(timestamp * 1000 + 8 * 3600_000).toISOString().slice(0, 10);
+}
+
+/**
+ * 把 output append 到 origin 和 dest 的 JSONL。
+ *
+ * 過渡期間同時保留 flat 檔與日期分檔：現有前端仍可讀 {ICAO}.jsonl，
+ * 日後 loader 切換時可直接讀 {ICAO}/{DATE}.jsonl。split-tracks 會從 flat
+ * 重建完整的 daily shards，確保補抓或舊資料整理後兩種表示法一致。
+ */
 function writeFlightToJsonl(output: FlightOutput) {
   if (!existsSync(AIRPORTS_DIR)) {
     mkdirSync(AIRPORTS_DIR, { recursive: true });
@@ -360,8 +374,22 @@ function writeFlightToJsonl(output: FlightOutput) {
     // 一行都寫不出去卻回報成功 → 上層會 markDone，credits 就白花了。擋下來當失敗處理。
     throw new Error(`no ICAO to write for ${output.fr24_id}`);
   }
+  const date = toTwDateFromOutput(output);
   for (const icao of icaos) {
     appendFileSync(join(AIRPORTS_DIR, `${icao}.jsonl`), line);
+    if (date) {
+      try {
+        const dailyDir = join(AIRPORTS_DIR, icao);
+        mkdirSync(dailyDir, { recursive: true });
+        appendFileSync(join(dailyDir, `${date}.jsonl`), line);
+      } catch (err) {
+        // flat 已成功寫入才會到這裡；daily 只是可由 split 重建的投影，
+        // 不該把已取得的 API 軌跡誤標 failed 而阻斷後續補抓。
+        console.warn(`⚠️  ${output.fr24_id}: ${icao}/${date} daily 寫入失敗，保留 flat fallback（${(err as Error).message}）`);
+      }
+    } else {
+      console.warn(`⚠️  ${output.fr24_id}: 無有效起飛時間，僅寫入 ${icao}.jsonl fallback`);
+    }
   }
 }
 

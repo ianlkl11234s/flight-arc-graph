@@ -36,6 +36,21 @@ fetch() {
   return 0
 }
 
+# 強制下載到同目錄 temp，成功後才原子替換。
+fetch_replace() {
+  src="$1"
+  dst="$2"
+  tmp="${dst}.tmp-$$"
+  rm -f "$tmp"
+  if ! wget $WGET_OPTS "$src" -O "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    echo "  ⚠️  fail: $(basename "$dst")"
+    return 1
+  fi
+  mv "$tmp" "$dst"
+  return 0
+}
+
 echo "=== Pull Flight Arc data from S3 ==="
 echo "Target: ${DATA_DIR}"
 echo ""
@@ -45,17 +60,81 @@ mkdir -p "${DATA_DIR}/tracks/airports"
 mkdir -p "${DATA_DIR}/tracks/regions"
 mkdir -p "${DATA_DIR}/airspace/days"
 
-# 1. 下載 tracks manifest（強制重抓，因為清單可能變了）
-echo "[1/4] Tracks manifest..."
-rm -f "${DATA_DIR}/tracks/manifest.json"
-fetch "${S3_BASE}/tracks/manifest.json" "${DATA_DIR}/tracks/manifest.json"
-echo "  done"
+# 1. 下載新 manifest 到 staging；等 daily 檔都齊了才 publish。
+echo "[1/4] Tracks manifest (staging)..."
+NEXT_MANIFEST="${DATA_DIR}/tracks/manifest.json.next"
+if ! fetch_replace "${S3_BASE}/tracks/manifest.json" "$NEXT_MANIFEST"; then
+  echo "❌ tracks manifest 下載失敗，保留舊版本"
+  exit 1
+fi
+echo "  staged"
 
-# 2. 從 manifest 解析機場列表，逐一下載（跳過已存在）
+# 2. 從 manifest 解析每日分檔與機場 fallback，逐一下載（跳過已存在）
 echo ""
 echo "[2/4] Tracks airports..."
 # [A-Z0-9]{4}：美國私人機場代碼可能數字開頭（如 65GA），別用 [A-Z] 開頭的窄 regex
-AIRPORTS=$(grep -o '"[A-Z0-9]\{4\}": {' "${DATA_DIR}/tracks/manifest.json" | sed 's/": {//' | sed 's/"//' | sort)
+AIRPORTS=$(grep -o '"[A-Z0-9]\{4\}": {' "$NEXT_MANIFEST" | sed 's/": {//' | sed 's/"//' | sort)
+
+# manifest.dailyFiles 的 path 是相對於 tracks/ 的 `airports/{ICAO}/{YYYY-MM-DD}.jsonl`。
+# flat fallback 仍照常下載，因為目前前端仍讀 {ICAO}.jsonl；日後 loader 切換後，
+# daily files 才會按選擇日期命中。grep 無結果時仍正常退回舊 manifest。
+DAILY_ENTRIES=$(awk '
+  /"path": "airports\/[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]\/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\.jsonl"/ {
+    path=$0
+    sub(/^.*"path": "/, "", path)
+    sub(/".*$/, "", path)
+    next
+  }
+  path != "" && /"bytes": [0-9]+/ {
+    bytes=$0
+    sub(/^.*"bytes": /, "", bytes)
+    sub(/[^0-9].*$/, "", bytes)
+    print path "|" bytes
+    path=""
+  }
+' "$NEXT_MANIFEST" | sort)
+DAILY_TOTAL=$(echo "$DAILY_ENTRIES" | sed '/^$/d' | wc -l | tr -d ' ')
+DAILY_COUNT=0
+DAILY_SKIPPED=0
+DAILY_FETCHED=0
+DAILY_FAILED=0
+for DAILY_ENTRY in $DAILY_ENTRIES; do
+  RELATIVE_PATH=${DAILY_ENTRY%%|*}
+  EXPECTED_BYTES=${DAILY_ENTRY#*|}
+  DAILY_COUNT=$((DAILY_COUNT + 1))
+  DST="${DATA_DIR}/tracks/${RELATIVE_PATH}"
+  mkdir -p "$(dirname "$DST")"
+  if [ "$FORCE_AIRPORTS" = "1" ]; then
+    rm -f "$DST"
+  fi
+  ACTUAL_BYTES=0
+  if [ -s "$DST" ]; then
+    ACTUAL_BYTES=$(wc -c < "$DST" | tr -d ' ')
+  fi
+  if [ "$ACTUAL_BYTES" = "$EXPECTED_BYTES" ]; then
+    DAILY_SKIPPED=$((DAILY_SKIPPED + 1))
+  else
+    rm -f "$DST"
+    if fetch "${S3_BASE}/tracks/${RELATIVE_PATH}" "$DST"; then
+      ACTUAL_BYTES=$(wc -c < "$DST" | tr -d ' ')
+      if [ "$ACTUAL_BYTES" = "$EXPECTED_BYTES" ]; then
+        DAILY_FETCHED=$((DAILY_FETCHED + 1))
+      else
+        rm -f "$DST"
+        DAILY_FAILED=$((DAILY_FAILED + 1))
+        echo "  ⚠️  size mismatch: ${RELATIVE_PATH} (${ACTUAL_BYTES}/${EXPECTED_BYTES})"
+      fi
+    else
+      DAILY_FAILED=$((DAILY_FAILED + 1))
+    fi
+  fi
+  if [ $((DAILY_COUNT % 500)) -eq 0 ]; then
+    echo "  ... daily ${DAILY_COUNT}/${DAILY_TOTAL} (fetched=${DAILY_FETCHED} skipped=${DAILY_SKIPPED} failed=${DAILY_FAILED})"
+  fi
+done
+if [ "$DAILY_TOTAL" -gt 0 ]; then
+  echo "  daily: total=${DAILY_COUNT} fetched=${DAILY_FETCHED} skipped=${DAILY_SKIPPED} failed=${DAILY_FAILED}"
+fi
 
 COUNT=0
 SKIPPED=0
@@ -97,6 +176,15 @@ for R in TW JP HK KR TH US UK CN other all; do
   fi
 done
 
+# 新 manifest 只在所有公告的 daily shards 就緒後才取代舊版本。
+if [ "$DAILY_FAILED" -eq 0 ] && [ "$FAILED" -eq 0 ]; then
+  mv "$NEXT_MANIFEST" "${DATA_DIR}/tracks/manifest.json"
+  echo "  ✓ tracks manifest published"
+else
+  rm -f "$NEXT_MANIFEST"
+  echo "  ⚠️  tracks manifest 未發布（daily failed=${DAILY_FAILED}, flat failed=${FAILED}），保留舊版本"
+fi
+
 # 4. 下載 airspace
 echo ""
 echo "[4/4] Airspace..."
@@ -121,6 +209,7 @@ echo "Tracks: $(ls ${DATA_DIR}/tracks/airports/*.jsonl 2>/dev/null | wc -l | tr 
 echo "Regions: $(ls ${DATA_DIR}/tracks/regions/*.jsonl 2>/dev/null | wc -l | tr -d ' ') files"
 echo "Airspace: $(ls ${DATA_DIR}/airspace/days/*.jsonl 2>/dev/null | wc -l | tr -d ' ') days"
 echo ""
-if [ "$FAILED" -gt 0 ]; then
-  echo "⚠️  ${FAILED} files failed — 重新跑一次即可續傳"
+TOTAL_FAILED=$((FAILED + DAILY_FAILED))
+if [ "$TOTAL_FAILED" -gt 0 ]; then
+  echo "⚠️  ${TOTAL_FAILED} files failed — 重新跑一次即可續傳"
 fi

@@ -57,7 +57,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   let lastAltOffset = getAltOffset();
   let lastDarkTheme = true;
   let lastShowTrails = true;
-  let lastFlightsKey = "";
+  let lastFlightsRef: Flight[] | null = null;
   let lastVisibilityKey = "";
   // ±12h 可見度掃描的 1 秒 bucket（事件化，避免每幀 O(N) 全掃）
   let lastScanBucket = NaN;
@@ -108,8 +108,8 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       const flightsKey = flights.length === 0
         ? ""
         : `${flights.length}|${flights[0]!.fr24_id}|${flights[flights.length - 1]!.fr24_id}`;
-      if (flightsKey !== lastFlightsKey) {
-        lastFlightsKey = flightsKey;
+      if (flights !== lastFlightsRef) {
+        lastFlightsRef = flights;
         lastVisibilityKey = ""; // 強制重新計算可見度
         lastScanBucket = NaN;   // 新幾何：強制重掃可見集合
         timeIndex.build(flights);

@@ -22,6 +22,7 @@ export class InstancedOrbs {
   private layers: OrbLayer[] = [];
   private blinkLayer!: OrbLayer;
   private geo: THREE.IcosahedronGeometry;
+  private blinkGeo: THREE.IcosahedronGeometry;
   private count = 0;
   private time = 0;
   /** 每個 instance 的 phase offset，避免同步呼吸/閃爍 */
@@ -74,7 +75,7 @@ export class InstancedOrbs {
     }
 
     // Blink layer（紅色閃爍，較低 detail）
-    const blinkGeo = new THREE.IcosahedronGeometry(1, 1);
+    this.blinkGeo = new THREE.IcosahedronGeometry(1, 1);
     const blinkMat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(1.0, 0.1, 0.1),
       transparent: true,
@@ -83,7 +84,7 @@ export class InstancedOrbs {
       depthWrite: false,
       depthTest: false, // 同上：globe 地形的 depth 會殺掉光球
     });
-    const blinkMesh = new THREE.InstancedMesh(blinkGeo, blinkMat, MAX_INSTANCES);
+    const blinkMesh = new THREE.InstancedMesh(this.blinkGeo, blinkMat, MAX_INSTANCES);
     blinkMesh.count = 0;
     blinkMesh.frustumCulled = false;
     scene.add(blinkMesh);
@@ -232,5 +233,6 @@ export class InstancedOrbs {
     (this.blinkLayer.mesh.material as THREE.Material).dispose();
     this.blinkLayer.mesh.dispose();
     this.geo.dispose();
+    this.blinkGeo.dispose();
   }
 }

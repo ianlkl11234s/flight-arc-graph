@@ -144,12 +144,17 @@
 
 ```
 tracks/airports/RCTP/2026-02-18.jsonl   （選一天只載一天）
-tracks/airports/RCTP/index.json         （該機場的日期索引）
 ```
 
-- 選 RCTP 單日從 166MB 降到 ~10-20MB，下載量降一個數量級
-- split-tracks.ts 改輸出結構 + flightLoader 改載入路徑 + S3 同步腳本對應調整
-- **依賴 Phase 1**（沒有日期目錄做不乾淨），建議等 Phase 1-2 穩定後再做
+日期分片與 UI loader 已完成開發環境串接：
+
+- `fetch-tracks.ts` 會雙寫 flat fallback 與日期檔；`split-tracks.ts` 的完整重建也會由 flat canonical source 重建每日檔。
+- manifest 保留 `dates`，並只在實際每日檔與 canonical 資料完全一致時新增 `dailyFiles[date] = { path, flights, bytes, gzipBytes }`；舊版前端會忽略此可選欄位。
+- `flightLoader` 只在選定日期皆有 `dailyFiles` 時讀取 daily shards；任一日缺檔或載入失敗就回退 flat，並在串流解析時先篩日期。
+- 首次遷移先驗證 RCTP：`node --import tsx scripts/migrate-airport-daily-shards.ts --airports RCTP --dry-run`，確認後移除 `--dry-run`；全域則用 `--all`。遷移不刪除、不改寫 `{ICAO}.jsonl`，且在全域執行前檢查磁碟餘裕。
+- `--manifest-only` 不改寫 flat / daily / region；只會在 daily 的 ID 與內容全部等同 canonical flat 時公告 metadata。manifest 與 daily shard 均採原子替換。
+- S3 upload 會先上傳 daily / flat / region，最後才發布 manifest；Zeabur pull 則先用新 manifest 核對 daily bytes，全部就緒後才原子切換 manifest。本階段只完成本地產物與回退驗證，未上傳、未部署。
+- `public/tracks/` 由 `.gitignore` 排除：Git 只回滾 loader / scripts，不會備份或刪除本地 daily 產物。切回舊程式後這些目錄不會被讀取；產物可由保留的 flat canonical 檔重建。
 
 ---
 

@@ -155,6 +155,14 @@ export class FlightScene {
   private staticMat: THREE.ShaderMaterial | null = null;
   private staticGlowMat: THREE.ShaderMaterial | null = null;
   private lastStaticKey = "";
+  /** 連續調整高度/顏色時，合併 static geometry rebuild，避免每個 pointer event 都重配大 buffer。 */
+  private staticRebuildPending = false;
+  private staticRebuildRequestedAt = 0;
+  private staticRebuildFirstRequestedAt = 0;
+  private static readonly STATIC_REBUILD_DEBOUNCE_MS = 80;
+  private static readonly STATIC_REBUILD_MAX_DELAY_MS = 300;
+  /** React 以 immutable array 傳入；用 reference 補足 key 只看首尾的盲點。 */
+  private lastStaticFlights: Flight[] | null = null;
 
   // Per-vertex alpha 可見度控制（±12h）；start 為桶內 offset
   private staticFlightRanges = new Map<string, { bucket: StaticBucket; start: number; count: number }>();
@@ -301,6 +309,7 @@ export class FlightScene {
       this.removeStaticMeshes();
       this.lastStaticKey = "";
       this.staticBuildState = null;
+      this.staticRebuildPending = false;
       return;
     }
 
@@ -309,13 +318,28 @@ export class FlightScene {
         ? ""
         : `${flights.length}|${flights[0]!.fr24_id}|${flights[flights.length - 1]!.fr24_id}`;
 
-    if (this.staticBuildState && key === this.lastStaticKey) {
+    if (this.staticRebuildPending) {
+      // 新資料集合優先立即切換；只有同一批資料的外觀/座標變更才延遲合併。
+      if (key !== this.lastStaticKey || flights !== this.lastStaticFlights) {
+        this.staticRebuildPending = false;
+      } else {
+        const now = performance.now();
+        const quietEnough = now - this.staticRebuildRequestedAt >= FlightScene.STATIC_REBUILD_DEBOUNCE_MS;
+        const maxDelayReached = now - this.staticRebuildFirstRequestedAt >= FlightScene.STATIC_REBUILD_MAX_DELAY_MS;
+        if (!quietEnough && !maxDelayReached) return;
+        this.staticRebuildPending = false;
+        this.lastStaticKey = "";
+      }
+    }
+
+    if (this.staticBuildState && flights === this.staticBuildState.flights && key === this.lastStaticKey) {
       this.continueStaticBuild();
       return;
     }
 
-    if (key === this.lastStaticKey) return;
+    if (flights === this.lastStaticFlights && key === this.lastStaticKey) return;
     this.lastStaticKey = key;
+    this.lastStaticFlights = flights;
 
     this.removeStaticMeshes();
     this.staticBuildState = null;
@@ -570,7 +594,10 @@ export class FlightScene {
   }
 
   forceRebuildStatic() {
-    this.lastStaticKey = "";
+    const now = performance.now();
+    if (!this.staticRebuildPending) this.staticRebuildFirstRequestedAt = now;
+    this.staticRebuildRequestedAt = now;
+    this.staticRebuildPending = true;
   }
 
   setStaticOpacity(innerOpacity: number) {
@@ -945,7 +972,9 @@ export class FlightScene {
     this.instancedOrbs = null;
     this.removeStaticMeshes();
     this.lastStaticKey = "";
+    this.lastStaticFlights = null;
     this.staticBuildState = null;
+    this.staticRebuildPending = false;
     this.staticFlightRanges.clear();
     this.lastVisibleIds.clear();
   }
