@@ -874,11 +874,19 @@ export default function App() {
     return airports.filter(prefixes[region]);
   }, [airports, region]);
 
+  // Local 比較應以目前 Selection 為優先；只有純 region 總覽才使用 region 機場。
+  // Saved set 可能跨國，且不會同步單一 region，不能用 stale region 推導本地端點。
+  const localCompareAirportCodes = useMemo(() => {
+    if (airportSet !== null) return airportSet;
+    if (scope === "airport") return [selectedAirport];
+    return regionalAirports;
+  }, [airportSet, scope, selectedAirport, regionalAirports]);
+
   // 機場分色指派（依實際顯示的航班 + 使用者手動覆寫）
   const airportAssignment = useMemo((): AirportAssignment | null => {
     if (effectiveColorBy === "theme") return null;
-    return assignAirportColors(finalFlights, effectiveColorBy, airportColorOverrides, regionalAirports);
-  }, [effectiveColorBy, finalFlights, airportColorOverrides, regionalAirports]);
+    return assignAirportColors(finalFlights, effectiveColorBy, airportColorOverrides, localCompareAirportCodes);
+  }, [effectiveColorBy, finalFlights, airportColorOverrides, localCompareAirportCodes]);
 
   // 🔬 Deep Analysis colorMap（按機型/用途/時長/航線/航司分色）
   const analysisColorMap = useMemo(
