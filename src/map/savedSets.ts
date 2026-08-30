@@ -18,6 +18,18 @@ export const BUILTIN_SETS: SavedAirportSet[] = [
     icaos: ["RCTP", "RCKH", "RCMQ"],
   },
   {
+    id: "taipei-metro",
+    name: "Taipei 機場群",
+    shortName: "Taipei",
+    icaos: ["RCSS", "RCTP"],
+  },
+  {
+    id: "bangkok-metro",
+    name: "Bangkok 機場群",
+    shortName: "Bangkok",
+    icaos: ["VTBS", "VTBD"],
+  },
+  {
     id: "apac-hub",
     name: "亞太樞紐",
     shortName: "APAC Hubs",

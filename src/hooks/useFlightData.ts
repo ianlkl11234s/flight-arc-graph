@@ -4,6 +4,7 @@ import {
   filterByAirport,
   getTimeRange,
   loadAirportFlights,
+  loadAirportSelectionFlights,
   loadRegionFullFlights,
   loadAirspaceManifest,
   loadAirspaceDays,
@@ -36,6 +37,7 @@ export function useFlightData(
   region: Region,
   selectedDate?: string,
   rangeDays?: number,
+  airportSelection?: string[] | null,
 ): UseFlightDataReturn {
   const [trackFlights, setTrackFlights] = useState<Flight[]>([]);
   const [airspaceFlights, setAirspaceFlights] = useState<Flight[] | null>(null);
@@ -85,7 +87,10 @@ export function useFlightData(
     // 從 manifest 取得預期總數
     const manifest = manifestRef.current;
     let expectedTotal = 0;
-    if (scope === "airport") {
+    if (airportSelection !== null && airportSelection !== undefined) {
+      // 多機場 union 會按 fr24_id 去重，各機場 manifest 總數相加不是可靠分母。
+      expectedTotal = 0;
+    } else if (scope === "airport") {
       expectedTotal = manifest?.airports[selectedAirport]?.flights ?? 0;
     } else {
       // region: 加總所有匹配機場的航班數
@@ -114,7 +119,18 @@ export function useFlightData(
       }
     };
 
-    if (scope === "airport") {
+    if (airportSelection !== null && airportSelection !== undefined) {
+      loadAirportSelectionFlights(
+        airportSelection,
+        onProgress,
+        () => loadIdRef.current !== loadId,
+      ).then((flights) => {
+        if (loadIdRef.current !== loadId) return;
+        setTrackFlights(flights);
+        setLoadingProgress(null);
+        setLoading(false);
+      });
+    } else if (scope === "airport") {
       loadAirportFlights(selectedAirport, onProgress).then((flights) => {
         if (loadIdRef.current !== loadId) return;
         setTrackFlights(flights);
@@ -133,7 +149,7 @@ export function useFlightData(
         setLoading(false);
       });
     }
-  }, [dataSource, scope, region, selectedAirport]);
+  }, [dataSource, scope, region, selectedAirport, airportSelection]);
 
   // 載入 airspace：依 selectedDate + rangeDays 按天載入
   useEffect(() => {

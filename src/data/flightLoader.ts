@@ -365,6 +365,58 @@ export async function loadAirportFlights(
 }
 
 /**
+ * 載入任意機場組合的完整軌跡（每座機場串流 + 有限並行 + union 去重）。
+ *
+ * 取消不會中止已開始的單機場 fetch（loadAirportFlights 尚未接受 AbortSignal），
+ * 但會停止後續排程，並回傳取消前已完成的 union 結果。
+ */
+export async function loadAirportSelectionFlights(
+  icaos: readonly string[],
+  onProgress?: (flights: Flight[], total: number) => void,
+  isCancelled?: () => boolean,
+): Promise<Flight[]> {
+  const selection = [...new Set(
+    icaos
+      .map((icao) => icao.trim().toUpperCase())
+      .filter((icao) => icao.length > 0),
+  )];
+  const accumulated: Flight[] = [];
+  const seen = new Set<string>();
+
+  if (selection.length === 0) {
+    onProgress?.([], 0);
+    return accumulated;
+  }
+
+  onProgress?.([], 0);
+
+  // 每座機場檔案可能很大；限制並行避免同時壓垮瀏覽器連線與記憶體。
+  const concurrency = Math.min(4, selection.length);
+  let nextIndex = 0;
+
+  const loadNext = async (): Promise<void> => {
+    while (!isCancelled?.()) {
+      const index = nextIndex++;
+      if (index >= selection.length) return;
+
+      const flights = await loadAirportFlights(selection[index]!);
+      if (isCancelled?.()) return;
+      for (const flight of flights) {
+        if (seen.has(flight.fr24_id)) continue;
+        seen.add(flight.fr24_id);
+        accumulated.push(flight);
+      }
+      onProgress?.([...accumulated], accumulated.length);
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: concurrency }, () => loadNext()),
+  );
+  return accumulated;
+}
+
+/**
  * 載入 Region 的降採樣軌跡（串流 + 漸進式）
  */
 export async function loadRegionFlights(

@@ -1,7 +1,8 @@
 /**
  * build-core-airports.ts
  *
- * 從 scripts/flight-list.json（Step 1 班表）+ scripts/track-done.ndjson（已抓軌跡 id）
+ * 從 scripts/flights/{ICAO}/{YYYY-MM-DD}.json ∪ scripts/flight-list.json（Step 1 班表）
+ * + scripts/track-done.ndjson（已抓軌跡 id）
  * 產出 scripts/core-airports.json：
  *   - 哪些機場是「主動查詢」(core)
  *   - 每座 core 機場哪些台灣日期算「抓滿」(fullDates)
@@ -14,12 +15,19 @@
  * Usage: npx tsx scripts/build-core-airports.ts
  */
 
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  readdirSync,
+  statSync,
+} from "fs";
 import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FLIGHT_LIST = join(__dirname, "flight-list.json");
+const FLIGHTS_DIR = join(__dirname, "flights");
 const TRACK_DONE = join(__dirname, "track-done.ndjson");
 const OUT_FILE = join(__dirname, "core-airports.json");
 
@@ -40,9 +48,49 @@ function toTwDate(iso: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+function loadNewFormatFlights(): {
+  flights: Map<string, ListedFlight>;
+  coreIcaos: Set<string>;
+  parsedFiles: number;
+  skippedInvalidFiles: number;
+} {
+  const flights = new Map<string, ListedFlight>();
+  const coreIcaos = new Set<string>();
+  let parsedFiles = 0;
+  let skippedInvalidFiles = 0;
+  if (!existsSync(FLIGHTS_DIR)) {
+    return { flights, coreIcaos, parsedFiles, skippedInvalidFiles };
+  }
+
+  for (const icao of readdirSync(FLIGHTS_DIR)) {
+    const dir = join(FLIGHTS_DIR, icao);
+    if (!statSync(dir).isDirectory()) continue;
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".json")) continue;
+      try {
+        const payload = JSON.parse(readFileSync(join(dir, file), "utf-8")) as {
+          flights?: ListedFlight[];
+        };
+        parsedFiles++;
+        coreIcaos.add(icao.toUpperCase());
+        for (const flight of payload.flights ?? []) {
+          if (flight.fr24_id) flights.set(flight.fr24_id, flight);
+        }
+      } catch {
+        skippedInvalidFiles++;
+        console.warn(`⚠️  跳過無法解析的班表：${join(dir, file)}`);
+      }
+    }
+  }
+  return { flights, coreIcaos, parsedFiles, skippedInvalidFiles };
+}
+
 function main() {
-  if (!existsSync(FLIGHT_LIST) || !existsSync(TRACK_DONE)) {
-    console.error("❌ 需要 scripts/flight-list.json 與 scripts/track-done.ndjson");
+  if (
+    !existsSync(TRACK_DONE) ||
+    (!existsSync(FLIGHTS_DIR) && !existsSync(FLIGHT_LIST))
+  ) {
+    console.error("❌ 需要 scripts/track-done.ndjson，以及 scripts/flights/ 或 scripts/flight-list.json");
     process.exit(1);
   }
 
@@ -56,17 +104,43 @@ function main() {
   }
   console.log(`📖 track-done: ${doneIds.size} 筆`);
 
-  // 2. 班表 + 主動查詢機場
-  const list = JSON.parse(readFileSync(FLIGHT_LIST, "utf-8")) as {
-    completed: string[];
-    flights: ListedFlight[];
-  };
-  const coreIcaos = new Set(list.completed.map((c) => c.split(":")[0]!));
-  console.log(`📖 flight-list: ${list.flights.length} 班次, ${coreIcaos.size} 座主動查詢機場`);
+  // 2. 新格式班表 ∪ legacy 班表（按 fr24_id 去重，新格式優先）+ 主動查詢機場
+  const {
+    flights,
+    coreIcaos,
+    parsedFiles,
+    skippedInvalidFiles,
+  } = loadNewFormatFlights();
+  const newFormatCount = flights.size;
+  let legacyCount = 0;
+  if (existsSync(FLIGHT_LIST)) {
+    const list = JSON.parse(readFileSync(FLIGHT_LIST, "utf-8")) as {
+      completed?: string[];
+      flights?: ListedFlight[];
+    };
+    legacyCount = list.flights?.length ?? 0;
+    for (const completed of list.completed ?? []) {
+      const icao = completed.split(":")[0];
+      if (icao) coreIcaos.add(icao.toUpperCase());
+    }
+    for (const flight of list.flights ?? []) {
+      if (flight.fr24_id && !flights.has(flight.fr24_id)) {
+        flights.set(flight.fr24_id, flight);
+      }
+    }
+  }
+  if (parsedFiles === 0 && !existsSync(FLIGHT_LIST)) {
+    console.error("❌ scripts/flights/ 沒有可解析的班表，拒絕覆寫 core-airports.json");
+    process.exit(1);
+  }
+  console.log(
+    `📖 班表聯集: ${flights.size} 班次不重複（新格式 ${newFormatCount} + legacy ${legacyCount}）, ` +
+      `${coreIcaos.size} 座主動查詢機場`,
+  );
 
   // 3. 每座 core 機場 × 台灣日期 → scheduled / done
   const stats = new Map<string, Map<string, { scheduled: number; done: number }>>();
-  for (const f of list.flights) {
+  for (const f of flights.values()) {
     const ts = f.datetime_takeoff ?? f.first_seen;
     if (!ts) continue;
     const date = toTwDate(ts);
@@ -101,6 +175,15 @@ function main() {
   const out = {
     generatedAt: new Date().toISOString(),
     rule: `done >= ${MIN_DONE} && done/scheduled >= ${MIN_RATIO}（台灣時間切日）`,
+    sourceSummary: {
+      newFormatDedupedFlights: newFormatCount,
+      legacyRawFlights: legacyCount,
+      dedupedFlights: flights.size,
+      activeQueryAirports: coreIcaos.size,
+      doneTracks: doneIds.size,
+      parsedNewFormatFiles: parsedFiles,
+      skippedInvalidFiles,
+    },
     airports,
   };
   writeFileSync(OUT_FILE, JSON.stringify(out, null, 1));

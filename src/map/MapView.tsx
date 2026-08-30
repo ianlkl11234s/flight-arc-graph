@@ -26,6 +26,8 @@ const AIRPORT_FILL = "airport-fill";
 const AIRPORT_LINE = "airport-outline";
 const AIRPORT_GLOW_1 = "airport-glow-1";
 const AIRPORT_GLOW_2 = "airport-glow-2";
+const GLOBE_OVERVIEW_ZOOM = 3;
+const GLOBE_OVERVIEW_MAX_LAT = 75;
 
 // Atlas 機場總覽點層（大小=dailyProxy、顏色=完整度）
 export const ATLAS_SOURCE = "atlas-points";
@@ -257,9 +259,29 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
       zoom: presetRef.current.zoom,
       pitch: presetRef.current.pitch,
       bearing: presetRef.current.bearing,
+      // 全球視角下壓低放手後的慣性，避免一拖就繼續滑過半個地球。
+      dragPan: {
+        linearity: 0.15,
+        maxSpeed: 700,
+        deceleration: 5000,
+      },
       antialias: true,
       preserveDrawingBuffer: true,
     });
+
+    // Globe 中心靠近極點時，拖曳會連帶大幅調整 bearing，視覺上容易像「亂轉」。
+    // 只在低 zoom 的全球總覽限制中心緯度；經度不設 bounds，地球仍可跨換日線完整旋轉。
+    let clampingGlobeLatitude = false;
+    const clampGlobeLatitude = () => {
+      if (clampingGlobeLatitude || map.getZoom() >= GLOBE_OVERVIEW_ZOOM) return;
+      const center = map.getCenter();
+      const lat = Math.max(-GLOBE_OVERVIEW_MAX_LAT, Math.min(GLOBE_OVERVIEW_MAX_LAT, center.lat));
+      if (lat === center.lat) return;
+      clampingGlobeLatitude = true;
+      map.setCenter([center.lng, lat]);
+      clampingGlobeLatitude = false;
+    };
+    map.on("move", clampGlobeLatitude);
 
     // 唯一的 style.load handler：每次底圖切換都會觸發，重建所有圖層
     map.on("style.load", () => {
@@ -297,6 +319,7 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
     });
 
     return () => {
+      map.off("move", clampGlobeLatitude);
       map.remove();
       mapRef.current = null;
       readyRef.current = false;

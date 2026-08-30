@@ -4,14 +4,15 @@
  *   npx tsx scripts/build-airport-points.ts
  *
  * 點集 = manifest 已抓機場 ∪ top1000 目標機場（union ~2062 座）。
- * 每個 Point 帶 properties：icao/iata/name/country/continent/rank/
+ * 每個 Point 帶 properties：icao/iata/name/nameZh/nameEn/city/country/continent/rank/
  *   dailyProxy（圓圈大小用）/capturedFlights/estDaily/status（顏色用）。
  *
  * 資料來源（皆本地，部分 gitignored）：
  *   public/tracks/manifest.json         → 已抓機場 flights/isCore/dates/fullDates
  *   scripts/top1000-airports.json       → rank/iata/name/country/continent/est_daily_flights
  *   scripts/airports-coords.json        → ident → [lat,lng]（主座標索引）
- *   scripts/airports-cache.csv          → icao_code → 座標/name/country/continent（備援 + manifest-only 補國家）
+ *   scripts/airports-cache.csv          → 座標/name/city/keywords/country/continent（備援 + 搜尋詞）
+ *   public/airports.geojson             → 中英文機場名（有資料者）
  *   src/map/cameraPresets.ts AIRPORT_INFO→ 中文名（優先顯示）
  *
  * 抓完新批次、跑完 split-tracks 後重跑本腳本，讓完整度/航班數同步。
@@ -66,6 +67,10 @@ interface CsvEntry {
   iata: string;
   country: string;
   continent: string;
+  city: string;
+  regionCode: string;
+  localCode: string;
+  searchKeywords: string[];
 }
 const csvByIcao = new Map<string, CsvEntry>();
 {
@@ -81,6 +86,10 @@ const csvByIcao = new Map<string, CsvEntry>();
   const iCountry = col("iso_country");
   const iIcao = col("icao_code");
   const iIata = col("iata_code");
+  const iCity = col("municipality");
+  const iRegion = col("iso_region");
+  const iLocalCode = col("local_code");
+  const iKeywords = col("keywords");
   for (let n = 1; n < lines.length; n++) {
     const line = lines[n];
     if (!line) continue;
@@ -98,8 +107,40 @@ const csvByIcao = new Map<string, CsvEntry>();
         iata: f[iIata] || "",
         country: f[iCountry] || "",
         continent: f[iCont] || "",
+        city: f[iCity] || "",
+        regionCode: f[iRegion] || "",
+        localCode: f[iLocalCode] || "",
+        searchKeywords: (f[iKeywords] || "")
+          .split(/[,;]+/)
+          .map((value) => value.trim())
+          .filter(Boolean),
       });
     }
+  }
+}
+
+interface LocalizedAirportName {
+  nameZh: string;
+  nameEn: string;
+}
+
+const localizedNames = new Map<string, LocalizedAirportName>();
+{
+  const geojson = JSON.parse(
+    readFileSync(resolve(ROOT, "public/airports.geojson"), "utf-8"),
+  ) as {
+    features?: Array<{
+      properties?: { icao?: string; name?: string; name_en?: string };
+    }>;
+  };
+  for (const feature of geojson.features ?? []) {
+    const properties = feature.properties;
+    const icao = properties?.icao?.toUpperCase();
+    if (!icao) continue;
+    localizedNames.set(icao, {
+      nameZh: properties?.name || "",
+      nameEn: properties?.name_en || "",
+    });
   }
 }
 
@@ -148,6 +189,7 @@ for (const icao of union) {
   const m = manifest.airports[icao];
   const t = top1000Map.get(icao);
   const csv = csvByIcao.get(icao);
+  const localized = localizedNames.get(icao);
 
   // 座標：coords.json（byIdent）優先，CSV（byIcao）備援
   const ll = coordsByIdent[icao] ?? (csv ? [csv.lat, csv.lng] : null);
@@ -182,6 +224,12 @@ for (const icao of union) {
       icao,
       iata,
       name,
+      nameZh: localized?.nameZh || null,
+      nameEn: localized?.nameEn || t?.name || csv?.name || null,
+      city: csv?.city || null,
+      regionCode: csv?.regionCode || null,
+      localCode: csv?.localCode || null,
+      searchKeywords: csv?.searchKeywords ?? [],
       country: t?.country || csv?.country || "",
       continent: t?.continent || csv?.continent || "",
       rank: t?.rank ?? null,
