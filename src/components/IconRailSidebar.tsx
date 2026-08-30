@@ -2131,7 +2131,7 @@ function ColorThemePanel(props: ColorThemePanelProps) {
                 key={m}
                 onClick={() => onColorByChange(m)}
                 title={
-                  m === "local" ? "區域內機場（自動挑 region 端）"
+                  m === "local" ? "目前 Selection 的機場（純區域總覽時使用 region）"
                   : m === "origin" ? "起飛機場"
                   : "目的地機場"
                 }
@@ -2164,7 +2164,7 @@ function ColorThemePanel(props: ColorThemePanelProps) {
             <span>
               {airportAssignment.airports.length} airport{airportAssignment.airports.length !== 1 ? "s" : ""}
               {" · "}
-              {colorBy === "local" ? "in region"
+              {colorBy === "local" ? "local"
                 : colorBy === "origin" ? "by departure"
                 : "by arrival"}
             </span>

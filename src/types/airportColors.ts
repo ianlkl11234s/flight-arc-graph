@@ -46,22 +46,22 @@ export interface AirportAssignment {
 
 /**
  * 挑選航班端點：
- *  - local: 兩端中屬於 regionAirports 的那端（若都在 / 都不在 → fallback 到 origin）
+ *  - local: 兩端中屬於 localAirportCodes 的那端
  *  - origin / dest: 固定該端
  */
 function pickEndpoint(
   f: Flight,
   dimension: Exclude<AirportColorMode, "theme">,
-  regionAirports: Set<string>,
+  localAirportCodes: Set<string>,
 ): string | null {
   if (dimension === "origin") return f.origin_icao || null;
   if (dimension === "dest") return f.dest_icao || null;
   // local
-  const originIn = !!f.origin_icao && regionAirports.has(f.origin_icao);
-  const destIn = !!f.dest_icao && regionAirports.has(f.dest_icao);
+  const originIn = !!f.origin_icao && localAirportCodes.has(f.origin_icao);
+  const destIn = !!f.dest_icao && localAirportCodes.has(f.dest_icao);
   if (originIn) return f.origin_icao;
   if (destIn) return f.dest_icao;
-  return null; // 兩端都不在 region → 不上色
+  return null; // 兩端都不在目前 local 候選清單 → 不上色
 }
 
 /**
@@ -70,19 +70,19 @@ function pickEndpoint(
  * @param flights        當前顯示的航班
  * @param dimension      分色維度（local / origin / dest）
  * @param overrides      使用者手動覆寫：icao → primary hex
- * @param regionAirports local 模式需要的區域機場 ICAO 清單
+ * @param localAirportCodes local 模式視為本地端點的 ICAO 清單（Selection 優先，否則 region）
  */
 export function assignAirportColors(
   flights: Flight[],
   dimension: Exclude<AirportColorMode, "theme">,
   overrides: Record<string, string> = {},
-  regionAirports: string[] = [],
+  localAirportCodes: string[] = [],
 ): AirportAssignment {
-  const regionSet = new Set(regionAirports);
+  const localAirportSet = new Set(localAirportCodes);
   // 統計每個機場的航班數
   const counts = new Map<string, number>();
   for (const f of flights) {
-    const icao = pickEndpoint(f, dimension, regionSet);
+    const icao = pickEndpoint(f, dimension, localAirportSet);
     if (!icao) continue;
     counts.set(icao, (counts.get(icao) ?? 0) + 1);
   }
@@ -107,7 +107,7 @@ export function assignAirportColors(
 
   const flightColors = new Map<string, string>();
   for (const f of flights) {
-    const icao = pickEndpoint(f, dimension, regionSet);
+    const icao = pickEndpoint(f, dimension, localAirportSet);
     if (!icao) continue;
     const palette = icaoToPalette.get(icao);
     if (palette) flightColors.set(f.fr24_id, palette.primary);
