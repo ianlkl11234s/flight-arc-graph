@@ -1755,7 +1755,7 @@ export default function App() {
                 <h1
                   style={{
                     margin: "2px 0 0",
-                    fontSize: 17,
+                    fontSize: 26,
                     color: isDarkTheme ? "#fff" : "#333",
                     fontFamily: "monospace",
                     letterSpacing: 0.5,

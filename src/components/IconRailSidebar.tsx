@@ -1496,73 +1496,85 @@ function SetsPanel({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {/* Header: 已選 + 動作 */}
-      <div style={{ padding: "4px 8px 6px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ fontSize: 11, color: theme.ACCENT, lineHeight: 1.3 }}>
-          已選 <strong style={{ color: theme.ACTIVE_TEXT }}>{airportSet.length}</strong> 座
-          {setName && (
-            <span style={{ marginLeft: 6, fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>· {setName}</span>
-          )}
-        </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          <button
-            onClick={onClearSet}
-            disabled={airportSet.length === 0}
-            style={{
-              padding: "2px 8px", fontSize: 10, borderRadius: 4,
-              background: "transparent", border: `1px solid ${theme.BORDER}`,
-              color: airportSet.length === 0 ? theme.DISABLED_TEXT : theme.DIM,
-              cursor: airportSet.length === 0 ? "default" : "pointer",
-            }}
-          >
-            清空
-          </button>
-          {setMode && (
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 2,
+          flexShrink: 0,
+          paddingBottom: 2,
+          background: theme.BG_RAIL,
+          boxShadow: `0 1px 0 ${theme.BORDER}`,
+        }}
+      >
+        {/* Header: 已選 + 動作 */}
+        <div style={{ padding: "4px 8px 6px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <div style={{ fontSize: 11, color: theme.ACCENT, lineHeight: 1.3 }}>
+            已選 <strong style={{ color: theme.ACTIVE_TEXT }}>{airportSet.length}</strong> 座
+            {setName && (
+              <span style={{ marginLeft: 6, fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>· {setName}</span>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 4 }}>
             <button
-              onClick={onExitSetMode}
+              onClick={onClearSet}
+              disabled={airportSet.length === 0}
               style={{
                 padding: "2px 8px", fontSize: 10, borderRadius: 4,
                 background: "transparent", border: `1px solid ${theme.BORDER}`,
-                color: theme.DIM, cursor: "pointer",
+                color: airportSet.length === 0 ? theme.DISABLED_TEXT : theme.DIM,
+                cursor: airportSet.length === 0 ? "default" : "pointer",
               }}
-              title="退出組合模式（回到單一機場）"
             >
-              退出
+              清空
             </button>
-          )}
+            {setMode && (
+              <button
+                onClick={onExitSetMode}
+                style={{
+                  padding: "2px 8px", fontSize: 10, borderRadius: 4,
+                  background: "transparent", border: `1px solid ${theme.BORDER}`,
+                  color: theme.DIM, cursor: "pointer",
+                }}
+                title="退出組合模式（回到單一機場）"
+              >
+                退出
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Selected chips */}
-      {airportSet.length > 0 && (
-        <div style={{ padding: "4px 8px 8px", display: "flex", flexWrap: "wrap", gap: 4 }}>
-          {airportSet.map((icao) => (
-            <SetChip key={icao} icao={icao} onRemove={() => onToggleAirport(icao)} theme={theme} />
-          ))}
+        {/* Selected chips */}
+        {airportSet.length > 0 && (
+          <div style={{ padding: "4px 8px 8px", display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {airportSet.map((icao) => (
+              <SetChip key={icao} icao={icao} onRemove={() => onToggleAirport(icao)} theme={theme} />
+            ))}
+          </div>
+        )}
+
+        <div style={{ height: 1, background: theme.BORDER, margin: "2px 8px 6px" }} />
+
+        <div style={{ padding: "2px 8px 8px" }}>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="搜尋機場、國家、洲別、ICAO / IATA"
+            aria-label="搜尋機場"
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "8px 10px",
+              borderRadius: 7,
+              border: `1px solid ${theme.BORDER}`,
+              background: theme.SELECT_BG,
+              color: theme.ACTIVE_TEXT,
+              fontFamily: "monospace",
+              fontSize: 11,
+              outline: "none",
+            }}
+          />
         </div>
-      )}
-
-      <div style={{ height: 1, background: theme.BORDER, margin: "2px 8px 6px" }} />
-
-      <div style={{ padding: "2px 8px 8px" }}>
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="搜尋機場、國家、洲別、ICAO / IATA"
-          aria-label="搜尋機場"
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            padding: "8px 10px",
-            borderRadius: 7,
-            border: `1px solid ${theme.BORDER}`,
-            background: theme.SELECT_BG,
-            color: theme.ACTIVE_TEXT,
-            fontFamily: "monospace",
-            fontSize: 11,
-            outline: "none",
-          }}
-        />
       </div>
 
       {search.trim() && (
@@ -2955,7 +2967,9 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
     zIndex: 20,
     width: PANEL_WIDTH,
     maxHeight: "70vh",
-    overflowY: "auto",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
     background: theme.BG_PANEL,
     backdropFilter: "blur(16px)",
     WebkitBackdropFilter: "blur(16px)",
@@ -3085,7 +3099,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           >
             ✕
           </button>
-          <div style={{ paddingRight: 26, marginBottom: 12 }}>
+          <div style={{ paddingRight: 26, marginBottom: 12, flexShrink: 0 }}>
             <div style={{ fontSize: 9, letterSpacing: 1.6, color: theme.ACCENT_BLUE, fontFamily: "monospace" }}>
               FLIGHT ARC / {activeWorkspace?.toUpperCase()}
             </div>
@@ -3128,6 +3142,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               })}
             </div>
           </div>
+          <div style={{ minHeight: 0, overflowY: "auto", flex: "1 1 auto" }}>
           {activePanel === "settings" && <SettingsPanel {...props} theme={theme} />}
           {activePanel === "locations" && (
             <LocationsPanel
@@ -3231,6 +3246,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               theme={theme}
             />
           )}
+          </div>
         </div>
       )}
     </>
