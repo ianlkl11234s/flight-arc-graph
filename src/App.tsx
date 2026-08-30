@@ -264,6 +264,11 @@ export default function App() {
     airportSet,
     airspaceSelectedDates,
   );
+  const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
+
+  useEffect(() => {
+    if (!loading) setHasCompletedInitialLoad(true);
+  }, [loading]);
 
   // 機場 metadata（座標/名稱/國家，含無 preset 的長尾機場）— 一次性載入，失敗回空物件
   const [airportMeta, setAirportMeta] = useState<Record<string, AirportMeta>>({});
@@ -466,8 +471,13 @@ export default function App() {
 
   const regionTitle = REGION_CONFIG[region].title;
   const selectionTitle = airportSet
-    ? setName ?? "Custom selection"
+    ? setName ?? (airportSet.length > 0
+      ? `Flight Network · ${airportSet.length} Airport${airportSet.length === 1 ? "" : "s"}`
+      : "Build a Flight Network")
     : airportMeta[selectedAirport]?.name ?? getAirportInfo(selectedAirport)?.name ?? selectedAirport;
+  const selectionEyebrow = airportSet
+    ? "FLIGHT ARC / NETWORK STUDY"
+    : "FLIGHT ARC / AIRPORT VIEW";
   const selectionCodeLabel = airportSet
     ? airportSet.join(" · ")
     : (() => {
@@ -1296,7 +1306,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, availableDates.length]);
 
-  if (loading && allFlights.length === 0) {
+  if (!hasCompletedInitialLoad && loading && allFlights.length === 0) {
     return <LoadingScreen />;
   }
 
@@ -1740,7 +1750,7 @@ export default function App() {
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <div style={{ minWidth: 210 }}>
                 <div style={{ fontSize: 9, color: "#64aaff", fontFamily: "monospace", letterSpacing: 1.8 }}>
-                  FLIGHT ARC / CURRENT SELECTION
+                  {selectionEyebrow}
                 </div>
                 <h1
                   style={{

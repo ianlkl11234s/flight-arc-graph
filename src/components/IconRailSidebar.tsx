@@ -574,10 +574,10 @@ function SliderRow({
 
 /* ── SVG Icons ───────────────────────────────────────────── */
 
-function IconActivity() {
+function IconPlaneMark() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      <path d="M17.8 19 16 11l3.5-3.5c1.5-1.5 2-3.5 1-4.5s-3-.5-4.5 1L12.5 7.5 4.5 5.7 3 7.2l6.5 3.8L6 14.5 3.5 14l-1 1 3.5 2 2 3.5 1-1-.5-2.5 3.5-3.5 3.8 6.5Z" />
     </svg>
   );
 }
@@ -1411,8 +1411,11 @@ function SetsPanel({
   const selectedSet = new Set(airportSet);
   const [search, setSearch] = useState("");
   const [scenesOpen, setScenesOpen] = useState(false);
-  const defaultContinent = airportMeta[airportSet[0] ?? ""]?.continent || (region === "US" ? "NA" : region === "UK" ? "EU" : "AS");
-  const [openContinents, setOpenContinents] = useState<Set<string>>(new Set([defaultContinent]));
+  const firstAirportMeta = airportMeta[airportSet[0] ?? ""];
+  const defaultCatalogGroup = firstAirportMeta?.country === "TW" || firstAirportMeta?.country === "JP"
+    ? firstAirportMeta.country
+    : firstAirportMeta?.continent || (region === "US" ? "NA" : region === "UK" ? "EU" : "AS");
+  const [openContinents, setOpenContinents] = useState<Set<string>>(new Set([defaultCatalogGroup]));
   const [openCountries, setOpenCountries] = useState<Set<string>>(new Set());
 
   const catalogIcaos = useMemo(
@@ -1436,37 +1439,43 @@ function SetsPanel({
   }, [search, searchCandidates]);
 
   const groupedCatalog = useMemo(() => {
-    const byContinent = new Map<string, Map<string, string[]>>();
+    const byGroup = new Map<string, Map<string, string[]>>();
     for (const icao of catalogIcaos) {
       const meta = airportMeta[icao];
       const continent = meta?.continent || "ZZ";
       const country = meta?.country || "ZZ";
-      const countries = byContinent.get(continent) ?? new Map<string, string[]>();
+      const group = country === "TW" || country === "JP" ? country : continent;
+      const countries = byGroup.get(group) ?? new Map<string, string[]>();
       const countryAirports = countries.get(country) ?? [];
       countryAirports.push(icao);
       countries.set(country, countryAirports);
-      byContinent.set(continent, countries);
+      byGroup.set(group, countries);
     }
 
-    const continentOrder = ["AS", "EU", "NA", "SA", "AF", "OC", "ZZ"];
-    return Array.from(byContinent.entries())
-      .map(([continent, countries]) => ({
-        key: continent,
-        label: getContinentLabel(continent),
+    const groupOrder = ["TW", "JP", "AS", "EU", "NA", "SA", "AF", "OC", "ZZ"];
+    const groupLabels: Record<string, string> = { TW: "台灣", JP: "日本", AS: "亞洲其他" };
+    return Array.from(byGroup.entries())
+      .map(([group, countries]) => ({
+        key: group,
+        label: groupLabels[group] ?? getContinentLabel(group),
+        flattenCountries: group === "TW" || group === "JP",
         countries: Array.from(countries.entries())
-          .map(([country, icaos]) => ({
-            key: `${continent}:${country}`,
-            code: country,
-            label: getCountryLabel(country),
-            icaos: icaos.sort((a, b) =>
+          .map(([country, icaos]) => {
+            const sortedIcaos = icaos.sort((a, b) =>
               Number(available.has(b)) - Number(available.has(a)) ||
               (airportCatalog[b]?.flights ?? 0) - (airportCatalog[a]?.flights ?? 0) ||
-              a.localeCompare(b),
-            ),
-          }))
-          .sort((a, b) => a.label.localeCompare(b.label, "zh-Hant")),
+              a.localeCompare(b));
+            return {
+              key: `${group}:${country}`,
+              code: country,
+              label: getCountryLabel(country),
+              icaos: sortedIcaos,
+              flightCount: sortedIcaos.reduce((sum, icao) => sum + (airportCatalog[icao]?.flights ?? 0), 0),
+            };
+          })
+          .sort((a, b) => b.flightCount - a.flightCount || a.label.localeCompare(b.label, "zh-Hant")),
       }))
-      .sort((a, b) => continentOrder.indexOf(a.key) - continentOrder.indexOf(b.key));
+      .sort((a, b) => groupOrder.indexOf(a.key) - groupOrder.indexOf(b.key));
   }, [catalogIcaos, airportMeta, airportCatalog, airports]);
 
   const toggleSetKey = (setter: typeof setOpenContinents, key: string) => {
@@ -1658,7 +1667,7 @@ function SetsPanel({
 
       <div style={{ height: 1, background: theme.BORDER, margin: "8px 8px 6px" }} />
 
-      {/* Complete airport directory: continent → country → airport */}
+      {/* Complete airport directory: Taiwan / Japan / continent → country → airport */}
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "2px 8px 4px" }}>
         <span style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2 }}>全部機場</span>
         <span style={{ fontSize: 9, color: theme.DIM, fontFamily: "monospace" }}>
@@ -1692,7 +1701,25 @@ function SetsPanel({
                 {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{continentIcaos.length}
               </span>
             </button>
-            {open && continent.countries.map((country) => {
+            {open && continent.flattenCountries && continentIcaos.map((icao) => {
+              const meta = airportMeta[icao];
+              const selectable = available.has(icao);
+              return (
+                <div key={icao} style={{ paddingLeft: 8 }}>
+                  <AirportCheckboxRow
+                    icao={icao}
+                    name={meta?.nameZh || meta?.name || icao}
+                    iata={meta?.iata}
+                    checked={selectedSet.has(icao)}
+                    coverage={selectable ? undefined : "尚無軌跡"}
+                    disabled={!selectable}
+                    onToggle={() => onToggleAirport(icao)}
+                    theme={theme}
+                  />
+                </div>
+              );
+            })}
+            {open && !continent.flattenCountries && continent.countries.map((country) => {
               const countryOpen = openCountries.has(country.key);
               const selectedInCountry = country.icaos.filter((icao) => selectedSet.has(icao)).length;
               return (
@@ -2973,7 +3000,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             color: theme.ACCENT_BLUE,
           }}
         >
-          <IconActivity />
+          <IconPlaneMark />
         </div>
 
         {/* Separator */}
