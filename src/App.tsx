@@ -674,7 +674,12 @@ export default function App() {
     if (availableDates.length === 0 || !availableDates.includes(timeline.selectedDate)) return;
     setAirspaceDate(timeline.selectedDate);
     setAirspaceRangeDays(timeline.rangeDays);
-    setAirspaceSelectedDates(timeline.selectedDates);
+    setAirspaceSelectedDates((current) => {
+      const next = [...new Set(timeline.selectedDates)].sort();
+      const unchanged = current.length === next.length
+        && current.every((date, index) => date === next[index]);
+      return unchanged ? current : next;
+    });
   }, [availableDates, timeline.selectedDate, timeline.rangeDays, timeline.selectedDates]);
 
   // Airspace Scan 預設：切換時自動設定 All Taiwan、7d、拉遠視角、低 opacity
