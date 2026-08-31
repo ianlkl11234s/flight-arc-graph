@@ -469,6 +469,7 @@ export async function loadAirportFlights(
   let flights: Flight[] = [];
   if (dates.length > 0) {
     const manifest = await loadManifest();
+    throwIfAborted(options?.signal);
     const dailyFiles = manifest.airports[icao]?.dailyFiles;
     const shardEntries = dates.map((date) => dailyFiles?.[date]).filter(
       (entry): entry is NonNullable<typeof entry> => Boolean(entry),
