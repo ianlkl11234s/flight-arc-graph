@@ -266,6 +266,24 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
     if (bottomLineMat) bottomLineMat.uniforms["uEdgeGlow"]!.value = settings.edgeGlow * 0.5;
   }
 
+  // 延遲載入：13 個空域 geojson（~15.2MB）只在使用者第一次開啟空域圖層時才下載。
+  // loadAirspace() 內部有 module-level cache，重複呼叫不會重抓。
+  function ensureLoaded() {
+    if (built || building) return;
+    building = true;
+    loadAirspace()
+      .then((features) => {
+        if (removed) return;
+        buildGeometry(features);
+        applyUniforms();
+        mapRef?.triggerRepaint();
+      })
+      .catch((err) => {
+        console.error("[airspace] load failed", err);
+      })
+      .finally(() => { building = false; });
+  }
+
   return {
     id: "airspace-aurora",
     type: "custom" as const,
@@ -281,26 +299,21 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
       });
       renderer.autoClear = false;
 
-      if (!built && !building) {
-        building = true;
-        loadAirspace()
-          .then((features) => {
-            if (removed) return;
-            buildGeometry(features);
-            applyUniforms();
-            mapRef?.triggerRepaint();
-          })
-          .catch((err) => {
-            console.error("[airspace] load failed", err);
-          })
-          .finally(() => { building = false; });
+      // 只有已經是「開啟」狀態才立刻載入（例如上次 session 已開啟並持久化）；
+      // 預設關閉時不下載，等使用者實際開啟時由 render() 觸發。
+      if (opts.getSettings().enabled) {
+        ensureLoaded();
       }
     },
 
     render(_gl: WebGLRenderingContext, matrix: number[]) {
       if (!renderer) return;
       const settings = opts.getSettings();
-      if (!settings.enabled || !built) return;
+      if (!settings.enabled) return;
+      if (!built) {
+        ensureLoaded();
+        return;
+      }
       const hasVisibleCategory = CATEGORY_ORDER.some((cat) => settings.visibility[cat]);
       const hasVisibleOutput = hasVisibleCategory && (settings.opacity > 0 || settings.edgeGlow > 0);
       if (!hasVisibleOutput) return;
