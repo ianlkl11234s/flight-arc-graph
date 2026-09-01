@@ -355,12 +355,16 @@ export interface IconRailSidebarProps {
   // Atlas 機場總覽（🗺️）
   atlasVisible: boolean;
   onAtlasVisibleChange: (v: boolean) => void;
+  /** 使用者是否曾啟用過機場點（true 時待按小紅點永久消失） */
+  atlasEverEnabled: boolean;
   atlasGlowVisible: boolean;
   onAtlasGlowVisibleChange: (v: boolean) => void;
   atlasColorMode: AtlasColorMode;
   onAtlasColorModeChange: (m: AtlasColorMode) => void;
   atlasGlowSize: number;
   onAtlasGlowSizeChange: (v: number) => void;
+  // 展開「探索地圖總覽」workspace 時觸發（用來飛相機到俯瞰視角）
+  onExploreOpen?: () => void;
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -369,6 +373,14 @@ const FADE_KEYFRAMES = `
 @keyframes iconRailFadeIn {
   from { opacity: 0; transform: translateX(-12px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+`;
+
+// 機場點按鈕「待按」小紅點的呼吸動畫（動畫名稱獨立，避免撞名 App.tsx/CinemaBar 的 pulse）
+const ATLAS_BADGE_KEYFRAMES = `
+@keyframes atlasBadgePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(1.25); }
 }
 `;
 
@@ -2543,6 +2555,7 @@ function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays, them
 function AtlasPanel({
   atlasVisible,
   onAtlasVisibleChange,
+  atlasEverEnabled,
   atlasGlowVisible,
   onAtlasGlowVisibleChange,
   atlasColorMode,
@@ -2554,6 +2567,7 @@ function AtlasPanel({
 }: {
   atlasVisible: boolean;
   onAtlasVisibleChange: (v: boolean) => void;
+  atlasEverEnabled: boolean;
   atlasGlowVisible: boolean;
   onAtlasGlowVisibleChange: (v: boolean) => void;
   atlasColorMode: AtlasColorMode;
@@ -2576,10 +2590,10 @@ function AtlasPanel({
   }, [airportCatalog]);
 
   const legend = [
-    { color: "#2ecc71", label: "完整資料", desc: `整天完整捕捉（${stats.complete}）` },
-    { color: "#f1c40f", label: "核心（部分）", desc: `主動抓但未滿整天（${stats.corePartial}）` },
-    { color: "#4a90d9", label: "部分（附帶）", desc: `因航線連到而附帶（${stats.partial}）` },
-    { color: "#8894a3", label: "僅規劃（未抓）", desc: "前 1000 目標、尚未抓" },
+    { color: "#3FB8A5", opacity: 0.85, label: "完整資料", desc: `整天完整捕捉（${stats.complete}）` },
+    { color: "#f1c40f", opacity: 0.7, label: "核心（部分）", desc: `主動抓但未滿整天（${stats.corePartial}）` },
+    { color: "#4C84B6", opacity: 0.5, label: "部分（附帶）", desc: `因航線連到而附帶（${stats.partial}）` },
+    { color: "#3E434A", opacity: 0.3, label: "僅規劃（未抓）", desc: "前 1000 目標、尚未抓" },
   ];
 
   return (
@@ -2592,6 +2606,7 @@ function AtlasPanel({
       <button
         onClick={() => onAtlasVisibleChange(!atlasVisible)}
         style={{
+          position: "relative",
           width: "100%",
           padding: "8px 12px",
           marginBottom: 14,
@@ -2605,12 +2620,30 @@ function AtlasPanel({
         }}
       >
         {atlasVisible ? "● 已顯示在地圖上" : "○ 在地圖上顯示機場點"}
+        {!atlasEverEnabled && (
+          <span
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: -3,
+              right: -3,
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "#ff4444",
+              border: `2px solid ${theme.BG_PANEL}`,
+              boxShadow: "0 0 6px rgba(255,68,68,0.8)",
+              animation: "atlasBadgePulse 1.6s ease-in-out infinite",
+              pointerEvents: "none",
+            }}
+          />
+        )}
       </button>
 
       <div style={{ fontSize: 11, color: theme.DIM, marginBottom: 8, fontWeight: 600 }}>顏色 = 資料完整度</div>
       {legend.map((l) => (
         <div key={l.label} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
-          <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, marginTop: 2, flexShrink: 0, border: `1px solid ${theme.BORDER}` }} />
+          <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, opacity: l.opacity, marginTop: 2, flexShrink: 0, border: `1px solid ${theme.BORDER}` }} />
           <div>
             <div style={{ fontSize: 12, color: theme.ACTIVE_TEXT, fontWeight: 600 }}>{l.label}</div>
             <div style={{ fontSize: 10.5, color: theme.DIM }}>{l.desc}</div>
@@ -2719,7 +2752,7 @@ function AtlasPanel({
         ) : (
           legend.map((l) => (
             <div key={l.label} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
-              <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, marginTop: 2, flexShrink: 0, border: `1px solid ${theme.BORDER}` }} />
+              <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, opacity: l.opacity, marginTop: 2, flexShrink: 0, border: `1px solid ${theme.BORDER}` }} />
               <div>
                 <div style={{ fontSize: 12, color: theme.ACTIVE_TEXT, fontWeight: 600 }}>{l.label}</div>
                 <div style={{ fontSize: 10.5, color: theme.DIM }}>{l.desc}</div>
@@ -2982,7 +3015,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
 
   return (
     <>
-      <style>{FADE_KEYFRAMES}</style>
+      <style>{FADE_KEYFRAMES}{ATLAS_BADGE_KEYFRAMES}</style>
 
       {/* Icon Rail (top icons) */}
       <div
@@ -3029,7 +3062,11 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
 
         <RailIcon
           active={activeWorkspace === "explore"}
-          onClick={() => toggleWorkspace("explore")}
+          onClick={() => {
+            const opening = activeWorkspace !== "explore";
+            toggleWorkspace("explore");
+            if (opening) props.onExploreOpen?.();
+          }}
           title="探索地圖總覽"
           theme={theme}
         >
@@ -3236,6 +3273,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             <AtlasPanel
               atlasVisible={props.atlasVisible}
               onAtlasVisibleChange={props.onAtlasVisibleChange}
+              atlasEverEnabled={props.atlasEverEnabled}
               atlasGlowVisible={props.atlasGlowVisible}
               onAtlasGlowVisibleChange={props.onAtlasGlowVisibleChange}
               atlasColorMode={props.atlasColorMode}

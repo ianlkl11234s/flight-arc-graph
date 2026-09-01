@@ -59,10 +59,10 @@ interface AtlasProps {
   estDaily: number | null;
 }
 const ATLAS_STATUS_META: Record<string, { label: string; color: string }> = {
-  complete: { label: "完整資料", color: "#2ecc71" },
+  complete: { label: "完整資料", color: "#3FB8A5" },
   "core-partial": { label: "核心（部分）", color: "#f1c40f" },
-  partial: { label: "部分（附帶）", color: "#4a90d9" },
-  planned: { label: "僅規劃（未抓）", color: "#8894a3" },
+  partial: { label: "部分（附帶）", color: "#4C84B6" },
+  planned: { label: "僅規劃（未抓）", color: "#3E434A" },
 };
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) =>
@@ -230,6 +230,14 @@ function OrientationOrb({
   );
 }
 
+// 「探索地圖總覽」地球 icon 展開時飛去的固定俯瞰視角
+const EXPLORE_OVERVIEW_CAMERA = {
+  center: [119.0049, 22.5292] as [number, number],
+  zoom: 2.5,
+  pitch: 0,
+  bearing: 0,
+};
+
 export default function App() {
   const [dataSource, setDataSource] = useState<DataSource>("api");
   const [scope, setScope] = useState<Scope>("airport");
@@ -352,6 +360,14 @@ export default function App() {
   });
   const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
   const [atlasVisible, setAtlasVisible] = useState(false);
+  // 機場點按鈕是否曾被使用者啟用過（用來決定待按小紅點是否顯示，啟用一次後永久消失）
+  const [atlasEverEnabled, setAtlasEverEnabled] = useState(() => {
+    try {
+      return localStorage.getItem("flight-arc-atlas-ever-enabled") === "1";
+    } catch {
+      return false;
+    }
+  });
   const [atlasGlowVisible, setAtlasGlowVisible] = useState(false);
   const [atlasColorMode, setAtlasColorMode] = useState<AtlasColorMode>("flow");
   const [atlasGlowSize, setAtlasGlowSize] = useState(1.6);
@@ -761,6 +777,12 @@ export default function App() {
   useEffect(() => {
     try { localStorage.setItem("flight-arc-airport-color-overrides", JSON.stringify(airportColorOverrides)); } catch { /* ignore */ }
   }, [airportColorOverrides]);
+  // 機場點第一次啟用後永久記住，待按小紅點就不再顯示
+  useEffect(() => {
+    if (!atlasVisible || atlasEverEnabled) return;
+    setAtlasEverEnabled(true);
+    try { localStorage.setItem("flight-arc-atlas-ever-enabled", "1"); } catch { /* ignore */ }
+  }, [atlasVisible, atlasEverEnabled]);
 
   // Multi-condition filter（機型/航司/用途/航線/時長/quick toggles）
   const analysisFilteredFlights = useMemo(
@@ -1740,12 +1762,14 @@ export default function App() {
             onScaleByAircraftSizeChange={setScaleByAircraftSize}
             atlasVisible={atlasVisible}
             onAtlasVisibleChange={setAtlasVisible}
+            atlasEverEnabled={atlasEverEnabled}
             atlasGlowVisible={atlasGlowVisible}
             onAtlasGlowVisibleChange={setAtlasGlowVisible}
             atlasColorMode={atlasColorMode}
             onAtlasColorModeChange={setAtlasColorMode}
             atlasGlowSize={atlasGlowSize}
             onAtlasGlowSizeChange={setAtlasGlowSize}
+            onExploreOpen={() => mapRef.current?.flyTo({ ...EXPLORE_OVERVIEW_CAMERA, duration: 2000 })}
           />
 
           {/* 頂部控制列（sidebar 右邊） */}
