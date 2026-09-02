@@ -27,6 +27,22 @@ function screenDistPx(m: number[], a: GlobeResolved, b: GlobeResolved, w: number
   return Math.hypot((xb - xa) * w * 0.5, (yb - ya) * h * 0.5);
 }
 
+// DEV-only GL 上傳計數器（T1-1 驗收用）：monkeypatch onAdd 拿到的 gl context 的
+// bufferData/bufferSubData，累加呼叫次數。production 完全不執行（tree-shake 掉整段）。
+let glBufferDataCalls = 0;
+let glBufferSubDataCalls = 0;
+
+/** 目前累積的 GL buffer 上傳次數（DEV-only；production 恆回傳 0） */
+export function getGlStats(): { bufferData: number; bufferSubData: number } {
+  return { bufferData: glBufferDataCalls, bufferSubData: glBufferSubDataCalls };
+}
+
+/** 歸零計數器，通常在暫停/相機靜止測試前呼叫 */
+export function resetGlStats(): void {
+  glBufferDataCalls = 0;
+  glBufferSubDataCalls = 0;
+}
+
 export interface FlightLayerOptions {
   getCurrentTime: () => number;
   getFlights: () => Flight[];
@@ -76,6 +92,21 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
 
     onAdd(mapInstance: MapboxMap, gl: WebGLRenderingContext) {
       map = mapInstance;
+      // DEV-only：THREE 的 WebGLRenderer 用同一個 gl context（見 flightScene.init 下方），
+      // 在建立 renderer 前先掛上計數器，才不會漏算它初始化時發出的呼叫。
+      if (import.meta.env.DEV) {
+        const g = gl as unknown as Record<string, (...args: unknown[]) => unknown>;
+        const origBufferData = g["bufferData"]!.bind(gl);
+        g["bufferData"] = (...args: unknown[]) => {
+          glBufferDataCalls++;
+          return origBufferData(...args);
+        };
+        const origBufferSubData = g["bufferSubData"]!.bind(gl);
+        g["bufferSubData"] = (...args: unknown[]) => {
+          glBufferSubDataCalls++;
+          return origBufferSubData(...args);
+        };
+      }
       flightScene.init(gl);
       opts.onSceneReady?.(flightScene);
     },

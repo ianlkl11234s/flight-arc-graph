@@ -886,7 +886,10 @@ export class FlightScene {
       sig === this.lastActiveSig &&
       this.trailEpoch === this.lastTrailEpoch
     ) {
-      this.instancedOrbs?.updateAll(this.lastOrbEntries);
+      // 這條快速路徑本來就是靠 currentTime + 航班集合簽章判斷「內容沒變」才進來，
+      // 故 lastOrbEntries（含座標）保證與上次呼叫相同 → entriesUnchanged=true，
+      // 讓 InstancedOrbs 在相機也沒動時可以完全跳過 instanceMatrix 重算/上傳。
+      this.instancedOrbs?.updateAll(this.lastOrbEntries, true);
       this.activeOrbCount = this.lastOrbEntries.length;
       return;
     }
@@ -921,7 +924,8 @@ export class FlightScene {
     batch.releaseMissing(activeIds); // 落地/離窗 → slot 立即釋放並隱藏（同舊 setOpacity(0)）
     batch.commit();
 
-    this.instancedOrbs?.updateAll(orbEntries);
+    // 新建構的 orbEntries：座標剛重算過，不能假設與上次相同
+    this.instancedOrbs?.updateAll(orbEntries, false);
     this.activeOrbCount = orbEntries.length;
     this.lastOrbEntries = orbEntries;
   }

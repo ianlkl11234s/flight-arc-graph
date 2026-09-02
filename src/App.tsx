@@ -10,7 +10,7 @@ import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo, cameraForAirport } from "./map/cameraPresets";
 import { loadAirportMeta, type AirportMeta } from "./data/airportMeta";
-import { createFlightLayer } from "./map/customLayer";
+import { createFlightLayer, getGlStats, resetGlStats } from "./map/customLayer";
 import { createAtlasGlowLayer, ATLAS_GLOW_LAYER_ID, type AtlasColorMode } from "./map/atlasGlowLayer";
 import { createAirspaceLayer } from "./map/airspaceAurora";
 import { addMedianLineLayer, removeMedianLineLayer, setMedianLineVisibility, setMedianLineTheme } from "./map/medianLine";
@@ -1161,6 +1161,10 @@ export default function App() {
       },
       timeline: { play: timeline.play, pause: timeline.pause, seek: timeline.seek, setSpeed: timeline.setSpeed, setSelectedDate: timeline.setSelectedDate },
       builtinSets: BUILTIN_SETS,
+      /** T1-1 驗收用：累積的 GL buffer 上傳次數（bufferData/bufferSubData 呼叫數） */
+      glStats: getGlStats,
+      /** 歸零 glStats 計數器，通常在暫停/相機靜止測試前呼叫 */
+      resetGlStats,
     };
   });
 
