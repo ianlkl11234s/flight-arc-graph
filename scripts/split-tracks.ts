@@ -6,10 +6,14 @@
  *   1. public/tracks/regions/{REGION}.jsonl — 每個 region 的 LOD（DP 2km + 40 點上限）版
  *   2. public/tracks/regions/all.jsonl       — 全球 union LOD（world/all scope 用）
  *   3. public/tracks/manifest.json          — 索引檔（airports + regions，regions 含 "all"）
+ *   4. public/tracks/airports/{ICAO}/{YYYY-MM-DD}.l1.jsonl / .l2.jsonl — 中階 LOD
+ *      （--lod-only 專屬產出，eps 50m / 250m，3D DP，見下方 usage）
  *
  * LOD 分層：regions/*.jsonl 是給 world/all/region scope 用的抽稀版（每航班 ≤40 點，
  *   世界視角肉眼不可辨）；單機場 scope 仍走 airports/{ICAO}.jsonl 全解析度。前端依 scope
  *   在 flightLoader.ts 選層（loadRegionFullFlights → LOD 檔；loadAirportFlights → 全解析度）。
+ *   .l1/.l2.jsonl 是 Phase 2 補的中間層（zoom band 6–7.2 / 7.2–9.5），格式與全解析度日檔
+ *   完全相同，只有 path 被 3D DP 抽稀（水平公尺 + 高度×3 誇張，避免爬升/下降折點被抹平）。
  *
  * 注意：airports/{ICAO}.jsonl 是 fetch-tracks.ts 持續寫入的相容性 fallback。
  *       預設模式會以它為 canonical source，dedupe 後產生每日分檔、region 與 manifest；
@@ -28,6 +32,9 @@
  *   npx tsx scripts/split-tracks.ts
  *   npx tsx scripts/split-tracks.ts --dedupe-only     # 只去重 airports/*.jsonl，不動 region
  *   npx tsx scripts/split-tracks.ts --manifest-only   # 只重建 manifest，不重寫 daily / region 檔
+ *   npx tsx scripts/split-tracks.ts --lod-only --airports RCTP,RJTT --dates 2026-02-18
+ *     # 只對指定機場（逗號分隔，省略則全部）× 指定日期（逗號分隔，省略則該機場既有全部日期）
+ *     # 產 {ICAO}/{date}.l1.jsonl（eps 50m）與 .l2.jsonl（eps 250m），不動其他任何既有產出
  */
 
 import {
@@ -123,6 +130,57 @@ function dpSimplifyCapped(
     guard++;
   }
   return simplified;
+}
+
+// ── 3D DP 抽稀（airport L1/L2 用，垂直分量誇张後併入距離）──
+// path[i] = [lat, lng, alt_m, timestamp]（alt 一律公尺，見 CLAUDE.md 資料架構段）。
+// 2D DP（perpDistKm）只算水平距離，會把爬升/下降的高度折點抹平；這裡把高度乘上
+// 誇張係數（與前端 altExaggeration 量級對齊）後併入 3D 垂距，dist² = dx² + dy² + (K·dz)²。
+const M_PER_DEG_LAT = 111_320; // 每緯度公尺（與既有 perpDistKm 的 111.32 km/deg 同係數）
+const ALT_EXAGGERATION = 3;
+const LOD_L1_EPSILON_M = 50;
+const LOD_L2_EPSILON_M = 250;
+
+function perpDist3DMeters(p: number[], a: number[], b: number[]): number {
+  const cosLat = Math.cos((a[0]! * Math.PI) / 180);
+  const az = (a[2] ?? 0) * ALT_EXAGGERATION;
+  const bx = (b[0]! - a[0]!) * M_PER_DEG_LAT;
+  const by = (b[1]! - a[1]!) * M_PER_DEG_LAT * cosLat;
+  const bz = (b[2] ?? 0) * ALT_EXAGGERATION - az;
+  const px = (p[0]! - a[0]!) * M_PER_DEG_LAT;
+  const py = (p[1]! - a[1]!) * M_PER_DEG_LAT * cosLat;
+  const pz = (p[2] ?? 0) * ALT_EXAGGERATION - az;
+  const len2 = bx * bx + by * by + bz * bz;
+  if (len2 === 0) {
+    return Math.sqrt(px * px + py * py + pz * pz);
+  }
+  const t = Math.max(0, Math.min(1, (px * bx + py * by + pz * bz) / len2));
+  const dx = px - t * bx;
+  const dy = py - t * by;
+  const dz = pz - t * bz;
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+/** 3D 版 DP：與 dpSimplify 同樣的遞迴結構，僅距離函式改 3D，永遠保留起訖點。 */
+function dpSimplify3D(path: number[][], epsilonMeters: number): number[][] {
+  if (path.length <= 2) return path;
+  let maxDist = 0;
+  let maxIdx = 0;
+  const a = path[0]!;
+  const b = path[path.length - 1]!;
+  for (let i = 1; i < path.length - 1; i++) {
+    const d = perpDist3DMeters(path[i]!, a, b);
+    if (d > maxDist) {
+      maxDist = d;
+      maxIdx = i;
+    }
+  }
+  if (maxDist > epsilonMeters) {
+    const left = dpSimplify3D(path.slice(0, maxIdx + 1), epsilonMeters);
+    const right = dpSimplify3D(path.slice(maxIdx), epsilonMeters);
+    return left.slice(0, -1).concat(right);
+  }
+  return [a, b];
 }
 
 // ── Region matching ──
@@ -372,6 +430,73 @@ function writeManifestAtomically(manifest: unknown): void {
   renameSync(temporary, MANIFEST_FILE);
 }
 
+// ── --lod-only：airports/{ICAO}/{date}.l1.jsonl / .l2.jsonl（不動其他既有產出）──
+
+/** 列出某機場已存在的每日全解析度分檔日期（不含 .l1/.l2 產出，DATE_FILE_RE 不會誤配）。 */
+function listDailyDates(icao: string): string[] {
+  const dailyDir = join(AIRPORTS_DIR, icao);
+  if (!existsSync(dailyDir)) return [];
+  return readdirSync(dailyDir)
+    .filter((name) => DATE_FILE_RE.test(name))
+    .map((name) => name.slice(0, -".jsonl".length))
+    .sort();
+}
+
+/** 對單一 {ICAO}/{date}.jsonl 全解析度分檔，產出對應的 .l1.jsonl（eps 50m）與 .l2.jsonl（eps 250m）。 */
+function buildLodFilesForDaily(icao: string, date: string): void {
+  const dailyDir = join(AIRPORTS_DIR, icao);
+  const srcPath = join(dailyDir, `${date}.jsonl`);
+  if (!existsSync(srcPath)) {
+    console.warn(`   ⚠️  ${icao}/${date}.jsonl 不存在，略過`);
+    return;
+  }
+  const { flights } = parseJsonl(readFileSync(srcPath, "utf-8"));
+
+  const t0 = Date.now();
+  let origPts = 0;
+  let l1Pts = 0;
+  let l2Pts = 0;
+  const l1Lines: string[] = [];
+  const l2Lines: string[] = [];
+  for (const f of flights) {
+    origPts += f.path.length;
+    const l1Path = dpSimplify3D(f.path, LOD_L1_EPSILON_M);
+    const l2Path = dpSimplify3D(f.path, LOD_L2_EPSILON_M);
+    l1Pts += l1Path.length;
+    l2Pts += l2Path.length;
+    l1Lines.push(JSON.stringify({ ...f, path: l1Path }));
+    l2Lines.push(JSON.stringify({ ...f, path: l2Path }));
+  }
+  writeFileSync(join(dailyDir, `${date}.l1.jsonl`), l1Lines.join("\n") + "\n");
+  writeFileSync(join(dailyDir, `${date}.l2.jsonl`), l2Lines.join("\n") + "\n");
+  const elapsedMs = Date.now() - t0;
+  const pct1 = origPts > 0 ? ((l1Pts / origPts) * 100).toFixed(1) : "0.0";
+  const pct2 = origPts > 0 ? ((l2Pts / origPts) * 100).toFixed(1) : "0.0";
+  console.log(
+    `   ${icao} ${date}: ${flights.length} flights, ${origPts} pts → L1 ${l1Pts} (${pct1}%) / L2 ${l2Pts} (${pct2}%)  [${elapsedMs} ms]`,
+  );
+}
+
+/** --lod-only 進入點：只產每機場每日 L1/L2 檔，不動 flat/daily/region/manifest 任何既有產出。 */
+function runLodOnly(airportsFilter: string[] | undefined, datesFilter: string[] | undefined): void {
+  const targets = airportsFilter && airportsFilter.length > 0 ? airportsFilter : listAirportIcaos();
+  console.log(
+    `=== --lod-only：L1(eps ${LOD_L1_EPSILON_M}m) / L2(eps ${LOD_L2_EPSILON_M}m) 3D DP，${targets.length} 座機場 ===\n`,
+  );
+  for (const icao of targets) {
+    const dailyDir = join(AIRPORTS_DIR, icao);
+    if (!existsSync(dailyDir)) {
+      console.warn(`   ⚠️  找不到 ${icao} 的 daily shard 目錄，略過`);
+      continue;
+    }
+    const dates = datesFilter && datesFilter.length > 0 ? datesFilter : listDailyDates(icao);
+    for (const date of dates) {
+      buildLodFilesForDaily(icao, date);
+    }
+  }
+  console.log("\n✅ --lod-only 完成（未動 flat / daily / region / manifest 既有產出）");
+}
+
 // ── Main ──
 
 function main() {
@@ -384,6 +509,18 @@ function main() {
 
   const dedupeOnly = process.argv.includes("--dedupe-only");
   const manifestOnly = process.argv.includes("--manifest-only");
+  const lodOnly = process.argv.includes("--lod-only");
+
+  if (lodOnly) {
+    const airportsIdx = process.argv.indexOf("--airports");
+    const airportsFilter =
+      airportsIdx >= 0 ? process.argv[airportsIdx + 1]?.split(",").map((s) => s.trim()).filter(Boolean) : undefined;
+    const datesIdx = process.argv.indexOf("--dates");
+    const datesFilter =
+      datesIdx >= 0 ? process.argv[datesIdx + 1]?.split(",").map((s) => s.trim()).filter(Boolean) : undefined;
+    runLodOnly(airportsFilter, datesFilter);
+    return;
+  }
 
   const coreAirports = loadCoreAirports();
   console.log(`📖 core-airports: ${coreAirports.size} 座主動查詢機場\n`);
