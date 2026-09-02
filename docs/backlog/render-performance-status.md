@@ -13,7 +13,8 @@
 |---|---|---|
 | 型別 | `npm run typecheck` | 綠 |
 | 效能 A/B | `scripts/perf/`（README 有指令；場景 S1 單機場 RCTP、S2 set「亞太樞紐」，暫停＋播放各 6 秒） | 目標指標改善，且沒有任何指標退步 >5% |
-| 視覺回歸 | Phase 0 建立的 `visual-check`（固定時刻＋固定相機＋動畫凍結，dark 與 light 各一組） | 逐像素 diff：>2/255 的像素 <0.5%，且 diff 不得成塊（只允許沿線條邊緣的捨入差） |
+| 視覺回歸 | `scripts/perf/visual-check.mjs`（6 場景，固定時刻＋固定相機＋動畫凍結） | `pctOver8 < 0.15%` 且不成塊（顯著閾值 8/255 的理由見 `scripts/perf/README.md` §5）。⚠️ 鑑別力在 4 個 S1 場景（同版本底線 0.000%）；**S2／world 的底線本身就有 0.05–0.07%，pct 幾乎不鑑別，要看 blocky**。Phase 2 換 LOD 時 S2 是主戰場，屆時須先把 S2 底線壓下去（查併發載入順序），或加一個「3 座機場」的中型場景讓底線歸零 |
+| Summary 數字 | `scripts/perf/summary-snapshot.mjs --compare` | 三場景數字完全相同 |
 | 功能冒煙 | agent-browser 或手動 | 播放／暫停／seek、切機場、切底圖、Far View、時間窗（±12h）、漸進模式、點光球選航班，全部正常 |
 | 資料一致 | Summary 面板數字（航班數、dep/arr、每日趨勢） | 改前後完全相同 |
 
