@@ -19,9 +19,15 @@ interface OrbLayer {
   mesh: THREE.InstancedMesh;
   baseOpacity: number;
   scaleRatio: number;
+  /**
+   * T3-4（2026-09-03）：快取 mesh.instanceMatrix.array 參考，讓 updateAll() 直接寫
+   * column-major float，跳過每 instance 4 次 Object3D.updateMatrix()（quaternion 組合）
+   * + Matrix4.toArray() 複製。陣列本身在 mesh 生命週期內不會被重新配置（InstancedMesh
+   * 建構時一次配好 MAX_INSTANCES*16 大小，count 只是繪製筆數，不影響底層陣列），故快取
+   * 參考安全。
+   */
+  matrixArray: Float32Array;
 }
-
-const _dummy = new THREE.Object3D();
 
 /** GLSL 浮點數字面量：確保整數值也帶小數點（`2` → `2.0`），避免部分驅動對整數字面量挑剔 */
 function glslFloat(n: number): string {
@@ -117,7 +123,7 @@ export class InstancedOrbs {
         side: THREE.DoubleSide,
       });
       // 呼吸：vertex shader 在套用 instanceMatrix 之前對 transformed 乘 pulse，
-      // 等價於原本 CPU 把 pulse 乘進 _dummy.scale（純等向縮放，乘法可交換）。
+      // 等價於原本 CPU 把 pulse 乘進 Object3D.scale（純等向縮放，乘法可交換）。
       mat.onBeforeCompile = (shader) => {
         shader.uniforms["uTime"] = { value: 0 };
         shader.vertexShader =
@@ -133,6 +139,10 @@ export class InstancedOrbs {
       const mesh = new THREE.InstancedMesh(this.geo, mat, MAX_INSTANCES);
       mesh.count = 0;
       mesh.frustumCulled = false;
+      // column-major identity 已由 InstancedMesh 建構子對全部 MAX_INSTANCES 個 instance
+      // 寫過一次（setMatrixAt(i, identity)），故非 scale/position 欄位（1-4,6-9,11,15）
+      // 永遠維持 0/1，updateAll() 之後只需覆寫 0,5,10,12,13,14 這 6 個欄位。
+      const matrixArray = mesh.instanceMatrix.array as Float32Array;
       // 4 層都是 transparent + depthTest:false，且共用同一組世界座標，只靠半徑不同。
       // three.js 對 transparent 物件是先比 renderOrder、平手才退回 Z-depth；這 4 個
       // InstancedMesh 的 boundingSphere 半徑各不同（含每個 instance 的局部半徑做
@@ -157,7 +167,7 @@ export class InstancedOrbs {
       // 之後若要再調 orb 的 renderOrder，務必連同這兩個既有關係一起測。
       mesh.renderOrder = cfg.renderOrder;
       scene.add(mesh);
-      this.layers.push({ mesh, baseOpacity: cfg.opacity, scaleRatio: cfg.scaleRatio });
+      this.layers.push({ mesh, baseOpacity: cfg.opacity, scaleRatio: cfg.scaleRatio, matrixArray });
     }
 
     // Blink layer（紅色閃爍，較低 detail）
@@ -199,7 +209,8 @@ export class InstancedOrbs {
     blinkMesh.frustumCulled = false;
     blinkMesh.renderOrder = 0.4; // 三層 orb 中最上層：閃爍疊在三層 orb 之上（見上方 renderOrder 註解）
     scene.add(blinkMesh);
-    this.blinkLayer = { mesh: blinkMesh, baseOpacity: 1.0, scaleRatio: 0.4 };
+    const blinkMatrixArray = blinkMesh.instanceMatrix.array as Float32Array;
+    this.blinkLayer = { mesh: blinkMesh, baseOpacity: 1.0, scaleRatio: 0.4, matrixArray: blinkMatrixArray };
   }
 
   /**
@@ -260,22 +271,40 @@ export class InstancedOrbs {
       // Per-instance multiplier（按機型等分類調整大小，未設定則 1.0）
       const mul = this.scaleMap?.get(e.id) ?? 1.0;
 
+      // T3-4（2026-09-03）：四層原本各自用 Object3D（position.set + scale.set +
+      // updateMatrix 做 quaternion→matrix 組合）再 setMatrixAt（Matrix4.toArray 複製
+      // 16 個 float）。旋轉恆為單位四元數、四層位置相同，等價矩陣其實只有 6 個欄位
+      // 會變（column-major：對角線 0,5,10 放 scale，12,13,14 放 position，其餘欄位
+      // 因 InstancedMesh 建構時已全數初始化為 identity 而永遠是 0（非對角）或 1（[15]）
+      // ——見 OrbLayer.matrixArray 欄位註解），故直接寫這 6 個欄位到快取的
+      // instanceMatrix.array，略過 Object3D 與 Matrix4.toArray 兩層轉換。
+      // 乘法順序刻意維持與舊碼相同的 orbScale*scaleRatio*mul*cull（不引入 base 這種
+      // 共用中間值）：orb 三層的 scaleRatio（0.5/1.0/2.0）是 2 的冪，重新結合律不影響
+      // rounding，但 blink 層 scaleRatio=0.4 不是 2 的冪，若中間值重新分組會有 1-ulp
+      // 浮點捨入風險，故不省這個乘法。
       // Orb layers（cull：球體背面的光球縮到 0 隱藏；呼吸 pulse 已搬進 shader，這裡的
       // scale 只含靜態部分）
+      const off = i * 16;
       for (const layer of this.layers) {
         const s = this.orbScale * layer.scaleRatio * mul * cull;
-        _dummy.position.set(gx, gy, gz);
-        _dummy.scale.set(s, s, s);
-        _dummy.updateMatrix();
-        layer.mesh.setMatrixAt(i, _dummy.matrix);
+        const arr = layer.matrixArray;
+        arr[off] = s;
+        arr[off + 5] = s;
+        arr[off + 10] = s;
+        arr[off + 12] = gx;
+        arr[off + 13] = gy;
+        arr[off + 14] = gz;
       }
 
       // Blink layer（閃爍强度已搬進 shader，這裡的 scale 同樣不含動畫成分）
       const bs = this.orbScale * this.blinkLayer.scaleRatio * mul * cull;
-      _dummy.position.set(gx, gy, gz);
-      _dummy.scale.set(bs, bs, bs);
-      _dummy.updateMatrix();
-      this.blinkLayer.mesh.setMatrixAt(i, _dummy.matrix);
+      const barr = this.blinkLayer.matrixArray;
+      barr[off] = bs;
+      barr[off + 5] = bs;
+      barr[off + 10] = bs;
+      barr[off + 12] = gx;
+      barr[off + 13] = gy;
+      barr[off + 14] = gz;
     }
 
     // 更新 instance counts 和 matrix
