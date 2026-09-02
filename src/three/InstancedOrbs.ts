@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { mercatorToGlobe, type GlobeResolved } from "./shaders/globeProject";
 import { getFrozenAnimTime } from "./animClock";
 
-const MAX_INSTANCES = 1024;
+const MAX_INSTANCES = 8192;
 const _g: GlobeResolved = { x: 0, y: 0, z: 0, cull: 1, dot: 1 };
 
 /**
@@ -12,7 +12,7 @@ const _g: GlobeResolved = { x: 0, y: 0, z: 0, cull: 1, dot: 1 };
  */
 const PULSE_RATE = 2.0;
 const BLINK_RATE = 1.2;
-/** phase 的黃金角序列（弳度），讓 1024 個 instance 的相位分散但決定性可重現（見 T1-1） */
+/** phase 的黃金角序列（弳度），讓 MAX_INSTANCES 個 instance 的相位分散但決定性可重現（見 T1-1） */
 const GOLDEN_ANGLE_RAD = 2.399963229728653;
 
 interface OrbLayer {
@@ -79,8 +79,13 @@ export class InstancedOrbs {
   private lastScaleMapRef: Map<string, number> | null | undefined = undefined;
 
   constructor(scene: THREE.Scene, color: THREE.Color, blending: THREE.Blending) {
-    this.geo = new THREE.IcosahedronGeometry(1, 2);
-    this.blinkGeo = new THREE.IcosahedronGeometry(1, 1);
+    // T3-3（2026-09-03）：光球在螢幕上通常只佔數到數十像素，additive 疊加下 20 面體
+    // （細分 0 階，12 頂點/60 verts）與原本 2 階細分（540 verts）難以肉眼分辨；改用最低
+    // 細分把每顆光球的頂點量從 1,860 壓到 240，換 8 倍 MAX_INSTANCES（1,024→8,192），
+    // 修正 world 場景同時空中 >1,024 架時光球被靜默截斷（也選不到）的缺陷。
+    // 每幀頂點預算幾乎不變：1,024×1,860 ≈ 1.9M → 8,192×240 ≈ 1.97M。
+    this.geo = new THREE.IcosahedronGeometry(1, 0);
+    this.blinkGeo = new THREE.IcosahedronGeometry(1, 0);
 
     // per-instance phase：決定性黃金角序列（取代舊的 Math.random，讓凍結／非凍結畫面一致，
     // 也是 T1-1 視覺回歸可用 maxDiff=0 驗收的前提）。值固定不變，只在建構時設一次。
