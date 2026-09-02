@@ -9,6 +9,12 @@ import { AIRPORT_INFO } from "../map/cameraPresets";
  */
 export type RawFlight = Omit<Flight, "path"> & { path: TrailPoint[] };
 
+/**
+ * Phase 2-2 LOD 層級：l0 = 全解析度（現況），l1 = eps 50 m，l2 = eps 250 m。
+ * 只影響 per-airport daily shard 的 path 解析度；航班集合、起訖點與其餘欄位在三層之間完全一致。
+ */
+export type LodLevel = "l0" | "l1" | "l2";
+
 /** ICAO → IATA 對照表：台灣機場 + 常見國際航點 */
 export const ICAO_TO_IATA: Record<string, string> = {
   // 台灣機場（從 AIRPORT_INFO 展開）
@@ -118,6 +124,12 @@ export interface FlightLoadOptions {
   /** 只載入這些台灣日期；未提供時維持完整檔案行為。 */
   dates?: readonly string[];
   signal?: AbortSignal;
+  /**
+   * LOD 層級（Phase 2-2）：只影響 loadAirportFlights／loadAirportSelectionFlights 讀的
+   * per-airport daily shard 副檔名；未提供 = "l0"。loadRegionFullFlights 不吃這個欄位，
+   * region scope 一律維持讀 regions/*.jsonl。
+   */
+  lod?: LodLevel;
 }
 
 /** 按機場／日期快取的軌跡（全解析度，LRU + path 點數上限） */
@@ -439,6 +451,12 @@ function assetCandidates(path: string, source: "tracks" | "airspace"): string[] 
   ])];
 }
 
+/** 把 per-airport daily shard 路徑換成對應 LOD 層的檔名（.l1.jsonl／.l2.jsonl）；"l0" 原樣返回。 */
+function lodShardPath(path: string, lod: LodLevel): string {
+  if (lod === "l0") return path;
+  return path.replace(/\.jsonl$/, `.${lod}.jsonl`);
+}
+
 async function streamFirstAvailable(
   urls: readonly string[],
   onProgress?: (total: number) => void,
@@ -465,7 +483,8 @@ export async function loadAirportFlights(
   options?: FlightLoadOptions,
 ): Promise<Flight[]> {
   const dates = normalizeDates(options?.dates);
-  const cacheKey = `${icao}|${datesKey(dates)}`;
+  const lod: LodLevel = options?.lod ?? "l0";
+  const cacheKey = `${icao}|${datesKey(dates)}|${lod}`;
   const hit = lruTouch(airportCache, cacheKey);
   if (hit) {
     onProgress?.(hit.length);
@@ -473,7 +492,7 @@ export async function loadAirportFlights(
   }
 
   throwIfAborted(options?.signal);
-  console.log(`[Loader] Airport ${icao}: streaming...`);
+  console.log(`[Loader] Airport ${icao}: streaming... (lod=${lod})`);
 
   let flights: Flight[] = [];
   if (dates.length > 0) {
@@ -485,12 +504,20 @@ export async function loadAirportFlights(
     );
     // 只有完整涵蓋 requested dates 才採用 shard；缺任何一天就回 flat，避免靜默漏資料。
     if (shardEntries.length === dates.length) {
-      console.log(`[Loader] Airport ${icao}: ${dates.length} daily shard${dates.length === 1 ? "" : "s"}`);
+      console.log(`[Loader] Airport ${icao}: ${dates.length} daily shard${dates.length === 1 ? "" : "s"} (lod=${lod})`);
       const shardResults: Flight[] = [];
       let completedFlights = 0;
       for (const entry of shardEntries) {
+        // LOD 候選排前面、L0 全解析度殿後：Phase 2-1 只產出 7 座機場的 L1/L2，
+        // 其餘機場或缺檔日期會 404 → streamFirstAvailable 自動落到 L0，航班數不受影響。
+        const candidates = lod === "l0"
+          ? assetCandidates(entry.path, "tracks")
+          : [
+              ...assetCandidates(lodShardPath(entry.path, lod), "tracks"),
+              ...assetCandidates(entry.path, "tracks"),
+            ];
         const shard = await streamFirstAvailable(
-          assetCandidates(entry.path, "tracks"),
+          candidates,
           (total) => onProgress?.(completedFlights + total),
           options,
         );

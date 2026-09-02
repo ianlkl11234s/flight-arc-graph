@@ -20,6 +20,7 @@ import { getCachedAirspace, type AirspaceFeature } from "./data/airspaceLoader";
 import { pickAirspace } from "./map/airspacePicker";
 import { AirspaceInfoCard } from "./components/AirspaceInfoCard";
 import { filterByAirport } from "./data/flightLoader";
+import type { LodLevel } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { AirportSelector } from "./components/AirportSelector";
@@ -232,6 +233,36 @@ function OrientationOrb({
   );
 }
 
+// Phase 2-2：依 zoom band 換 LOD 層（門檻推導見 docs/backlog/render-performance-status.md §Phase 2）。
+// > 9.5 → L0（全解析度）；7.2–9.5 → L1（eps 50 m）；≤ 7.2 → L2（eps 250 m）。
+// 帶 ±0.3 hysteresis：只有離開目前band 超過 0.3 才切層，避免邊界抖動反覆重載。
+const LOD_L1_UP_THRESHOLD = 9.5; // l1 → l0 的嚴格門檻
+const LOD_L2_UP_THRESHOLD = 7.2; // l2 → l1 的嚴格門檻
+const LOD_HYSTERESIS = 0.3;
+
+/** 嚴格 band（不帶 hysteresis）：用於初始落地／跨兩層以上的大跳躍。 */
+function strictLodBand(zoom: number): LodLevel {
+  if (zoom > LOD_L1_UP_THRESHOLD) return "l0";
+  if (zoom > LOD_L2_UP_THRESHOLD) return "l1";
+  return "l2";
+}
+
+/** 依目前 band + 新 zoom 算出下一個 band；離開目前 band 需超過 hysteresis 邊界。 */
+function computeLodBand(zoom: number, current: LodLevel): LodLevel {
+  if (current === "l0") {
+    if (zoom > LOD_L1_UP_THRESHOLD - LOD_HYSTERESIS) return "l0";
+    return strictLodBand(zoom);
+  }
+  if (current === "l1") {
+    if (zoom > LOD_L1_UP_THRESHOLD + LOD_HYSTERESIS) return "l0";
+    if (zoom <= LOD_L2_UP_THRESHOLD - LOD_HYSTERESIS) return strictLodBand(zoom);
+    return "l1";
+  }
+  // current === "l2"
+  if (zoom <= LOD_L2_UP_THRESHOLD + LOD_HYSTERESIS) return "l2";
+  return strictLodBand(zoom);
+}
+
 // 「探索地圖總覽」地球 icon 展開時飛去的固定俯瞰視角
 const EXPLORE_OVERVIEW_CAMERA = {
   center: [119.0049, 22.5292] as [number, number],
@@ -253,6 +284,13 @@ export default function App() {
   const [airspaceRangeDays, setAirspaceRangeDays] = useState(1);
   const [airspaceSelectedDates, setAirspaceSelectedDates] = useState<string[]>([]);
 
+  // Phase 2-2：依 zoom band 自動換 LOD 層（airport scope／airport set 適用；region scope
+  // 忽略這個值）。lodRef 供 hysteresis 計算與 debug hook 同步讀寫，避免依賴 state 的 stale closure。
+  const [lod, setLod] = useState<LodLevel>("l0");
+  const lodRef = useRef<LodLevel>("l0");
+  // 非 null 時暫停自動換層，強制固定在該層（驗收 band 邊界用）。
+  const lodOverrideRef = useRef<LodLevel | null>(null);
+
   const {
     allFlights,
     airports,
@@ -273,6 +311,7 @@ export default function App() {
     airspaceRangeDays,
     airportSet,
     airspaceSelectedDates,
+    lod,
   );
   const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
 
@@ -375,6 +414,19 @@ export default function App() {
   const [atlasGlowSize, setAtlasGlowSize] = useState(1.6);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
   const { isMobile, isLandscape } = useIsMobile();
+
+  // Phase 2-2：cameraInfo.zoom 變動時依 hysteresis band 重算 LOD 層（setLodOverride 期間暫停）。
+  // zoom<=0 是尚未收到第一次 map "move" 事件的初始 sentinel（handleMapReady 才會設定真實值），
+  // 略過避免 mount 瞬間誤判成極遠 zoom 而先切到 l2 又立刻切回。
+  useEffect(() => {
+    if (lodOverrideRef.current !== null) return;
+    if (cameraInfo.zoom <= 0) return;
+    const next = computeLodBand(cameraInfo.zoom, lodRef.current);
+    if (next !== lodRef.current) {
+      lodRef.current = next;
+      setLod(next);
+    }
+  }, [cameraInfo.zoom]);
 
   // Region 相關 helper
   const KNOWN_REGIONS = ["RC", "RJ", "RO", "VH", "K", "EG"];
@@ -1050,7 +1102,20 @@ export default function App() {
       getTime: () => timeRef.current,
       /** Phase 1-3 驗收用：currentTime state（節流 ~10 Hz）側的值，與 getTime()（ref，逐幀）對照 */
       getStateTime: () => timeline.currentTime,
-      state: { scope, region, selectedAirport, airportSet, renderMode, displayMode, mapStyleId, playing: timeline.playing, speed: timeline.speed },
+      state: { scope, region, selectedAirport, airportSet, renderMode, displayMode, mapStyleId, playing: timeline.playing, speed: timeline.speed, lod: lodRef.current },
+      /** Phase 2-2 驗收用：目前套用的 LOD 層（"l0"／"l1"／"l2"），依 zoom band 自動算出或被 setLodOverride 鎖定。 */
+      getLod: () => lodRef.current,
+      /**
+       * Phase 2-2 驗收用：強制鎖定 LOD 層（band 邊界視覺比對）；傳 null 解除鎖定，
+       * 回到依目前 zoom 自動換層（用嚴格 band，不帶 hysteresis，落地後續交給 zoom effect）。
+       */
+      setLodOverride: (value: LodLevel | null) => {
+        lodOverrideRef.current = value;
+        const next = value ?? strictLodBand(cameraInfo.zoom);
+        lodRef.current = next;
+        setLod(next);
+        notifyActivity(mapRef.current);
+      },
       selectAirportSingle,
       applySavedSet,
       toggleAirportInSet,
