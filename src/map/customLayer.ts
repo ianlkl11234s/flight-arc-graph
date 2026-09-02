@@ -82,7 +82,16 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   let lastRepaintTime = NaN;
   let lastControlSig = "";
   let keepAliveFrames = 0;
-  const KEEP_ALIVE_FRAMES = 12; // 動作停止後的續繪窗，橋接 timeRef 落後一幀避免播放 stall
+  // 動作停止後的續繪窗。原本 12 是為了橋接「timeRef 落後一幀」：Phase 1-3 前
+  // getCurrentTime() 讀的是 App 每次 render 才從 currentTime state 複製出來的 ref，
+  // 而 state 是每個 rAF tick 才 setState，Mapbox 的 render() 常常搶先跑到、讀到上一幀
+  // 沒變的舊值，靠這個窗撐過那個空隙避免播放 stall。Phase 1-3 之後 getCurrentTime()
+  // 直接讀 useTimeline 內部每幀同步寫入的 timeRef（不經 React state），且播放時
+  // useTimeline 的 rAF 迴圈本身每幀都呼叫 onTick → notifyActivity 觸發下一幀，
+  // 這個橋接空隙已經不存在。保留一個小窗只為了另外兩個用途：controlsChanged（單一
+  // 控制項變更那一幀）與 isStaticBuilding() 收尾時，讓下游（Three.js buffer 更新／
+  // GPU pipeline）多撐幾幀再回落到 Phase 1-2 的 20fps 裝飾節流，不必是 12 那麼大。
+  const KEEP_ALIVE_FRAMES = 3;
   // setGlobe 的 cam scratch，每幀重用避免物件字面量 alloc
   const camScratch = { x: 0, y: 0, z: 0 };
   // repaint 節流器的 detach handle（style 切換會整批 remove+re-add 這個 layer）

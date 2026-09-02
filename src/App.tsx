@@ -589,7 +589,14 @@ export default function App() {
     return "2026-02-18";
   }, [fullDates, airportDateCounts, selectionDateCounts]);
 
-  const timeline = useTimeline({ availableDates, preferredDate });
+  const mapRef = useRef<MapboxMap | null>(null);
+  // Phase 1-3：播放時鐘留在 ref，rAF 每幀呼叫（不受 10 Hz state 節流影響）觸發 repaint。
+  // 播放屬於「有活動」，走 notifyActivity（立即 triggerRepaint + 重置節流器閒置計時），
+  // 不能讓它被 Phase 1-2 的裝飾動畫節流吃掉。
+  const handleTimelineTick = useCallback(() => {
+    notifyActivity(mapRef.current);
+  }, []);
+  const timeline = useTimeline({ availableDates, preferredDate, onTick: handleTimelineTick });
 
   // 切換機場時：若目前日期不是新機場的完整資料日，跳到該機場的 preferredDate。
   // 只在「機場改變」時觸發 —— 使用者手動點部分資料日期不會被蓋掉。
@@ -607,7 +614,6 @@ export default function App() {
       timeline.setSelectedDate(preferredDate);
     }
   }, [selectedAirport, airportSet, isAirportScope, availableDates, preferredDate, timeline]);
-  const mapRef = useRef<MapboxMap | null>(null);
   const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode });
   const recorder = useCanvasRecorder({ map: mapRef.current });
   const isRecording = recorder.recordingState === "recording";
@@ -969,7 +975,10 @@ export default function App() {
   const isDarkTheme = !["light", "streets"].includes(mapStyleId);
 
   const flightsRef = useRef(finalFlights);
-  const timeRef = useRef(timeline.currentTime);
+  // Phase 1-3：不再自己維護一份「每次 render 從 state 複製」的 ref（那會被 10 Hz
+  // 節流拖慢），直接沿用 useTimeline 內部的 timeRef —— 同一個物件，rAF 每幀寫入，
+  // custom layer / 錄影 overlay / 晨昏線 / viewshed track-single 都讀到最新值。
+  const timeRef = timeline.timeRef;
   const renderModeRef = useRef(renderMode);
   const altExagRef = useRef(altExaggeration);
   const altOffsetRef = useRef(altOffset);
@@ -995,7 +1004,6 @@ export default function App() {
   const atlasGlowSizeRef = useRef(atlasGlowSize);
 
   flightsRef.current = finalFlights;
-  timeRef.current = timeline.currentTime;
   renderModeRef.current = renderMode;
   altExagRef.current = altExaggeration;
   altOffsetRef.current = altOffset;
@@ -1040,6 +1048,8 @@ export default function App() {
       get scene() { return flightSceneRef.current; },
       getFlights: () => flightsRef.current,
       getTime: () => timeRef.current,
+      /** Phase 1-3 驗收用：currentTime state（節流 ~10 Hz）側的值，與 getTime()（ref，逐幀）對照 */
+      getStateTime: () => timeline.currentTime,
       state: { scope, region, selectedAirport, airportSet, renderMode, displayMode, mapStyleId, playing: timeline.playing, speed: timeline.speed },
       selectAirportSingle,
       applySavedSet,
