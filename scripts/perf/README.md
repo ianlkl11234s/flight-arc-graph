@@ -65,9 +65,11 @@ python3 visual-diff.py a.png b.png diff.png            # 單獨比兩張圖
 
 | 場景 | maxDiff | >2px% | >8px% |
 |---|---:|---:|---:|
-| s1-rctp-dark / light / progressive / timewindow | 0–1 | 0% | 0.000% |
+| s1-rctp-dark / light / progressive / timewindow | **0–11** | ≤0.03% | ≤0.005% |
 | s2-apac-dark | 68 | 0.14% | 0.068% |
 | world-globe-far | 83 | 0.12% | 0.046% |
+
+⚠️ **S1 的底線在 2026-09-03 從 0–1 升到 0–11**（viewport 換成 1400×800、DPR 2 之後）。那些差異固定落在 x=42/46/794 附近的垂直線段（sidebar 邊框與 UI 文字抗鋸齒），同一份程式碼連跑也會隨機出現／消失。判讀時看 `pctOver8` 與分區統計，不要只看 maxDiff。
 
 S1 系列是完全可重現的（唯一例外是底部播放列 UI 有 16 px 的 1/255 抗鋸齒差）。S2 與 world 還有 0.12–0.14% 殘留，推測與多檔併發載入的完成順序、光球 `MAX_INSTANCES=1024` 截斷、光軌 `MAX_SLOTS=6000` 溢位有關（後兩者是 `plan` 的 G4 已知缺陷）。**比對這兩個場景時，差異若在此量級且不成塊視為噪聲；超過或成塊才是回歸。**
 
