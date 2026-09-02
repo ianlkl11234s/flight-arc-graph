@@ -43,7 +43,7 @@
   - 現在 `updateAll` 用固定 `dt=0.016`，改 wall-clock 後動畫速度要與改前一致（用 freezeAnimation 在同一 t 截圖比對）
   - 測試：visual-check 全場景；暫停＋相機靜止時 `probe.mjs` 量到 instance buffer 零上傳（`renderer.info` 或 trace 內 bufferSubData 次數）；點光球選航班仍正確
 - [ ] **1-2 暫停時降頻／閒置**（T05-2；`src/map/customLayer.ts:239-251`，同 pattern `atlasGlowLayer.ts`、`airspaceAurora.ts`）
-  - **預設政策（用戶可改）**：暫停且相機靜止 → 用單一 `setTimeout` 以 20 fps 排 `triggerRepaint`；連續 30 秒無互動 → 完全停止重繪（呼吸停在當下相位）；任何互動／播放／slider 立即恢復；`document.hidden` → 停
+  - **政策（2026-09-02 用戶已拍板）**：暫停且相機靜止 → 用單一 `setTimeout` 以 20 fps 排 `triggerRepaint`；連續 30 秒無互動 → 完全停止重繪（呼吸停在當下相位）；任何互動／播放／slider 立即恢復；`document.hidden` → 停
   - 測試：`probe.mjs` 暫停 rAF≈20/s，30 秒後 0/s，按播放回到滿幀；播放中無 stall（`KEEP_ALIVE` 語意保留）；visual-check 不變
 - [ ] **1-3 播放時鐘留在 ref、React 10 Hz 發布**（T05-3；`src/hooks/useTimeline.ts`、`src/App.tsx:996`）
   - 時鐘由 hook 持 `timeRef`，rAF 內直接 `map.triggerRepaint()`；state 節流 ~10 Hz；`seek()` 同步寫 ref 並立即發布
@@ -55,21 +55,48 @@
 
 ---
 
-## Phase 2：Tier 1 多層 LOD（多機場的根本解；需要重生資料）
+## Phase 2：多層 LOD × 依 zoom 換層（2026-09-02 用戶拍板：換層依 zoom band，不依模式）
+
+> 目標：**拉遠與拉近都不能看出差異**。單機場／set／world 走同一套規則。
+> 長期目標：**全球某一天所有機場全開**（= world 場景 S3，同時空中 7.9K–8.6K 班）。
+
+門檻推導：Web Mercator lat 25°、DPR 2 下 `m/device px = 554 / 2^(z−6)`（plan 引用的 C2d 表）。取「該層 eps ≤ 1 device px」為可用上限。
+
+| 層 | eps | 「≤1 device px」上限 z | 採用 band | 資料來源 |
+|---|---|---:|---|---|
+| L3（現有） | 2 km／40 pt | 4.15 | z ≤ 6 | `regions/*.jsonl`、`all.jsonl` |
+| L2 | 250 m | 7.15 | 6 < z ≤ 7.2 | 新：`airports/{ICAO}/{date}.l2.jsonl` |
+| L1 | 50 m | 9.47 | 7.2 < z ≤ 9.5 | 新：`airports/{ICAO}/{date}.l1.jsonl` |
+| L0 | 全解析度 | — | z > 9.5（**僅視窗內**航班） | 現有 daily shard |
+
+換層一律加 hysteresis ±0.3 zoom，避免邊界來回抖動。
+
+⚠️ **開工前需用戶拍板的張力**：嚴格門檻下 z4.15–6 的 world 視角該用 L2，但 world 走 `regions/all.jsonl` 單檔聚合，**沒有 region 級 L2／L1**。二選一：(a) 2-1 一併產 region 級 L2／L1 聚合檔（體積待估，all.jsonl 2 km 版今為 0.54 MB／機場日檔等比放大）；(b) world 視角維持 L3，接受 z5–6 的 2 km = 2–3.6 device px 折線。
 
 - [ ] **2-1 `scripts/split-tracks.ts` 產 L1／L2 檔**
   - 每機場每日：`airports/{ICAO}/{date}.l1.jsonl`（eps 50 m）、`.l2.jsonl`（eps 250 m）；DP 改 **3D**（水平公尺 + 高度 ×3，避免爬升／下降折點被抹平）；起訖點必留
+  - 若張力選 (a)，同時產 region 級 `regions/{R}.l1.jsonl`／`.l2.jsonl`
+  - **張力定案實驗（先做這個再決定 a／b）**：先只對 TW region 產一份 region 級 L2 聚合檔，用 visual-check 在 z5.5 同相機比 L3 vs L2。diff 只是線條邊緣零星差異 → 定案 (b)（world 維持 L3 到 z6）；成塊可辨 → 為 z4–6 做 (a)，且只在 zoom 進入該 band 時 lazy 下載（`all.jsonl` L2 估 ≈ 3× L3 ≈ 70 MB gzip，**不能進站就載**，會打回 PR #9 修好的 6 MB 進站流量）
   - 測試（腳本 `scripts/perf/lod-verify.ts`）：每檔航班數與 fr24_id 集合 = L0；每航班起訖點座標與時間戳 = L0；每個被抽掉的點到簡化線的 3D 垂距 ≤ eps；RCTP 2/18 點數約 L1 18%、L2 ~9%（對照 plan §C2d）
-- [ ] **2-2 前端選層**（`src/data/flightLoader.ts`、`src/hooks/useFlightData.ts`）
-  - 單機場 scope → L1；set／多機場 → L2；單機追蹤（track-single）或 zoom ≥ 11 → L0；檔案缺失 graceful fallback L0；manifest 記錄各層是否存在
-  - **資料一致檢查**：先盤點 `src/data/flightStats.ts`（`.path` 12 處）哪些統計依賴點數（距離、高度剖面、時間）；依賴點數的統計一律仍以 L0 或起訖點計算，不得因 LOD 改變 Summary 數字
-  - 測試：Summary JSON 與 Phase 0-3 快照完全相同；visual-check 場景 3（set z≤8）L2 vs L0 diff 通過；場景 1（z10.4）L1 vs L0 diff 通過；harness S2 lines 從 2.5M 降到 ~0.5M 以下
+- [ ] **2-2 依 zoom 換層 + 視窗內升級**（`src/data/flightLoader.ts`、`src/hooks/useFlightData.ts`、`src/map/customLayer.ts` 的 zoom 監聽）
+  - 依上表 band 選層；zoom ≥ 9.5 時**只**對視窗內機場載 L0／L1 shard（沿用 `loadAirportFlights` 的日期 shard），拉遠即釋放；換層走現有 progressive build（Tier 0-3 之後上傳成本已小）
+  - 檔案缺失 graceful fallback 到較粗層；manifest 記錄各層是否存在
+  - **資料一致檢查**：先盤點 `src/data/flightStats.ts`（`.path` 12 處）哪些統計依賴點數（距離、高度剖面、時間）；依賴點數的統計一律仍以 L0 或起訖點計算，**Summary 數字不得改變**
+  - 測試：
+    - Summary JSON 與 Phase 0-3 快照完全相同
+    - **band 邊界兩側同相機 diff**：z8.9 的 L2 vs L1、z10.9 的 L1 vs L0，皆需通過視覺門檻
+    - **連續 zoom-in**：world 視角一路拉到 RCTP z12，過程無閃爍、無缺線；最終畫面與「純 L0」diff 通過
+    - harness：S2 lines 明顯下降；world 場景 zoom-in 後常駐頂點 < 2M
 - [ ] **2-3 部署鏈**：`scripts/pull-from-s3.sh` 與上傳腳本加新層；**上傳 S3 前向用戶確認**；README 覆蓋表若有欄位受影響同步
   - 測試：本機用 `pull-from-s3.sh` 的 dry-run 或列表確認路徑正確
 
 ---
 
 ## Phase 3：Tier 2 結構改造（world 同步顯示；每項先寫設計小節再動工）
+
+> 建議順序（2026-09-02）：**3-1 typed array → 3-3 光球上限 → 3-2 GPU 光軌 → 3-4**。
+> 3-3 光球 8,192 與 3-2 光軌 slot 溢位都是「全球一天全開」的硬性需求（今天 world 場景 >1,024 顆光球靜默消失、>6,000 條光軌互踢閃爍）。
+> **3-4 若 Phase 2-2 已實作 zoom 換層 + 視窗內升級，即可直接刪除。**
 
 - [ ] **3-1 `Flight.path` 改 typed array**（T2-3）：`TrackPath` 包裝類（`length/lat(i)/lng(i)/alt(i)/t(i)`）機械替換 53 處；解析直接填 typed array；worker 解碼 + Transferable
   - 測試：`Summary` 數字不變；visual-check 全場景不變；heap（S2）從 ~620 MB 明顯下降；typecheck 綠
