@@ -84,3 +84,13 @@ node summary-snapshot.mjs --compare     # 深度比對，任一場景有差 → 
 - 排序類統計一律存成無序 `{key: count}`（同分時的順序取決於航班陣列疊代順序，會造成假 diff），另附 `xxxOrdered` 供人工判讀
 - 另存 `flightCount` 與 `fr24_id` 排序後的 hash，用來區分「統計算法變了」還是「載到的航班集合變了」
 - ⚠️ airport scope 的 `total` = `departures + arrivals`，不是 `flightCount`（起訖同機場會算兩次）
+
+## 7. A/B 量測的噪聲（2026-09-02 踩過）
+
+`sh ab-run.sh <tag> <s1|s2>` 會先 reload → 設場景 → **釘死相機與時刻** → 再跑 `run-scenario.sh`。不這樣做的話，前一輪跑完留下的相機位置與累積的 heap（實測跑過 6 場景後 heap 到 1.9 GB）會讓兩次量測不可比。
+
+**`mainThread.busyPct` 在 S1 場景的噪聲是 ±6 個百分點**：同一份程式碼連跑三次，播放時分別是 41% / 52% / 53%。拿單次結果當基準會得到「改壞了」的假結論。判讀規則：
+
+- 看 `brief.py` 的 `perFrame.script`（ms/frame）而不是 `busyPct`，前者直接反映 CPU 工作量
+- **同一版至少跑三次取中位數**，差異小於該場景的噪聲範圍就直說「測不出來」，不要挑對自己有利的那次
+- 光球相關的改動要用 world 場景才測得出來（S1 只有 ~105 顆活躍光球、S2 ~116，world 才會頂到 `MAX_INSTANCES=1024`）

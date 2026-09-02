@@ -46,10 +46,15 @@
 
 ## Phase 1：Tier 0.5（近零視覺差異）
 
-- [ ] **1-1 光球動畫搬進 shader**（T05-1；`src/three/InstancedOrbs.ts`）
+- [x] **1-1 光球動畫搬進 shader**（2026-09-02 完成，`a9e3398`）
   - 呼吸／閃爍改 `uTime`（wall-clock 秒）uniform + per-instance `aPhase` attribute；instanceMatrix 只在 entries／globe 參數／scale 變時重算；attribute 改 `DynamicDrawUsage`
   - 現在 `updateAll` 用固定 `dt=0.016`，改 wall-clock 後動畫速度要與改前一致（用 freezeAnimation 在同一 t 截圖比對）
-  - 測試：visual-check 全場景；暫停＋相機靜止時 `probe.mjs` 量到 instance buffer 零上傳（`renderer.info` 或 trace 內 bufferSubData 次數）；點光球選航班仍正確
+  - ✅ visual-check 全 6 場景：4 個 S1 場景 maxDiff = 0；s2-apac 74、world 136（噪聲底線內）
+  - ✅ summary-snapshot 三場景數字完全相同
+  - ✅ 零上傳：暫停＋相機靜止 5 秒，Three.js 側 `bufferData`/`bufferSubData` = 0（新增 DEV 計數器 `__flightArcDebug.glStats()`；殘留計數經 call-stack 追查全屬 Mapbox 自身的 symbol/label placement）
+  - ✅ 播放中光球正確跟隨、`pickFlight` 正常
+  - ⚠️ **CPU 沒有可測量的改善，也沒有退步**：S1 播放 `perFrame.script` after 7.14 ms/f vs before 三次 5.91／7.77／7.78（噪聲內）；暫停 1.79 vs 1.69／2.37／1.74。原因是 S1 只有 ~105 顆活躍光球，`updateAll` 本來就便宜。**1-1 的價值是「暫停時零上傳」這個 1-2 的前提**，CPU 收益要到 1-2 降頻／閒置才體現；真正吃光球成本的是 world 場景（頂到 `MAX_INSTANCES=1024`）
+  - 📌 順帶修掉潛在 bug：4 個 orb `InstancedMesh` 沒有明確 `renderOrder`，three.js 對 transparent 物件在 renderOrder 平手時退回 Z-depth 排序，而各層 `boundingSphere` 半徑不同 → 疊繪順序不穩定；dark 的 additive 蓋掉了，light 的 Normal blending 會顯現。已指定 0.1／0.2／0.3／0.4，夾在靜態軌跡桶（預設 0）與 `BatchedTrails`（1）之間
 - [ ] **1-2 暫停時降頻／閒置**（T05-2；`src/map/customLayer.ts:239-251`，同 pattern `atlasGlowLayer.ts`、`airspaceAurora.ts`）
   - **政策（2026-09-02 用戶已拍板）**：暫停且相機靜止 → 用單一 `setTimeout` 以 20 fps 排 `triggerRepaint`；連續 30 秒無互動 → 完全停止重繪（呼吸停在當下相位）；任何互動／播放／slider 立即恢復；`document.hidden` → 停
   - 測試：`probe.mjs` 暫停 rAF≈20/s，30 秒後 0/s，按播放回到滿幀；播放中無 stall（`KEEP_ALIVE` 語意保留）；visual-check 不變
