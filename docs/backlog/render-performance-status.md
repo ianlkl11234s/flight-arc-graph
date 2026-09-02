@@ -131,12 +131,18 @@
 > 3-3 光球 8,192 與 3-2 光軌 slot 溢位都是「全球一天全開」的硬性需求（今天 world 場景 >1,024 顆光球靜默消失、>6,000 條光軌互踢閃爍）。
 > **3-4 若 Phase 2-2 已實作 zoom 換層 + 視窗內升級，即可直接刪除。**
 
-- [ ] **3-1 `Flight.path` 改 typed array**（T2-3）：`TrackPath` 包裝類（`length/lat(i)/lng(i)/alt(i)/t(i)`）機械替換 53 處；解析直接填 typed array；worker 解碼 + Transferable
-  - 測試：`Summary` 數字不變；visual-check 全場景不變；heap（S2）從 ~620 MB 明顯下降；typecheck 綠
+- [x] **3-1 `Flight.path` 改 typed array**（2026-09-03 完成，`f9b187b`）（T2-3）：`TrackPath` 包裝類（`length/lat(i)/lng(i)/alt(i)/t(i)`）機械替換 53 處；解析直接填 typed array；worker 解碼 + Transferable
+  - ✅ `TrackPath` SoA：Float64 lat/lng（不用 Float32，經度誤差約 1 公尺 z12 以上看得見）、Float32 alt、Uint32 t = 24 B/點（原 ~60 B）
+  - ✅ heap（GC 後量、2-3 次中位數）：S1 139→124 MB（-11%）、S2 464→373 MB（-20%）、world 321→296 MB（-8%）
+  - ✅ visual-check 6/6、summary 三場景相同。S1 的 pctOver8 0.0044% 有查到底：暫時把 alt 換 Float64 重跑 → maxDiff 全部歸零，證實只來自刻意的 Float32 高度精度
+  - 📌 `coordTransform.worker.ts` 查證是 dead code（無任何 import），未動
 - [ ] **3-2 GPU 時間驅動光軌**（T2-1；設計見 plan §C2e）：先做「tRel attribute + `uTime` → 漸進模式進 shader」（獨立小步），再做 partner attribute + 頭部夾回 + 活躍段 index，最後拆 `BatchedTrails`
   - 測試：freezeAnimation + 固定時刻下，光軌截圖 vs 改前 diff 通過（顏色 cycle 順序若改變需先在 plan 記錄並取得用戶同意）；world 場景 8,000+ 班同時空中無互踢閃爍；harness 播放時主執行緒 busy 顯著下降
-- [ ] **3-3 光球 billboard + 上限 8,192**（T2-2）
-  - 測試：world 場景每架在空中的飛機都有光球（數量 = activeFlights）；點選任一光球正確；visual-check 場景 1／3 光球外觀 diff 通過（呼吸／閃爍在凍結時刻比對）
+- [x] **3-3 光球上限 8,192**（2026-09-03 完成，`8b9b267`）（T2-2）
+  - ✅ **不採用 billboard**：改成維持球體、細分 `(1,2)`→`(1,0)`（1,860→240 verts/顆），用省下的頂點換 8 倍上限，每幀頂點預算 1.9M→1.97M 幾乎不變。理由：billboard 在 globe 下要自建相機基底且會改變光暈外觀
+  - ✅ world 場景 `instancedOrbs.count` 1,024（截斷）→ 7,866；pickFlight 8/8 命中，含索引 1500–7865（舊版根本畫不出來的那批）
+  - ✅ 視覺：S1 pctOver8 0.064–0.080%、s2 0.028%，門檻內不成塊；跑過同 commit 控制組（0.0000%）確認是幾何的真實效果非噪聲，再對 dark／light 各做 4× 裁圖人工比對，光球一樣圓無稜角
+  - ⚠️ **已知取捨**：world **播放** script 60.19 → 73.57 ms/frame（fps 15→12，+22%，三次穩定可重現）。這是 updateAll 從每幀處理 1,024 顆變成 7,866 顆的直接成本（S1 對照組 2.18→2.25 在噪聲內，證實放大的 buffer 本身不花錢）。world 播放改動前就已 99% busy／15 fps 不可用，解方是 3-2
 - [ ] **3-4 依 zoom 換層 + 視窗內升級**（T2-4）
   - 測試：拉近某機場後視窗內航線換成 L1／L0，拉遠換回；換層期間無閃爍缺線；harness world 場景常駐頂點 <2M
 
