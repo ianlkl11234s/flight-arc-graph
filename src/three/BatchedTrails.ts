@@ -64,6 +64,20 @@ export class BatchedTrails {
   private freeSlots: number[] = [];
   /** 歷史最高使用 slot（drawRange 上限；低於此的空 slot opacity 全 0，頂點成本可忽略） */
   private maxEverUsed = -1;
+
+  // ── 逐出用 min-heap（endTime 最小者優先）─────────────────────────
+  // world 場景活躍航班數 > MAX_SLOTS 時，池滿後每幀有大量 flight 搶不到 slot，
+  // 逐出候選須從全部佔用中找 endTime 最小者。原本用 for..of 掃過整個 slotByFlight
+  // （最壞情況 O(MAX_SLOTS)，實測 world 規模達 ~11M 次迭代/幀，是 writeTrail 成本
+  // 的 ~92%）；改用 min-heap 把「找最小 + 移除」壓到 O(log MAX_SLOTS)。
+  // - slotSeq[slot]：目前佔用該 slot 的 acquire 序號，兼作 (a) heap 陳舊 entry 判斷
+  //   （slot 被別的航班重新佔用後，舊 entry 的 seq 對不上 → 懶惰丟棄）與 (b) endTime
+  //   完全打平手時的 tie-break —— 複製原本「Map 迭代序、strict < 不覆蓋」的語意，即
+  //   「同 endTime 時踢最早取得目前 slot 的那個」，保證與原演算法逐出結果逐幀一致
+  //   （實測 endTime 打平手比例 ~28%，FR24 時間戳量化所致，不能忽略）。
+  private slotSeq: Float64Array = new Float64Array(MAX_SLOTS);
+  private acquireSeq = 0;
+  private heap: { endTime: number; slot: number; seq: number }[] = [];
   // 本幀髒區（slot 粒度），commit 時合併成單一 updateRange
   private minDirtySlot = Infinity;
   private maxDirtySlot = -1;
@@ -292,27 +306,86 @@ export class BatchedTrails {
   }
 
   private acquireSlot(flightId: string, endTime: number): number {
+    // 陳舊 entry（slot 被重新佔用後留下的舊 heap 記錄）太多時整批重建，保持記憶體有界。
+    // 放在池滿判斷之外：池從不滿的場景（S1/S2）heap 只會單調成長（release 不會移除舊 entry），
+    // 沒有這行同樣會無界累積，只是速度較慢。
+    if (this.heap.length > MAX_SLOTS * 8) this.rebuildHeap();
     if (this.freeSlots.length === 0) {
-      // 池滿：踢「最接近抵達」的航班（本來就快落地消失，視覺衝擊最小）
-      let victimId: string | null = null;
+      // 池滿：踢「最接近抵達」的航班（本來就快落地消失，視覺衝擊最小）。
+      // O(log n) min-heap 取代原本掃全表的線性搜尋，逐出結果（含打平手 tie-break）與原演算法相同。
       let victimSlot = -1;
-      let minEnd = Infinity;
-      for (const [id, s] of this.slotByFlight) {
-        const st = this.states[s];
-        if (st && st.endTime < minEnd) {
-          minEnd = st.endTime;
-          victimId = id;
-          victimSlot = s;
-        }
+      let top = this.heapPopMin();
+      while (top) {
+        if (top.seq === this.slotSeq[top.slot]) { victimSlot = top.slot; break; } // 仍是目前佔用者，命中
+        top = this.heapPopMin(); // 陳舊 entry（slot 早已換人佔用），丟棄繼續找
       }
-      if (victimId === null) return -1;
+      if (victimSlot === -1) return -1;
+      const victimId = this.states[victimSlot]!.flightId;
       this.release(victimId, victimSlot);
     }
     const slot = this.freeSlots.pop()!;
     this.states[slot] = { flightId, endTime, lastCount: 0 };
     this.slotByFlight.set(flightId, slot);
     if (slot > this.maxEverUsed) this.maxEverUsed = slot;
+    const seq = ++this.acquireSeq;
+    this.slotSeq[slot] = seq;
+    this.heapPush({ endTime, slot, seq });
     return slot;
+  }
+
+  // ── min-heap 基本操作（陣列表示，endTime 升冪；打平手比 seq 升冪）───────
+  private heapLess(a: { endTime: number; seq: number }, b: { endTime: number; seq: number }): boolean {
+    return a.endTime < b.endTime || (a.endTime === b.endTime && a.seq < b.seq);
+  }
+
+  private heapPush(entry: { endTime: number; slot: number; seq: number }) {
+    const h = this.heap;
+    h.push(entry);
+    let i = h.length - 1;
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (!this.heapLess(entry, h[parent]!)) break;
+      h[i] = h[parent]!;
+      i = parent;
+    }
+    h[i] = entry;
+  }
+
+  private heapPopMin(): { endTime: number; slot: number; seq: number } | undefined {
+    const h = this.heap;
+    if (h.length === 0) return undefined;
+    const top = h[0]!;
+    const last = h.pop()!;
+    if (h.length > 0) {
+      h[0] = last;
+      this.heapSiftDown(0);
+    }
+    return top;
+  }
+
+  private heapSiftDown(i: number) {
+    const h = this.heap;
+    const n = h.length;
+    const entry = h[i]!;
+    for (;;) {
+      const l = i * 2 + 1, r = l + 1;
+      let smallest = i, smallestEntry = entry;
+      if (l < n && this.heapLess(h[l]!, smallestEntry)) { smallest = l; smallestEntry = h[l]!; }
+      if (r < n && this.heapLess(h[r]!, smallestEntry)) { smallest = r; smallestEntry = h[r]!; }
+      if (smallest === i) break;
+      h[i] = smallestEntry;
+      i = smallest;
+    }
+    h[i] = entry;
+  }
+
+  /** heap 累積過多陳舊 entry 時整批重建（只留目前仍佔用中的 slot），保持記憶體有界 */
+  private rebuildHeap() {
+    this.heap.length = 0;
+    for (const slot of this.slotByFlight.values()) {
+      this.heap.push({ endTime: this.states[slot]!.endTime, slot, seq: this.slotSeq[slot]! });
+    }
+    for (let i = (this.heap.length >> 1) - 1; i >= 0; i--) this.heapSiftDown(i);
   }
 
   private markDirty(slot: number) {
