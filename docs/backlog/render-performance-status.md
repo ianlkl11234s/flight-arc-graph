@@ -71,9 +71,15 @@
   - ✅ visual-check 6/6、summary 三場景相同；播放連續性 30 秒 × 60×／600×／3600× ref 單調遞增、state ~10 Hz 零倒退；seek ref <12 ms／state ~14 ms；錄影時間字 rAF probe 119/119 逐幀變化
   - ✅ `KEEP_ALIVE_FRAMES` 12 → 3（原用途「橋接 timeRef 落後一幀」已消失）
   - ⚠️ 未實測：viewshed track-single 的 UI 級效果、`KEEP_ALIVE_FRAMES=3` 的極端序列（暫停時連續快速拖多個 slider）
-- [ ] **1-4 `preserveDrawingBuffer:false`**（T05-4；`src/map/MapView.tsx:276`、`src/hooks/useCanvasRecorder.ts`）
+- [x] **1-4 `preserveDrawingBuffer:false`**（2026-09-03 完成，`d3a49de`）
   - 即時錄製改在 `map.on("render")` 內同步取像；HQ 匯出維持 `once("render")`
-  - 測試：即時錄 10 秒 → 檔案可播且非黑畫面；HQ 匯出 30 幀 → 每幀非黑；visual-check 不變
+  - ✅ 即時錄製改 `map.on("render")` 內同步取像；HQ 匯出維持 `once("render")`，兩者改用同一個 `captureFrame()`
+  - ✅ **真的錄了一段檔案驗證**：完整 MediaRecorder 流程產出 2800×1600 VP9 webm（9.9 MB），ffmpeg 解出 45 幀逐幀檢查，min nonBlackRatio 0.9992、無一幀低於 0.9。另走生產取像路徑取 32 幀，每幀 nonBlackRatio = 1
+  - ✅ HQ 路徑 30 幀全非黑且亮度隨相機 bearing 平滑變化（非卡住的同一幀）
+  - ✅ visual-check 6/6、summary 3/3
+  - ⚠️ A/B 量不出收益：script 2.16 → 2.21 ms/frame 在噪聲內，GPU 欄位兩側相同（gpuHw 播放時 99% 已飽和）。省一次 back buffer 複製的收益在這個場景／canvas 尺寸下測不出來，如實記錄
+  - ⚠️ **留下的風險（未修）**：`useCanvasRecorder.ts:196` 的 `waitForRender` 有 200 ms timeout fallback。舊 flag 下逾時只抓到「舊但有效」的幀，新 flag 下可能抓到已清空的 buffer。S1 每幀約 13 ms 遠低於門檻，但沒對「大場景 jumpTo 後第一幀伴隨大量 tile 載入」壓測
+  - ⚠️ 未驗證：用播放器實際播放存下的 webm（只做程式化解碼與像素分析）；從「閒置 30 秒完全停止」狀態啟動錄影
 
 ---
 
