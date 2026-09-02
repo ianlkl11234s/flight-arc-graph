@@ -63,6 +63,11 @@
 
 ---
 
+> ⚠️ **開工前先修掉 S2／world 的視覺噪聲**（否則換 LOD 的驗收沒有鑑別力）。
+> 已查明根因（2026-09-02）：`FlightScene.colorForFlight`（`src/three/FlightScene.ts:280-290`）的 theme-cycle 依「首次出現順序」輪派 `colorIndex++`，而 `loadAirportSelectionFlights` 多檔並行、合併順序隨完成順序變 → 同一架飛機兩次拿到不同光軌顏色；切 style 重建 FlightScene 後 `colorIndex` 歸零重派，同理（這也是 Phase 0 查到的「切 style 改變畫面」的一部分）。
+> **範圍只在光軌**：靜態軌跡顏色走高度漸層（`FlightScene.ts:502` 附近），是決定性的；S1 場景光軌只有 ~16 條所以噪聲 0.000%，S2 有 116 條、world 更多。
+> 修法：(a) 合併後依 `(dep_time, fr24_id)` 排序；(b) `colorForFlight` 改成 `fr24_id` 穩定雜湊 → palette index。**建議 (b)**（兩個非決定性一起消失、錄影可重現），代價是光軌顏色一次性重洗（色盤不變）→ **需用戶點頭**，做完要重建 S2／world baseline。
+
 ## Phase 2：多層 LOD × 依 zoom 換層（2026-09-02 用戶拍板：換層依 zoom band，不依模式）
 
 > 目標：**拉遠與拉近都不能看出差異**。單機場／set／world 走同一套規則。
