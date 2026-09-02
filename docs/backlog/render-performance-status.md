@@ -107,7 +107,7 @@
   - 若張力選 (a)，同時產 region 級 `regions/{R}.l1.jsonl`／`.l2.jsonl`
   - **張力定案實驗（先做這個再決定 a／b）**：先只對 TW region 產一份 region 級 L2 聚合檔，用 visual-check 在 z5.5 同相機比 L3 vs L2。diff 只是線條邊緣零星差異 → 定案 (b)（world 維持 L3 到 z6）；成塊可辨 → 為 z4–6 做 (a)，且只在 zoom 進入該 band 時 lazy 下載（`all.jsonl` L2 估 ≈ 3× L3 ≈ 70 MB gzip，**不能進站就載**，會打回 PR #9 修好的 6 MB 進站流量）
   - 測試（腳本 `scripts/perf/lod-verify.ts`）：每檔航班數與 fr24_id 集合 = L0；每航班起訖點座標與時間戳 = L0；每個被抽掉的點到簡化線的 3D 垂距 ≤ eps；RCTP 2/18 點數約 L1 18%、L2 ~9%（對照 plan §C2d）
-- [ ] **2-2 依 zoom 換層 + 視窗內升級**（`src/data/flightLoader.ts`、`src/hooks/useFlightData.ts`、`src/map/customLayer.ts` 的 zoom 監聽）
+- [x] **2-2 依 zoom 換層**（2026-09-03 完成，`e245662`；視窗內升級未做，見下）（`src/data/flightLoader.ts`、`src/hooks/useFlightData.ts`、`src/map/customLayer.ts` 的 zoom 監聽）
   - 依上表 band 選層；zoom ≥ 9.5 時**只**對視窗內機場載 L0／L1 shard（沿用 `loadAirportFlights` 的日期 shard），拉遠即釋放；換層走現有 progressive build（Tier 0-3 之後上傳成本已小）
   - 檔案缺失 graceful fallback 到較粗層；manifest 記錄各層是否存在
   - **資料一致檢查（2026-09-02 已盤點，結論如下）**：
@@ -115,11 +115,15 @@
     - ⚠️ **`App.tsx:1230-1234` 的 tooltip 高度會變**：它取「最後一個 `t ≤ 當前時間` 的 path 點的 `[2]`」，點變疏就會顯示較舊的高度。2-2 要處理：對被點選的那一班用 L0（單機追蹤本來就會升級到 L0），或改成兩點線性內插
     - ⚠️ 三個與點數無關、但同樣會讓快照 diff 的來源，做快照時要避開：(1) `computeTopRoutes`／`getAirlineStats`／`computeAirportComparison`／`getAircraftTypeStats` 都是 `sort((a,b)=>b.count-a.count)`，**同分時順序 = 航班陣列疊代順序**（= 載入順序）→ 快照存無序 `{key:count}`；(2) 航班集合本身會因載入路徑改變（`flightLoader.ts:625-641` 先讀 `regions/*.jsonl`、缺檔才 fallback 全解析度；`preprocessFlights` 丟棄 `path.length===0`）→ 快照要存 `flightCount` + `fr24_id` 排序後的 hash，才能區分「算法變了」還是「載到的航班變了」；(3) airport scope 的 Total = `departures + arrivals`（`IconRailSidebar.tsx:2394`），**不是** `flights.length`（起訖同機場算兩次）
     - `FlightStatsPanel` 的 ALL REGION tab 吃的是 `allFlights`（`App.tsx:2389`，未篩選），**沒掛在 `__flightArcDebug` 上** → 若要納入快照需另外暴露
-  - 測試：
-    - Summary JSON 與 Phase 0-3 快照完全相同
-    - **band 邊界兩側同相機 diff**：z8.9 的 L2 vs L1、z10.9 的 L1 vs L0，皆需通過視覺門檻
-    - **連續 zoom-in**：world 視角一路拉到 RCTP z12，過程無閃爍、無缺線；最終畫面與「純 L0」diff 通過
-    - harness：S2 lines 明顯下降；world 場景 zoom-in 後常駐頂點 < 2M
+  - ⚠️ **band 定義修正**：原本寫「z ≤ 6 → L3（regions/*.jsonl）」是錯的 —— region 檔的航班集合與 per-airport shard 不同，換過去 Summary 數字會變。實作改成**同一份 shard 換副檔名**：z>9.5 → L0、7.2–9.5 → L1、≤7.2 → L2，航班集合恆定
+  - ✅ **Summary 三場景數字完全相同**（s2 確認真的走 L2：267,811 點 vs L0 的 2,533,949 = 10.6%）
+  - ✅ **s2-apac（z4.72）效能：lines 2,534,079 → 268,981（-89%）、heap 396 → 203 MB（-49%）**
+  - ✅ band 邊界：z10.9 L1 vs L0 maxDiff 12／pctOver8 0.005% 不成塊；z8.9 L2 vs L1 maxDiff 210／4.7% 成塊 → 佐證 band 把 z8.9 放 L1 是對的
+  - ✅ 連續 zoom z4→z12 層序 L2(4.0–7.5)→L1(8.0–9.5)→L0(10.0–12.0)，非背景像素比例平滑 21%→4.5%，無空白／缺線幀
+  - ✅ fallback：RCKH（無 LOD 檔）在 z5 內容與強制 L0 完全相同
+  - ✅ s2 視覺 pctOver8 1.46%，對最密差異區塊 4× 裁圖人工比對：線位置／粗細／亮度一致，差異只在次像素抗鋸齒，正常尺寸不可辨
+  - ⏭️ **未做（留給後續）**：視窗內 L0 升級（需空間索引）、tooltip 高度內插、track-single 升 L0、region 級 L1/L2 聚合檔
+  - ⏭️ LOD 檔目前只產了 7 座機場 × 2026-02-18；全量產檔（40 秒–2 分鐘、+1.1 GB）與上傳 S3 待用戶拍板
 - [ ] **2-3 部署鏈**：`scripts/pull-from-s3.sh` 與上傳腳本加新層；**上傳 S3 前向用戶確認**；README 覆蓋表若有欄位受影響同步
   - 測試：本機用 `pull-from-s3.sh` 的 dry-run 或列表確認路徑正確
 
