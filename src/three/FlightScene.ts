@@ -51,6 +51,8 @@ interface StaticBucket {
   colAttr: THREE.BufferAttribute;
   alphaAttr: THREE.BufferAttribute;
   ecefAttr: THREE.BufferAttribute;
+  /** T2-1：timestamps 的 GPU 鏡射（aTRel），progressive 顯示判斷搬進 vertex shader 用 */
+  trelAttr: THREE.BufferAttribute;
   /** 已寫入頂點數（桶內 offset，同 drawRange 上限） */
   writeVerts: number;
   totalVerts: number;
@@ -171,7 +173,6 @@ export class FlightScene {
 
   // Progressive 軌跡模式
   private progressiveMode = false;
-  private lastProgressiveTime = 0;
 
   // 漸進式靜態軌跡建構（頂點 buffer 在各桶內，寫入位置由 bucket.writeVerts 追蹤）
   private staticBuildState: {
@@ -380,6 +381,13 @@ export class FlightScene {
         uWidth: { value: this.currentStaticWidth },
         uGlowW: { value: this.glowHidden ? 0 : 0.3 * this.currentStaticWidth },
         uAdditive: { value: this.isDarkTheme ? 1 : 0 },
+        // T2-1：progressive「已飛過才顯示」；重建 geometry（換色/寬度/航班集合…）時
+        // 材質會整支換掉，故用目前的 progressiveMode 初始化，不能寫死 0——不然若
+        // rebuild 發生在 progressive 已開啟且沒有切換 enabled 的那一幀，
+        // setProgressiveMode() 會因「值沒變」而 early return，新材質就會漏設 uProgressive。
+        // uTime 用 0 沒關係：同一幀稍後的 updateProgressiveVisibility() 一定會覆蓋。
+        uTime: { value: 0 },
+        uProgressive: { value: this.progressiveMode ? 1 : 0 },
         ...this.globeUniforms,
       },
       transparent: true,
@@ -399,12 +407,14 @@ export class FlightScene {
       const colAttr = new THREE.BufferAttribute(colors, 3);
       const alphaAttr = new THREE.BufferAttribute(alphas, 1);
       const ecefAttr = new THREE.BufferAttribute(ecefs, 3);
+      const trelAttr = new THREE.BufferAttribute(timestamps, 1);
 
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", posAttr);
       geometry.setAttribute("color", colAttr);
       geometry.setAttribute("alpha", alphaAttr);
       geometry.setAttribute("aEcef", ecefAttr);
+      geometry.setAttribute("aTRel", trelAttr);
       geometry.setDrawRange(0, 0);
 
       // 本體 + glow 併單 pass（T0-1），單一 mesh／material
@@ -425,6 +435,7 @@ export class FlightScene {
         colAttr,
         alphaAttr,
         ecefAttr,
+        trelAttr,
         writeVerts: 0,
         totalVerts: verts,
         axis: bucketAxisOf(k),
@@ -591,6 +602,7 @@ export class FlightScene {
       this.applyStaticRange(b.colAttr, ds * 3, countV * 3);
       this.applyStaticRange(b.ecefAttr, ds * 3, countV * 3);
       this.applyStaticRange(b.alphaAttr, ds, countV);
+      this.applyStaticRange(b.trelAttr, ds, countV);
       b.geometry.setDrawRange(0, b.writeVerts);
     }
 
@@ -739,10 +751,15 @@ export class FlightScene {
   setProgressiveMode(enabled: boolean) {
     if (this.progressiveMode === enabled) return;
     this.progressiveMode = enabled;
-    this.lastProgressiveTime = 0;
+    // T2-1：progressive 的顯示/隱藏改在 vertex shader 用 uProgressive/uTime × aTRel 算，
+    // alphaAttr 不再被 progressive 寫入（只留給 ±12h 時間窗的 updateStaticVisibility 用）。
+    if (this.staticMat) this.staticMat.uniforms.uProgressive!.value = enabled ? 1 : 0;
     if (!enabled) {
       // 關閉 progressive 時，恢復全部可見（整條上傳，不動——但 T0-3 引入 range 機制後，
-      // 同幀若已有其他呼叫方對 alphaAttr 加過 range，需先 clear 才能保證這裡是整條上傳）
+      // 同幀若已有其他呼叫方對 alphaAttr 加過 range，需先 clear 才能保證這裡是整條上傳）。
+      // 這一步在新設計下多數情況已是 no-op（alphaAttr 期間本來就沒被 progressive 動過），
+      // 但保留與舊行為一致：±12h 視窗開著時關閉 progressive 的當幀仍會把視窗過濾暫時蓋掉
+      // （下一次 updateStaticVisibility 重掃才會修回來）——這是既有行為，不在本次修動範圍內。
       for (const b of this.staticBuckets) {
         b.alphas.fill(1.0);
         b.alphaAttr.clearUpdateRanges();
@@ -751,31 +768,16 @@ export class FlightScene {
     }
   }
 
+  /**
+   * T2-1：只更新 uTime uniform（O(1)，不再逐頂點掃描 timestamps 重算 alpha、
+   * 不再整桶重傳 alphaAttr）。「已飛過才顯示」的判斷搬進 staticTrail.vert
+   * （aTRel<=uTime，語意對齊舊 CPU 版的 ts[i] <= relTime，見該檔註解）。
+   */
   updateProgressiveVisibility(currentTime: number) {
-    if (!this.progressiveMode || this.staticBuckets.length === 0) return;
-    if (Math.abs(currentTime - this.lastProgressiveTime) < 1) return;
-    this.lastProgressiveTime = currentTime;
-    // T0-5：timestamps 已存相對秒數，比較前先扣掉 staticTimeBase
+    if (!this.progressiveMode || !this.staticMat) return;
+    // T0-5：timestamps／aTRel 已存相對秒數，比較前先扣掉 staticTimeBase
     const relTime = currentTime - this.staticTimeBase;
-
-    for (const b of this.staticBuckets) {
-      const alphas = b.alphas;
-      const ts = b.timestamps;
-      let changed = false;
-      for (let i = 0; i < b.writeVerts; i++) {
-        const shouldShow = ts[i]! <= relTime ? 1.0 : 0.0;
-        if (alphas[i] !== shouldShow) {
-          alphas[i] = shouldShow;
-          changed = true;
-        }
-      }
-      if (changed) {
-        // 全量情況維持整條上傳（不動）；先 clear 避免本幀稍早加過的 range 讓
-        // three 誤判成只上傳部分 range（見 setProgressiveMode(false) 同樣處理）
-        b.alphaAttr.clearUpdateRanges();
-        b.alphaAttr.needsUpdate = true;
-      }
-    }
+    this.staticMat.uniforms.uTime!.value = relTime;
   }
 
   pickFlight(screenX: number, screenY: number, viewWidth: number, viewHeight: number): string | null {
