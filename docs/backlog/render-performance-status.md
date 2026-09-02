@@ -55,9 +55,14 @@
   - ✅ 播放中光球正確跟隨、`pickFlight` 正常
   - ⚠️ **CPU 沒有可測量的改善，也沒有退步**：S1 播放 `perFrame.script` after 7.14 ms/f vs before 三次 5.91／7.77／7.78（噪聲內）；暫停 1.79 vs 1.69／2.37／1.74。原因是 S1 只有 ~105 顆活躍光球，`updateAll` 本來就便宜。**1-1 的價值是「暫停時零上傳」這個 1-2 的前提**，CPU 收益要到 1-2 降頻／閒置才體現；真正吃光球成本的是 world 場景（頂到 `MAX_INSTANCES=1024`）
   - 📌 順帶修掉潛在 bug：4 個 orb `InstancedMesh` 沒有明確 `renderOrder`，three.js 對 transparent 物件在 renderOrder 平手時退回 Z-depth 排序，而各層 `boundingSphere` 半徑不同 → 疊繪順序不穩定；dark 的 additive 蓋掉了，light 的 Normal blending 會顯現。已指定 0.1／0.2／0.3／0.4，夾在靜態軌跡桶（預設 0）與 `BatchedTrails`（1）之間
-- [ ] **1-2 暫停時降頻／閒置**（T05-2；`src/map/customLayer.ts:239-251`，同 pattern `atlasGlowLayer.ts`、`airspaceAurora.ts`）
+- [x] **1-2 暫停時降頻／閒置**（2026-09-03 完成，`d53b80a`）
   - **政策（2026-09-02 用戶已拍板）**：暫停且相機靜止 → 用單一 `setTimeout` 以 20 fps 排 `triggerRepaint`；連續 30 秒無互動 → 完全停止重繪（呼吸停在當下相位）；任何互動／播放／slider 立即恢復；`document.hidden` → 停
-  - 測試：`probe.mjs` 暫停 rAF≈20/s，30 秒後 0/s，按播放回到滿幀；播放中無 stall（`KEEP_ALIVE` 語意保留）；visual-check 不變
+  - ✅ 新增 `src/map/repaintScheduler.ts`，三個 `triggerRepaint` 來源（customLayer／atlasGlowLayer／airspaceAurora）走同一節流器
+  - ✅ 降頻：裝飾性重繪 15.5–18.6 renders/秒（全部歸因 repaintScheduler）。probe 讀到的 raw rAF ≈31–37/秒高於 20，是 Mapbox 自身的 `_triggerFrame(false)` idle-confirm dummy frame + 從 `render()` 內重排 timer 的額外 vsync 等待，非節流器行為
+  - ✅ 閒置：32 秒後 rAF = 0，且 `hasActiveOrbs=true`／`activeOrbCount=105`（排除假陽性）
+  - ✅ 恢復：play 無 stall（rAF callback max 10.1 ms）；暫停後 panBy 立即更新
+  - ✅ 視覺：s1-rctp-light maxDiff 0；s1-rctp-dark maxDiff 11、`pctOver8` 0.0044%（49 px，sidebar 文字抗鋸齒，地圖主體 0.006%）。summary 三場景完全相同
+  - ✅ 功能冒煙 7/7，其中 2 項從「已完全閒置停止」狀態再測
 - [ ] **1-3 播放時鐘留在 ref、React 10 Hz 發布**（T05-3；`src/hooks/useTimeline.ts`、`src/App.tsx:996`）
   - 時鐘由 hook 持 `timeRef`，rAF 內直接 `map.triggerRepaint()`；state 節流 ~10 Hz；`seek()` 同步寫 ref 並立即發布
   - 影響面要逐一驗：時間標籤、進度 slider、cinema keyframe（`useCinemaCamera.ts`）、錄影 overlay 時間字（`useCanvasRecorder.ts`）、晨昏線、viewshed track-single
@@ -93,7 +98,7 @@
 
 ⚠️ **開工前需用戶拍板的張力**：嚴格門檻下 z4.15–6 的 world 視角該用 L2，但 world 走 `regions/all.jsonl` 單檔聚合，**沒有 region 級 L2／L1**。二選一：(a) 2-1 一併產 region 級 L2／L1 聚合檔（體積待估，all.jsonl 2 km 版今為 0.54 MB／機場日檔等比放大）；(b) world 視角維持 L3，接受 z5–6 的 2 km = 2–3.6 device px 折線。
 
-- [ ] **2-1 `scripts/split-tracks.ts` 產 L1／L2 檔**
+- [x] **2-1 `scripts/split-tracks.ts` 產 L1／L2 檔**（2026-09-03 完成，`55a7b48`；7 座機場 × 2026-02-18，L1 17.9–23.9%、L2 8.0–10.9%；`lod-verify.ts` 全過並做過負向測試；全量 2,303 座估 40 秒–2 分鐘、+1.1 GB）
   - 每機場每日：`airports/{ICAO}/{date}.l1.jsonl`（eps 50 m）、`.l2.jsonl`（eps 250 m）；DP 改 **3D**（水平公尺 + 高度 ×3，避免爬升／下降折點被抹平）；起訖點必留
   - 若張力選 (a)，同時產 region 級 `regions/{R}.l1.jsonl`／`.l2.jsonl`
   - **張力定案實驗（先做這個再決定 a／b）**：先只對 TW region 產一份 region 級 L2 聚合檔，用 visual-check 在 z5.5 同相機比 L3 vs L2。diff 只是線條邊緣零星差異 → 定案 (b)（world 維持 L3 到 z6）；成塊可辨 → 為 z4–6 做 (a)，且只在 zoom 進入該 band 時 lazy 下載（`all.jsonl` L2 估 ≈ 3× L3 ≈ 70 MB gzip，**不能進站就載**，會打回 PR #9 修好的 6 MB 進站流量）

@@ -94,3 +94,22 @@ node summary-snapshot.mjs --compare     # 深度比對，任一場景有差 → 
 - 看 `brief.py` 的 `perFrame.script`（ms/frame）而不是 `busyPct`，前者直接反映 CPU 工作量
 - **同一版至少跑三次取中位數**，差異小於該場景的噪聲範圍就直說「測不出來」，不要挑對自己有利的那次
 - 光球相關的改動要用 world 場景才測得出來（S1 只有 ~105 顆活躍光球、S2 ~116，world 才會頂到 `MAX_INSTANCES=1024`）
+
+## 8. ⚠️ 量測環境會漂（2026-09-03 踩過，代價是一次假 FAIL）
+
+**症狀**：全 6 場景 visual-check 突然 maxDiff 240–255、`pctOver8` 1.7–5.0%，看起來像大回歸。實際上 96% 的差異落在 DOM/UI chrome（sidebar 文字、時間軸 slider），WebGL 畫布本身乾淨。
+
+**根因**：兩件事同時發生
+
+1. 這台機器的 `devicePixelRatio` 在 session 中途從 1 變成 2（用戶闔上筆電再打開，螢幕配置改變）
+2. `visual-scenes.json` 原本的 viewport override 是 1600×913，但 Chrome 視窗實際只有 **1469 CSS px** 寬（`window.outerWidth`）。override 成比視窗大的 viewport 時，`Page.captureScreenshot({fromSurface:true})` 的行為會受實際視窗表面影響 → 文字次像素渲染跨執行不一致
+
+**現在的設定**：viewport 1400×800（留在視窗內），Chrome 用 `--window-size=1480,940`。
+
+**每次開始量測前先確認**：
+```bash
+node cdp-eval.mjs "[devicePixelRatio, innerWidth, innerHeight, window.outerWidth, screen.width]"
+```
+viewport 必須 **小於** `outerWidth`／`outerHeight`。換螢幕、闔上筆電再開、外接顯示器插拔之後，**baseline 一律作廢重建**——baseline 與 current 必須在同一個實體環境產生，否則比對沒有意義。
+
+**判斷是不是環境問題**：把 diff 分區統計（sidebar / 底部控制列 / 地圖主體）。差異若壓倒性落在 UI 而地圖主體乾淨，就是環境；反過來才是真回歸。確認方式是在同一環境下對**同一個 commit** 跑 baseline → compare，應該得到 maxDiff = 0。
