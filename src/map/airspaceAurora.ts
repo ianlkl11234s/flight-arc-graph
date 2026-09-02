@@ -11,6 +11,7 @@ import {
 import vertSrc from "../three/shaders/airspaceAurora.vert?raw";
 import fragSrc from "../three/shaders/airspaceAurora.frag?raw";
 import { getFrozenAnimTime } from "../three/animClock";
+import { notifyActivity, requestDecorativeRepaint } from "./repaintScheduler";
 
 /** 分類 ID → shader uniform 索引（依 sortOrder 低到高） */
 const CATEGORY_ORDER: AirspaceCategory[] = [...AIRSPACE_CATEGORIES]
@@ -277,7 +278,8 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
         if (removed) return;
         buildGeometry(features);
         applyUniforms();
-        mapRef?.triggerRepaint();
+        // 資料剛載入完成，屬於「真的有事發生」——立即顯示，不走裝飾節流
+        notifyActivity(mapRef);
       })
       .catch((err) => {
         console.error("[airspace] load failed", err);
@@ -325,10 +327,11 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
       renderer.resetState();
       renderer.render(scene, camera);
 
-      // shimmer 需要持續重繪
+      // shimmer 是純裝飾的 wall-clock 動畫，走跟光球呼吸同一套 20fps／閒置 30 秒
+      // 停止的節流器（暫停+相機靜止時降頻，不再永續踢整張地圖滿幀重繪）。
       // 沒有可見分類或輸出透明度時不維持動畫 repaint；開啟狀態仍由上層的
       // control change / map interaction 觸發下一次 render。
-      if (hasVisibleOutput) mapRef?.triggerRepaint();
+      if (hasVisibleOutput && mapRef) requestDecorativeRepaint(mapRef);
     },
 
     onRemove() {

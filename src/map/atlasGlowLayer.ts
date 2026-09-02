@@ -1,5 +1,6 @@
 import type { CustomLayerInterface, Map as MapboxMap } from "mapbox-gl";
 import { GlowPointsScene, type GlowPoint } from "../three/GlowPointsScene";
+import { notifyActivity, requestDecorativeRepaint } from "./repaintScheduler";
 
 /** 顏色維度：流量（白→橘→紅）或 資料完整度（4 級離散） */
 export type AtlasColorMode = "flow" | "completeness";
@@ -87,7 +88,8 @@ export function createAtlasGlowLayer(opts: AtlasGlowLayerOptions): CustomLayerIn
           features = geo.features;
           dailyMax = features.reduce((m, f) => Math.max(m, f.properties.dailyProxy ?? 0), 1);
           lastMode = null; // 迫使下一幀 setData
-          map?.triggerRepaint();
+          // 資料剛載入完成，屬於「真的有事發生」——立即顯示，不走裝飾節流
+          notifyActivity(map);
         })
         .catch((e) => console.error("[AtlasGlow] load failed", e));
     },
@@ -116,8 +118,10 @@ export function createAtlasGlowLayer(opts: AtlasGlowLayerOptions): CustomLayerIn
         if (cam) scene.setCamera(cam.x, cam.y, cam.z);
       }
 
+      // scene.render() 目前恆回傳 true（純裝飾的 bloom 星點閃爍動畫），
+      // 走跟光球呼吸同一套 20fps／閒置 30 秒停止的節流器。
       const moving = scene.render(matrix);
-      if (moving) map?.triggerRepaint();
+      if (moving && map) requestDecorativeRepaint(map);
     },
 
     onRemove() {

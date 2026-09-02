@@ -6,6 +6,7 @@ import { FlightScene } from "../three/FlightScene";
 import { mercatorToGlobe, type GlobeResolved } from "../three/shaders/globeProject";
 import { setAltExaggeration, getAltExaggeration, setAltOffset, getAltOffset } from "../utils/coordinates";
 import { FlightTimeIndex } from "../utils/flightIndex";
+import { attachRepaintScheduler, notifyActivity, requestDecorativeRepaint } from "./repaintScheduler";
 
 /** ±12h 時間窗口（秒） */
 const VISIBILITY_WINDOW_SEC = 12 * 3600;
@@ -84,6 +85,8 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   const KEEP_ALIVE_FRAMES = 12; // 動作停止後的續繪窗，橋接 timeRef 落後一幀避免播放 stall
   // setGlobe 的 cam scratch，每幀重用避免物件字面量 alloc
   const camScratch = { x: 0, y: 0, z: 0 };
+  // repaint 節流器的 detach handle（style 切換會整批 remove+re-add 這個 layer）
+  let detachScheduler: (() => void) | null = null;
 
   return {
     id: "flight-3d",
@@ -109,6 +112,10 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       }
       flightScene.init(gl);
       opts.onSceneReady?.(flightScene);
+      // 三個 custom layer（flight-3d / atlas-glow-3d / airspace-aurora）一定同時
+      // 存在，repaint 節流器的地圖互動監聽只在這裡掛一次即可，其他 layer 直接呼叫
+      // notifyActivity / requestDecorativeRepaint。
+      detachScheduler = attachRepaintScheduler(mapInstance);
     },
 
     render(_gl, matrix, projection, projectionToMercatorMatrix, projectionToMercatorTransition) {
@@ -267,22 +274,29 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       const controlsChanged = controlSig !== lastControlSig;
       lastControlSig = controlSig;
 
-      if (
+      // Phase 1-2：hasActiveOrbs()（光球呼吸/閃爍）單獨拆出來，不再算進「滿幀」條件——
+      // 暫停且相機靜止時，唯一還在動的只有 wall-clock 光球動畫，交給節流器降頻到
+      // 20fps／閒置 30 秒後完全停止；其餘條件（時間推進/globe 過渡/靜態建構/控制項
+      // 變更）維持原本 KEEP_ALIVE 續繪窗語意，避免播放因 timeRef 落後一幀而 stall。
+      const needsFullFrame =
         timeChanged ||                    // 播放中（動畫時鐘前進）
         transitioning ||                  // globe↔mercator 過渡中
         flightScene.isStaticBuilding() || // 靜態軌跡漸進建構中（buffer 待更新）
-        flightScene.hasActiveOrbs() ||    // 有光球呼吸/閃爍動畫
-        controlsChanged                   // 控制項剛變更
-      ) {
+        controlsChanged;                  // 控制項剛變更
+      if (needsFullFrame) {
         keepAliveFrames = KEEP_ALIVE_FRAMES;
       }
       if (keepAliveFrames > 0) {
         keepAliveFrames--;
-        map?.triggerRepaint();
+        notifyActivity(map);
+      } else if (flightScene.hasActiveOrbs() && map) {
+        requestDecorativeRepaint(map);
       }
     },
 
     onRemove() {
+      detachScheduler?.();
+      detachScheduler = null;
       flightScene.dispose();
     },
   };

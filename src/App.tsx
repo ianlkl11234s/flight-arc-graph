@@ -11,6 +11,7 @@ import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo, cameraForAirport } from "./map/cameraPresets";
 import { loadAirportMeta, type AirportMeta } from "./data/airportMeta";
 import { createFlightLayer, getGlStats, resetGlStats } from "./map/customLayer";
+import { notifyActivity } from "./map/repaintScheduler";
 import { createAtlasGlowLayer, ATLAS_GLOW_LAYER_ID, type AtlasColorMode } from "./map/atlasGlowLayer";
 import { createAirspaceLayer } from "./map/airspaceAurora";
 import { addMedianLineLayer, removeMedianLineLayer, setMedianLineVisibility, setMedianLineTheme } from "./map/medianLine";
@@ -1018,8 +1019,11 @@ export default function App() {
 
   // repaint 閘控（customLayer）後，Mapbox 不再永續重繪；custom layer 每幀 pull 的狀態
   // 變更時要主動踢一下 repaint，否則完全 idle 時拖 slider / 按播放不會立即反應。
+  // 這些都是「真的有事發生」（播放中時刻推進、控制項變更），走 notifyActivity：
+  // 立即 triggerRepaint 之外，也重置節流器的閒置計時，避免裝飾動畫（光球呼吸等）
+  // 誤判成已閒置 30 秒而停在半路。
   useEffect(() => {
-    mapRef.current?.triggerRepaint();
+    notifyActivity(mapRef.current);
   }, [
     timeline.currentTime, finalFlights, renderMode, altExaggeration, altOffset,
     staticOpacity, trailLineWidth, airportGlow, orbScale, farView, farViewBoost, isDarkTheme, displayMode, timeWindow, trailDisplay,
@@ -1063,7 +1067,9 @@ export default function App() {
           st.textContent = "*,*::before,*::after{animation-play-state:paused!important;transition:none!important}";
           document.head.appendChild(st);
         }
-        mapRef.current?.triggerRepaint();
+        // 凍結/解凍動畫是「控制項變更」，走 notifyActivity（視覺回歸截圖工具用，
+        // 需要立即看到結果，不能被裝飾節流吃掉）。
+        notifyActivity(mapRef.current);
       },
       /**
        * 視覺回歸用：重現 IconRailSidebar.tsx SummaryPanel 的 airportStats / regionStats 算式，
