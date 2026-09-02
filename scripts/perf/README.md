@@ -68,3 +68,17 @@ python3 visual-diff.py a.png b.png diff.png            # 單獨比兩張圖
 | world-globe-far | 136 | 0.12% |
 
 S1 系列是完全可重現的（唯一例外是底部播放列 UI 有 16 px 的 1/255 抗鋸齒差）。S2 與 world 還有 0.12–0.14% 殘留，推測與多檔併發載入的完成順序、光球 `MAX_INSTANCES=1024` 截斷、光軌 `MAX_SLOTS=6000` 溢位有關（後兩者是 `plan` 的 G4 已知缺陷）。**比對這兩個場景時，差異若在此量級且不成塊視為噪聲；超過或成塊才是回歸。**
+
+## 6. Summary 數字快照（summary-snapshot）
+
+證明渲染改動沒有動到 Sidebar Summary 面板的統計數字（Phase 2 換 LOD 時特別重要）。
+
+```bash
+node summary-snapshot.mjs --baseline    # 預設三個資料集合不同的場景：s1 / s2 / world
+node summary-snapshot.mjs --compare     # 深度比對，任一場景有差 → exit 1
+```
+
+- 資料來自 `window.__flightArcDebug.summarySnapshot()`，輸入就是 Summary 面板實際吃到的 `finalFlights`
+- 排序類統計一律存成無序 `{key: count}`（同分時的順序取決於航班陣列疊代順序，會造成假 diff），另附 `xxxOrdered` 供人工判讀
+- 另存 `flightCount` 與 `fr24_id` 排序後的 hash，用來區分「統計算法變了」還是「載到的航班集合變了」
+- ⚠️ airport scope 的 `total` = `departures + arrivals`，不是 `flightCount`（起訖同機場會算兩次）

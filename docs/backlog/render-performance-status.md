@@ -33,7 +33,7 @@
 - [ ] **0-2 用 0-1 對 Tier 0 補驗 light theme**（`b9cf92d` 只驗過 dark）
   - 用 `git stash`／checkout `8346b2c` 產 baseline → 回到 HEAD 比對；light 場景 diff 需符合通過標準
   - 另手動：切底圖一次、Far View、漸進模式 60× 播 30 秒無跳格、即時錄影 5 秒檔案可播放
-- [ ] **0-3 Summary 數字快照**：把 S1／S2 的 Summary 面板數字（航班數、dep/arr、Top 航空公司、24h 熱力）dump 成 JSON 存 `scripts/perf/out/baseline/summary-*.json`，之後 Phase 2 換 LOD 要對照
+- [x] **0-3 Summary 數字快照**（2026-09-02 完成，工具 `scripts/perf/summary-snapshot.mjs`；三場景 baseline 已建立並驗過 `--compare` 全數相同）：把 S1／S2 的 Summary 面板數字（航班數、dep/arr、Top 航空公司、24h 熱力）dump 成 JSON 存 `scripts/perf/out/baseline/summary-*.json`，之後 Phase 2 換 LOD 要對照
 
 ---
 
