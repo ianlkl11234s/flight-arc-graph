@@ -1026,6 +1026,31 @@ export default function App() {
     colorThemeKey, colorThemeOverride, perFlightColorMap, perFlightScaleMap, airspaceSettings,
   ]);
 
+  // DEV-only 除錯掛鉤：效能量測腳本（scripts/perf/）用來取得 map / scene 與操控場景，
+  // production build 會被 tree-shake 掉。不要在 UI 程式碼裡依賴它。
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __flightArcDebug?: unknown }).__flightArcDebug = {
+      get map() { return mapRef.current; },
+      get scene() { return flightSceneRef.current; },
+      getFlights: () => flightsRef.current,
+      getTime: () => timeRef.current,
+      state: { scope, region, selectedAirport, airportSet, renderMode, displayMode, mapStyleId, playing: timeline.playing, speed: timeline.speed },
+      selectAirportSingle,
+      applySavedSet,
+      toggleAirportInSet,
+      exitSetMode,
+      setScope,
+      setRegion,
+      setAirportGlow,
+      setStaticOpacity,
+      setDisplayMode,
+      setFarView,
+      timeline: { play: timeline.play, pause: timeline.pause, seek: timeline.seek, setSpeed: timeline.setSpeed, setSelectedDate: timeline.setSelectedDate },
+      builtinSets: BUILTIN_SETS,
+    };
+  });
+
   // 持久化 airspace 設定
   useEffect(() => {
     try { localStorage.setItem("flight-arc-airspace", JSON.stringify(airspaceSettings)); } catch { /* ignore */ }
