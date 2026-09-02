@@ -273,7 +273,11 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
         deceleration: 5000,
       },
       antialias: true,
-      preserveDrawingBuffer: true,
+      // Phase 1-4：關閉 preserveDrawingBuffer（Mapbox 官方預設，效能考量：DPR 2
+      // 全螢幕下每幀多一次整張 back buffer 複製）。副作用是 drawing buffer 只在
+      // "render" 事件的同一個 tick 內同步讀取才保證有內容 —— 即時錄製與 HQ 匯出
+      // 的取像都已配合改成 render-tick 內同步取像，見 useCanvasRecorder.ts。
+      preserveDrawingBuffer: false,
     });
 
     // Globe 中心靠近極點時，拖曳會連帶大幅調整 bearing，視覺上容易像「亂轉」。

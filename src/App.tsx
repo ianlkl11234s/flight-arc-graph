@@ -1246,6 +1246,18 @@ export default function App() {
       glStats: getGlStats,
       /** 歸零 glStats 計數器，通常在暫停/相機靜止測試前呼叫 */
       resetGlStats,
+      /**
+       * Phase 1-4 驗收用（preserveDrawingBuffer:false）：走真實錄製路徑
+       * start/stopRecording，以及不落地成檔案、直接量測取像路徑像素內容的
+       * captureFrameForTest／captureHQFrameForTest。
+       */
+      recorder: {
+        startRecording: handleStartRecording,
+        stopRecording: recorder.stopRecording,
+        getState: () => recorder.recordingState,
+        captureFrameForTest: recorder.captureFrameForTest,
+        captureHQFrameForTest: recorder.captureHQFrameForTest,
+      },
     };
   });
 
