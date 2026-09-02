@@ -30,9 +30,15 @@
   - `--baseline` 存到 `scripts/perf/out/baseline/`（gitignored），`--compare` 產出 diff 圖與數字表（PIL + numpy 已可用）
   - ✅ 測試結果（同一 commit 背靠背 `--baseline` → `--compare`）：4 個 S1 場景 **maxDiff = 0**；s2-apac-dark 72／0.14%、world-globe-far 136／0.12%（不成塊，記為噪聲底線，見 `scripts/perf/README.md` §5）
   - 🔑 過程中查出的真正非決定性根因：**底圖 style 切換會改變軌跡渲染結果**（同場景「從未切過 style」vs「切過 light→dark」maxDiff 90，兩次都切過則為 0）。解法是每次執行先 `Page.reload` 再強制走一次 light→dark 歸零（`bootstrap()`），不是加長等待
-- [ ] **0-2 用 0-1 對 Tier 0 補驗 light theme**（`b9cf92d` 只驗過 dark）
-  - 用 `git stash`／checkout `8346b2c` 產 baseline → 回到 HEAD 比對；light 場景 diff 需符合通過標準
-  - 另手動：切底圖一次、Far View、漸進模式 60× 播 30 秒無跳格、即時錄影 5 秒檔案可播放
+- [x] **0-2 用 0-1 對 Tier 0 補驗 light theme**（2026-09-02 完成）
+  - 做法：`git switch -c perf/vis-baseline-tmp 8346b2c` → cherry-pick freeze commit（`8d869ae`）→ 另補 `git checkout 6a59854 -- scripts/perf`（harness 基礎檔在 8346b2c 上還不存在）→ 產 baseline → 切回 → compare
+  - ✅ **light theme 通過**：maxDiff 4、`pctOver8` **0.000%**、不成塊。T0-1 的 normal-blending 近似公式（理論誤差 ≤3/255）實測落在理論範圍內
+  - ✅ dark 與 timewindow 場景 `pctOver8` 也是 0.000%（maxDiff 8–9 全是 8-bit 累加捨入）
+  - ✅ s1-progressive `pctOver8` 0.022% = T0-5 修掉 128 s 量化階梯的真實改善；另跑 60× 播放 10 秒逐幀比對，**39 個相鄰幀對 0 次完全相同**，階梯確認消失
+  - ✅ s2-apac 0.083%／world 0.074%，與同版本背靠背噪聲底線（0.068%／0.046%）同量級
+  - ✅ 切底圖（bootstrap 每次都走 light↔dark）、Far View（world 場景）皆無殘影
+  - ⚠️ **仍待手動確認一次即時錄影**（Tier 0 沒動 `useCanvasRecorder`，但 T0-2 刪了三個 renderer 的 GL 狀態還原；這條在 T05-4 動錄影路徑時一定要再驗）
+  - 📌 副產物：`visual-diff.py` 的顯著閾值由 2/255 改為 8/255（理由見 `scripts/perf/README.md` §5）
 - [x] **0-3 Summary 數字快照**（2026-09-02 完成，工具 `scripts/perf/summary-snapshot.mjs`；三場景 baseline 已建立並驗過 `--compare` 全數相同）：把 S1／S2 的 Summary 面板數字（航班數、dep/arr、Top 航空公司、24h 熱力）dump 成 JSON 存 `scripts/perf/out/baseline/summary-*.json`，之後 Phase 2 換 LOD 要對照
 
 ---

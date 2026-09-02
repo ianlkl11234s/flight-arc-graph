@@ -54,18 +54,20 @@ python3 visual-diff.py a.png b.png diff.png            # 單獨比兩張圖
 - 動畫凍結靠 `window.__flightArcDebug.freezeAnimation(t)`（DEV-only，見 `src/three/animClock.ts`）：光球呼吸／閃爍、機場 bloom、空域極光的 wall-clock 時間釘死，並停掉所有 CSS animation/transition
 
 ### 通過標準
-`>2/255 的像素 < 0.5%` 且**不成塊**（16×16 block 內差異像素超過 50% 即判成塊）。沿線條邊緣的零星捨入差可接受，成塊代表真的畫錯了。
+`pctOver8 < 0.15%` 且**不成塊**（16×16 block 內 `diff>8` 的像素超過 50% 即判成塊）。
+
+顯著閾值是 **8/255 而不是 2/255**（2026-09-02 實測定的）：additive 下把兩次 8-bit 累加合併成一次（T0-1）數學上等價，但每條線的捨入會累積，軌跡密集處實測最大到 8/255 —— 任何顯示器上都不可辨。用 2/255 當門檻時，密集區整個 block 會被捨入差填滿而誤判成塊。改用 8/255 後，Tier 0 前後比對在 s1-rctp-dark / light / timewindow 的 `pctOver8` 都是 **0.000%**，而真實差異（s1-progressive 的 T0-5 修正）仍被算出來（0.022%）。`pctOver2` 與 `blockyWorst2` 仍會輸出供人工參考。
 
 ### 每次執行都會先 bootstrap（不要拿掉）
 連線後先 `Page.reload` 再強制走一次 `light → dark`。原因是實測（2026-09-02）**底圖 style 切換會改變軌跡渲染結果**：同一場景在「reload 後從未切過 style」與「切過 light→dark」下 maxDiff 達 90，但兩次都切過就是 0。場景序列裡 `s1-rctp-light` 會切 style，於是「這次執行有沒有跑過 light 場景」會影響 dark 場景的結果。bootstrap 讓所有執行從同一起點出發。
 
 ### 已知噪聲底線（2026-09-02，同一 commit 背靠背 baseline → compare）
 
-| 場景 | maxDiff | >2px% |
-|---|---:|---:|
-| s1-rctp-dark / light / progressive / timewindow | 0 | 0% |
-| s2-apac-dark | 72 | 0.14% |
-| world-globe-far | 136 | 0.12% |
+| 場景 | maxDiff | >2px% | >8px% |
+|---|---:|---:|---:|
+| s1-rctp-dark / light / progressive / timewindow | 0–1 | 0% | 0.000% |
+| s2-apac-dark | 68 | 0.14% | 0.068% |
+| world-globe-far | 83 | 0.12% | 0.046% |
 
 S1 系列是完全可重現的（唯一例外是底部播放列 UI 有 16 px 的 1/255 抗鋸齒差）。S2 與 world 還有 0.12–0.14% 殘留，推測與多檔併發載入的完成順序、光球 `MAX_INSTANCES=1024` 截斷、光軌 `MAX_SLOTS=6000` 溢位有關（後兩者是 `plan` 的 G4 已知缺陷）。**比對這兩個場景時，差異若在此量級且不成塊視為噪聲；超過或成塊才是回歸。**
 
