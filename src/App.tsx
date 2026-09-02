@@ -44,6 +44,7 @@ import { computeAnalysisColorMap, type AnalysisColorBy } from "./data/analysisCo
 import { getAircraftInfo, type AircraftCategory as AcCat } from "./data/aircraftDatabase";
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
+import { setFrozenAnimTime } from "./three/animClock";
 
 // ── Atlas 機場點：點擊 popup ──
 interface AtlasProps {
@@ -1046,6 +1047,118 @@ export default function App() {
       setStaticOpacity,
       setDisplayMode,
       setFarView,
+      setMapStyle: setMapStyleId,
+      setTrailDisplay,
+      setTimeWindow,
+      /** 視覺回歸用：凍結所有 wall-clock 動畫（光球呼吸／閃爍、bloom、極光、CSS 動畫）到固定秒數；null 解除 */
+      freezeAnimation: (t: number | null) => {
+        setFrozenAnimTime(t);
+        const styleId = "__flight-arc-freeze-css";
+        const existing = document.getElementById(styleId);
+        if (t === null) {
+          existing?.remove();
+        } else if (!existing) {
+          const st = document.createElement("style");
+          st.id = styleId;
+          st.textContent = "*,*::before,*::after{animation-play-state:paused!important;transition:none!important}";
+          document.head.appendChild(st);
+        }
+        mapRef.current?.triggerRepaint();
+      },
+      /**
+       * 視覺回歸用：重現 IconRailSidebar.tsx SummaryPanel 的 airportStats / regionStats 算式，
+       * 回傳可 JSON.stringify 的快照。用來證明「改渲染（尤其換 LOD）後 Summary 數字沒變」。
+       * 排序陣列（同分順序取決於航班疊代順序）一律轉成無序物件，避免載入順序改變造成假 diff。
+       */
+      summarySnapshot: async () => {
+        const st = await import("./data/flightStats");
+        const flights = flightsRef.current;
+
+        const toCountMap = <T,>(
+          arr: T[],
+          keyFn: (item: T) => string,
+          valFn: (item: T) => number,
+        ): Record<string, number> => {
+          const out: Record<string, number> = {};
+          for (const item of arr) out[keyFn(item)] = valFn(item);
+          return out;
+        };
+
+        // fr24_id 排序後 join，算簡單 32-bit hash（區分「統計算法變了」vs「載入的航班集合變了」）
+        const sortedIds = flights.map((f) => f.fr24_id).sort();
+        const idsJoined = sortedIds.join(",");
+        let hash = 0;
+        for (let i = 0; i < idsJoined.length; i++) {
+          hash = (Math.imul(31, hash) + idsJoined.charCodeAt(i)) | 0;
+        }
+
+        const base = {
+          scope,
+          region,
+          selectedAirport,
+          airportSet,
+          time: timeRef.current,
+          rangeDays: timeline.rangeDays,
+          flightCount: flights.length,
+          flightIdsHash: hash,
+        };
+
+        const isAirportScope = scope === "airport";
+
+        const airportStats = (() => {
+          if (!isAirportScope || flights.length === 0) return null;
+          const icao = selectedAirport;
+          const depArr = st.getDepArrCount(flights, icao);
+          const total = depArr.departures + depArr.arrivals;
+          const hourly = st.computeHourlyStats(flights, icao);
+          const peak = hourly.reduce((a, b) => (b.count > a.count ? b : a), { hour: 0, count: 0 });
+          const daily = st.computeDailyStats(flights, icao);
+          const days = st.getUniqueDays(flights, icao);
+          const topRoutes = st.computeTopRoutes(flights, icao, 5);
+          const airlines = st.getAirlineStats(flights, icao);
+          const fleetMix = st.getFleetMix(flights, icao);
+          const durations = st.getFlightDurationDistribution(flights, icao);
+
+          return {
+            departures: depArr.departures,
+            arrivals: depArr.arrivals,
+            total,
+            days,
+            peakHour: peak.hour,
+            peakCount: peak.count,
+            hourly: toCountMap(hourly, (h) => String(h.hour), (h) => h.count),
+            daily: toCountMap(daily, (d) => d.date, (d) => d.total),
+            dailyDep: toCountMap(daily, (d) => d.date, (d) => d.departures),
+            dailyArr: toCountMap(daily, (d) => d.date, (d) => d.arrivals),
+            topRoutes: toCountMap(topRoutes, (r) => r.destIcao, (r) => r.count),
+            topRoutesOrdered: topRoutes.map((r) => r.destIcao),
+            airlines: toCountMap(airlines, (a) => a.code, (a) => a.count),
+            airlinesOrdered: airlines.map((a) => a.code),
+            fleetMix: toCountMap(fleetMix, (f) => f.category, (f) => f.count),
+            durations: toCountMap(durations, (d) => d.label, (d) => d.count),
+          };
+        })();
+
+        const regionStats = (() => {
+          if (isAirportScope || flights.length === 0) return null;
+          const comparison = st.computeAirportComparison(flights);
+          const totalFlights = flights.length;
+          const domestic = flights.filter((f) => f.origin_icao.startsWith("RC") && f.dest_icao.startsWith("RC")).length;
+          const international = totalFlights - domestic;
+          const uniqueAirports = new Set([...flights.map((f) => f.origin_icao), ...flights.map((f) => f.dest_icao)]).size;
+
+          return {
+            totalFlights,
+            domestic,
+            international,
+            uniqueAirports,
+            comparison: toCountMap(comparison, (c) => c.icao, (c) => c.count),
+            comparisonOrdered: comparison.map((c) => c.icao),
+          };
+        })();
+
+        return { ...base, airportStats, regionStats };
+      },
       timeline: { play: timeline.play, pause: timeline.pause, seek: timeline.seek, setSpeed: timeline.setSpeed, setSelectedDate: timeline.setSelectedDate },
       builtinSets: BUILTIN_SETS,
     };

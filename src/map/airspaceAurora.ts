@@ -10,6 +10,7 @@ import {
 
 import vertSrc from "../three/shaders/airspaceAurora.vert?raw";
 import fragSrc from "../three/shaders/airspaceAurora.frag?raw";
+import { getFrozenAnimTime } from "../three/animClock";
 
 /** 分類 ID → shader uniform 索引（依 sortOrder 低到高） */
 const CATEGORY_ORDER: AirspaceCategory[] = [...AIRSPACE_CATEGORIES]
@@ -256,7 +257,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
       mat.uniforms["uOpacity"]!.value = settings.opacity;
       mat.uniforms["uHeightScale"]!.value = settings.heightScale;
       mat.uniforms["uIsDark"]!.value = isDark ? 1 : 0;
-      mat.uniforms["uTime"]!.value = (performance.now() - startTime) / 1000;
+      mat.uniforms["uTime"]!.value = getFrozenAnimTime() ?? (performance.now() - startTime) / 1000;
       // wall 本身的 edge glow 較弱，頂線更強
       mat.blending = isDark ? THREE.AdditiveBlending : THREE.NormalBlending;
       mat.needsUpdate = false; // uniforms 不需重編譯

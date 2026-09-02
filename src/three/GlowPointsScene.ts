@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { toMercator } from "../utils/coordinates";
+import { getFrozenAnimTime } from "./animClock";
 
 /**
  * 通用 Point bloom 場景 — 只吃 {lon, lat, colorHex, sizeNorm(0-1)}[]，不綁業務資料。
@@ -269,7 +270,8 @@ export class GlowPointsScene {
     if (!this.material) return false;
     // T0-2：刪每幀 GL 狀態同步查詢（同 FlightScene.render 理由）
     this.camera.projectionMatrix = this.projMatrix.fromArray(matrix);
-    this.material.uniforms.uTime!.value = (performance.now() - this.startTime) / 1000;
+    const frozen = getFrozenAnimTime();
+    this.material.uniforms.uTime!.value = frozen ?? (performance.now() - this.startTime) / 1000;
 
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);

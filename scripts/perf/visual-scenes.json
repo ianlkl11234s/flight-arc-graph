@@ -1,0 +1,78 @@
+{
+  "note": "視覺回歸場景表。相機參數是對著活的 app 讀出來後釘死的字面值（不再跑 fitBounds／flyTo，避免容器 1px 差異影響動畫終點）。時間一律存 unix 秒（台灣時間 UTC+8 換算後的絕對值）。",
+  "viewport": { "width": 1600, "height": 913, "deviceScaleFactor": 1 },
+  "freezeAt": 12.0,
+  "settleMs": 1200,
+  "scenes": [
+    {
+      "id": "s1-rctp-dark",
+      "desc": "S1 RCTP 單機場、dark 底圖、trails full（2026-02-18 10:00 TW）",
+      "steps": [
+        { "js": "const d=window.__flightArcDebug; d.setMapStyle('dark'); 1" },
+        { "styleReady": true },
+        { "js": "const d=window.__flightArcDebug; d.exitSetMode&&d.exitSetMode(); d.setScope('airport'); d.setRegion('TW'); d.setDisplayMode('trails'); d.setTrailDisplay('full'); d.setTimeWindow(false); d.setFarView(false); 1" },
+        { "wait": 600 },
+        { "js": "window.__flightArcDebug.selectAirportSingle('RCTP'); 1" },
+        { "stable": 90000 }
+      ],
+      "camera": { "center": [121.2281, 25.0927], "zoom": 10.4, "pitch": 57, "bearing": 16 },
+      "time": 1771380000
+    },
+    {
+      "id": "s1-rctp-light",
+      "desc": "S1 RCTP 單機場、light 底圖（T0-1 的 normal-blending 近似只在這裡看得出來）",
+      "steps": [
+        { "js": "window.__flightArcDebug.setMapStyle('light'); 1" },
+        { "styleReady": true },
+        { "stable": 90000 }
+      ],
+      "camera": { "center": [121.2281, 25.0927], "zoom": 10.4, "pitch": 57, "bearing": 16 },
+      "time": 1771380000
+    },
+    {
+      "id": "s1-progressive",
+      "desc": "S1 RCTP、dark、漸進模式播到中段（T0-5 相對時間；舊碼在此有 128 s 量化階梯，baseline 比對預期會超標）",
+      "steps": [
+        { "js": "const d=window.__flightArcDebug; d.setMapStyle('dark'); 1" },
+        { "styleReady": true },
+        { "js": "window.__flightArcDebug.setTrailDisplay('progressive'); 1" },
+        { "stable": 90000 }
+      ],
+      "camera": { "center": [121.2281, 25.0927], "zoom": 10.4, "pitch": 57, "bearing": 16 },
+      "time": 1771394400
+    },
+    {
+      "id": "s1-timewindow",
+      "desc": "S1 RCTP、dark、時間窗（±12h）開啟",
+      "steps": [
+        { "js": "const d=window.__flightArcDebug; d.setTrailDisplay('full'); d.setTimeWindow(true); 1" },
+        { "stable": 90000 }
+      ],
+      "camera": { "center": [121.2281, 25.0927], "zoom": 10.4, "pitch": 57, "bearing": 16 },
+      "time": 1771380000
+    },
+    {
+      "id": "s2-apac-dark",
+      "desc": "S2 亞太樞紐 set（RCTP RJTT RJAA VHHH ROAH RJBB）、dark；相機 = 實際 fitBounds 終點",
+      "steps": [
+        { "js": "const d=window.__flightArcDebug; d.setTimeWindow(false); d.setTrailDisplay('full'); 1" },
+        { "js": "const d=window.__flightArcDebug; d.applySavedSet(d.builtinSets.find(s=>s.id==='apac-hub')); 1" },
+        { "stable": 120000 }
+      ],
+      "camera": { "center": [127.156, 29.3288], "zoom": 4.72, "pitch": 35, "bearing": 0 },
+      "time": 1771380000
+    },
+    {
+      "id": "world-globe-far",
+      "desc": "world region all、globe z3、Far View 開",
+      "steps": [
+        { "js": "const d=window.__flightArcDebug; d.exitSetMode&&d.exitSetMode(); d.setScope('region'); 1" },
+        { "wait": 600 },
+        { "js": "const d=window.__flightArcDebug; d.setRegion('all'); d.setFarView(true); 1" },
+        { "stable": 180000 }
+      ],
+      "camera": { "center": [110, 25], "zoom": 3, "pitch": 0, "bearing": 0 },
+      "time": 1771380000
+    }
+  ]
+}

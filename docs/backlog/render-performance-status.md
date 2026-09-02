@@ -23,12 +23,13 @@
 
 ## Phase 0：把「呈現不能錯」變成可自動檢查（先做，之後每一步都靠它）
 
-- [ ] **0-1 視覺回歸腳本 `scripts/perf/visual-check.mjs`**
+- [x] **0-1 視覺回歸腳本 `scripts/perf/visual-check.mjs`**（2026-09-02 完成）
   - 在 `window.__flightArcDebug` 加 `freezeAnimation(t | null)`：把光球呼吸／閃爍與任何 wall-clock 動畫的時間凍結成固定值（DEV only），截圖才可重現
   - 場景清單（存 `scripts/perf/visual-scenes.json`：seek 時刻、center/zoom/pitch/bearing、theme、模式）：
     1. S1 RCTP dark、2. S1 RCTP light（`light` 底圖）、3. S2 亞太樞紐 dark（fitBounds 後視角）、4. world globe（z3，Far View 開）、5. S1 漸進模式播到中段、6. S1 時間窗開啟
   - `--baseline` 存到 `scripts/perf/out/baseline/`（gitignored），`--compare` 產出 diff 圖與數字表（PIL + numpy 已可用）
-  - 測試：對同一 commit 連跑兩次 `--compare`，diff 必須 0（證明可重現）
+  - ✅ 測試結果（同一 commit 背靠背 `--baseline` → `--compare`）：4 個 S1 場景 **maxDiff = 0**；s2-apac-dark 72／0.14%、world-globe-far 136／0.12%（不成塊，記為噪聲底線，見 `scripts/perf/README.md` §5）
+  - 🔑 過程中查出的真正非決定性根因：**底圖 style 切換會改變軌跡渲染結果**（同場景「從未切過 style」vs「切過 light→dark」maxDiff 90，兩次都切過則為 0）。解法是每次執行先 `Page.reload` 再強制走一次 light→dark 歸零（`bootstrap()`），不是加長等待
 - [ ] **0-2 用 0-1 對 Tier 0 補驗 light theme**（`b9cf92d` 只驗過 dark）
   - 用 `git stash`／checkout `8346b2c` 產 baseline → 回到 HEAD 比對；light 場景 diff 需符合通過標準
   - 另手動：切底圖一次、Far View、漸進模式 60× 播 30 秒無跳格、即時錄影 5 秒檔案可播放
@@ -81,7 +82,11 @@
 - [ ] **2-2 依 zoom 換層 + 視窗內升級**（`src/data/flightLoader.ts`、`src/hooks/useFlightData.ts`、`src/map/customLayer.ts` 的 zoom 監聽）
   - 依上表 band 選層；zoom ≥ 9.5 時**只**對視窗內機場載 L0／L1 shard（沿用 `loadAirportFlights` 的日期 shard），拉遠即釋放；換層走現有 progressive build（Tier 0-3 之後上傳成本已小）
   - 檔案缺失 graceful fallback 到較粗層；manifest 記錄各層是否存在
-  - **資料一致檢查**：先盤點 `src/data/flightStats.ts`（`.path` 12 處）哪些統計依賴點數（距離、高度剖面、時間）；依賴點數的統計一律仍以 L0 或起訖點計算，**Summary 數字不得改變**
+  - **資料一致檢查（2026-09-02 已盤點，結論如下）**：
+    - ✅ Sidebar Summary 與 FlightStatsPanel 的**每一個數字都不讀 path 中間點**。`flightStats.ts` 12 處 `.path`（118, 142, 268-269, 358, 487, 493, 508, 517, 526, 557, 564）全是 `dep_time`／`arr_time` 缺值時拿 `path[0][3]`／`path[len-1][3]` 當時間戳 fallback；`split-tracks.ts:110` 的 DP 抽稀保證保留起訖點 → **換 LOD 不影響 Summary**
+    - ⚠️ **`App.tsx:1230-1234` 的 tooltip 高度會變**：它取「最後一個 `t ≤ 當前時間` 的 path 點的 `[2]`」，點變疏就會顯示較舊的高度。2-2 要處理：對被點選的那一班用 L0（單機追蹤本來就會升級到 L0），或改成兩點線性內插
+    - ⚠️ 三個與點數無關、但同樣會讓快照 diff 的來源，做快照時要避開：(1) `computeTopRoutes`／`getAirlineStats`／`computeAirportComparison`／`getAircraftTypeStats` 都是 `sort((a,b)=>b.count-a.count)`，**同分時順序 = 航班陣列疊代順序**（= 載入順序）→ 快照存無序 `{key:count}`；(2) 航班集合本身會因載入路徑改變（`flightLoader.ts:625-641` 先讀 `regions/*.jsonl`、缺檔才 fallback 全解析度；`preprocessFlights` 丟棄 `path.length===0`）→ 快照要存 `flightCount` + `fr24_id` 排序後的 hash，才能區分「算法變了」還是「載到的航班變了」；(3) airport scope 的 Total = `departures + arrivals`（`IconRailSidebar.tsx:2394`），**不是** `flights.length`（起訖同機場算兩次）
+    - `FlightStatsPanel` 的 ALL REGION tab 吃的是 `allFlights`（`App.tsx:2389`，未篩選），**沒掛在 `__flightArcDebug` 上** → 若要納入快照需另外暴露
   - 測試：
     - Summary JSON 與 Phase 0-3 快照完全相同
     - **band 邊界兩側同相機 diff**：z8.9 的 L2 vs L1、z10.9 的 L1 vs L0，皆需通過視覺門檻
@@ -112,3 +117,6 @@
 ## 執行紀錄
 
 - 2026-09-02：Tier 0 完成（`b9cf92d`），規劃與證據歸檔（`3336c9d`），本檔建立，交由新 session 接手 Phase 0 起。
+- 2026-09-02 傍晚：Phase 2 依用戶拍板改寫為 zoom band 換層（`654c201`）。
+- 2026-09-02 晚：**Phase 0-1 完成**。freeze 機制（`src/three/animClock.ts` + 三個 wall-clock 動畫源）、debug hook（`freezeAnimation` / `setMapStyle` / `setTrailDisplay` / `setTimeWindow` / `summarySnapshot`）、`scripts/perf/visual-{check.mjs,diff.py,scenes.json}` 與 README §5 全部就緒，6 場景 baseline 已建立。production 路徑零改變（未凍結時仍走原 `dt += 0.016` 與 `Math.random` 相位）。
+  - 下一步：0-3（`summarySnapshot()` 實測並存 baseline JSON）→ 0-2（cherry-pick freeze commit 到 `8346b2c` 臨時分支產 baseline，補驗 Tier 0 的 light theme）

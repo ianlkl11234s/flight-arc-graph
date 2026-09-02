@@ -38,3 +38,33 @@ sh run-scenario.sh <TAG> [seconds=8]
 - `brief.py <summary.json>`：壓成一行方便比對
 
 多螢幕、系統負載會讓絕對數字失真，同場景 before/after 盡量背靠背跑、避免中途換視窗。
+
+## 5. 視覺回歸（visual-check）
+
+固定相機 + 固定時刻 + 凍結動畫 → 截圖 → 與 baseline 逐像素比對。用來確保效能改動「呈現不會錯」。
+
+```bash
+node visual-check.mjs --baseline [--scenes s1-rctp-dark,s2-apac-dark]
+node visual-check.mjs --compare  [--scenes ...]        # 任一 FAIL → exit 1
+python3 visual-diff.py a.png b.png diff.png            # 單獨比兩張圖
+```
+
+- 場景定義：`visual-scenes.json`（6 個；相機是對著活的 app 讀出後釘死的字面值，時間存 unix 秒）
+- 輸出：`out/baseline/`、`out/current/`、`out/diff/`（diff 圖差值 ×20 方便肉眼看）
+- 動畫凍結靠 `window.__flightArcDebug.freezeAnimation(t)`（DEV-only，見 `src/three/animClock.ts`）：光球呼吸／閃爍、機場 bloom、空域極光的 wall-clock 時間釘死，並停掉所有 CSS animation/transition
+
+### 通過標準
+`>2/255 的像素 < 0.5%` 且**不成塊**（16×16 block 內差異像素超過 50% 即判成塊）。沿線條邊緣的零星捨入差可接受，成塊代表真的畫錯了。
+
+### 每次執行都會先 bootstrap（不要拿掉）
+連線後先 `Page.reload` 再強制走一次 `light → dark`。原因是實測（2026-09-02）**底圖 style 切換會改變軌跡渲染結果**：同一場景在「reload 後從未切過 style」與「切過 light→dark」下 maxDiff 達 90，但兩次都切過就是 0。場景序列裡 `s1-rctp-light` 會切 style，於是「這次執行有沒有跑過 light 場景」會影響 dark 場景的結果。bootstrap 讓所有執行從同一起點出發。
+
+### 已知噪聲底線（2026-09-02，同一 commit 背靠背 baseline → compare）
+
+| 場景 | maxDiff | >2px% |
+|---|---:|---:|
+| s1-rctp-dark / light / progressive / timewindow | 0 | 0% |
+| s2-apac-dark | 72 | 0.14% |
+| world-globe-far | 136 | 0.12% |
+
+S1 系列是完全可重現的（唯一例外是底部播放列 UI 有 16 px 的 1/255 抗鋸齒差）。S2 與 world 還有 0.12–0.14% 殘留，推測與多檔併發載入的完成順序、光球 `MAX_INSTANCES=1024` 截斷、光軌 `MAX_SLOTS=6000` 溢位有關（後兩者是 `plan` 的 G4 已知缺陷）。**比對這兩個場景時，差異若在此量級且不成塊視為噪聲；超過或成塊才是回歸。**

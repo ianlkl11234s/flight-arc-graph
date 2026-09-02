@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { mercatorToGlobe, type GlobeResolved } from "./shaders/globeProject";
+import { getFrozenAnimTime } from "./animClock";
 
 const MAX_INSTANCES = 1024;
 const _g: GlobeResolved = { x: 0, y: 0, z: 0, cull: 1, dot: 1 };
@@ -98,8 +99,14 @@ export class InstancedOrbs {
   updateAll(entries: Array<{ id: string; x: number; y: number; z: number }>) {
     this.count = Math.min(entries.length, MAX_INSTANCES);
     this.flightIds.length = this.count;
-    const dt = 0.016;
-    this.time += dt;
+    // DEV 視覺回歸：凍結時把動畫時間釘死（解凍後從該值續跑）
+    const frozen = getFrozenAnimTime();
+    if (frozen !== null) {
+      this.time = frozen;
+    } else {
+      const dt = 0.016;
+      this.time += dt;
+    }
 
     for (let i = 0; i < this.count; i++) {
       const e = entries[i]!;
@@ -120,7 +127,8 @@ export class InstancedOrbs {
       this.positions[i * 3 + 1] = gy;
       this.positions[i * 3 + 2] = gz;
 
-      const phase = this.phaseOffsets[i]!;
+      // 凍結時相位改用決定性序列（phaseOffsets 是 Math.random，跨 reload 不可重現）
+      const phase = frozen !== null ? (i * 2.399963229728653) % (Math.PI * 2) : this.phaseOffsets[i]!;
 
       // 呼吸動畫
       const pulse = 1.0 + Math.sin(this.time * 2.0 + phase) * 0.15;
