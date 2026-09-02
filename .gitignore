@@ -33,6 +33,9 @@ output/
 music/
 scripts/__pycache__/
 
+# perf 量測 harness 的輸出（trace JSON / 截圖 / chrome profile，不進 git）
+scripts/perf/out/
+
 # 軌跡幾何分析探索區（不進 git，演算法驗證 OK 後畢業到 src/analysis/）
 exploration/
 
