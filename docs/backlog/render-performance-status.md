@@ -77,6 +77,7 @@
   - ✅ **真的錄了一段檔案驗證**：完整 MediaRecorder 流程產出 2800×1600 VP9 webm（9.9 MB），ffmpeg 解出 45 幀逐幀檢查，min nonBlackRatio 0.9992、無一幀低於 0.9。另走生產取像路徑取 32 幀，每幀 nonBlackRatio = 1
   - ✅ HQ 路徑 30 幀全非黑且亮度隨相機 bearing 平滑變化（非卡住的同一幀）
   - ✅ visual-check 6/6、summary 3/3
+  - ⚠️ **本身會改變渲染輸出**：後來隔離量測發現 `preserveDrawingBuffer: false` 讓地圖主體有約 0.4% 像素的次像素差異（pctOver8 0.15–0.18%，maxDiff ~48），推測是瀏覽器改走不同合成路徑。在門檻邊緣，不是「畫錯」但也不是零差異 —— 之後若視覺驗收出現莫名其妙的 0.15% 級差異，先確認 baseline 有沒有跨過這個 commit
   - ⚠️ A/B 量不出收益：script 2.16 → 2.21 ms/frame 在噪聲內，GPU 欄位兩側相同（gpuHw 播放時 99% 已飽和）。省一次 back buffer 複製的收益在這個場景／canvas 尺寸下測不出來，如實記錄
   - ⚠️ **留下的風險（未修）**：`useCanvasRecorder.ts:196` 的 `waitForRender` 有 200 ms timeout fallback。舊 flag 下逾時只抓到「舊但有效」的幀，新 flag 下可能抓到已清空的 buffer。S1 每幀約 13 ms 遠低於門檻，但沒對「大場景 jumpTo 後第一幀伴隨大量 tile 載入」壓測
   - ⚠️ 未驗證：用播放器實際播放存下的 webm（只做程式化解碼與像素分析）；從「閒置 30 秒完全停止」狀態啟動錄影
@@ -146,7 +147,17 @@
   - ✅ heap（GC 後量、2-3 次中位數）：S1 139→124 MB（-11%）、S2 464→373 MB（-20%）、world 321→296 MB（-8%）
   - ✅ visual-check 6/6、summary 三場景相同。S1 的 pctOver8 0.0044% 有查到底：暫時把 alt 換 Float64 重跑 → maxDiff 全部歸零，證實只來自刻意的 Float32 高度精度
   - 📌 `coordTransform.worker.ts` 查證是 dead code（無任何 import），未動
-- [ ] **3-2 GPU 時間驅動光軌**（T2-1；設計見 plan §C2e）：先做「tRel attribute + `uTime` → 漸進模式進 shader」（獨立小步），再做 partner attribute + 頭部夾回 + 活躍段 index，最後拆 `BatchedTrails`
+- [~] **3-2 GPU 時間驅動光軌**（T2-1；設計見 plan §C2e）
+  - [x] **步驟一：`tRel` attribute + `uTime` → progressive 進 shader**（2026-09-03 完成，`845d1d0`）
+    - `staticTrail.vert` 加 `aTRel` + `uTime`/`uProgressive`；`updateProgressiveVisibility` 從 O(N) 全頂點掃描變成設一個 uniform
+    - ✅ **S1 progressive 播放 script 2.62 → 2.17 ms/frame（-17%，三次區間不重疊）**
+    - ✅ 視覺 s1-progressive maxDiff 11／pctOver8 0.005%、s1-timewindow maxDiff **0**；summary 三場景相同
+    - ✅ 播放正確性：用 `bucket.timestamps` 算「已飛過頂點數／總數」，40 幀嚴格單調遞增 18.481% → 20.272%
+    - ⚠️ **行為改變**：舊碼 progressive 開啟時會整批覆蓋 ±12h 的 alpha（兩者同開時視窗失效），新碼是嚴格 AND。AND 更符合直覺、舊行為比較像 bug，但這是可見改變。要改回：`vAlpha = mix(alpha, 1.0, uProgressive) * cull * step(aTRel, uTime);`
+  - [ ] 步驟二～五：partner attribute → 頭部夾回 → 活躍段 index → 拆 `BatchedTrails`
+
+> 🔑 **步驟一順帶推翻了 plan 對 world 瓶頸的假設**（2026-09-03 實測）：world 場景這一步幾乎沒收益（72.01 → 71.29 ms/frame，噪聲 4.5 ms 內）。補測 world **full 模式**（完全不走 progressive）是 69.5 ms/frame，同量級 → **world 的 ~70–80 ms/frame 不是靜態軌跡也不是 progressive 掃描造成的**。主執行緒 busy 97–99% 而 **GPU 只有 ~3%**，大頭是 Far View 下每幀更新 7,868 顆光球／光軌。
+> **後續排序應據此調整**：要解 world 播放，重點在 `InstancedOrbs.updateAll` 與 `BatchedTrails` 的每幀 CPU 成本，不是繼續往靜態軌跡的 GPU 化走。
   - 測試：freezeAnimation + 固定時刻下，光軌截圖 vs 改前 diff 通過（顏色 cycle 順序若改變需先在 plan 記錄並取得用戶同意）；world 場景 8,000+ 班同時空中無互踢閃爍；harness 播放時主執行緒 busy 顯著下降
 - [x] **3-3 光球上限 8,192**（2026-09-03 完成，`8b9b267`）（T2-2）
   - ✅ **不採用 billboard**：改成維持球體、細分 `(1,2)`→`(1,0)`（1,860→240 verts/顆），用省下的頂點換 8 倍上限，每幀頂點預算 1.9M→1.97M 幾乎不變。理由：billboard 在 globe 下要自建相機基底且會改變光暈外觀
