@@ -63,10 +63,14 @@
   - ✅ 恢復：play 無 stall（rAF callback max 10.1 ms）；暫停後 panBy 立即更新
   - ✅ 視覺：s1-rctp-light maxDiff 0；s1-rctp-dark maxDiff 11、`pctOver8` 0.0044%（49 px，sidebar 文字抗鋸齒，地圖主體 0.006%）。summary 三場景完全相同
   - ✅ 功能冒煙 7/7，其中 2 項從「已完全閒置停止」狀態再測
-- [ ] **1-3 播放時鐘留在 ref、React 10 Hz 發布**（T05-3；`src/hooks/useTimeline.ts`、`src/App.tsx:996`）
+- [x] **1-3 播放時鐘留在 ref、React 10 Hz 發布**（2026-09-03 完成，`7d01d7c`）
   - 時鐘由 hook 持 `timeRef`，rAF 內直接 `map.triggerRepaint()`；state 節流 ~10 Hz；`seek()` 同步寫 ref 並立即發布
   - 影響面要逐一驗：時間標籤、進度 slider、cinema keyframe（`useCinemaCamera.ts`）、錄影 overlay 時間字（`useCanvasRecorder.ts`）、晨昏線、viewshed track-single
-  - 測試：60×／600×／3600× 播放 30 秒，slider 與標籤連續更新無倒退；seek 後立即反映；harness 播放時主執行緒 busy 下降；visual-check 不變
+  - ✅ **A/B：播放 `perFrame.script` 7.14 → 3.20 ms/frame，降 55%**（三次取中位數）
+  - ✅ 關鍵設計：App 的 `timeRef` 改成 `timeline.timeRef` 的別名 → 錄影 overlay、晨昏線、customLayer、viewshed、點擊查高度全部零改動自動讀到每幀值
+  - ✅ visual-check 6/6、summary 三場景相同；播放連續性 30 秒 × 60×／600×／3600× ref 單調遞增、state ~10 Hz 零倒退；seek ref <12 ms／state ~14 ms；錄影時間字 rAF probe 119/119 逐幀變化
+  - ✅ `KEEP_ALIVE_FRAMES` 12 → 3（原用途「橋接 timeRef 落後一幀」已消失）
+  - ⚠️ 未實測：viewshed track-single 的 UI 級效果、`KEEP_ALIVE_FRAMES=3` 的極端序列（暫停時連續快速拖多個 slider）
 - [ ] **1-4 `preserveDrawingBuffer:false`**（T05-4；`src/map/MapView.tsx:276`、`src/hooks/useCanvasRecorder.ts`）
   - 即時錄製改在 `map.on("render")` 內同步取像；HQ 匯出維持 `once("render")`
   - 測試：即時錄 10 秒 → 檔案可播且非黑畫面；HQ 匯出 30 幀 → 每幀非黑；visual-check 不變
