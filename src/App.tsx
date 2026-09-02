@@ -554,7 +554,7 @@ export default function App() {
 
     // 也加入已載入航班的日期（fallback）；sanity floor 1e9 擋掉接近 epoch 的壞時間戳
     for (const f of allFlights) {
-      const t = f.dep_time || f.path[0]?.[3];
+      const t = f.dep_time || (f.path.length > 0 ? f.path.t(0) : undefined);
       if (t && t > 1e9) {
         const d = new Date(t * 1000 + 8 * 3600_000);
         dates.add(d.toISOString().slice(0, 10));
@@ -737,7 +737,7 @@ export default function App() {
     // 日期範圍篩選
     if (timeline.isMultiDateMode && timeline.dateWindowStarts.length > 0) {
       base = base.filter((f) => {
-        const t = f.dep_time || f.path[0]?.[3];
+        const t = f.dep_time || (f.path.length > 0 ? f.path.t(0) : undefined);
         if (!t) return false;
         return timeline.dateWindowStarts.some(
           (start, i) => t >= start && t <= timeline.dateWindowEnds[i]!,
@@ -745,7 +745,7 @@ export default function App() {
       });
     } else {
       base = base.filter((f) => {
-        const t = f.dep_time || f.path[0]?.[3];
+        const t = f.dep_time || (f.path.length > 0 ? f.path.t(0) : undefined);
         return t && t >= timeline.windowStart && t <= timeline.windowEnd;
       });
     }
@@ -763,7 +763,7 @@ export default function App() {
     if (!timeline.isMultiDateMode || timeline.dateWindowStarts.length === 0) return undefined;
     const map = new Map<string, string>();
     for (const f of displayedFlights) {
-      const t = f.dep_time || f.path[0]?.[3];
+      const t = f.dep_time || (f.path.length > 0 ? f.path.t(0) : undefined);
       if (!t) continue;
       const idx = timeline.dateWindowStarts.findIndex(
         (start, i) => t >= start && t <= timeline.dateWindowEnds[i]!,
@@ -1344,7 +1344,7 @@ export default function App() {
             let altitude: number | null = null;
             const t = timeRef.current;
             for (let i = flight.path.length - 1; i >= 0; i--) {
-              if (flight.path[i]![3] <= t) { altitude = Math.round(flight.path[i]![2]); break; }
+              if (flight.path.t(i) <= t) { altitude = Math.round(flight.path.alt(i)); break; }
             }
             setTooltipInfo({ flight, x: e.point.x, y: e.point.y, altitude });
             setAirspaceSelection(null);
@@ -1437,26 +1437,26 @@ export default function App() {
         const t = timeRef.current;
         const path = flight.path;
         let lat: number, lng: number, alt = 0, heading = 0;
-        if (t <= path[0]![3]) {
-          lat = path[0]![0]; lng = path[0]![1]; alt = path[0]![2];
-          if (path.length > 1) heading = computeBearing(path[0]![0], path[0]![1], path[1]![0], path[1]![1]);
-        } else if (t >= path[path.length - 1]![3]) {
-          lat = path[path.length - 1]![0]; lng = path[path.length - 1]![1]; alt = path[path.length - 1]![2];
+        if (t <= path.t(0)) {
+          lat = path.lat(0); lng = path.lng(0); alt = path.alt(0);
+          if (path.length > 1) heading = computeBearing(path.lat(0), path.lng(0), path.lat(1), path.lng(1));
+        } else if (t >= path.t(path.length - 1)) {
+          const last = path.length - 1;
+          lat = path.lat(last); lng = path.lng(last); alt = path.alt(last);
           if (path.length > 1) {
             const n = path.length;
-            heading = computeBearing(path[n - 2]![0], path[n - 2]![1], path[n - 1]![0], path[n - 1]![1]);
+            heading = computeBearing(path.lat(n - 2), path.lng(n - 2), path.lat(n - 1), path.lng(n - 1));
           }
         } else {
-          lat = path[0]![0]; lng = path[0]![1];
+          lat = path.lat(0); lng = path.lng(0);
           for (let i = 1; i < path.length; i++) {
-            if (path[i]![3] >= t) {
-              const a = path[i - 1]!;
-              const b = path[i]!;
-              const r = (t - a[3]) / (b[3] - a[3]);
-              lat = a[0] + (b[0] - a[0]) * r;
-              lng = a[1] + (b[1] - a[1]) * r;
-              alt = a[2] + (b[2] - a[2]) * r;
-              heading = computeBearing(a[0], a[1], b[0], b[1]);
+            if (path.t(i) >= t) {
+              const ai = i - 1, bi = i;
+              const r = (t - path.t(ai)) / (path.t(bi) - path.t(ai));
+              lat = path.lat(ai) + (path.lat(bi) - path.lat(ai)) * r;
+              lng = path.lng(ai) + (path.lng(bi) - path.lng(ai)) * r;
+              alt = path.alt(ai) + (path.alt(bi) - path.alt(ai)) * r;
+              heading = computeBearing(path.lat(ai), path.lng(ai), path.lat(bi), path.lng(bi));
               break;
             }
           }

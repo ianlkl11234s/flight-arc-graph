@@ -13,6 +13,16 @@ import type {
 import { ICAO_TO_IATA } from "./flightLoader";
 import { AIRPORT_INFO } from "../map/cameraPresets";
 
+/** 航班出發時間：優先 dep_time，其次 path 首點 t（path 為空回傳 0，與舊版 tuple optional chaining ?? 0 語意相同） */
+function flightDepTs(f: Flight): number {
+  return f.dep_time > 0 ? f.dep_time : f.path.length > 0 ? f.path.t(0) : 0;
+}
+
+/** 航班抵達時間：優先 arr_time，其次 path 末點 t（path 為空回傳 0） */
+function flightArrTs(f: Flight): number {
+  return f.arr_time > 0 ? f.arr_time : f.path.length > 0 ? f.path.t(f.path.length - 1) : 0;
+}
+
 /** ICAO prefix → 國家/地區名稱 */
 const ICAO_PREFIX_COUNTRY: Record<string, string> = {
   RC: "Taiwan",
@@ -115,7 +125,7 @@ export function computeDailyStats(
   >();
 
   for (const f of af) {
-    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    const ts = flightDepTs(f);
     if (ts === 0) continue;
     const date = toTaipeiDate(ts);
     const entry = map.get(date) ?? { departures: 0, arrivals: 0, total: 0 };
@@ -139,7 +149,7 @@ export function computeHourlyStats(
   const hours = new Array(24).fill(0) as number[];
 
   for (const f of af) {
-    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    const ts = flightDepTs(f);
     if (ts === 0) continue;
     hours[getTaipeiHour(ts)]!++;
   }
@@ -265,8 +275,8 @@ export function getFlightDurationDistribution(
   ];
 
   for (const f of af) {
-    const dep = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
-    const arr = f.arr_time > 0 ? f.arr_time : f.path[f.path.length - 1]?.[3] ?? 0;
+    const dep = flightDepTs(f);
+    const arr = flightArrTs(f);
     if (dep === 0 || arr === 0) continue;
     const mins = (arr - dep) / 60;
     if (mins <= 0) continue;
@@ -355,7 +365,7 @@ export function getUniqueDays(flights: Flight[], icao: string): number {
   const af = airportFlights(flights, icao);
   const dates = new Set<string>();
   for (const f of af) {
-    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    const ts = flightDepTs(f);
     if (ts > 0) dates.add(toTaipeiDate(ts));
   }
   return dates.size;
@@ -484,13 +494,13 @@ export function computeHourlyDepArr(
 
   for (const f of flights) {
     if (f.origin_icao === icao) {
-      const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+      const ts = flightDepTs(f);
       if (ts > 0 && (!date || toTaipeiDate(ts) === date)) {
         hours[getTaipeiHour(ts)]!.departures++;
       }
     }
     if (f.dest_icao === icao) {
-      const ts = f.arr_time > 0 ? f.arr_time : f.path[f.path.length - 1]?.[3] ?? 0;
+      const ts = flightArrTs(f);
       if (ts > 0 && (!date || toTaipeiDate(ts) === date)) {
         hours[getTaipeiHour(ts)]!.arrivals++;
       }
@@ -505,7 +515,7 @@ export function getAvailableDates(flights: Flight[], icao: string): string[] {
   const af = airportFlights(flights, icao);
   const dates = new Set<string>();
   for (const f of af) {
-    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    const ts = flightDepTs(f);
     if (ts > 0) dates.add(toTaipeiDate(ts));
   }
   return [...dates].sort();
@@ -514,7 +524,7 @@ export function getAvailableDates(flights: Flight[], icao: string): string[] {
 /** 按日期篩選航班 */
 export function filterFlightsByDate(flights: Flight[], date: string): Flight[] {
   return flights.filter((f) => {
-    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    const ts = flightDepTs(f);
     return ts > 0 && toTaipeiDate(ts) === date;
   });
 }
@@ -523,7 +533,7 @@ export function filterFlightsByDate(flights: Flight[], date: string): Flight[] {
 export function filterFlightsByDates(flights: Flight[], dates: string[]): Flight[] {
   const dateSet = new Set(dates);
   return flights.filter((f) => {
-    const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+    const ts = flightDepTs(f);
     return ts > 0 && dateSet.has(toTaipeiDate(ts));
   });
 }
@@ -554,14 +564,14 @@ export function computeTimelineDepArr(
 
   for (const f of flights) {
     if (f.origin_icao === icao) {
-      const ts = f.dep_time > 0 ? f.dep_time : f.path[0]?.[3] ?? 0;
+      const ts = flightDepTs(f);
       if (ts > 0) {
         const slot = slotMap.get(`${toTaipeiDate(ts)}-${getTaipeiHour(ts)}`);
         if (slot) slot.departures++;
       }
     }
     if (f.dest_icao === icao) {
-      const ts = f.arr_time > 0 ? f.arr_time : f.path[f.path.length - 1]?.[3] ?? 0;
+      const ts = flightArrTs(f);
       if (ts > 0) {
         const slot = slotMap.get(`${toTaipeiDate(ts)}-${getTaipeiHour(ts)}`);
         if (slot) slot.arrivals++;

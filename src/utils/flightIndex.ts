@@ -18,8 +18,8 @@ export class FlightTimeIndex {
       const f = flights[i]!;
       if (f.path.length === 0) continue;
 
-      const startBucket = Math.floor(f.path[0]![3] / BUCKET_SIZE);
-      const endBucket = Math.floor(f.path[f.path.length - 1]![3] / BUCKET_SIZE);
+      const startBucket = Math.floor(f.path.t(0) / BUCKET_SIZE);
+      const endBucket = Math.floor(f.path.t(f.path.length - 1) / BUCKET_SIZE);
 
       for (let b = startBucket; b <= endBucket; b++) {
         let arr = this.buckets.get(b);
@@ -45,8 +45,8 @@ export class FlightTimeIndex {
     for (const idx of indices) {
       const f = this.flights[idx]!;
       // 精確檢查：bucket 是粗篩，還需確認時間在 path 範圍內
-      const start = f.path[0]![3];
-      const end = f.path[f.path.length - 1]![3];
+      const start = f.path.t(0);
+      const end = f.path.t(f.path.length - 1);
       if (time >= start && time <= end) {
         result.push(f);
       }

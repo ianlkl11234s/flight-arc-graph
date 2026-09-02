@@ -22,6 +22,14 @@ function parseHex(hex: string): [number, number, number] {
   return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
 }
 
+/** TrackPath → GeoJSON LineString coordinates（[lng, lat] 每點，逐欄存取避免 at() 配置 tuple） */
+function pathToLineCoords(path: Flight["path"]): [number, number][] {
+  const n = path.length;
+  const coords: [number, number][] = new Array(n);
+  for (let i = 0; i < n; i++) coords[i] = [path.lng(i), path.lat(i)];
+  return coords;
+}
+
 /** 產生 lerp 函式，在兩個 hex 色之間插值 */
 function makeLerpColor(hexA: string, hexB: string): (t: number) => string {
   const [ar, ag, ab] = parseHex(hexA);
@@ -75,7 +83,7 @@ function flightsToGeoJSON(
         geometry: {
           type: "LineString" as const,
           // path 格式: [lat, lng, alt, ts] → GeoJSON 要 [lng, lat]
-          coordinates: f.path.map((pt) => [pt[1], pt[0]]),
+          coordinates: pathToLineCoords(f.path),
         },
       })),
   };

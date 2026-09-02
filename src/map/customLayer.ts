@@ -179,8 +179,8 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
           const visibleIds = new Set<string>();
           for (const f of flights) {
             if (f.path.length === 0) continue;
-            const pathStart = f.path[0]![3];
-            const pathEnd = f.path[f.path.length - 1]![3];
+            const pathStart = f.path.t(0);
+            const pathEnd = f.path.t(f.path.length - 1);
             if (pathEnd >= tMin && pathStart <= tMax) {
               visibleIds.add(f.fr24_id);
             }

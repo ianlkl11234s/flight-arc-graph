@@ -296,8 +296,8 @@ export class FlightScene {
    */
   private bucketKeyForFlight(f: Flight): number {
     if (!this.isDarkTheme) return 0;
-    const mid = f.path[Math.floor(f.path.length / 2)]!;
-    return bucketKeyOfLngLat(mid[0], mid[1]);
+    const midIdx = Math.floor(f.path.length / 2);
+    return bucketKeyOfLngLat(f.path.lat(midIdx), f.path.lng(midIdx));
   }
 
   /**
@@ -360,7 +360,7 @@ export class FlightScene {
       const k = this.bucketKeyForFlight(f);
       bucketVertCounts.set(k, (bucketVertCounts.get(k) ?? 0) + verts);
       totalVerts += verts;
-      const t0 = f.path[0]![3];
+      const t0 = f.path.t(0);
       if (t0 < minTimeBase) minTimeBase = t0;
     }
     if (totalVerts === 0) return;
@@ -503,10 +503,10 @@ export class FlightScene {
       const ax = bucket.axis.x, ay = bucket.axis.y, az = bucket.axis.z;
 
       for (let i = startPt; i < f.path.length - 1 && vertsThisFrame < limit; i++) {
-        const a = f.path[i]!;
-        const b = f.path[i + 1]!;
-        const ma = toMercator(a[0], a[1], a[2]);
-        const mb = toMercator(b[0], b[1], b[2]);
+        const aLat = f.path.lat(i), aLng = f.path.lng(i), aAlt = f.path.alt(i), aT = f.path.t(i);
+        const bLat = f.path.lat(i + 1), bLng = f.path.lng(i + 1), bAlt = f.path.alt(i + 1), bT = f.path.t(i + 1);
+        const ma = toMercator(aLat, aLng, aAlt);
+        const mb = toMercator(bLat, bLng, bAlt);
 
         const w = bucket.writeVerts;
         const o3 = w * 3;
@@ -536,12 +536,12 @@ export class FlightScene {
           bucket.colors[o3 + 4] = g;
           bucket.colors[o3 + 5] = bl;
         } else {
-          let t = Math.min(Math.max(a[2] / MAX_ALT, 0), 1);
+          let t = Math.min(Math.max(aAlt / MAX_ALT, 0), 1);
           let [cr, cg, cb] = lerpGradient(t);
           bucket.colors[o3] = cr;
           bucket.colors[o3 + 1] = cg;
           bucket.colors[o3 + 2] = cb;
-          t = Math.min(Math.max(b[2] / MAX_ALT, 0), 1);
+          t = Math.min(Math.max(bAlt / MAX_ALT, 0), 1);
           [cr, cg, cb] = lerpGradient(t);
           bucket.colors[o3 + 3] = cr;
           bucket.colors[o3 + 4] = cg;
@@ -552,8 +552,8 @@ export class FlightScene {
         bucket.alphas[w + 1] = 1.0;
 
         // T0-5：存相對秒數（減 staticTimeBase），避免 float32 存絕對 unix 秒的 ulp=128s 誤差
-        bucket.timestamps[w] = a[3] - this.staticTimeBase;
-        bucket.timestamps[w + 1] = b[3] - this.staticTimeBase;
+        bucket.timestamps[w] = aT - this.staticTimeBase;
+        bucket.timestamps[w + 1] = bT - this.staticTimeBase;
 
         bucket.writeVerts += 2;
         vertsThisFrame += 2;
@@ -791,9 +791,8 @@ export class FlightScene {
     const pts: MercatorPoint[] = new Array(n);
     const ecef = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
-      const pt = flight.path[i]!;
-      const mc = toMercator(pt[0], pt[1], pt[2]);
-      pts[i] = [mc.x, mc.y, mc.z, pt[3]];
+      const mc = toMercator(flight.path.lat(i), flight.path.lng(i), flight.path.alt(i));
+      pts[i] = [mc.x, mc.y, mc.z, flight.path.t(i)];
       mercatorToEcef(mc.x, mc.y, mc.z, ecef, i * 3); // 貼球 ECEF 一次算好（光軌每幀直接抄）
     }
     cached = { pts, ecef };
@@ -905,7 +904,7 @@ export class FlightScene {
       activeIds.add(flight.fr24_id);
 
       const cache = this.getMercatorPath(flight);
-      const endTime = flight.path.length > 0 ? flight.path[flight.path.length - 1]![3] : currentTime;
+      const endTime = flight.path.length > 0 ? flight.path.t(flight.path.length - 1) : currentTime;
       const written = batch.writeTrail(
         flight.fr24_id,
         endTime,

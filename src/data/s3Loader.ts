@@ -1,5 +1,5 @@
 import type { Flight } from "../types";
-import { preprocessFlights } from "./flightLoader";
+import { preprocessFlights, type RawFlight } from "./flightLoader";
 
 const S3_BASE =
   "https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc";
@@ -32,7 +32,7 @@ export async function mergeS3Updates(
     // 計算本地已有的日期集合
     const localDates = new Set<string>();
     for (const f of localFlights) {
-      const ts = f.dep_time > 0 ? f.dep_time : (f.path[0]?.[3] ?? 0);
+      const ts = f.dep_time > 0 ? f.dep_time : (f.path.length > 0 ? f.path.t(0) : 0);
       if (ts > 0) localDates.add(new Date(ts * 1000).toISOString().slice(0, 10));
     }
 
@@ -65,7 +65,7 @@ export async function mergeS3Updates(
       const url = `${S3_BASE}/${source}/${y}/${m}/${dd}/data.json`;
       const res = await fetch(url);
       if (!res.ok) return [];
-      const flights: Flight[] = await res.json();
+      const flights: RawFlight[] = await res.json();
       return preprocessFlights(flights).filter((f) => !localIds.has(f.fr24_id));
     });
 
