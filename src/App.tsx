@@ -1173,13 +1173,24 @@ export default function App() {
     }
     const updateCamera = () => {
       const c = map.getCenter();
-      setCameraInfo({
+      const next = {
         lng: +c.lng.toFixed(4),
         lat: +c.lat.toFixed(4),
         zoom: +map.getZoom().toFixed(1),
         pitch: +map.getPitch().toFixed(0),
         bearing: +map.getBearing().toFixed(0),
-      });
+      };
+      // T0-4：四捨五入後數值沒變就沿用舊物件參考，避免相機移動期間每幀都觸發
+      // App 整棵樹 reconcile（拖曳／orbit／cinema／flyTo 期間尤其密集）
+      setCameraInfo((prev) =>
+        prev.lng === next.lng &&
+        prev.lat === next.lat &&
+        prev.zoom === next.zoom &&
+        prev.pitch === next.pitch &&
+        prev.bearing === next.bearing
+          ? prev
+          : next,
+      );
     };
     map.on("move", updateCamera);
     updateCamera();

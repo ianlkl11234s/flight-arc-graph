@@ -267,23 +267,12 @@ export class GlowPointsScene {
 
   render(matrix: number[]): boolean {
     if (!this.material) return false;
-    const gl = this.renderer.getContext();
-    const blendEnabled = gl.isEnabled(gl.BLEND);
-    const blendSrc = gl.getParameter(gl.BLEND_SRC_RGB);
-    const blendDst = gl.getParameter(gl.BLEND_DST_RGB);
-    const blendSrcA = gl.getParameter(gl.BLEND_SRC_ALPHA);
-    const blendDstA = gl.getParameter(gl.BLEND_DST_ALPHA);
-
+    // T0-2：刪每幀 GL 狀態同步查詢（同 FlightScene.render 理由）
     this.camera.projectionMatrix = this.projMatrix.fromArray(matrix);
     this.material.uniforms.uTime!.value = (performance.now() - this.startTime) / 1000;
 
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
-    this.renderer.resetState();
-
-    if (blendEnabled) gl.enable(gl.BLEND);
-    else gl.disable(gl.BLEND);
-    gl.blendFuncSeparate(blendSrc, blendDst, blendSrcA, blendDstA);
 
     return true;
   }

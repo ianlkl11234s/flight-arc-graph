@@ -323,7 +323,6 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
       camera.projectionMatrix = projectionMatrix.fromArray(matrix);
       renderer.resetState();
       renderer.render(scene, camera);
-      renderer.resetState();
 
       // shimmer 需要持續重繪
       // 沒有可見分類或輸出透明度時不維持動畫 repaint；開啟狀態仍由上層的
