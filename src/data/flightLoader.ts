@@ -5,7 +5,7 @@ import { AIRPORT_INFO } from "../map/cameraPresets";
 /**
  * Flight 的原始 JSON／wire 格式：path 仍是磁碟上的 TrailPoint tuple 陣列，
  * 尚未經 TrackPath.fromArray 轉換。JSON.parse 出來的資料在轉成 Flight（TrackPath）
- * 之前都長這樣——所有解析入口（streamLoadJsonl／tryLoadLocal／loadFromS3）都回傳這個型別。
+ * 之前都長這樣——所有解析入口（streamLoadJsonl）都回傳這個型別。
  */
 export type RawFlight = Omit<Flight, "path"> & { path: TrailPoint[] };
 
@@ -117,9 +117,6 @@ export function preprocessFlights(flights: RawFlight[]): Flight[] {
 
 // ── 快取 ──
 
-let cachedTracks: Flight[] | null = null;
-let cachedAirspace: Flight[] | null = null;
-
 export interface FlightLoadOptions {
   /** 只載入這些台灣日期；未提供時維持完整檔案行為。 */
   dates?: readonly string[];
@@ -220,64 +217,6 @@ function flightDateTW(flight: Flight): string | null {
 
 const S3_BASE =
   "https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc";
-
-/** 嘗試載入 JSON 檔案（支援多路徑 fallback） */
-async function tryLoadLocal(...paths: string[]): Promise<RawFlight[] | null> {
-  for (const path of paths) {
-    try {
-      const res = await fetch(`/${path}`);
-      if (!res.ok) continue;
-      const text = await res.text();
-      if (text.trimStart().startsWith("<")) continue;
-      return JSON.parse(text);
-    } catch {
-      continue;
-    }
-  }
-  return null;
-}
-
-/** 從 S3 manifest 載入指定來源的航班 */
-async function loadFromS3(source: "tracks" | "airspace"): Promise<RawFlight[]> {
-  const manifestRes = await fetch(`${S3_BASE}/${source}/manifest.json`);
-  if (!manifestRes.ok) throw new Error(`S3 ${source} manifest not available`);
-  const manifest: { dates: { date: string }[] } = await manifestRes.json();
-
-  const fetches = manifest.dates.map(async (d) => {
-    const [y, m, dd] = d.date.split("-");
-    const res = await fetch(`${S3_BASE}/${source}/${y}/${m}/${dd}/data.json`);
-    if (!res.ok) return [];
-    return (await res.json()) as RawFlight[];
-  });
-
-  const results = await Promise.all(fetches);
-  return results.flat();
-}
-
-/** 載入 FR24 完整軌跡（舊式：一次全載） */
-export async function loadTracks(): Promise<Flight[]> {
-  if (cachedTracks) return cachedTracks;
-
-  let data = await tryLoadLocal(
-    "data/tracks/latest.json",       // Zeabur /data volume
-    "tracks/aviation_data.json",     // 本地開發 / docker mount
-  );
-  if (data) {
-    console.log(`[Loader] Tracks: ${data.length} flights (local)`);
-  }
-
-  if (!data) {
-    console.log("[Loader] Tracks: loading from S3...");
-    try {
-      data = await loadFromS3("tracks");
-    } catch {
-      data = [];
-    }
-  }
-
-  cachedTracks = preprocessFlights(data);
-  return cachedTracks;
-}
 
 // ── Manifest ──
 
@@ -799,52 +738,6 @@ export async function loadAirspaceDays(
   throwIfAborted(options?.signal);
   return all;
 }
-
-/** 舊式：一次全載（向下相容） */
-export async function loadAirspace(): Promise<Flight[] | null> {
-  if (cachedAirspace) return cachedAirspace;
-
-  let data = await tryLoadLocal(
-    "data/airspace/latest.json",
-    "airspace/aviation_data.json",
-  );
-  if (data) {
-    console.log(`[Loader] Airspace: ${data.length} flights (local)`);
-    cachedAirspace = preprocessFlights(data);
-    return cachedAirspace;
-  }
-
-  // S3 fallback
-  try {
-    data = await loadFromS3("airspace");
-    if (data.length > 0) {
-      console.log(`[Loader] Airspace: ${data.length} flights (S3)`);
-      cachedAirspace = preprocessFlights(data);
-      return cachedAirspace;
-    }
-  } catch { /* ignore */ }
-
-  return null;
-}
-
-/** 更新 tracks 快取 */
-export function updateCachedTracks(flights: Flight[]): void {
-  cachedTracks = flights;
-}
-
-/** 更新 airspace 快取 */
-export function updateCachedAirspace(flights: Flight[]): void {
-  cachedAirspace = flights;
-}
-
-// ── 向下相容：保留舊函數名稱供其他模組使用 ──
-
-/** @deprecated 改用 loadTracks() */
-export const loadApiFlights = loadTracks;
-/** @deprecated 改用 loadAirspace() */
-export const loadFusedFlights = loadAirspace;
-/** @deprecated 改用 updateCachedTracks() */
-export const updateCachedFlights = updateCachedTracks;
 
 /** 依目的地機場 ICAO 篩選（降落航班） */
 export function filterByArrivalAirport(
