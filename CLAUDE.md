@@ -117,6 +117,7 @@ LOD 有 9,476 個小檔、逐檔 wget，全新拉約需 2 小時；用 `find /da
 - [Color Theme System](docs/features/color-theme-system.md) — 6 組 preset、多色停漸層、即時微調
 - [Recording Overlay](docs/features/recording-overlay.md) — 動態 overlay、右下角資訊、4K 錄製
 - [Dynamic Viewshed](docs/features/dynamic-viewshed.md) — Track Single 視域扇形 / 掃描線
+- [**軌跡渲染：現況與演進**](docs/features/trajectory-rendering.md) — 管線全貌、7 個月的架構演進、**踩過的坑與被推翻的假設**（改渲染前先看第三節）
 - [Atlas Bloom · Globe](docs/features/atlas-bloom-globe.md) — 機場總覽 Three.js additive bloom 星圖 + custom layer 貼合 Mapbox 球體（可跨專案移植）
 
 YouTube 影片錄製 + 後製流程 → `/video-production` skill（`.claude/skills/video-production/SKILL.md`）。
