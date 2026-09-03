@@ -84,7 +84,9 @@
 
 ---
 
-> ⚠️ **開工前先修掉 S2／world 的視覺噪聲**（否則換 LOD 的驗收沒有鑑別力）。
+> ✅ **已修（2026-09-03，`b32fb6b`）**：`colorForFlight` 改成 `hashFlightId(fr24_id) % colors.length`，三次 reload 顏色逐 id 相同。顏色一次性洗牌（用戶已同意），6× 裁圖確認軌跡位置不變、只有顏色不同。
+>
+> ~~⚠️ **開工前先修掉 S2／world 的視覺噪聲**（否則換 LOD 的驗收沒有鑑別力）。~~
 > 已查明根因（2026-09-02）：`FlightScene.colorForFlight`（`src/three/FlightScene.ts:280-290`）的 theme-cycle 依「首次出現順序」輪派 `colorIndex++`，而 `loadAirportSelectionFlights` 多檔並行、合併順序隨完成順序變 → 同一架飛機兩次拿到不同光軌顏色；切 style 重建 FlightScene 後 `colorIndex` 歸零重派，同理（這也是 Phase 0 查到的「切 style 改變畫面」的一部分）。
 > **範圍只在光軌**：靜態軌跡顏色走高度漸層（`FlightScene.ts:502` 附近），是決定性的；S1 場景光軌只有 ~16 條所以噪聲 0.000%，S2 有 116 條、world 更多。
 > 修法：(a) 合併後依 `(dep_time, fr24_id)` 排序；(b) `colorForFlight` 改成 `index = hash(fr24_id) % theme.trailColors.length`（`perFlightColorMap` override 優先不變，`flightColors`／`colorIndex` 狀態整個刪掉）。**建議 (b)**（兩個非決定性一起消失、錄影可重現），代價是光軌顏色一次性重洗（色盤不變，靜態軌跡不動）→ **需用戶點頭**，做完要重建 S2／world baseline。
@@ -131,7 +133,12 @@
   - ✅ s2 視覺 pctOver8 1.46%，對最密差異區塊 4× 裁圖人工比對：線位置／粗細／亮度一致，差異只在次像素抗鋸齒，正常尺寸不可辨
   - ⏭️ **未做（留給後續）**：視窗內 L0 升級（需空間索引）、tooltip 高度內插、track-single 升 L0、region 級 L1/L2 聚合檔
   - ⏭️ LOD 檔目前只產了 7 座機場 × 2026-02-18；全量產檔（40 秒–2 分鐘、+1.1 GB）與上傳 S3 待用戶拍板
-- [ ] **2-3 部署鏈**：`scripts/pull-from-s3.sh` 與上傳腳本加新層；**上傳 S3 前向用戶確認**；README 覆蓋表若有欄位受影響同步
+- [x] **2-3 部署鏈**（2026-09-03 完成，`3d8f8cd`；用戶已授權上傳）
+  - ✅ 全量產檔：4,738 個日檔全部有 L1/L2，2,303 座機場、9,476 個檔、1,177 MB（L1 818 MB／L2 406 MB）
+  - 🔑 **發現的缺口**：主 manifest 不記錄 LOD 檔，而 `pull-from-s3.sh` 是照 manifest 的 `dailyFiles.path` 解析要拉什麼、pattern 寫死 `\.jsonl` → **上傳了部署端也拉不下來**；若改成盲試 `.l1`/`.l2` 則是 9,476 次 404
+  - ✅ 解法：`split-tracks` 產 `tracks/lod-files.txt`（每行 `相對路徑<TAB>bytes`，刻意用純文字而非 JSON —— 部署端 Alpine 只有 `sh`；147 KB）；新增 `--lod-manifest-only` 可單獨重產清單不重跑 DP
+  - ✅ `pull-from-s3.sh` 新增 `[2b/4]` 段讀清單拉取（含 size 驗證與進度輸出）＋ `--no-lod` 旗標可跳過那 1.2 GB
+  - ✅ `upload-split-to-s3.ts` 把 `lod-files.txt` 與 manifest 一樣「最後發布」
   - 測試：本機用 `pull-from-s3.sh` 的 dry-run 或列表確認路徑正確
 
 ---
