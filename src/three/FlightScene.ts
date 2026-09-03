@@ -36,6 +36,22 @@ function themeToColors(theme: ColorTheme): THREE.Color[] {
 }
 
 /**
+ * 決定性字串雜湊（32-bit，Math.imul 累乘），colorForFlight() 用它把 fr24_id 映到色盤 index。
+ *
+ * 舊法是「首次出現順序」遞增計數器（colorIndex++）：多檔並行載入時完成順序每次不同，
+ * 同一架飛機每次重載拿到不同顏色；切底圖重建 FlightScene 時 colorIndex 也歸零重派，一樣亂跳。
+ * 這裡改成純函式 hash(fr24_id)——同一個 fr24_id 永遠映到同一個 index，
+ * 與載入順序、重建次數、呼叫次數完全無關，只跟 fr24_id 本身與（呼叫端傳入的）色盤大小有關。
+ */
+function hashFlightId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
+  }
+  return h;
+}
+
+/**
  * 靜態軌跡地理分桶：每桶一個 LineSegments（本體＋glow 併單 pass，見 T0-1 frag shader），
  * 供 globe 模式下「桶整個在地平線背面」時整批 mesh.visible=false 剔除。
  */
@@ -111,9 +127,10 @@ export class FlightScene {
   };
   private globeInvMatrix = new THREE.Matrix4();
   private mercatorCache = new Map<string, FlightPathCache>();
-  private colorIndex = 0;
-  /** fr24_id → 已指派的 theme-cycle 顏色（slot 逐出後重進場仍保持同色） */
-  private flightColors = new Map<string, THREE.Color>();
+  /** updateTrailCapacity() 用來偵測「flights 這個 reference 是否真的變了」（避免每幀重掃） */
+  private lastCapacityFlights: Flight[] | null = null;
+  /** 上次 updateTrailCapacity() 掃描線算出的尖峰同時在空中數（未加 headroom）；驗收/除錯用 */
+  private lastTrailPeak = 0;
   // 暫停快進偵測：時間/集合/樣式 epoch 都沒變 → 跳過光軌重寫（只推進光球動畫）
   private lastTrailTime = NaN;
   private lastActiveSig = "__init__";
@@ -264,9 +281,8 @@ export class FlightScene {
   }
 
   private applyColors() {
-    // 顏色 cycle 重置 + epoch 推進 → 下一次 update()（同幀 render 前）以新配色重寫全部光軌
-    this.flightColors.clear();
-    this.colorIndex = 0;
+    // epoch 推進 → 下一次 update()（同幀 render 前）以新配色重寫全部光軌
+    // （colorForFlight 已改成 hash(fr24_id) 決定性映射，不再需要清空 per-flight 顏色快取/計數器）
     this.trailEpoch++;
     this.batchedTrails?.setBlending(this.blending);
 
@@ -277,17 +293,21 @@ export class FlightScene {
     this.forceRebuildStatic();
   }
 
-  /** 光軌顏色：perFlightColorMap 覆寫優先，否則 theme-cycle（同舊 createTrailEntry 邏輯） */
+  /**
+   * 光軌顏色：perFlightColorMap 覆寫優先，否則 hash(fr24_id) 決定性映到色盤（見 hashFlightId）。
+   * 色盤長度依主題/色盤設定變動，故用當下 this.colors.length 取模，不快取 index。
+   */
   private colorForFlight(flightId: string): THREE.Color {
     const override = this.perFlightColorMap?.get(flightId);
     if (override) return override;
-    let c = this.flightColors.get(flightId);
-    if (!c) {
-      c = this.colors[this.colorIndex % this.colors.length]!;
-      this.colorIndex++;
-      this.flightColors.set(flightId, c);
-    }
-    return c;
+    const colors = this.colors;
+    const idx = (hashFlightId(flightId) >>> 0) % colors.length;
+    return colors[idx]!;
+  }
+
+  /** 驗收/除錯用：查詢某 fr24_id 目前會拿到的光軌顏色（hex）。colorForFlight 決定性，重複呼叫結果應完全相同。 */
+  getFlightColorHex(flightId: string): string {
+    return `#${this.colorForFlight(flightId).getHexString()}`;
   }
 
   /**
@@ -302,11 +322,79 @@ export class FlightScene {
   }
 
   /**
+   * 光軌 slot 容量：掃描線算出這批航班「同時在空中的峰值」，動態配置 BatchedTrails 的
+   * GPU buffer（取代原本寫死 6000 slot）。獨立於下面的靜態軌跡渲染管線（2D 模式會提早
+   * return，但動畫光軌容量與渲染模式無關，故在 updateStaticTrails 最前面、mode 判斷之前呼叫）。
+   *
+   * dep_time/arr_time 為 0（缺值）時 fallback 用 path 頭尾時間戳（TrackPath.t()）。
+   * 只在 flights 這個 array reference 真的變了（換機場/region/日期）才重新掃描。
+   */
+  private updateTrailCapacity(flights: Flight[]) {
+    const n = flights.length;
+    if (n === 0) {
+      this.lastTrailPeak = 0;
+      return;
+    }
+
+    const starts = new Float64Array(n);
+    const ends = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const f = flights[i]!;
+      let dep = f.dep_time;
+      let arr = f.arr_time;
+      if (!dep || !arr) {
+        const len = f.path.length;
+        if (len > 0) {
+          if (!dep) dep = f.path.t(0);
+          if (!arr) arr = f.path.t(len - 1);
+        }
+      }
+      starts[i] = dep;
+      ends[i] = arr >= dep ? arr : dep; // 防禦壞資料（arr < dep）：退化成瞬時區間，不影響峰值方向
+    }
+    // TypedArray.sort() 預設數值遞增（非字典序），不用比較器
+    starts.sort();
+    ends.sort();
+
+    // 掃描線（meeting-rooms 變體）：不需要 start/end 逐一配對，
+    // 只要兩條各自排序的時間軸交錯掃過即可算出最大同時重疊數。
+    let peak = 0, cur = 0, si = 0, ei = 0;
+    while (si < n) {
+      if (starts[si]! <= ends[ei]!) {
+        cur++;
+        si++;
+        if (cur > peak) peak = cur;
+      } else {
+        cur--;
+        ei++;
+      }
+    }
+    this.lastTrailPeak = peak;
+    this.batchedTrails?.ensureCapacity(peak);
+  }
+
+  /** 驗收/除錯用：目前光軌容量狀態（peak 為 updateTrailCapacity 算出的原始峰值，不含 5% headroom） */
+  getTrailCapacityInfo(): { peak: number; capacity: number; bufferBytes: number; evictions: number } | null {
+    if (!this.batchedTrails) return null;
+    return {
+      peak: this.lastTrailPeak,
+      capacity: this.batchedTrails.getCapacity(),
+      bufferBytes: this.batchedTrails.getBufferBytes(),
+      evictions: this.batchedTrails.getEvictionCount(),
+    };
+  }
+
+  /**
    * 更新靜態軌跡 mesh
    * 漸進式建構：每幀處理一批頂點，產生逐步展開的動畫效果。
    * 幾何體用全量航班建構（按地理分桶），可見度用 per-vertex alpha 增量控制。
    */
   updateStaticTrails(flights: Flight[], mode: RenderMode = "3d") {
+    if (flights !== this.lastCapacityFlights) {
+      this.lastCapacityFlights = flights;
+      this.updateTrailCapacity(flights);
+    }
+
     if (mode === "2d") {
       this.removeStaticMeshes();
       this.lastStaticKey = "";
@@ -971,8 +1059,8 @@ export class FlightScene {
       this.batchedTrails = null;
     }
     this.mercatorCache.clear();
-    this.colorIndex = 0;
-    this.flightColors.clear();
+    this.lastCapacityFlights = null;
+    this.lastTrailPeak = 0;
     this.lastOrbEntries = [];
     this.lastTrailTime = NaN;
     this.lastActiveSig = "__init__";
