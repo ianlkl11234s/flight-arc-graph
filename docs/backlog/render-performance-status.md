@@ -139,6 +139,11 @@
   - ✅ 解法：`split-tracks` 產 `tracks/lod-files.txt`（每行 `相對路徑<TAB>bytes`，刻意用純文字而非 JSON —— 部署端 Alpine 只有 `sh`；147 KB）；新增 `--lod-manifest-only` 可單獨重產清單不重跑 DP
   - ✅ `pull-from-s3.sh` 新增 `[2b/4]` 段讀清單拉取（含 size 驗證與進度輸出）＋ `--no-lod` 旗標可跳過那 1.2 GB
   - ✅ `upload-split-to-s3.ts` 把 `lod-files.txt` 與 manifest 一樣「最後發布」
+  - ✅ **S3 上傳完成（2026-09-03）**：9,476 / 9,476 個 LOD 檔全部上傳，共約 1.2 GB。中途因背景任務清理與一次 DNS ENOTFOUND 斷過兩次，靠 `upload-state.json` 的增量機制續傳完成。抽查 `lod-files.txt`、RCTP L1/L2、RJTT L1、manifest 皆 HTTP 206 可讀，`lod-files.txt` 內容正確
+  - ⏭️ **尚未上線**：S3 有資料了，但線上跑的仍是舊版前端（本分支未 push／未 merge）。完整上線順序：
+    1. `npm run typecheck` → push → 開 PR → merge（**待用戶決定**）
+    2. Zeabur 自動 build
+    3. Zeabur 終端機跑 `sh /app/scripts/pull-from-s3.sh`（會多拉約 1.2 GB 的 L1/L2；不想要可用 `--no-lod` 跳過，但那樣就拿不到 Phase 2 的效能收益）
   - 測試：本機用 `pull-from-s3.sh` 的 dry-run 或列表確認路徑正確
 
 ---
