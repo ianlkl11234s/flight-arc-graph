@@ -13,7 +13,7 @@ import {
   getRegionDates,
   getRegionFullDates,
 } from "../data/flightLoader";
-import type { AirportManifestEntry } from "../data/flightLoader";
+import type { AirportManifestEntry, LodLevel } from "../data/flightLoader";
 
 interface UseFlightDataReturn {
   allFlights: Flight[];
@@ -39,6 +39,8 @@ export function useFlightData(
   rangeDays?: number,
   airportSelection?: string[] | null,
   selectedDates?: readonly string[],
+  /** Phase 2-2：依 zoom band 決定的 LOD 層；只影響 airport scope／airport set 的 per-airport shard，region scope 不受影響。未提供 = "l0"。 */
+  lod?: LodLevel,
 ): UseFlightDataReturn {
   const [trackFlights, setTrackFlights] = useState<Flight[]>([]);
   const [airspaceFlights, setAirspaceFlights] = useState<Flight[] | null>(null);
@@ -53,6 +55,10 @@ export function useFlightData(
 
   const loadIdRef = useRef(0);
   const manifestRef = useRef<{ airports: Record<string, AirportManifestEntry> } | null>(null);
+  // Phase 2-2：identity 不含 lod——同一份「機場/日期選擇」下換 zoom band 只是背景升
+  // /降解析度，不該清空目前畫面（見下方主 effect）。
+  const lastLoadIdentityRef = useRef<string | null>(null);
+  const currentLod: LodLevel = lod ?? "l0";
 
   const requestedDates = useMemo(() => {
     if (selectedDates && selectedDates.length > 0) {
@@ -96,9 +102,18 @@ export function useFlightData(
     const loadId = ++loadIdRef.current;
     const controller = new AbortController();
 
-    setLoading(true);
-    setLoadingProgress({ loaded: 0, label: "Loading..." });
-    setTrackFlights([]);
+    // Phase 2-2：identity 不含 lod。同一份 identity 下只是換 LOD 層（zoom band 跨界）——
+    // 背景載入新解析度，載完才整批換上；不先清空／不切 loading 徽章，避免換層閃爍與
+    // 誤觸發「loading→false 自動播放」副作用（見 App.tsx 的 autoplay effect）。
+    const identity = JSON.stringify([dataSource, scope, region, airportSelection, selectedAirport, requestedDates]);
+    const isLodOnlyChange = lastLoadIdentityRef.current === identity;
+    lastLoadIdentityRef.current = identity;
+
+    if (!isLodOnlyChange) {
+      setLoading(true);
+      setLoadingProgress({ loaded: 0, label: "Loading..." });
+      setTrackFlights([]);
+    }
 
     // 從 manifest 取得預期總數
     const manifest = manifestRef.current;
@@ -133,6 +148,7 @@ export function useFlightData(
 
     const onProgress = (total: number) => {
       if (loadIdRef.current !== loadId) return;
+      if (isLodOnlyChange) return; // 背景換層不驅動 loading 徽章
       const now = Date.now();
       if (now - lastProgressUpdate > 300) {
         lastProgressUpdate = now;
@@ -141,57 +157,46 @@ export function useFlightData(
       }
     };
 
+    // 載入完成／失敗一律解除 loading（即使是 lod-only 背景載入也要清掉，避免卡在
+    // true——只有「起點」的 setLoading(true)／清空畫面才依 isLodOnlyChange 略過）。
+    const finishLoad = (flights: Flight[]) => {
+      if (loadIdRef.current !== loadId) return;
+      setTrackFlights(flights);
+      setLoadingProgress(null);
+      setLoading(false);
+    };
+    const failLoad = (error: unknown) => {
+      if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
+      if (loadIdRef.current !== loadId) return;
+      // lod-only 的背景升級失敗時保留目前畫面，不清空已顯示的資料。
+      if (!isLodOnlyChange) setTrackFlights([]);
+      setLoadingProgress(null);
+      setLoading(false);
+    };
+
     if (airportSelection !== null && airportSelection !== undefined) {
       loadAirportSelectionFlights(
         airportSelection,
         onProgress,
-        { dates: requestedDates, signal: controller.signal },
-      ).then((flights) => {
-        if (loadIdRef.current !== loadId) return;
-        setTrackFlights(flights);
-        setLoadingProgress(null);
-        setLoading(false);
-      }).catch((error: unknown) => {
-        if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
-        if (loadIdRef.current !== loadId) return;
-        setTrackFlights([]);
-        setLoadingProgress(null);
-        setLoading(false);
-      });
+        { dates: requestedDates, signal: controller.signal, lod: currentLod },
+      ).then(finishLoad).catch(failLoad);
     } else if (scope === "airport") {
-      loadAirportFlights(selectedAirport, onProgress, { dates: requestedDates, signal: controller.signal }).then((flights) => {
-        if (loadIdRef.current !== loadId) return;
-        setTrackFlights(flights);
-        setLoadingProgress(null);
-        setLoading(false);
-      }).catch((error: unknown) => {
-        if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
-        if (loadIdRef.current !== loadId) return;
-        setTrackFlights([]);
-        setLoadingProgress(null);
-        setLoading(false);
-      });
+      loadAirportFlights(
+        selectedAirport,
+        onProgress,
+        { dates: requestedDates, signal: controller.signal, lod: currentLod },
+      ).then(finishLoad).catch(failLoad);
     } else {
+      // region scope：一律讀 regions/*.jsonl，lod 不適用（維持現況）。
       loadRegionFullFlights(
         region,
         onProgress,
         { dates: requestedDates, signal: controller.signal },
-      ).then((flights) => {
-        if (loadIdRef.current !== loadId) return;
-        setTrackFlights(flights);
-        setLoadingProgress(null);
-        setLoading(false);
-      }).catch((error: unknown) => {
-        if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
-        if (loadIdRef.current !== loadId) return;
-        setTrackFlights([]);
-        setLoadingProgress(null);
-        setLoading(false);
-      });
+      ).then(finishLoad).catch(failLoad);
     }
 
     return () => controller.abort();
-  }, [dataSource, scope, region, selectedAirport, airportSelection, requestedDates]);
+  }, [dataSource, scope, region, selectedAirport, airportSelection, requestedDates, currentLod]);
 
   // 載入 airspace：依 selectedDate + rangeDays 按天載入
   useEffect(() => {

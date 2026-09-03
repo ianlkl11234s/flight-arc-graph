@@ -173,6 +173,12 @@ async function main() {
     resolve(tracksDir, "manifest.json"),
     `${S3_PREFIX}/tracks/manifest.json`,
   );
+  // lod-files.txt 是 pull-from-s3.sh 用來知道有哪些 L1/L2 可拉的清單
+  // （主 manifest 不記錄 LOD）。與 manifest 同樣最後發布。
+  const lodListPath = resolve(tracksDir, "lod-files.txt");
+  if (existsSync(lodListPath)) {
+    await uploadAlways(lodListPath, `${S3_PREFIX}/tracks/lod-files.txt`);
+  }
 
   // 4. airspace — 日檔先上傳，manifest 同樣最後發布
   if (existsSync(resolve(airspaceDir, "manifest.json"))) {

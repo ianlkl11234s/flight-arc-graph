@@ -6,6 +6,7 @@ import { FlightScene } from "../three/FlightScene";
 import { mercatorToGlobe, type GlobeResolved } from "../three/shaders/globeProject";
 import { setAltExaggeration, getAltExaggeration, setAltOffset, getAltOffset } from "../utils/coordinates";
 import { FlightTimeIndex } from "../utils/flightIndex";
+import { attachRepaintScheduler, notifyActivity, requestDecorativeRepaint } from "./repaintScheduler";
 
 /** ±12h 時間窗口（秒） */
 const VISIBILITY_WINDOW_SEC = 12 * 3600;
@@ -25,6 +26,22 @@ function screenDistPx(m: number[], a: GlobeResolved, b: GlobeResolved, w: number
   const xb = (m[0]! * b.x + m[4]! * b.y + m[8]! * b.z + m[12]!) / wb;
   const yb = (m[1]! * b.x + m[5]! * b.y + m[9]! * b.z + m[13]!) / wb;
   return Math.hypot((xb - xa) * w * 0.5, (yb - ya) * h * 0.5);
+}
+
+// DEV-only GL 上傳計數器（T1-1 驗收用）：monkeypatch onAdd 拿到的 gl context 的
+// bufferData/bufferSubData，累加呼叫次數。production 完全不執行（tree-shake 掉整段）。
+let glBufferDataCalls = 0;
+let glBufferSubDataCalls = 0;
+
+/** 目前累積的 GL buffer 上傳次數（DEV-only；production 恆回傳 0） */
+export function getGlStats(): { bufferData: number; bufferSubData: number } {
+  return { bufferData: glBufferDataCalls, bufferSubData: glBufferSubDataCalls };
+}
+
+/** 歸零計數器，通常在暫停/相機靜止測試前呼叫 */
+export function resetGlStats(): void {
+  glBufferDataCalls = 0;
+  glBufferSubDataCalls = 0;
 }
 
 export interface FlightLayerOptions {
@@ -65,9 +82,20 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   let lastRepaintTime = NaN;
   let lastControlSig = "";
   let keepAliveFrames = 0;
-  const KEEP_ALIVE_FRAMES = 12; // 動作停止後的續繪窗，橋接 timeRef 落後一幀避免播放 stall
+  // 動作停止後的續繪窗。原本 12 是為了橋接「timeRef 落後一幀」：Phase 1-3 前
+  // getCurrentTime() 讀的是 App 每次 render 才從 currentTime state 複製出來的 ref，
+  // 而 state 是每個 rAF tick 才 setState，Mapbox 的 render() 常常搶先跑到、讀到上一幀
+  // 沒變的舊值，靠這個窗撐過那個空隙避免播放 stall。Phase 1-3 之後 getCurrentTime()
+  // 直接讀 useTimeline 內部每幀同步寫入的 timeRef（不經 React state），且播放時
+  // useTimeline 的 rAF 迴圈本身每幀都呼叫 onTick → notifyActivity 觸發下一幀，
+  // 這個橋接空隙已經不存在。保留一個小窗只為了另外兩個用途：controlsChanged（單一
+  // 控制項變更那一幀）與 isStaticBuilding() 收尾時，讓下游（Three.js buffer 更新／
+  // GPU pipeline）多撐幾幀再回落到 Phase 1-2 的 20fps 裝飾節流，不必是 12 那麼大。
+  const KEEP_ALIVE_FRAMES = 3;
   // setGlobe 的 cam scratch，每幀重用避免物件字面量 alloc
   const camScratch = { x: 0, y: 0, z: 0 };
+  // repaint 節流器的 detach handle（style 切換會整批 remove+re-add 這個 layer）
+  let detachScheduler: (() => void) | null = null;
 
   return {
     id: "flight-3d",
@@ -76,8 +104,27 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
 
     onAdd(mapInstance: MapboxMap, gl: WebGLRenderingContext) {
       map = mapInstance;
+      // DEV-only：THREE 的 WebGLRenderer 用同一個 gl context（見 flightScene.init 下方），
+      // 在建立 renderer 前先掛上計數器，才不會漏算它初始化時發出的呼叫。
+      if (import.meta.env.DEV) {
+        const g = gl as unknown as Record<string, (...args: unknown[]) => unknown>;
+        const origBufferData = g["bufferData"]!.bind(gl);
+        g["bufferData"] = (...args: unknown[]) => {
+          glBufferDataCalls++;
+          return origBufferData(...args);
+        };
+        const origBufferSubData = g["bufferSubData"]!.bind(gl);
+        g["bufferSubData"] = (...args: unknown[]) => {
+          glBufferSubDataCalls++;
+          return origBufferSubData(...args);
+        };
+      }
       flightScene.init(gl);
       opts.onSceneReady?.(flightScene);
+      // 三個 custom layer（flight-3d / atlas-glow-3d / airspace-aurora）一定同時
+      // 存在，repaint 節流器的地圖互動監聽只在這裡掛一次即可，其他 layer 直接呼叫
+      // notifyActivity / requestDecorativeRepaint。
+      detachScheduler = attachRepaintScheduler(mapInstance);
     },
 
     render(_gl, matrix, projection, projectionToMercatorMatrix, projectionToMercatorTransition) {
@@ -132,8 +179,8 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
           const visibleIds = new Set<string>();
           for (const f of flights) {
             if (f.path.length === 0) continue;
-            const pathStart = f.path[0]![3];
-            const pathEnd = f.path[f.path.length - 1]![3];
+            const pathStart = f.path.t(0);
+            const pathEnd = f.path.t(f.path.length - 1);
             if (pathEnd >= tMin && pathStart <= tMax) {
               visibleIds.add(f.fr24_id);
             }
@@ -236,22 +283,29 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       const controlsChanged = controlSig !== lastControlSig;
       lastControlSig = controlSig;
 
-      if (
+      // Phase 1-2：hasActiveOrbs()（光球呼吸/閃爍）單獨拆出來，不再算進「滿幀」條件——
+      // 暫停且相機靜止時，唯一還在動的只有 wall-clock 光球動畫，交給節流器降頻到
+      // 20fps／閒置 30 秒後完全停止；其餘條件（時間推進/globe 過渡/靜態建構/控制項
+      // 變更）維持原本 KEEP_ALIVE 續繪窗語意，避免播放因 timeRef 落後一幀而 stall。
+      const needsFullFrame =
         timeChanged ||                    // 播放中（動畫時鐘前進）
         transitioning ||                  // globe↔mercator 過渡中
         flightScene.isStaticBuilding() || // 靜態軌跡漸進建構中（buffer 待更新）
-        flightScene.hasActiveOrbs() ||    // 有光球呼吸/閃爍動畫
-        controlsChanged                   // 控制項剛變更
-      ) {
+        controlsChanged;                  // 控制項剛變更
+      if (needsFullFrame) {
         keepAliveFrames = KEEP_ALIVE_FRAMES;
       }
       if (keepAliveFrames > 0) {
         keepAliveFrames--;
-        map?.triggerRepaint();
+        notifyActivity(map);
+      } else if (flightScene.hasActiveOrbs() && map) {
+        requestDecorativeRepaint(map);
       }
     },
 
     onRemove() {
+      detachScheduler?.();
+      detachScheduler = null;
       flightScene.dispose();
     },
   };

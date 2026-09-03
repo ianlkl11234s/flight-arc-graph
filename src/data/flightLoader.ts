@@ -1,5 +1,19 @@
 import type { Flight, TrailPoint } from "../types";
+import { TrackPath } from "../types/trackPath";
 import { AIRPORT_INFO } from "../map/cameraPresets";
+
+/**
+ * Flight 的原始 JSON／wire 格式：path 仍是磁碟上的 TrailPoint tuple 陣列，
+ * 尚未經 TrackPath.fromArray 轉換。JSON.parse 出來的資料在轉成 Flight（TrackPath）
+ * 之前都長這樣——所有解析入口（streamLoadJsonl／tryLoadLocal／loadFromS3）都回傳這個型別。
+ */
+export type RawFlight = Omit<Flight, "path"> & { path: TrailPoint[] };
+
+/**
+ * Phase 2-2 LOD 層級：l0 = 全解析度（現況），l1 = eps 50 m，l2 = eps 250 m。
+ * 只影響 per-airport daily shard 的 path 解析度；航班集合、起訖點與其餘欄位在三層之間完全一致。
+ */
+export type LodLevel = "l0" | "l1" | "l2";
 
 /** ICAO → IATA 對照表：台灣機場 + 常見國際航點 */
 export const ICAO_TO_IATA: Record<string, string> = {
@@ -84,19 +98,20 @@ function unwrapPathLongitudes(path: TrailPoint[]): TrailPoint[] {
  * （fetch-tracks / retry-failed-tracks 落地即轉換；存量資料已由
  * scripts/oneoff/migrate-alt-units.ts 一次性反解）。
  */
-export function preprocessFlight(f: Flight): Flight {
+export function preprocessFlight(f: RawFlight): Flight {
+  const path = unwrapPathLongitudes(f.path);
   return {
     ...f,
-    path: unwrapPathLongitudes(f.path),
+    path: TrackPath.fromArray(path),
     origin_iata: resolveIata(f.origin_icao, f.origin_iata),
     dest_iata: resolveIata(f.dest_icao, f.dest_iata),
-    dep_time: f.dep_time > 0 ? f.dep_time : (f.path[0]?.[3] ?? 0),
-    arr_time: f.arr_time > 0 ? f.arr_time : (f.path[f.path.length - 1]?.[3] ?? 0),
+    dep_time: f.dep_time > 0 ? f.dep_time : (path[0]?.[3] ?? 0),
+    arr_time: f.arr_time > 0 ? f.arr_time : (path[path.length - 1]?.[3] ?? 0),
   };
 }
 
 /** 前處理航班陣列 */
-export function preprocessFlights(flights: Flight[]): Flight[] {
+export function preprocessFlights(flights: RawFlight[]): Flight[] {
   return flights.filter((f) => f.path.length > 0).map(preprocessFlight);
 }
 
@@ -109,6 +124,12 @@ export interface FlightLoadOptions {
   /** 只載入這些台灣日期；未提供時維持完整檔案行為。 */
   dates?: readonly string[];
   signal?: AbortSignal;
+  /**
+   * LOD 層級（Phase 2-2）：只影響 loadAirportFlights／loadAirportSelectionFlights 讀的
+   * per-airport daily shard 副檔名；未提供 = "l0"。loadRegionFullFlights 不吃這個欄位，
+   * region scope 一律維持讀 regions/*.jsonl。
+   */
+  lod?: LodLevel;
 }
 
 /** 按機場／日期快取的軌跡（全解析度，LRU + path 點數上限） */
@@ -192,7 +213,7 @@ function datesKey(dates?: readonly string[]): string {
 }
 
 function flightDateTW(flight: Flight): string | null {
-  const timestamp = flight.dep_time || flight.path[0]?.[3];
+  const timestamp = flight.dep_time || (flight.path.length > 0 ? flight.path.t(0) : undefined);
   if (!timestamp || timestamp <= 1e9) return null;
   return new Date(timestamp * 1000 + 8 * 3600_000).toISOString().slice(0, 10);
 }
@@ -201,7 +222,7 @@ const S3_BASE =
   "https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc";
 
 /** 嘗試載入 JSON 檔案（支援多路徑 fallback） */
-async function tryLoadLocal(...paths: string[]): Promise<Flight[] | null> {
+async function tryLoadLocal(...paths: string[]): Promise<RawFlight[] | null> {
   for (const path of paths) {
     try {
       const res = await fetch(`/${path}`);
@@ -217,7 +238,7 @@ async function tryLoadLocal(...paths: string[]): Promise<Flight[] | null> {
 }
 
 /** 從 S3 manifest 載入指定來源的航班 */
-async function loadFromS3(source: "tracks" | "airspace"): Promise<Flight[]> {
+async function loadFromS3(source: "tracks" | "airspace"): Promise<RawFlight[]> {
   const manifestRes = await fetch(`${S3_BASE}/${source}/manifest.json`);
   if (!manifestRes.ok) throw new Error(`S3 ${source} manifest not available`);
   const manifest: { dates: { date: string }[] } = await manifestRes.json();
@@ -226,7 +247,7 @@ async function loadFromS3(source: "tracks" | "airspace"): Promise<Flight[]> {
     const [y, m, dd] = d.date.split("-");
     const res = await fetch(`${S3_BASE}/${source}/${y}/${m}/${dd}/data.json`);
     if (!res.ok) return [];
-    return (await res.json()) as Flight[];
+    return (await res.json()) as RawFlight[];
   });
 
   const results = await Promise.all(fetches);
@@ -382,7 +403,7 @@ async function streamLoadJsonl(
       const trimmed = line.trim();
       if (!trimmed) continue;
       try {
-        const f = preprocessFlight(JSON.parse(trimmed) as Flight);
+        const f = preprocessFlight(JSON.parse(trimmed) as RawFlight);
         if (f.path.length > 0 && (requestedDates.size === 0 || requestedDates.has(flightDateTW(f) ?? ""))) {
           flights.push(f);
           sinceProgress++;
@@ -401,7 +422,7 @@ async function streamLoadJsonl(
   // 處理剩餘 buffer
   if (buffer.trim()) {
     try {
-      const f = preprocessFlight(JSON.parse(buffer) as Flight);
+      const f = preprocessFlight(JSON.parse(buffer) as RawFlight);
       if (f.path.length > 0 && (requestedDates.size === 0 || requestedDates.has(flightDateTW(f) ?? ""))) flights.push(f);
     } catch {
       // ignore
@@ -430,6 +451,12 @@ function assetCandidates(path: string, source: "tracks" | "airspace"): string[] 
   ])];
 }
 
+/** 把 per-airport daily shard 路徑換成對應 LOD 層的檔名（.l1.jsonl／.l2.jsonl）；"l0" 原樣返回。 */
+function lodShardPath(path: string, lod: LodLevel): string {
+  if (lod === "l0") return path;
+  return path.replace(/\.jsonl$/, `.${lod}.jsonl`);
+}
+
 async function streamFirstAvailable(
   urls: readonly string[],
   onProgress?: (total: number) => void,
@@ -456,7 +483,8 @@ export async function loadAirportFlights(
   options?: FlightLoadOptions,
 ): Promise<Flight[]> {
   const dates = normalizeDates(options?.dates);
-  const cacheKey = `${icao}|${datesKey(dates)}`;
+  const lod: LodLevel = options?.lod ?? "l0";
+  const cacheKey = `${icao}|${datesKey(dates)}|${lod}`;
   const hit = lruTouch(airportCache, cacheKey);
   if (hit) {
     onProgress?.(hit.length);
@@ -464,7 +492,7 @@ export async function loadAirportFlights(
   }
 
   throwIfAborted(options?.signal);
-  console.log(`[Loader] Airport ${icao}: streaming...`);
+  console.log(`[Loader] Airport ${icao}: streaming... (lod=${lod})`);
 
   let flights: Flight[] = [];
   if (dates.length > 0) {
@@ -476,12 +504,20 @@ export async function loadAirportFlights(
     );
     // 只有完整涵蓋 requested dates 才採用 shard；缺任何一天就回 flat，避免靜默漏資料。
     if (shardEntries.length === dates.length) {
-      console.log(`[Loader] Airport ${icao}: ${dates.length} daily shard${dates.length === 1 ? "" : "s"}`);
+      console.log(`[Loader] Airport ${icao}: ${dates.length} daily shard${dates.length === 1 ? "" : "s"} (lod=${lod})`);
       const shardResults: Flight[] = [];
       let completedFlights = 0;
       for (const entry of shardEntries) {
+        // LOD 候選排前面、L0 全解析度殿後：Phase 2-1 只產出 7 座機場的 L1/L2，
+        // 其餘機場或缺檔日期會 404 → streamFirstAvailable 自動落到 L0，航班數不受影響。
+        const candidates = lod === "l0"
+          ? assetCandidates(entry.path, "tracks")
+          : [
+              ...assetCandidates(lodShardPath(entry.path, lod), "tracks"),
+              ...assetCandidates(entry.path, "tracks"),
+            ];
         const shard = await streamFirstAvailable(
-          assetCandidates(entry.path, "tracks"),
+          candidates,
           (total) => onProgress?.(completedFlights + total),
           options,
         );
@@ -850,8 +886,8 @@ export function getTimeRange(flights: Flight[]): {
   let start = Infinity;
   let end = -Infinity;
   for (const f of flights) {
-    for (const pt of f.path) {
-      const t = pt[3];
+    for (let i = 0; i < f.path.length; i++) {
+      const t = f.path.t(i);
       if (t < start) start = t;
       if (t > end) end = t;
     }

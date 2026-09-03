@@ -36,12 +36,27 @@ function themeToColors(theme: ColorTheme): THREE.Color[] {
 }
 
 /**
- * 靜態軌跡地理分桶：每桶一對 LineSegments（本體 + glow 共用 geometry / attributes），
+ * 決定性字串雜湊（32-bit，Math.imul 累乘），colorForFlight() 用它把 fr24_id 映到色盤 index。
+ *
+ * 舊法是「首次出現順序」遞增計數器（colorIndex++）：多檔並行載入時完成順序每次不同，
+ * 同一架飛機每次重載拿到不同顏色；切底圖重建 FlightScene 時 colorIndex 也歸零重派，一樣亂跳。
+ * 這裡改成純函式 hash(fr24_id)——同一個 fr24_id 永遠映到同一個 index，
+ * 與載入順序、重建次數、呼叫次數完全無關，只跟 fr24_id 本身與（呼叫端傳入的）色盤大小有關。
+ */
+function hashFlightId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
+  }
+  return h;
+}
+
+/**
+ * 靜態軌跡地理分桶：每桶一個 LineSegments（本體＋glow 併單 pass，見 T0-1 frag shader），
  * 供 globe 模式下「桶整個在地平線背面」時整批 mesh.visible=false 剔除。
  */
 interface StaticBucket {
   mesh: THREE.LineSegments;
-  glowMesh: THREE.LineSegments;
   geometry: THREE.BufferGeometry;
   positions: Float32Array;
   colors: Float32Array;
@@ -52,6 +67,8 @@ interface StaticBucket {
   colAttr: THREE.BufferAttribute;
   alphaAttr: THREE.BufferAttribute;
   ecefAttr: THREE.BufferAttribute;
+  /** T2-1：timestamps 的 GPU 鏡射（aTRel），progressive 顯示判斷搬進 vertex shader 用 */
+  trelAttr: THREE.BufferAttribute;
   /** 已寫入頂點數（桶內 offset，同 drawRange 上限） */
   writeVerts: number;
   totalVerts: number;
@@ -110,9 +127,10 @@ export class FlightScene {
   };
   private globeInvMatrix = new THREE.Matrix4();
   private mercatorCache = new Map<string, FlightPathCache>();
-  private colorIndex = 0;
-  /** fr24_id → 已指派的 theme-cycle 顏色（slot 逐出後重進場仍保持同色） */
-  private flightColors = new Map<string, THREE.Color>();
+  /** updateTrailCapacity() 用來偵測「flights 這個 reference 是否真的變了」（避免每幀重掃） */
+  private lastCapacityFlights: Flight[] | null = null;
+  /** 上次 updateTrailCapacity() 掃描線算出的尖峰同時在空中數（未加 headroom）；驗收/除錯用 */
+  private lastTrailPeak = 0;
   // 暫停快進偵測：時間/集合/樣式 epoch 都沒變 → 跳過光軌重寫（只推進光球動畫）
   private lastTrailTime = NaN;
   private lastActiveSig = "__init__";
@@ -149,11 +167,10 @@ export class FlightScene {
   private lastVsIsSatellite: boolean | null = null;
   private lastVsOpacity = -1;
 
-  // 靜態軌跡（地理分桶，見 StaticBucket；材質全桶共用兩支）
+  // 靜態軌跡（地理分桶，見 StaticBucket；材質全桶共用一支，T0-1 併 glow 單 pass）
   private staticBuckets: StaticBucket[] = [];
   private staticBucketByKey = new Map<number, StaticBucket>();
   private staticMat: THREE.ShaderMaterial | null = null;
-  private staticGlowMat: THREE.ShaderMaterial | null = null;
   private lastStaticKey = "";
   /** 連續調整高度/顏色時，合併 static geometry rebuild，避免每個 pointer event 都重配大 buffer。 */
   private staticRebuildPending = false;
@@ -167,10 +184,12 @@ export class FlightScene {
   // Per-vertex alpha 可見度控制（±12h）；start 為桶內 offset
   private staticFlightRanges = new Map<string, { bucket: StaticBucket; start: number; count: number }>();
   private lastVisibleIds = new Set<string>();
+  // T0-5：timestamps 存相對秒數的基準（flights 中最小 path[0][3]），避免 float32
+  // 存絕對 unix 秒（1.77e9）時 ulp=128s 造成 progressive 模式跳格
+  private staticTimeBase = 0;
 
   // Progressive 軌跡模式
   private progressiveMode = false;
-  private lastProgressiveTime = 0;
 
   // 漸進式靜態軌跡建構（頂點 buffer 在各桶內，寫入位置由 bucket.writeVerts 追蹤）
   private staticBuildState: {
@@ -262,9 +281,8 @@ export class FlightScene {
   }
 
   private applyColors() {
-    // 顏色 cycle 重置 + epoch 推進 → 下一次 update()（同幀 render 前）以新配色重寫全部光軌
-    this.flightColors.clear();
-    this.colorIndex = 0;
+    // epoch 推進 → 下一次 update()（同幀 render 前）以新配色重寫全部光軌
+    // （colorForFlight 已改成 hash(fr24_id) 決定性映射，不再需要清空 per-flight 顏色快取/計數器）
     this.trailEpoch++;
     this.batchedTrails?.setBlending(this.blending);
 
@@ -275,17 +293,21 @@ export class FlightScene {
     this.forceRebuildStatic();
   }
 
-  /** 光軌顏色：perFlightColorMap 覆寫優先，否則 theme-cycle（同舊 createTrailEntry 邏輯） */
+  /**
+   * 光軌顏色：perFlightColorMap 覆寫優先，否則 hash(fr24_id) 決定性映到色盤（見 hashFlightId）。
+   * 色盤長度依主題/色盤設定變動，故用當下 this.colors.length 取模，不快取 index。
+   */
   private colorForFlight(flightId: string): THREE.Color {
     const override = this.perFlightColorMap?.get(flightId);
     if (override) return override;
-    let c = this.flightColors.get(flightId);
-    if (!c) {
-      c = this.colors[this.colorIndex % this.colors.length]!;
-      this.colorIndex++;
-      this.flightColors.set(flightId, c);
-    }
-    return c;
+    const colors = this.colors;
+    const idx = (hashFlightId(flightId) >>> 0) % colors.length;
+    return colors[idx]!;
+  }
+
+  /** 驗收/除錯用：查詢某 fr24_id 目前會拿到的光軌顏色（hex）。colorForFlight 決定性，重複呼叫結果應完全相同。 */
+  getFlightColorHex(flightId: string): string {
+    return `#${this.colorForFlight(flightId).getHexString()}`;
   }
 
   /**
@@ -295,8 +317,71 @@ export class FlightScene {
    */
   private bucketKeyForFlight(f: Flight): number {
     if (!this.isDarkTheme) return 0;
-    const mid = f.path[Math.floor(f.path.length / 2)]!;
-    return bucketKeyOfLngLat(mid[0], mid[1]);
+    const midIdx = Math.floor(f.path.length / 2);
+    return bucketKeyOfLngLat(f.path.lat(midIdx), f.path.lng(midIdx));
+  }
+
+  /**
+   * 光軌 slot 容量：掃描線算出這批航班「同時在空中的峰值」，動態配置 BatchedTrails 的
+   * GPU buffer（取代原本寫死 6000 slot）。獨立於下面的靜態軌跡渲染管線（2D 模式會提早
+   * return，但動畫光軌容量與渲染模式無關，故在 updateStaticTrails 最前面、mode 判斷之前呼叫）。
+   *
+   * dep_time/arr_time 為 0（缺值）時 fallback 用 path 頭尾時間戳（TrackPath.t()）。
+   * 只在 flights 這個 array reference 真的變了（換機場/region/日期）才重新掃描。
+   */
+  private updateTrailCapacity(flights: Flight[]) {
+    const n = flights.length;
+    if (n === 0) {
+      this.lastTrailPeak = 0;
+      return;
+    }
+
+    const starts = new Float64Array(n);
+    const ends = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const f = flights[i]!;
+      let dep = f.dep_time;
+      let arr = f.arr_time;
+      if (!dep || !arr) {
+        const len = f.path.length;
+        if (len > 0) {
+          if (!dep) dep = f.path.t(0);
+          if (!arr) arr = f.path.t(len - 1);
+        }
+      }
+      starts[i] = dep;
+      ends[i] = arr >= dep ? arr : dep; // 防禦壞資料（arr < dep）：退化成瞬時區間，不影響峰值方向
+    }
+    // TypedArray.sort() 預設數值遞增（非字典序），不用比較器
+    starts.sort();
+    ends.sort();
+
+    // 掃描線（meeting-rooms 變體）：不需要 start/end 逐一配對，
+    // 只要兩條各自排序的時間軸交錯掃過即可算出最大同時重疊數。
+    let peak = 0, cur = 0, si = 0, ei = 0;
+    while (si < n) {
+      if (starts[si]! <= ends[ei]!) {
+        cur++;
+        si++;
+        if (cur > peak) peak = cur;
+      } else {
+        cur--;
+        ei++;
+      }
+    }
+    this.lastTrailPeak = peak;
+    this.batchedTrails?.ensureCapacity(peak);
+  }
+
+  /** 驗收/除錯用：目前光軌容量狀態（peak 為 updateTrailCapacity 算出的原始峰值，不含 5% headroom） */
+  getTrailCapacityInfo(): { peak: number; capacity: number; bufferBytes: number; evictions: number } | null {
+    if (!this.batchedTrails) return null;
+    return {
+      peak: this.lastTrailPeak,
+      capacity: this.batchedTrails.getCapacity(),
+      bufferBytes: this.batchedTrails.getBufferBytes(),
+      evictions: this.batchedTrails.getEvictionCount(),
+    };
   }
 
   /**
@@ -305,6 +390,11 @@ export class FlightScene {
    * 幾何體用全量航班建構（按地理分桶），可見度用 per-vertex alpha 增量控制。
    */
   updateStaticTrails(flights: Flight[], mode: RenderMode = "3d") {
+    if (flights !== this.lastCapacityFlights) {
+      this.lastCapacityFlights = flights;
+      this.updateTrailCapacity(flights);
+    }
+
     if (mode === "2d") {
       this.removeStaticMeshes();
       this.lastStaticKey = "";
@@ -348,36 +438,46 @@ export class FlightScene {
 
     if (flights.length === 0) return;
 
-    // 計數 pass：每桶頂點數（先算好才能一次配足桶 buffer）
+    // 計數 pass：每桶頂點數（先算好才能一次配足桶 buffer）；
+    // 順便算 T0-5 的 staticTimeBase（flights 中最小 path[0][3]）
     const bucketVertCounts = new Map<number, number>();
     let totalVerts = 0;
+    let minTimeBase = Infinity;
     for (const f of flights) {
       if (f.path.length < 2) continue;
       const verts = (f.path.length - 1) * 2;
       const k = this.bucketKeyForFlight(f);
       bucketVertCounts.set(k, (bucketVertCounts.get(k) ?? 0) + verts);
       totalVerts += verts;
+      const t0 = f.path.t(0);
+      if (t0 < minTimeBase) minTimeBase = t0;
     }
     if (totalVerts === 0) return;
+    this.staticTimeBase = minTimeBase === Infinity ? 0 : minTimeBase;
 
     const staticOpacity = this.isDarkTheme
       ? this.currentStaticOpacity
       : Math.min(this.currentStaticOpacity * 2.5, 0.7);
 
     // 材質全桶共用（uniform 更新一次全桶生效；draw call 便宜）
+    // T0-1：本體與 glow 併單 pass，frag 內同時算 a1（本體）與 a2=a1·uGlowW（glow）
     this.staticMat = new THREE.ShaderMaterial({
       vertexShader: GLOBE_PROJECT_GLSL + staticTrailVert,
       fragmentShader: staticTrailFrag,
-      uniforms: { uOpacity: { value: staticOpacity }, uWidth: { value: this.currentStaticWidth }, ...this.globeUniforms },
-      transparent: true,
-      blending: this.blending,
-      depthWrite: false,
-      depthTest: false, // globe 底圖 depth（far=∞）會誤遮貼球航跡，故關閉；背面靠 shader cull 藏
-    });
-    this.staticGlowMat = new THREE.ShaderMaterial({
-      vertexShader: GLOBE_PROJECT_GLSL + staticTrailVert,
-      fragmentShader: staticTrailFrag,
-      uniforms: { uOpacity: { value: staticOpacity * 0.3 }, uWidth: { value: this.currentStaticWidth * this.currentStaticWidth }, ...this.globeUniforms },
+      uniforms: {
+        uOpacity: { value: staticOpacity },
+        uWidth: { value: this.currentStaticWidth },
+        uGlowW: { value: this.glowHidden ? 0 : 0.3 * this.currentStaticWidth },
+        uAdditive: { value: this.isDarkTheme ? 1 : 0 },
+        // T2-1：progressive「已飛過才顯示」；重建 geometry（換色/寬度/航班集合…）時
+        // 材質會整支換掉，故用目前的 progressiveMode 初始化，不能寫死 0——不然若
+        // rebuild 發生在 progressive 已開啟且沒有切換 enabled 的那一幀，
+        // setProgressiveMode() 會因「值沒變」而 early return，新材質就會漏設 uProgressive。
+        // uTime 用 0 沒關係：同一幀稍後的 updateProgressiveVisibility() 一定會覆蓋。
+        uTime: { value: 0 },
+        uProgressive: { value: this.progressiveMode ? 1 : 0 },
+        ...this.globeUniforms,
+      },
       transparent: true,
       blending: this.blending,
       depthWrite: false,
@@ -395,27 +495,24 @@ export class FlightScene {
       const colAttr = new THREE.BufferAttribute(colors, 3);
       const alphaAttr = new THREE.BufferAttribute(alphas, 1);
       const ecefAttr = new THREE.BufferAttribute(ecefs, 3);
+      const trelAttr = new THREE.BufferAttribute(timestamps, 1);
 
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", posAttr);
       geometry.setAttribute("color", colAttr);
       geometry.setAttribute("alpha", alphaAttr);
       geometry.setAttribute("aEcef", ecefAttr);
+      geometry.setAttribute("aTRel", trelAttr);
       geometry.setDrawRange(0, 0);
 
-      // 本體 + glow 共用同一 geometry（drawRange/attribute 永遠同步）
+      // 本體 + glow 併單 pass（T0-1），單一 mesh／material
       const mesh = new THREE.LineSegments(geometry, this.staticMat);
       mesh.frustumCulled = false;
-      const glowMesh = new THREE.LineSegments(geometry, this.staticGlowMat);
-      glowMesh.frustumCulled = false;
       mesh.visible = this.showTrails;
-      glowMesh.visible = this.showTrails && !this.glowHidden;
       this.scene.add(mesh);
-      this.scene.add(glowMesh);
 
       const bucket: StaticBucket = {
         mesh,
-        glowMesh,
         geometry,
         positions,
         colors,
@@ -426,6 +523,7 @@ export class FlightScene {
         colAttr,
         alphaAttr,
         ecefAttr,
+        trelAttr,
         writeVerts: 0,
         totalVerts: verts,
         axis: bucketAxisOf(k),
@@ -474,7 +572,9 @@ export class FlightScene {
 
     let vertsThisFrame = 0;
     const limit = FlightScene.VERTS_PER_FRAME;
-    const dirtyBuckets = new Set<StaticBucket>();
+    // T0-3：每桶記本幀最早的髒起點（= 進入本幀時的 writeVerts），frame 尾只上傳
+    // [dirtyStart, writeVerts) range，取代整條 bufferSubData
+    const dirtyStart = new Map<StaticBucket, number>();
 
     while (state.flightIdx < state.flights.length && vertsThisFrame < limit) {
       const f = state.flights[state.flightIdx]!;
@@ -496,15 +596,16 @@ export class FlightScene {
       }
 
       const bucketVertStart = bucket.writeVerts;
+      if (!dirtyStart.has(bucket)) dirtyStart.set(bucket, bucketVertStart);
       // 若此 flight 有指定顏色（per-airport 模式），整條 trail 使用平色，忽略 altitude gradient
       const airportOverride = this.perFlightColorMap?.get(f.fr24_id) ?? null;
       const ax = bucket.axis.x, ay = bucket.axis.y, az = bucket.axis.z;
 
       for (let i = startPt; i < f.path.length - 1 && vertsThisFrame < limit; i++) {
-        const a = f.path[i]!;
-        const b = f.path[i + 1]!;
-        const ma = toMercator(a[0], a[1], a[2]);
-        const mb = toMercator(b[0], b[1], b[2]);
+        const aLat = f.path.lat(i), aLng = f.path.lng(i), aAlt = f.path.alt(i), aT = f.path.t(i);
+        const bLat = f.path.lat(i + 1), bLng = f.path.lng(i + 1), bAlt = f.path.alt(i + 1), bT = f.path.t(i + 1);
+        const ma = toMercator(aLat, aLng, aAlt);
+        const mb = toMercator(bLat, bLng, bAlt);
 
         const w = bucket.writeVerts;
         const o3 = w * 3;
@@ -534,12 +635,12 @@ export class FlightScene {
           bucket.colors[o3 + 4] = g;
           bucket.colors[o3 + 5] = bl;
         } else {
-          let t = Math.min(Math.max(a[2] / MAX_ALT, 0), 1);
+          let t = Math.min(Math.max(aAlt / MAX_ALT, 0), 1);
           let [cr, cg, cb] = lerpGradient(t);
           bucket.colors[o3] = cr;
           bucket.colors[o3 + 1] = cg;
           bucket.colors[o3 + 2] = cb;
-          t = Math.min(Math.max(b[2] / MAX_ALT, 0), 1);
+          t = Math.min(Math.max(bAlt / MAX_ALT, 0), 1);
           [cr, cg, cb] = lerpGradient(t);
           bucket.colors[o3 + 3] = cr;
           bucket.colors[o3 + 4] = cg;
@@ -549,8 +650,9 @@ export class FlightScene {
         bucket.alphas[w] = 1.0;
         bucket.alphas[w + 1] = 1.0;
 
-        bucket.timestamps[w] = a[3];
-        bucket.timestamps[w + 1] = b[3];
+        // T0-5：存相對秒數（減 staticTimeBase），避免 float32 存絕對 unix 秒的 ulp=128s 誤差
+        bucket.timestamps[w] = aT - this.staticTimeBase;
+        bucket.timestamps[w + 1] = bT - this.staticTimeBase;
 
         bucket.writeVerts += 2;
         vertsThisFrame += 2;
@@ -561,7 +663,6 @@ export class FlightScene {
       if (range) {
         range.count += (bucket.writeVerts - bucketVertStart);
       }
-      dirtyBuckets.add(bucket);
 
       if (state.pointIdx >= f.path.length - 1) {
         if (this.lastVisibleIds.size > 0 && !this.lastVisibleIds.has(f.fr24_id)) {
@@ -570,6 +671,9 @@ export class FlightScene {
             for (let i = r.start; i < r.start + r.count; i++) {
               r.bucket.alphas[i] = 0.0;
             }
+            // 剛完工的 flight 若跨多幀寫入，r.start 可能早於本幀 dirtyStart，須往回擴
+            const ds = dirtyStart.get(r.bucket);
+            if (ds === undefined || r.start < ds) dirtyStart.set(r.bucket, r.start);
           }
         }
         state.flightIdx++;
@@ -579,18 +683,27 @@ export class FlightScene {
 
     state.builtVerts += vertsThisFrame;
 
-    // 只更新本幀有寫入的桶（buffer 上傳也只針對這些桶，避免全量 re-upload）
-    for (const b of dirtyBuckets) {
-      b.posAttr.needsUpdate = true;
-      b.colAttr.needsUpdate = true;
-      b.alphaAttr.needsUpdate = true;
-      b.ecefAttr.needsUpdate = true;
+    // T0-3：只上傳本幀髒區間 [dirtyStart, writeVerts)，取代整條 bufferSubData
+    for (const [b, ds] of dirtyStart) {
+      const countV = b.writeVerts - ds;
+      this.applyStaticRange(b.posAttr, ds * 3, countV * 3);
+      this.applyStaticRange(b.colAttr, ds * 3, countV * 3);
+      this.applyStaticRange(b.ecefAttr, ds * 3, countV * 3);
+      this.applyStaticRange(b.alphaAttr, ds, countV);
+      this.applyStaticRange(b.trelAttr, ds, countV);
       b.geometry.setDrawRange(0, b.writeVerts);
     }
 
     if (state.builtVerts >= state.totalVerts) {
       this.staticBuildState = null;
     }
+  }
+
+  /** T0-3：range-only 上傳（照 BatchedTrails.applyRange 的寫法），取代整條 bufferSubData */
+  private applyStaticRange(attr: THREE.BufferAttribute, start: number, count: number) {
+    attr.clearUpdateRanges();
+    attr.addUpdateRange(start, count);
+    attr.needsUpdate = true;
   }
 
   forceRebuildStatic() {
@@ -608,9 +721,6 @@ export class FlightScene {
     if (this.staticMat) {
       this.staticMat.uniforms["uOpacity"]!.value = effective;
     }
-    if (this.staticGlowMat) {
-      this.staticGlowMat.uniforms["uOpacity"]!.value = effective * 0.3;
-    }
     this.recomputeGlowVisibility();
   }
 
@@ -624,9 +734,8 @@ export class FlightScene {
     this.currentStaticWidth = w;
     if (this.staticMat) {
       this.staticMat.uniforms["uWidth"]!.value = w;
-    }
-    if (this.staticGlowMat) {
-      this.staticGlowMat.uniforms["uWidth"]!.value = w * w;
+      // T0-1：uGlowW = 0.3·w，frag 內 a2 = a1·uGlowW = 原 glow pass 的 0.3·w² alpha
+      this.staticMat.uniforms["uGlowW"]!.value = this.glowHidden ? 0 : 0.3 * w;
     }
     this.recomputeGlowVisibility();
   }
@@ -656,12 +765,12 @@ export class FlightScene {
     this.setGlowHidden(hidden);
   }
 
-  /** 套用 glow mesh 停繪狀態（與 showTrails / 剔除狀態合成，不互相覆蓋） */
+  /** 套用 glow 停繪狀態（T0-1 併單 pass 後改設 uGlowW=0，取代原本整層 glowMesh.visible） */
   private setGlowHidden(hidden: boolean) {
     if (this.glowHidden === hidden) return;
     this.glowHidden = hidden;
-    for (const b of this.staticBuckets) {
-      b.glowMesh.visible = this.showTrails && !b.culled && !hidden;
+    if (this.staticMat) {
+      this.staticMat.uniforms["uGlowW"]!.value = hidden ? 0 : 0.3 * this.currentStaticWidth;
     }
   }
 
@@ -680,7 +789,6 @@ export class FlightScene {
     this.showTrails = show;
     for (const b of this.staticBuckets) {
       b.mesh.visible = show && !b.culled;
-      b.glowMesh.visible = show && !b.culled && !this.glowHidden;
     }
   }
 
@@ -700,6 +808,9 @@ export class FlightScene {
           for (let i = range.start; i < range.start + range.count; i++) {
             range.bucket.alphas[i] = 1.0;
           }
+          // T0-3：只登記此 flight 的 range（不 clear，可能與同幀 continueStaticBuild 的
+          // range 疊加；three 支援同一 attribute 多個 update range）
+          range.bucket.alphaAttr.addUpdateRange(range.start, range.count);
           changedBuckets.add(range.bucket);
         }
       }
@@ -712,6 +823,7 @@ export class FlightScene {
           for (let i = range.start; i < range.start + range.count; i++) {
             range.bucket.alphas[i] = 0.0;
           }
+          range.bucket.alphaAttr.addUpdateRange(range.start, range.count);
           changedBuckets.add(range.bucket);
         }
       }
@@ -727,36 +839,33 @@ export class FlightScene {
   setProgressiveMode(enabled: boolean) {
     if (this.progressiveMode === enabled) return;
     this.progressiveMode = enabled;
-    this.lastProgressiveTime = 0;
+    // T2-1：progressive 的顯示/隱藏改在 vertex shader 用 uProgressive/uTime × aTRel 算，
+    // alphaAttr 不再被 progressive 寫入（只留給 ±12h 時間窗的 updateStaticVisibility 用）。
+    if (this.staticMat) this.staticMat.uniforms.uProgressive!.value = enabled ? 1 : 0;
     if (!enabled) {
-      // 關閉 progressive 時，恢復全部可見
+      // 關閉 progressive 時，恢復全部可見（整條上傳，不動——但 T0-3 引入 range 機制後，
+      // 同幀若已有其他呼叫方對 alphaAttr 加過 range，需先 clear 才能保證這裡是整條上傳）。
+      // 這一步在新設計下多數情況已是 no-op（alphaAttr 期間本來就沒被 progressive 動過），
+      // 但保留與舊行為一致：±12h 視窗開著時關閉 progressive 的當幀仍會把視窗過濾暫時蓋掉
+      // （下一次 updateStaticVisibility 重掃才會修回來）——這是既有行為，不在本次修動範圍內。
       for (const b of this.staticBuckets) {
         b.alphas.fill(1.0);
+        b.alphaAttr.clearUpdateRanges();
         b.alphaAttr.needsUpdate = true;
       }
     }
   }
 
+  /**
+   * T2-1：只更新 uTime uniform（O(1)，不再逐頂點掃描 timestamps 重算 alpha、
+   * 不再整桶重傳 alphaAttr）。「已飛過才顯示」的判斷搬進 staticTrail.vert
+   * （aTRel<=uTime，語意對齊舊 CPU 版的 ts[i] <= relTime，見該檔註解）。
+   */
   updateProgressiveVisibility(currentTime: number) {
-    if (!this.progressiveMode || this.staticBuckets.length === 0) return;
-    if (Math.abs(currentTime - this.lastProgressiveTime) < 1) return;
-    this.lastProgressiveTime = currentTime;
-
-    for (const b of this.staticBuckets) {
-      const alphas = b.alphas;
-      const ts = b.timestamps;
-      let changed = false;
-      for (let i = 0; i < b.writeVerts; i++) {
-        const shouldShow = ts[i]! <= currentTime ? 1.0 : 0.0;
-        if (alphas[i] !== shouldShow) {
-          alphas[i] = shouldShow;
-          changed = true;
-        }
-      }
-      if (changed) {
-        b.alphaAttr.needsUpdate = true;
-      }
-    }
+    if (!this.progressiveMode || !this.staticMat) return;
+    // T0-5：timestamps／aTRel 已存相對秒數，比較前先扣掉 staticTimeBase
+    const relTime = currentTime - this.staticTimeBase;
+    this.staticMat.uniforms.uTime!.value = relTime;
   }
 
   pickFlight(screenX: number, screenY: number, viewWidth: number, viewHeight: number): string | null {
@@ -772,9 +881,8 @@ export class FlightScene {
     const pts: MercatorPoint[] = new Array(n);
     const ecef = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
-      const pt = flight.path[i]!;
-      const mc = toMercator(pt[0], pt[1], pt[2]);
-      pts[i] = [mc.x, mc.y, mc.z, pt[3]];
+      const mc = toMercator(flight.path.lat(i), flight.path.lng(i), flight.path.alt(i));
+      pts[i] = [mc.x, mc.y, mc.z, flight.path.t(i)];
       mercatorToEcef(mc.x, mc.y, mc.z, ecef, i * 3); // 貼球 ECEF 一次算好（光軌每幀直接抄）
     }
     cached = { pts, ecef };
@@ -849,7 +957,6 @@ export class FlightScene {
       if (culled !== b.culled) {
         b.culled = culled;
         b.mesh.visible = this.showTrails && !culled;
-        b.glowMesh.visible = this.showTrails && !culled && !this.glowHidden;
       }
     }
   }
@@ -868,7 +975,10 @@ export class FlightScene {
       sig === this.lastActiveSig &&
       this.trailEpoch === this.lastTrailEpoch
     ) {
-      this.instancedOrbs?.updateAll(this.lastOrbEntries);
+      // 這條快速路徑本來就是靠 currentTime + 航班集合簽章判斷「內容沒變」才進來，
+      // 故 lastOrbEntries（含座標）保證與上次呼叫相同 → entriesUnchanged=true，
+      // 讓 InstancedOrbs 在相機也沒動時可以完全跳過 instanceMatrix 重算/上傳。
+      this.instancedOrbs?.updateAll(this.lastOrbEntries, true);
       this.activeOrbCount = this.lastOrbEntries.length;
       return;
     }
@@ -884,7 +994,7 @@ export class FlightScene {
       activeIds.add(flight.fr24_id);
 
       const cache = this.getMercatorPath(flight);
-      const endTime = flight.path.length > 0 ? flight.path[flight.path.length - 1]![3] : currentTime;
+      const endTime = flight.path.length > 0 ? flight.path.t(flight.path.length - 1) : currentTime;
       const written = batch.writeTrail(
         flight.fr24_id,
         endTime,
@@ -903,7 +1013,8 @@ export class FlightScene {
     batch.releaseMissing(activeIds); // 落地/離窗 → slot 立即釋放並隱藏（同舊 setOpacity(0)）
     batch.commit();
 
-    this.instancedOrbs?.updateAll(orbEntries);
+    // 新建構的 orbEntries：座標剛重算過，不能假設與上次相同
+    this.instancedOrbs?.updateAll(orbEntries, false);
     this.activeOrbCount = orbEntries.length;
     this.lastOrbEntries = orbEntries;
   }
@@ -919,41 +1030,26 @@ export class FlightScene {
   }
 
   render(matrix: number[]) {
-    const gl = this.renderer.getContext();
-
-    const blendEnabled = gl.isEnabled(gl.BLEND);
-    const blendSrc = gl.getParameter(gl.BLEND_SRC_RGB);
-    const blendDst = gl.getParameter(gl.BLEND_DST_RGB);
-    const blendSrcA = gl.getParameter(gl.BLEND_SRC_ALPHA);
-    const blendDstA = gl.getParameter(gl.BLEND_DST_ALPHA);
-
+    // T0-2：刪每幀 GL 狀態同步查詢（gl.isEnabled/getParameter 在 Chromium 是
+    // non-cached，會強制 CPU↔GPU round-trip）。Mapbox drawCustom 在 custom layer
+    // 之後會自行 context.setDirty() 重發狀態，手動還原 blend 多餘；render 前的
+    // resetState() 保留（讓 three 重新同步自己的內部快取狀態）。
     this.matrixScratch.fromArray(matrix);
     this.lastMatrix = this.matrixScratch;
     this.camera.projectionMatrix = this.matrixScratch;
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
-    this.renderer.resetState();
-
-    if (blendEnabled) {
-      gl.enable(gl.BLEND);
-    } else {
-      gl.disable(gl.BLEND);
-    }
-    gl.blendFuncSeparate(blendSrc, blendDst, blendSrcA, blendDstA);
   }
 
   private removeStaticMeshes() {
     for (const b of this.staticBuckets) {
       this.scene.remove(b.mesh);
-      this.scene.remove(b.glowMesh);
       b.geometry.dispose();
     }
     this.staticBuckets = [];
     this.staticBucketByKey.clear();
     this.staticMat?.dispose();
     this.staticMat = null;
-    this.staticGlowMat?.dispose();
-    this.staticGlowMat = null;
   }
 
   private clearScene() {
@@ -963,8 +1059,8 @@ export class FlightScene {
       this.batchedTrails = null;
     }
     this.mercatorCache.clear();
-    this.colorIndex = 0;
-    this.flightColors.clear();
+    this.lastCapacityFlights = null;
+    this.lastTrailPeak = 0;
     this.lastOrbEntries = [];
     this.lastTrailTime = NaN;
     this.lastActiveSig = "__init__";

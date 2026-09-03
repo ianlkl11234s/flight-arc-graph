@@ -1,0 +1,13 @@
+S1 (RCTP, scenario s1):
+  seekTime = 1771348300
+  center = {lng: 121.2281, lat: 25.0927}
+  zoom = 10.4
+  pitch = 57
+  bearing = 16
+
+S2 (apac-hub, scenario s2):
+  seekTime = 1771350500
+  center = {lng: 127.15599999999995, lat: 29.32883298338686}
+  zoom = 4.719966171972333
+  pitch = 35
+  bearing = 0

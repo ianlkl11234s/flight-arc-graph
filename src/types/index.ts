@@ -1,3 +1,5 @@
+import type { TrackPath } from "./trackPath";
+
 /** 單一軌跡點：[緯度, 經度, 高度(公尺), Unix timestamp] */
 export type TrailPoint = [number, number, number, number];
 
@@ -15,7 +17,8 @@ export interface Flight {
   arr_time: number;
   status: string;
   trail_points: number;
-  path: TrailPoint[];
+  /** SoA typed array（見 trackPath.ts）；磁碟／wire 格式仍是 TrailPoint[]，解析後經 TrackPath.fromArray 轉換 */
+  path: TrackPath;
   /** IATA 航班號（如 "CX408"，與 ATC callsign 可能不同） */
   flight_number?: string;
   /** 實際營運航空公司 ICAO 三字碼（如 "CAL"） */

@@ -10,7 +10,8 @@ import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo, cameraForAirport } from "./map/cameraPresets";
 import { loadAirportMeta, type AirportMeta } from "./data/airportMeta";
-import { createFlightLayer } from "./map/customLayer";
+import { createFlightLayer, getGlStats, resetGlStats } from "./map/customLayer";
+import { notifyActivity } from "./map/repaintScheduler";
 import { createAtlasGlowLayer, ATLAS_GLOW_LAYER_ID, type AtlasColorMode } from "./map/atlasGlowLayer";
 import { createAirspaceLayer } from "./map/airspaceAurora";
 import { addMedianLineLayer, removeMedianLineLayer, setMedianLineVisibility, setMedianLineTheme } from "./map/medianLine";
@@ -19,6 +20,7 @@ import { getCachedAirspace, type AirspaceFeature } from "./data/airspaceLoader";
 import { pickAirspace } from "./map/airspacePicker";
 import { AirspaceInfoCard } from "./components/AirspaceInfoCard";
 import { filterByAirport } from "./data/flightLoader";
+import type { LodLevel } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { AirportSelector } from "./components/AirportSelector";
@@ -44,6 +46,7 @@ import { computeAnalysisColorMap, type AnalysisColorBy } from "./data/analysisCo
 import { getAircraftInfo, type AircraftCategory as AcCat } from "./data/aircraftDatabase";
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
+import { setFrozenAnimTime } from "./three/animClock";
 
 // ── Atlas 機場點：點擊 popup ──
 interface AtlasProps {
@@ -230,6 +233,36 @@ function OrientationOrb({
   );
 }
 
+// Phase 2-2：依 zoom band 換 LOD 層（門檻推導見 docs/backlog/render-performance-status.md §Phase 2）。
+// > 9.5 → L0（全解析度）；7.2–9.5 → L1（eps 50 m）；≤ 7.2 → L2（eps 250 m）。
+// 帶 ±0.3 hysteresis：只有離開目前band 超過 0.3 才切層，避免邊界抖動反覆重載。
+const LOD_L1_UP_THRESHOLD = 9.5; // l1 → l0 的嚴格門檻
+const LOD_L2_UP_THRESHOLD = 7.2; // l2 → l1 的嚴格門檻
+const LOD_HYSTERESIS = 0.3;
+
+/** 嚴格 band（不帶 hysteresis）：用於初始落地／跨兩層以上的大跳躍。 */
+function strictLodBand(zoom: number): LodLevel {
+  if (zoom > LOD_L1_UP_THRESHOLD) return "l0";
+  if (zoom > LOD_L2_UP_THRESHOLD) return "l1";
+  return "l2";
+}
+
+/** 依目前 band + 新 zoom 算出下一個 band；離開目前 band 需超過 hysteresis 邊界。 */
+function computeLodBand(zoom: number, current: LodLevel): LodLevel {
+  if (current === "l0") {
+    if (zoom > LOD_L1_UP_THRESHOLD - LOD_HYSTERESIS) return "l0";
+    return strictLodBand(zoom);
+  }
+  if (current === "l1") {
+    if (zoom > LOD_L1_UP_THRESHOLD + LOD_HYSTERESIS) return "l0";
+    if (zoom <= LOD_L2_UP_THRESHOLD - LOD_HYSTERESIS) return strictLodBand(zoom);
+    return "l1";
+  }
+  // current === "l2"
+  if (zoom <= LOD_L2_UP_THRESHOLD + LOD_HYSTERESIS) return "l2";
+  return strictLodBand(zoom);
+}
+
 // 「探索地圖總覽」地球 icon 展開時飛去的固定俯瞰視角
 const EXPLORE_OVERVIEW_CAMERA = {
   center: [119.0049, 22.5292] as [number, number],
@@ -251,6 +284,13 @@ export default function App() {
   const [airspaceRangeDays, setAirspaceRangeDays] = useState(1);
   const [airspaceSelectedDates, setAirspaceSelectedDates] = useState<string[]>([]);
 
+  // Phase 2-2：依 zoom band 自動換 LOD 層（airport scope／airport set 適用；region scope
+  // 忽略這個值）。lodRef 供 hysteresis 計算與 debug hook 同步讀寫，避免依賴 state 的 stale closure。
+  const [lod, setLod] = useState<LodLevel>("l0");
+  const lodRef = useRef<LodLevel>("l0");
+  // 非 null 時暫停自動換層，強制固定在該層（驗收 band 邊界用）。
+  const lodOverrideRef = useRef<LodLevel | null>(null);
+
   const {
     allFlights,
     airports,
@@ -271,6 +311,7 @@ export default function App() {
     airspaceRangeDays,
     airportSet,
     airspaceSelectedDates,
+    lod,
   );
   const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
 
@@ -373,6 +414,19 @@ export default function App() {
   const [atlasGlowSize, setAtlasGlowSize] = useState(1.6);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
   const { isMobile, isLandscape } = useIsMobile();
+
+  // Phase 2-2：cameraInfo.zoom 變動時依 hysteresis band 重算 LOD 層（setLodOverride 期間暫停）。
+  // zoom<=0 是尚未收到第一次 map "move" 事件的初始 sentinel（handleMapReady 才會設定真實值），
+  // 略過避免 mount 瞬間誤判成極遠 zoom 而先切到 l2 又立刻切回。
+  useEffect(() => {
+    if (lodOverrideRef.current !== null) return;
+    if (cameraInfo.zoom <= 0) return;
+    const next = computeLodBand(cameraInfo.zoom, lodRef.current);
+    if (next !== lodRef.current) {
+      lodRef.current = next;
+      setLod(next);
+    }
+  }, [cameraInfo.zoom]);
 
   // Region 相關 helper
   const KNOWN_REGIONS = ["RC", "RJ", "RO", "VH", "K", "EG"];
@@ -552,7 +606,7 @@ export default function App() {
 
     // 也加入已載入航班的日期（fallback）；sanity floor 1e9 擋掉接近 epoch 的壞時間戳
     for (const f of allFlights) {
-      const t = f.dep_time || f.path[0]?.[3];
+      const t = f.dep_time || (f.path.length > 0 ? f.path.t(0) : undefined);
       if (t && t > 1e9) {
         const d = new Date(t * 1000 + 8 * 3600_000);
         dates.add(d.toISOString().slice(0, 10));
@@ -587,7 +641,14 @@ export default function App() {
     return "2026-02-18";
   }, [fullDates, airportDateCounts, selectionDateCounts]);
 
-  const timeline = useTimeline({ availableDates, preferredDate });
+  const mapRef = useRef<MapboxMap | null>(null);
+  // Phase 1-3：播放時鐘留在 ref，rAF 每幀呼叫（不受 10 Hz state 節流影響）觸發 repaint。
+  // 播放屬於「有活動」，走 notifyActivity（立即 triggerRepaint + 重置節流器閒置計時），
+  // 不能讓它被 Phase 1-2 的裝飾動畫節流吃掉。
+  const handleTimelineTick = useCallback(() => {
+    notifyActivity(mapRef.current);
+  }, []);
+  const timeline = useTimeline({ availableDates, preferredDate, onTick: handleTimelineTick });
 
   // 切換機場時：若目前日期不是新機場的完整資料日，跳到該機場的 preferredDate。
   // 只在「機場改變」時觸發 —— 使用者手動點部分資料日期不會被蓋掉。
@@ -605,7 +666,6 @@ export default function App() {
       timeline.setSelectedDate(preferredDate);
     }
   }, [selectedAirport, airportSet, isAirportScope, availableDates, preferredDate, timeline]);
-  const mapRef = useRef<MapboxMap | null>(null);
   const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode });
   const recorder = useCanvasRecorder({ map: mapRef.current });
   const isRecording = recorder.recordingState === "recording";
@@ -729,7 +789,7 @@ export default function App() {
     // 日期範圍篩選
     if (timeline.isMultiDateMode && timeline.dateWindowStarts.length > 0) {
       base = base.filter((f) => {
-        const t = f.dep_time || f.path[0]?.[3];
+        const t = f.dep_time || (f.path.length > 0 ? f.path.t(0) : undefined);
         if (!t) return false;
         return timeline.dateWindowStarts.some(
           (start, i) => t >= start && t <= timeline.dateWindowEnds[i]!,
@@ -737,7 +797,7 @@ export default function App() {
       });
     } else {
       base = base.filter((f) => {
-        const t = f.dep_time || f.path[0]?.[3];
+        const t = f.dep_time || (f.path.length > 0 ? f.path.t(0) : undefined);
         return t && t >= timeline.windowStart && t <= timeline.windowEnd;
       });
     }
@@ -755,7 +815,7 @@ export default function App() {
     if (!timeline.isMultiDateMode || timeline.dateWindowStarts.length === 0) return undefined;
     const map = new Map<string, string>();
     for (const f of displayedFlights) {
-      const t = f.dep_time || f.path[0]?.[3];
+      const t = f.dep_time || (f.path.length > 0 ? f.path.t(0) : undefined);
       if (!t) continue;
       const idx = timeline.dateWindowStarts.findIndex(
         (start, i) => t >= start && t <= timeline.dateWindowEnds[i]!,
@@ -967,7 +1027,10 @@ export default function App() {
   const isDarkTheme = !["light", "streets"].includes(mapStyleId);
 
   const flightsRef = useRef(finalFlights);
-  const timeRef = useRef(timeline.currentTime);
+  // Phase 1-3：不再自己維護一份「每次 render 從 state 複製」的 ref（那會被 10 Hz
+  // 節流拖慢），直接沿用 useTimeline 內部的 timeRef —— 同一個物件，rAF 每幀寫入，
+  // custom layer / 錄影 overlay / 晨昏線 / viewshed track-single 都讀到最新值。
+  const timeRef = timeline.timeRef;
   const renderModeRef = useRef(renderMode);
   const altExagRef = useRef(altExaggeration);
   const altOffsetRef = useRef(altOffset);
@@ -993,7 +1056,6 @@ export default function App() {
   const atlasGlowSizeRef = useRef(atlasGlowSize);
 
   flightsRef.current = finalFlights;
-  timeRef.current = timeline.currentTime;
   renderModeRef.current = renderMode;
   altExagRef.current = altExaggeration;
   altOffsetRef.current = altOffset;
@@ -1017,14 +1079,187 @@ export default function App() {
 
   // repaint 閘控（customLayer）後，Mapbox 不再永續重繪；custom layer 每幀 pull 的狀態
   // 變更時要主動踢一下 repaint，否則完全 idle 時拖 slider / 按播放不會立即反應。
+  // 這些都是「真的有事發生」（播放中時刻推進、控制項變更），走 notifyActivity：
+  // 立即 triggerRepaint 之外，也重置節流器的閒置計時，避免裝飾動畫（光球呼吸等）
+  // 誤判成已閒置 30 秒而停在半路。
   useEffect(() => {
-    mapRef.current?.triggerRepaint();
+    notifyActivity(mapRef.current);
   }, [
     timeline.currentTime, finalFlights, renderMode, altExaggeration, altOffset,
     staticOpacity, trailLineWidth, airportGlow, orbScale, farView, farViewBoost, isDarkTheme, displayMode, timeWindow, trailDisplay,
     atlasGlowVisible, atlasColorMode, atlasGlowSize, viewshedOpacity, viewshedSharpness,
     colorThemeKey, colorThemeOverride, perFlightColorMap, perFlightScaleMap, airspaceSettings,
   ]);
+
+  // DEV-only 除錯掛鉤：效能量測腳本（scripts/perf/）用來取得 map / scene 與操控場景，
+  // production build 會被 tree-shake 掉。不要在 UI 程式碼裡依賴它。
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __flightArcDebug?: unknown }).__flightArcDebug = {
+      get map() { return mapRef.current; },
+      get scene() { return flightSceneRef.current; },
+      getFlights: () => flightsRef.current,
+      getTime: () => timeRef.current,
+      /** Phase 1-3 驗收用：currentTime state（節流 ~10 Hz）側的值，與 getTime()（ref，逐幀）對照 */
+      getStateTime: () => timeline.currentTime,
+      state: { scope, region, selectedAirport, airportSet, renderMode, displayMode, mapStyleId, playing: timeline.playing, speed: timeline.speed, lod: lodRef.current },
+      /** Phase 2-2 驗收用：目前套用的 LOD 層（"l0"／"l1"／"l2"），依 zoom band 自動算出或被 setLodOverride 鎖定。 */
+      getLod: () => lodRef.current,
+      /**
+       * Phase 2-2 驗收用：強制鎖定 LOD 層（band 邊界視覺比對）；傳 null 解除鎖定，
+       * 回到依目前 zoom 自動換層（用嚴格 band，不帶 hysteresis，落地後續交給 zoom effect）。
+       */
+      setLodOverride: (value: LodLevel | null) => {
+        lodOverrideRef.current = value;
+        const next = value ?? strictLodBand(cameraInfo.zoom);
+        lodRef.current = next;
+        setLod(next);
+        notifyActivity(mapRef.current);
+      },
+      selectAirportSingle,
+      applySavedSet,
+      toggleAirportInSet,
+      exitSetMode,
+      setScope,
+      setRegion,
+      setAirportGlow,
+      setStaticOpacity,
+      setDisplayMode,
+      setFarView,
+      setMapStyle: setMapStyleId,
+      setTrailDisplay,
+      setTimeWindow,
+      /** 視覺回歸用：凍結所有 wall-clock 動畫（光球呼吸／閃爍、bloom、極光、CSS 動畫）到固定秒數；null 解除 */
+      freezeAnimation: (t: number | null) => {
+        setFrozenAnimTime(t);
+        const styleId = "__flight-arc-freeze-css";
+        const existing = document.getElementById(styleId);
+        if (t === null) {
+          existing?.remove();
+        } else if (!existing) {
+          const st = document.createElement("style");
+          st.id = styleId;
+          st.textContent = "*,*::before,*::after{animation-play-state:paused!important;transition:none!important}";
+          document.head.appendChild(st);
+        }
+        // 凍結/解凍動畫是「控制項變更」，走 notifyActivity（視覺回歸截圖工具用，
+        // 需要立即看到結果，不能被裝飾節流吃掉）。
+        notifyActivity(mapRef.current);
+      },
+      /**
+       * 視覺回歸用：重現 IconRailSidebar.tsx SummaryPanel 的 airportStats / regionStats 算式，
+       * 回傳可 JSON.stringify 的快照。用來證明「改渲染（尤其換 LOD）後 Summary 數字沒變」。
+       * 排序陣列（同分順序取決於航班疊代順序）一律轉成無序物件，避免載入順序改變造成假 diff。
+       */
+      summarySnapshot: async () => {
+        const st = await import("./data/flightStats");
+        const flights = flightsRef.current;
+
+        const toCountMap = <T,>(
+          arr: T[],
+          keyFn: (item: T) => string,
+          valFn: (item: T) => number,
+        ): Record<string, number> => {
+          const out: Record<string, number> = {};
+          for (const item of arr) out[keyFn(item)] = valFn(item);
+          return out;
+        };
+
+        // fr24_id 排序後 join，算簡單 32-bit hash（區分「統計算法變了」vs「載入的航班集合變了」）
+        const sortedIds = flights.map((f) => f.fr24_id).sort();
+        const idsJoined = sortedIds.join(",");
+        let hash = 0;
+        for (let i = 0; i < idsJoined.length; i++) {
+          hash = (Math.imul(31, hash) + idsJoined.charCodeAt(i)) | 0;
+        }
+
+        const base = {
+          scope,
+          region,
+          selectedAirport,
+          airportSet,
+          time: timeRef.current,
+          rangeDays: timeline.rangeDays,
+          flightCount: flights.length,
+          flightIdsHash: hash,
+        };
+
+        const isAirportScope = scope === "airport";
+
+        const airportStats = (() => {
+          if (!isAirportScope || flights.length === 0) return null;
+          const icao = selectedAirport;
+          const depArr = st.getDepArrCount(flights, icao);
+          const total = depArr.departures + depArr.arrivals;
+          const hourly = st.computeHourlyStats(flights, icao);
+          const peak = hourly.reduce((a, b) => (b.count > a.count ? b : a), { hour: 0, count: 0 });
+          const daily = st.computeDailyStats(flights, icao);
+          const days = st.getUniqueDays(flights, icao);
+          const topRoutes = st.computeTopRoutes(flights, icao, 5);
+          const airlines = st.getAirlineStats(flights, icao);
+          const fleetMix = st.getFleetMix(flights, icao);
+          const durations = st.getFlightDurationDistribution(flights, icao);
+
+          return {
+            departures: depArr.departures,
+            arrivals: depArr.arrivals,
+            total,
+            days,
+            peakHour: peak.hour,
+            peakCount: peak.count,
+            hourly: toCountMap(hourly, (h) => String(h.hour), (h) => h.count),
+            daily: toCountMap(daily, (d) => d.date, (d) => d.total),
+            dailyDep: toCountMap(daily, (d) => d.date, (d) => d.departures),
+            dailyArr: toCountMap(daily, (d) => d.date, (d) => d.arrivals),
+            topRoutes: toCountMap(topRoutes, (r) => r.destIcao, (r) => r.count),
+            topRoutesOrdered: topRoutes.map((r) => r.destIcao),
+            airlines: toCountMap(airlines, (a) => a.code, (a) => a.count),
+            airlinesOrdered: airlines.map((a) => a.code),
+            fleetMix: toCountMap(fleetMix, (f) => f.category, (f) => f.count),
+            durations: toCountMap(durations, (d) => d.label, (d) => d.count),
+          };
+        })();
+
+        const regionStats = (() => {
+          if (isAirportScope || flights.length === 0) return null;
+          const comparison = st.computeAirportComparison(flights);
+          const totalFlights = flights.length;
+          const domestic = flights.filter((f) => f.origin_icao.startsWith("RC") && f.dest_icao.startsWith("RC")).length;
+          const international = totalFlights - domestic;
+          const uniqueAirports = new Set([...flights.map((f) => f.origin_icao), ...flights.map((f) => f.dest_icao)]).size;
+
+          return {
+            totalFlights,
+            domestic,
+            international,
+            uniqueAirports,
+            comparison: toCountMap(comparison, (c) => c.icao, (c) => c.count),
+            comparisonOrdered: comparison.map((c) => c.icao),
+          };
+        })();
+
+        return { ...base, airportStats, regionStats };
+      },
+      timeline: { play: timeline.play, pause: timeline.pause, seek: timeline.seek, setSpeed: timeline.setSpeed, setSelectedDate: timeline.setSelectedDate },
+      builtinSets: BUILTIN_SETS,
+      /** T1-1 驗收用：累積的 GL buffer 上傳次數（bufferData/bufferSubData 呼叫數） */
+      glStats: getGlStats,
+      /** 歸零 glStats 計數器，通常在暫停/相機靜止測試前呼叫 */
+      resetGlStats,
+      /**
+       * Phase 1-4 驗收用（preserveDrawingBuffer:false）：走真實錄製路徑
+       * start/stopRecording，以及不落地成檔案、直接量測取像路徑像素內容的
+       * captureFrameForTest／captureHQFrameForTest。
+       */
+      recorder: {
+        startRecording: handleStartRecording,
+        stopRecording: recorder.stopRecording,
+        getState: () => recorder.recordingState,
+        captureFrameForTest: recorder.captureFrameForTest,
+        captureHQFrameForTest: recorder.captureHQFrameForTest,
+      },
+    };
+  });
 
   // 持久化 airspace 設定
   useEffect(() => {
@@ -1148,13 +1383,24 @@ export default function App() {
     }
     const updateCamera = () => {
       const c = map.getCenter();
-      setCameraInfo({
+      const next = {
         lng: +c.lng.toFixed(4),
         lat: +c.lat.toFixed(4),
         zoom: +map.getZoom().toFixed(1),
         pitch: +map.getPitch().toFixed(0),
         bearing: +map.getBearing().toFixed(0),
-      });
+      };
+      // T0-4：四捨五入後數值沒變就沿用舊物件參考，避免相機移動期間每幀都觸發
+      // App 整棵樹 reconcile（拖曳／orbit／cinema／flyTo 期間尤其密集）
+      setCameraInfo((prev) =>
+        prev.lng === next.lng &&
+        prev.lat === next.lat &&
+        prev.zoom === next.zoom &&
+        prev.pitch === next.pitch &&
+        prev.bearing === next.bearing
+          ? prev
+          : next,
+      );
     };
     map.on("move", updateCamera);
     updateCamera();
@@ -1175,7 +1421,7 @@ export default function App() {
             let altitude: number | null = null;
             const t = timeRef.current;
             for (let i = flight.path.length - 1; i >= 0; i--) {
-              if (flight.path[i]![3] <= t) { altitude = Math.round(flight.path[i]![2]); break; }
+              if (flight.path.t(i) <= t) { altitude = Math.round(flight.path.alt(i)); break; }
             }
             setTooltipInfo({ flight, x: e.point.x, y: e.point.y, altitude });
             setAirspaceSelection(null);
@@ -1268,26 +1514,26 @@ export default function App() {
         const t = timeRef.current;
         const path = flight.path;
         let lat: number, lng: number, alt = 0, heading = 0;
-        if (t <= path[0]![3]) {
-          lat = path[0]![0]; lng = path[0]![1]; alt = path[0]![2];
-          if (path.length > 1) heading = computeBearing(path[0]![0], path[0]![1], path[1]![0], path[1]![1]);
-        } else if (t >= path[path.length - 1]![3]) {
-          lat = path[path.length - 1]![0]; lng = path[path.length - 1]![1]; alt = path[path.length - 1]![2];
+        if (t <= path.t(0)) {
+          lat = path.lat(0); lng = path.lng(0); alt = path.alt(0);
+          if (path.length > 1) heading = computeBearing(path.lat(0), path.lng(0), path.lat(1), path.lng(1));
+        } else if (t >= path.t(path.length - 1)) {
+          const last = path.length - 1;
+          lat = path.lat(last); lng = path.lng(last); alt = path.alt(last);
           if (path.length > 1) {
             const n = path.length;
-            heading = computeBearing(path[n - 2]![0], path[n - 2]![1], path[n - 1]![0], path[n - 1]![1]);
+            heading = computeBearing(path.lat(n - 2), path.lng(n - 2), path.lat(n - 1), path.lng(n - 1));
           }
         } else {
-          lat = path[0]![0]; lng = path[0]![1];
+          lat = path.lat(0); lng = path.lng(0);
           for (let i = 1; i < path.length; i++) {
-            if (path[i]![3] >= t) {
-              const a = path[i - 1]!;
-              const b = path[i]!;
-              const r = (t - a[3]) / (b[3] - a[3]);
-              lat = a[0] + (b[0] - a[0]) * r;
-              lng = a[1] + (b[1] - a[1]) * r;
-              alt = a[2] + (b[2] - a[2]) * r;
-              heading = computeBearing(a[0], a[1], b[0], b[1]);
+            if (path.t(i) >= t) {
+              const ai = i - 1, bi = i;
+              const r = (t - path.t(ai)) / (path.t(bi) - path.t(ai));
+              lat = path.lat(ai) + (path.lat(bi) - path.lat(ai)) * r;
+              lng = path.lng(ai) + (path.lng(bi) - path.lng(ai)) * r;
+              alt = path.alt(ai) + (path.alt(bi) - path.alt(ai)) * r;
+              heading = computeBearing(path.lat(ai), path.lng(ai), path.lat(bi), path.lng(bi));
               break;
             }
           }

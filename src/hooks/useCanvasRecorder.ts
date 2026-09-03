@@ -23,6 +23,12 @@ export interface HQExportProgress {
   percent: number;
 }
 
+/** Phase 1-4 驗收用：一幀的像素統計（平均亮度、非黑像素比例） */
+export interface FrameCaptureStats {
+  avgBrightness: number;
+  nonBlackRatio: number;
+}
+
 interface UseCanvasRecorderOptions {
   map: MapboxMap | null;
   fps?: number;
@@ -37,6 +43,16 @@ interface UseCanvasRecorderReturn {
   startHQExport: (getOverlay: OverlayProvider, keyframes: CameraKeyframe[], loop: boolean, pingpong: boolean) => void;
   stopHQExport: () => void;
   hqProgress: HQExportProgress | null;
+  /**
+   * Phase 1-4 驗收用：走與即時錄製完全相同的取像程式碼路徑（"render" 事件內
+   * 同步 drawImage）取一幀，回傳像素統計。不落地成檔案。DEV-only 掛鉤用。
+   */
+  captureFrameForTest: () => Promise<FrameCaptureStats | null>;
+  /**
+   * Phase 1-4 驗收用：走與 HQ 匯出完全相同的取像程式碼路徑（`waitForRender` +
+   * 同步 drawImage）取一幀，回傳像素統計。不落地成檔案。DEV-only 掛鉤用。
+   */
+  captureHQFrameForTest: () => Promise<FrameCaptureStats | null>;
 }
 
 /** Draw vignette + title onto the composite canvas */
@@ -126,6 +142,46 @@ function drawOverlay(
   ctx.letterSpacing = "0px";
 }
 
+/**
+ * 把 srcCanvas 目前內容同步畫進 composite canvas（可選疊 overlay）。
+ * ⚠️ 呼叫時機是安全與否的關鍵：`preserveDrawingBuffer:false` 之後，drawing
+ * buffer 只保證在 Mapbox 的 "render" 事件的同一個 tick 內同步呼叫才有內容
+ * （WebGL 規格：compositing 後 buffer 可能被清空；不同步呼叫可能讀到黑畫面）。
+ * 所有呼叫端必須在 "render" 事件 handler 內同步呼叫（或緊接在其 microtask
+ * 續行內，如 `waitForRender` 的 HQ 匯出路徑）。
+ */
+function captureFrame(
+  ctx: CanvasRenderingContext2D,
+  srcCanvas: HTMLCanvasElement,
+  w: number,
+  h: number,
+  overlay?: RecordingOverlay,
+) {
+  ctx.drawImage(srcCanvas, 0, 0);
+  if (overlay) drawOverlay(ctx, w, h, overlay);
+}
+
+/** Phase 1-4 驗收用：取樣 composite canvas 目前內容，算平均亮度與非黑像素比例 */
+function analyzeFrame(ctx: CanvasRenderingContext2D, w: number, h: number): FrameCaptureStats {
+  if (w === 0 || h === 0) return { avgBrightness: 0, nonBlackRatio: 0 };
+  const { data } = ctx.getImageData(0, 0, w, h);
+  // 取樣間隔（非逐 pixel，避免大畫布掃描太貴；47 與 4-byte stride 互質，取樣分佈均勻）
+  const step = 4 * 47;
+  let sum = 0;
+  let nonBlack = 0;
+  let n = 0;
+  for (let i = 0; i + 2 < data.length; i += step) {
+    const r = data[i]!;
+    const g = data[i + 1]!;
+    const b = data[i + 2]!;
+    const lum = (r + g + b) / 3;
+    sum += lum;
+    if (lum > 4) nonBlack++;
+    n++;
+  }
+  return { avgBrightness: n > 0 ? sum / n : 0, nonBlackRatio: n > 0 ? nonBlack / n : 0 };
+}
+
 /** 等待 Mapbox 完成一次渲染（最多 200ms，防止 hold still 時卡死） */
 function waitForRender(map: MapboxMap): Promise<void> {
   return new Promise((resolve) => {
@@ -154,7 +210,6 @@ export function useCanvasRecorder({
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const startTimeRef = useRef(0);
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const compositeRafRef = useRef(0);
   const overlayProviderRef = useRef<OverlayProvider | null>(null);
   const hqAbortRef = useRef(false);
 
@@ -206,14 +261,16 @@ export function useCanvasRecorder({
       const { composite, ctx, w, h } = getComposite(srcCanvas);
       overlayProviderRef.current = getOverlay;
 
-      const compositeLoop = () => {
-        ctx.drawImage(srcCanvas, 0, 0);
-        if (overlayProviderRef.current) {
-          drawOverlay(ctx, w, h, overlayProviderRef.current());
-        }
-        compositeRafRef.current = requestAnimationFrame(compositeLoop);
+      // Phase 1-4：改掛在 Mapbox 的 "render" 事件上、同步取像（見 captureFrame
+      // 上方註解）。原本獨立的 rAF 迴圈在 preserveDrawingBuffer:false 下讀取
+      // 時機與 Mapbox 實際繪製不同步，可能讀到已清空的黑畫面。
+      const onRender = () => {
+        captureFrame(ctx, srcCanvas, w, h, overlayProviderRef.current?.());
       };
-      compositeRafRef.current = requestAnimationFrame(compositeLoop);
+      map.on("render", onRender);
+      // 錄製開始當下地圖可能正閒置（Phase 1-2 節流器降頻/停止），強制一次
+      // render 讓 composite canvas 立刻有內容，不必等到下一次真正互動才畫出東西。
+      map.triggerRepaint();
 
       const mimeType = getBestMime();
       const recorder = new MediaRecorder(composite.captureStream(fps), {
@@ -226,7 +283,7 @@ export function useCanvasRecorder({
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
       recorder.onstop = () => {
-        cancelAnimationFrame(compositeRafRef.current);
+        map.off("render", onRender);
         downloadBlob(chunksRef.current, mimeType, "flight-arc");
         chunksRef.current = [];
         setRecordingState("idle");
@@ -329,8 +386,7 @@ export function useCanvasRecorder({
           await waitForRender(map);
 
           // 合成到 composite canvas — 每幀動態取得 overlay
-          ctx.drawImage(srcCanvas, 0, 0);
-          drawOverlay(ctx, w, h, getOverlay());
+          captureFrame(ctx, srcCanvas, w, h, getOverlay());
 
           // 手動擷取一幀
           track.requestFrame();
@@ -364,6 +420,36 @@ export function useCanvasRecorder({
     }
   }, []);
 
+  // ═══════════════════════════════════════
+  // Phase 1-4 驗收用：不落地成檔案，直接量測取像路徑的像素內容
+  // ═══════════════════════════════════════
+
+  /** 即時錄製取像路徑："render" 事件內同步 drawImage（與 startRecording 的 onRender 完全同一段程式碼）*/
+  const captureFrameForTest = useCallback((): Promise<FrameCaptureStats | null> => {
+    if (!map) return Promise.resolve(null);
+    const srcCanvas = map.getCanvas();
+    if (!srcCanvas) return Promise.resolve(null);
+    const { ctx, w, h } = getComposite(srcCanvas);
+    return new Promise((resolve) => {
+      map.once("render", () => {
+        captureFrame(ctx, srcCanvas, w, h);
+        resolve(analyzeFrame(ctx, w, h));
+      });
+      map.triggerRepaint();
+    });
+  }, [map, getComposite]);
+
+  /** HQ 匯出取像路徑：`waitForRender` 之後同步呼叫 `captureFrame`（與 startHQExport 迴圈內完全同一段程式碼）*/
+  const captureHQFrameForTest = useCallback(async (): Promise<FrameCaptureStats | null> => {
+    if (!map) return null;
+    const srcCanvas = map.getCanvas();
+    if (!srcCanvas) return null;
+    const { ctx, w, h } = getComposite(srcCanvas);
+    await waitForRender(map);
+    captureFrame(ctx, srcCanvas, w, h);
+    return analyzeFrame(ctx, w, h);
+  }, [map, getComposite]);
+
   return {
     recordingState,
     recordingTime,
@@ -372,5 +458,7 @@ export function useCanvasRecorder({
     startHQExport,
     stopHQExport,
     hqProgress,
+    captureFrameForTest,
+    captureHQFrameForTest,
   };
 }

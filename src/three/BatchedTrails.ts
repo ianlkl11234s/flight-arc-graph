@@ -21,8 +21,20 @@ const TRAIL_DURATION_SEC = 600;
 const SLOT_POINTS = 128;
 /** 每 slot 頂點數：實點 + 頭尾各一個 opacity=0 的 guard（隔開 line strip 相鄰 slot） */
 const SLOT_VERTS = SLOT_POINTS + 2;
-/** slot 上限：全球尖峰同時空中數（數千）加安全餘裕。記憶體 ≈ 6000×130×44B ≈ 34MB */
-const MAX_SLOTS = 6000;
+/** 每頂點 GPU 記憶體：position(12B) + progress(4B) + aColor(12B) + aOpacity(4B) + aEcef(12B) */
+const BYTES_PER_VERT = 44;
+/**
+ * slot 數下限：即使資料集同時在空中的峰值很小（如單機場 S1 ~105 架），也保留這個基本容量，
+ * 避免資料集稍微變動（航班數 ±幾架）就在下限附近反覆觸發 ensureCapacity() 重建。
+ */
+const MIN_SLOTS = 1024;
+/**
+ * slot 數上限：記憶體保護。16384 × 130 頂點 × 44B/頂點 ≈ 93 MB GPU buffer。
+ * 尖峰並發超過此值時 ensureCapacity() 會截斷並 console.warn（同舊「池滿互踢」行為，只是踢的機率變低）。
+ */
+const SLOT_CAP = 16384;
+/** ensureCapacity() 的餘裕係數：抓資料尖峰的估計值可能略低於實際峰值，留 5% 緩衝避免剛好卡在門檻互踢 */
+const CAPACITY_HEADROOM = 1.05;
 
 interface SlotState {
   flightId: string;
@@ -45,50 +57,50 @@ interface SlotState {
  */
 export class BatchedTrails {
   mesh: THREE.Line;
-  private geometry: THREE.BufferGeometry;
+  private geometry!: THREE.BufferGeometry;
   private material: THREE.ShaderMaterial;
-  private posAttr: THREE.BufferAttribute;
-  private progAttr: THREE.BufferAttribute;
-  private colorAttr: THREE.BufferAttribute;
-  private opacityAttr: THREE.BufferAttribute;
-  private ecefAttr: THREE.BufferAttribute;
-  private positions: Float32Array;
-  private progress: Float32Array;
-  private colors: Float32Array;
-  private opacities: Float32Array;
-  private ecefs: Float32Array;
+  private posAttr!: THREE.BufferAttribute;
+  private progAttr!: THREE.BufferAttribute;
+  private colorAttr!: THREE.BufferAttribute;
+  private opacityAttr!: THREE.BufferAttribute;
+  private ecefAttr!: THREE.BufferAttribute;
+  private positions!: Float32Array;
+  private progress!: Float32Array;
+  private colors!: Float32Array;
+  private opacities!: Float32Array;
+  private ecefs!: Float32Array;
 
-  private states: (SlotState | null)[] = new Array(MAX_SLOTS).fill(null);
+  /** 目前配置的 slot 數（動態，見 ensureCapacity）；buildBuffers() 統一設定 */
+  private capacity = 0;
+  /** 累積逐出次數（slot 池滿後互踢的次數）；驗收/除錯用，rebuild 時歸零 */
+  private evictionCount = 0;
+
+  private states!: (SlotState | null)[];
   private slotByFlight = new Map<string, number>();
   /** 空 slot 池（降冪排列，pop() 取最低 index → 活躍 slot 聚集低位，上傳區段緊湊） */
   private freeSlots: number[] = [];
   /** 歷史最高使用 slot（drawRange 上限；低於此的空 slot opacity 全 0，頂點成本可忽略） */
   private maxEverUsed = -1;
+
+  // ── 逐出用 min-heap（endTime 最小者優先）─────────────────────────
+  // 活躍航班數 > capacity 時，池滿後每幀有大量 flight 搶不到 slot，
+  // 逐出候選須從全部佔用中找 endTime 最小者。原本用 for..of 掃過整個 slotByFlight
+  // （最壞情況 O(capacity)，實測 world 規模達 ~11M 次迭代/幀，是 writeTrail 成本
+  // 的 ~92%）；改用 min-heap 把「找最小 + 移除」壓到 O(log capacity)。
+  // - slotSeq[slot]：目前佔用該 slot 的 acquire 序號，兼作 (a) heap 陳舊 entry 判斷
+  //   （slot 被別的航班重新佔用後，舊 entry 的 seq 對不上 → 懶惰丟棄）與 (b) endTime
+  //   完全打平手時的 tie-break —— 複製原本「Map 迭代序、strict < 不覆蓋」的語意，即
+  //   「同 endTime 時踢最早取得目前 slot 的那個」，保證與原演算法逐出結果逐幀一致
+  //   （實測 endTime 打平手比例 ~28%，FR24 時間戳量化所致，不能忽略）。
+  private slotSeq!: Float64Array;
+  private acquireSeq = 0;
+  private heap: { endTime: number; slot: number; seq: number }[] = [];
   // 本幀髒區（slot 粒度），commit 時合併成單一 updateRange
   private minDirtySlot = Infinity;
   private maxDirtySlot = -1;
 
   constructor(globeUniforms: GlobeUniforms, blending: THREE.Blending) {
-    const totalVerts = MAX_SLOTS * SLOT_VERTS;
-    this.positions = new Float32Array(totalVerts * 3);
-    this.progress = new Float32Array(totalVerts);
-    this.colors = new Float32Array(totalVerts * 3);
-    this.opacities = new Float32Array(totalVerts); // 初始全 0 → 全部不可見
-    this.ecefs = new Float32Array(totalVerts * 3);
-
-    this.posAttr = new THREE.BufferAttribute(this.positions, 3);
-    this.progAttr = new THREE.BufferAttribute(this.progress, 1);
-    this.colorAttr = new THREE.BufferAttribute(this.colors, 3);
-    this.opacityAttr = new THREE.BufferAttribute(this.opacities, 1);
-    this.ecefAttr = new THREE.BufferAttribute(this.ecefs, 3);
-
-    this.geometry = new THREE.BufferGeometry();
-    this.geometry.setAttribute("position", this.posAttr);
-    this.geometry.setAttribute("progress", this.progAttr);
-    this.geometry.setAttribute("aColor", this.colorAttr);
-    this.geometry.setAttribute("aOpacity", this.opacityAttr);
-    this.geometry.setAttribute("aEcef", this.ecefAttr);
-    this.geometry.setDrawRange(0, 0);
+    this.geometry = this.buildBuffers(MIN_SLOTS);
 
     this.material = new THREE.ShaderMaterial({
       vertexShader: GLOBE_PROJECT_GLSL + trailVert,
@@ -105,8 +117,89 @@ export class BatchedTrails {
     // 靜態軌跡桶 mesh 建立時間晚於本 mesh（object id 較大）；renderOrder=1 維持
     // 「動畫光軌畫在靜態軌跡之後」的既有順序（light theme NormalBlending 順序有感）
     this.mesh.renderOrder = 1;
+  }
 
-    for (let i = MAX_SLOTS - 1; i >= 0; i--) this.freeSlots.push(i);
+  /**
+   * （重）配置 slot buffer：typed array + THREE.BufferAttribute + 所有 slot 狀態全部重來。
+   * 供 constructor 首次配置與 ensureCapacity() 重建共用。
+   */
+  private buildBuffers(capacity: number): THREE.BufferGeometry {
+    this.capacity = capacity;
+    const totalVerts = capacity * SLOT_VERTS;
+    this.positions = new Float32Array(totalVerts * 3);
+    this.progress = new Float32Array(totalVerts);
+    this.colors = new Float32Array(totalVerts * 3);
+    this.opacities = new Float32Array(totalVerts); // 初始全 0 → 全部不可見
+    this.ecefs = new Float32Array(totalVerts * 3);
+
+    this.posAttr = new THREE.BufferAttribute(this.positions, 3);
+    this.progAttr = new THREE.BufferAttribute(this.progress, 1);
+    this.colorAttr = new THREE.BufferAttribute(this.colors, 3);
+    this.opacityAttr = new THREE.BufferAttribute(this.opacities, 1);
+    this.ecefAttr = new THREE.BufferAttribute(this.ecefs, 3);
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", this.posAttr);
+    geometry.setAttribute("progress", this.progAttr);
+    geometry.setAttribute("aColor", this.colorAttr);
+    geometry.setAttribute("aOpacity", this.opacityAttr);
+    geometry.setAttribute("aEcef", this.ecefAttr);
+    geometry.setDrawRange(0, 0);
+
+    // slot 狀態全部重置：舊 buffer 裡的軌跡本來就跟著舊 typed array 一起丟棄，
+    // 下一幀 update() 會用當下的 activeFlights 重新 writeTrail，同一批飛機立即補回。
+    this.states = new Array(capacity).fill(null);
+    this.slotByFlight = new Map<string, number>();
+    this.freeSlots = [];
+    for (let i = capacity - 1; i >= 0; i--) this.freeSlots.push(i);
+    this.maxEverUsed = -1;
+    this.slotSeq = new Float64Array(capacity);
+    this.acquireSeq = 0;
+    this.heap = [];
+    this.evictionCount = 0;
+    this.minDirtySlot = Infinity;
+    this.maxDirtySlot = -1;
+
+    return geometry;
+  }
+
+  /**
+   * 依「這份資料同時在空中的峰值」（不含 headroom，FlightScene.updateTrailCapacity 算出）
+   * 動態調整 slot 容量：clamp(peak × 1.05, MIN_SLOTS, SLOT_CAP)。
+   *
+   * 只在「需求超過目前容量」或「需求遠小於目前容量（<一半）」時才真的重建 buffer，
+   * 避免同一資料集內的微幅波動（幾架飛機進出）反覆觸發重配。重建有一次性成本
+   * （當幀所有 slot 內容清空，下一幀由 update() 用目前 activeFlights 重寫），
+   * 所以只在真正需要時才做——切機場/region/日期（資料集 reference 變）才會呼叫本方法。
+   */
+  ensureCapacity(peakConcurrent: number): void {
+    const rawTarget = Math.ceil(Math.max(0, peakConcurrent) * CAPACITY_HEADROOM);
+    const target = Math.max(MIN_SLOTS, Math.min(rawTarget, SLOT_CAP));
+    if (rawTarget > SLOT_CAP) {
+      console.warn(
+        `[BatchedTrails] 尖峰同時在空中數 ${peakConcurrent}（含 headroom ${rawTarget}）超過 slot 上限 ${SLOT_CAP}，已截斷；超額航班會互踢。`,
+      );
+    }
+    if (target <= this.capacity && target * 2 >= this.capacity) return; // 容量夠用且沒有過度浪費，不重建
+    const oldGeometry = this.geometry;
+    this.geometry = this.buildBuffers(target);
+    this.mesh.geometry = this.geometry;
+    oldGeometry.dispose();
+  }
+
+  /** 目前配置的 slot 數；驗收/除錯用 */
+  getCapacity(): number {
+    return this.capacity;
+  }
+
+  /** 目前 GPU buffer 估算大小（bytes）：capacity × SLOT_VERTS × BYTES_PER_VERT；驗收/除錯用 */
+  getBufferBytes(): number {
+    return this.capacity * SLOT_VERTS * BYTES_PER_VERT;
+  }
+
+  /** 累積逐出次數（slot 池滿後互踢的次數）；驗收/除錯用 */
+  getEvictionCount(): number {
+    return this.evictionCount;
   }
 
   /**
@@ -292,27 +385,87 @@ export class BatchedTrails {
   }
 
   private acquireSlot(flightId: string, endTime: number): number {
+    // 陳舊 entry（slot 被重新佔用後留下的舊 heap 記錄）太多時整批重建，保持記憶體有界。
+    // 放在池滿判斷之外：池從不滿的場景（S1/S2）heap 只會單調成長（release 不會移除舊 entry），
+    // 沒有這行同樣會無界累積，只是速度較慢。
+    if (this.heap.length > this.capacity * 8) this.rebuildHeap();
     if (this.freeSlots.length === 0) {
-      // 池滿：踢「最接近抵達」的航班（本來就快落地消失，視覺衝擊最小）
-      let victimId: string | null = null;
+      // 池滿：踢「最接近抵達」的航班（本來就快落地消失，視覺衝擊最小）。
+      // O(log n) min-heap 取代原本掃全表的線性搜尋，逐出結果（含打平手 tie-break）與原演算法相同。
       let victimSlot = -1;
-      let minEnd = Infinity;
-      for (const [id, s] of this.slotByFlight) {
-        const st = this.states[s];
-        if (st && st.endTime < minEnd) {
-          minEnd = st.endTime;
-          victimId = id;
-          victimSlot = s;
-        }
+      let top = this.heapPopMin();
+      while (top) {
+        if (top.seq === this.slotSeq[top.slot]) { victimSlot = top.slot; break; } // 仍是目前佔用者，命中
+        top = this.heapPopMin(); // 陳舊 entry（slot 早已換人佔用），丟棄繼續找
       }
-      if (victimId === null) return -1;
+      if (victimSlot === -1) return -1;
+      const victimId = this.states[victimSlot]!.flightId;
       this.release(victimId, victimSlot);
+      this.evictionCount++; // 驗收/除錯用計數器；不影響逐出邏輯本身
     }
     const slot = this.freeSlots.pop()!;
     this.states[slot] = { flightId, endTime, lastCount: 0 };
     this.slotByFlight.set(flightId, slot);
     if (slot > this.maxEverUsed) this.maxEverUsed = slot;
+    const seq = ++this.acquireSeq;
+    this.slotSeq[slot] = seq;
+    this.heapPush({ endTime, slot, seq });
     return slot;
+  }
+
+  // ── min-heap 基本操作（陣列表示，endTime 升冪；打平手比 seq 升冪）───────
+  private heapLess(a: { endTime: number; seq: number }, b: { endTime: number; seq: number }): boolean {
+    return a.endTime < b.endTime || (a.endTime === b.endTime && a.seq < b.seq);
+  }
+
+  private heapPush(entry: { endTime: number; slot: number; seq: number }) {
+    const h = this.heap;
+    h.push(entry);
+    let i = h.length - 1;
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (!this.heapLess(entry, h[parent]!)) break;
+      h[i] = h[parent]!;
+      i = parent;
+    }
+    h[i] = entry;
+  }
+
+  private heapPopMin(): { endTime: number; slot: number; seq: number } | undefined {
+    const h = this.heap;
+    if (h.length === 0) return undefined;
+    const top = h[0]!;
+    const last = h.pop()!;
+    if (h.length > 0) {
+      h[0] = last;
+      this.heapSiftDown(0);
+    }
+    return top;
+  }
+
+  private heapSiftDown(i: number) {
+    const h = this.heap;
+    const n = h.length;
+    const entry = h[i]!;
+    for (;;) {
+      const l = i * 2 + 1, r = l + 1;
+      let smallest = i, smallestEntry = entry;
+      if (l < n && this.heapLess(h[l]!, smallestEntry)) { smallest = l; smallestEntry = h[l]!; }
+      if (r < n && this.heapLess(h[r]!, smallestEntry)) { smallest = r; smallestEntry = h[r]!; }
+      if (smallest === i) break;
+      h[i] = smallestEntry;
+      i = smallest;
+    }
+    h[i] = entry;
+  }
+
+  /** heap 累積過多陳舊 entry 時整批重建（只留目前仍佔用中的 slot），保持記憶體有界 */
+  private rebuildHeap() {
+    this.heap.length = 0;
+    for (const slot of this.slotByFlight.values()) {
+      this.heap.push({ endTime: this.states[slot]!.endTime, slot, seq: this.slotSeq[slot]! });
+    }
+    for (let i = (this.heap.length >> 1) - 1; i >= 0; i--) this.heapSiftDown(i);
   }
 
   private markDirty(slot: number) {
