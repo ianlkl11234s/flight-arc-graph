@@ -4,6 +4,9 @@
 # 在 Zeabur 終端機上執行：sh /app/scripts/pull-from-s3.sh
 #   全檔重拉 airports（S3 端資料整批更新時用，如 2026-07 高度單位遷移）：
 #   sh /app/scripts/pull-from-s3.sh --force-airports
+#   跳過 LOD（L1/L2）下載，只拉全解析度（省 ~1.2 GB 與下載時間，但前端拉遠時
+#   會回落到全解析度、失去 Phase 2 的效能收益）：
+#   sh /app/scripts/pull-from-s3.sh --no-lod
 #
 # Alpine 相容（BusyBox wget，不依賴 curl/bash）
 # - 可重複執行（已下載的非空檔案會跳過；--force-airports 例外）
@@ -13,9 +16,13 @@
 # 注意：不用 set -e，個別檔案失敗時要繼續
 
 FORCE_AIRPORTS=0
-if [ "$1" = "--force-airports" ]; then
-  FORCE_AIRPORTS=1
-fi
+WITH_LOD=1
+for ARG in "$@"; do
+  case "$ARG" in
+    --force-airports) FORCE_AIRPORTS=1 ;;
+    --no-lod) WITH_LOD=0 ;;
+  esac
+done
 
 S3_BASE="https://migu-gis-data-collector.s3.ap-southeast-2.amazonaws.com/flight-arc"
 DATA_DIR="/data"
@@ -134,6 +141,61 @@ for DAILY_ENTRY in $DAILY_ENTRIES; do
 done
 if [ "$DAILY_TOTAL" -gt 0 ]; then
   echo "  daily: total=${DAILY_COUNT} fetched=${DAILY_FETCHED} skipped=${DAILY_SKIPPED} failed=${DAILY_FAILED}"
+fi
+
+# ── LOD（L1 eps 50m / L2 eps 250m）──────────────────────────────
+# 主 manifest 不記錄 LOD 檔（split-tracks --lod-only 刻意不動它），所以改讀
+# tracks/lod-files.txt：每行 "相對路徑<TAB>bytes"，由 split-tracks 產生。
+# 不能對每個 daily shard 盲試 .l1/.l2 —— 4,738 個日檔會變成 9,476 次 404。
+# 缺檔不是錯誤：前端 loadAirportFlights 對 404 會自動回落全解析度。
+if [ "$WITH_LOD" = "1" ]; then
+  echo "[2b/4] Tracks airports LOD (L1/L2)..."
+  LOD_LIST="${DATA_DIR}/tracks/lod-files.txt"
+  if fetch_replace "${S3_BASE}/tracks/lod-files.txt" "$LOD_LIST"; then
+    LOD_TOTAL=$(wc -l < "$LOD_LIST" | tr -d ' ')
+    LOD_COUNT=0
+    LOD_FETCHED=0
+    LOD_SKIPPED=0
+    LOD_FAILED=0
+    while IFS="$(printf '\t')" read -r LOD_REL LOD_BYTES; do
+      [ -z "$LOD_REL" ] && continue
+      LOD_COUNT=$((LOD_COUNT + 1))
+      LOD_DST="${DATA_DIR}/tracks/${LOD_REL}"
+      mkdir -p "$(dirname "$LOD_DST")"
+      if [ "$FORCE_AIRPORTS" = "1" ]; then
+        rm -f "$LOD_DST"
+      fi
+      LOD_ACTUAL=0
+      if [ -s "$LOD_DST" ]; then
+        LOD_ACTUAL=$(wc -c < "$LOD_DST" | tr -d ' ')
+      fi
+      if [ "$LOD_ACTUAL" = "$LOD_BYTES" ]; then
+        LOD_SKIPPED=$((LOD_SKIPPED + 1))
+      else
+        rm -f "$LOD_DST"
+        if fetch "${S3_BASE}/tracks/${LOD_REL}" "$LOD_DST"; then
+          LOD_ACTUAL=$(wc -c < "$LOD_DST" | tr -d ' ')
+          if [ "$LOD_ACTUAL" = "$LOD_BYTES" ]; then
+            LOD_FETCHED=$((LOD_FETCHED + 1))
+          else
+            rm -f "$LOD_DST"
+            LOD_FAILED=$((LOD_FAILED + 1))
+            echo "  ⚠️  size mismatch: ${LOD_REL} (${LOD_ACTUAL}/${LOD_BYTES})"
+          fi
+        else
+          LOD_FAILED=$((LOD_FAILED + 1))
+        fi
+      fi
+      if [ $((LOD_COUNT % 1000)) -eq 0 ]; then
+        echo "  ... lod ${LOD_COUNT}/${LOD_TOTAL} (fetched=${LOD_FETCHED} skipped=${LOD_SKIPPED} failed=${LOD_FAILED})"
+      fi
+    done < "$LOD_LIST"
+    echo "  lod: total=${LOD_COUNT} fetched=${LOD_FETCHED} skipped=${LOD_SKIPPED} failed=${LOD_FAILED}"
+  else
+    echo "  （S3 沒有 tracks/lod-files.txt，略過 LOD；前端會自動回落全解析度）"
+  fi
+else
+  echo "[2b/4] LOD 下載已停用（--no-lod）"
 fi
 
 COUNT=0

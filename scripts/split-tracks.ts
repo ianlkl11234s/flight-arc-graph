@@ -44,6 +44,7 @@ import {
   mkdirSync,
   existsSync,
   renameSync,
+  statSync,
 } from "fs";
 import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -494,7 +495,48 @@ function runLodOnly(airportsFilter: string[] | undefined, datesFilter: string[] 
       buildLodFilesForDaily(icao, date);
     }
   }
+  writeLodManifest();
   console.log("\n✅ --lod-only 完成（未動 flat / daily / region / manifest 既有產出）");
+}
+
+/**
+ * 掃出所有已產的 L1/L2 檔，寫成 `public/tracks/lod-manifest.json`。
+ *
+ * 為什麼需要這個檔：主 manifest 不記錄 LOD（--lod-only 刻意不動它），而部署端的
+ * pull-from-s3.sh 若對每個 daily shard 盲試 `.l1`/`.l2`，4,738 個日檔就是 9,476 次
+ * 404 請求。有清單就只拉真的存在的檔，也能做 size 驗證。
+ *
+ * 格式刻意用「每行一筆」的純文字而非 JSON：部署端是 Alpine 容器只有 sh，
+ * 解析巢狀 JSON 很痛，`while read REL BYTES` 直接就能吃。
+ *   airports/RCTP/2026-02-18.l1.jsonl<TAB>4113523
+ */
+function writeLodManifest(): void {
+  const lines: string[] = [];
+  let totalBytes = 0;
+  let icaoCount = 0;
+  for (const icao of listAirportIcaos()) {
+    const dailyDir = join(AIRPORTS_DIR, icao);
+    if (!existsSync(dailyDir)) continue;
+    let hasAny = false;
+    for (const date of listDailyDates(icao)) {
+      for (const suffix of ["l1", "l2"] as const) {
+        const file = join(dailyDir, `${date}.${suffix}.jsonl`);
+        if (!existsSync(file)) continue;
+        const bytes = statSync(file).size;
+        if (bytes === 0) continue;
+        lines.push(`airports/${icao}/${date}.${suffix}.jsonl\t${bytes}`);
+        totalBytes += bytes;
+        hasAny = true;
+      }
+    }
+    if (hasAny) icaoCount++;
+  }
+  const dst = join(TRACKS_DIR, "lod-files.txt");
+  writeFileSync(dst, lines.length > 0 ? `${lines.join("\n")}\n` : "");
+  console.log(
+    `   📄 lod-files.txt：${icaoCount} 座機場、${lines.length} 個檔、` +
+      `${(totalBytes / 1048576).toFixed(0)} MB`,
+  );
 }
 
 // ── Main ──
@@ -510,6 +552,12 @@ function main() {
   const dedupeOnly = process.argv.includes("--dedupe-only");
   const manifestOnly = process.argv.includes("--manifest-only");
   const lodOnly = process.argv.includes("--lod-only");
+
+  // 只重產 lod-manifest.json（不重跑 DP），用在 LOD 檔已存在、只是清單過期時
+  if (process.argv.includes("--lod-manifest-only")) {
+    writeLodManifest();
+    return;
+  }
 
   if (lodOnly) {
     const airportsIdx = process.argv.indexOf("--airports");
