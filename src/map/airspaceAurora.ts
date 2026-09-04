@@ -8,6 +8,7 @@ import {
   type AirspaceSettings,
 } from "../types/airspace";
 
+import { GLOBE_PROJECT_GLSL } from "../three/shaders/globeProject";
 import vertSrc from "../three/shaders/airspaceAurora.vert?raw";
 import fragSrc from "../three/shaders/airspaceAurora.frag?raw";
 import { getFrozenAnimTime } from "../three/animClock";
@@ -48,6 +49,14 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
   let bottomLine: THREE.LineSegments | null = null;
   let bottomLineMat: THREE.ShaderMaterial | null = null;
   const projectionMatrix = new THREE.Matrix4();
+  /** 貼球共用 uniform（wall/top/bottom 三個材質共用同一組 value 物件，每幀更新一次） */
+  const globeUniforms = {
+    uGlobeToMerc: { value: new THREE.Matrix4() },
+    uTransition: { value: 1 },
+    uCameraEcef: { value: new THREE.Vector3() },
+    uLimbFade: { value: 0 },
+  };
+  const globeInvMatrix = new THREE.Matrix4();
 
   let built = false;
   let building = false;
@@ -59,10 +68,12 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
     const colors = CATEGORY_ORDER.map(() => new THREE.Color(1, 1, 1));
     const enabled = CATEGORY_ORDER.map(() => 0);
     return new THREE.ShaderMaterial({
-      vertexShader: vertSrc,
+      vertexShader: GLOBE_PROJECT_GLSL + vertSrc,
       fragmentShader: fragSrc,
       transparent: true,
       depthWrite: false,
+      // globe 底圖 depth（far=∞）會誤遮貼球幾何，故關閉；背面靠 shader cull 藏（同靜態軌跡）
+      depthTest: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
       uniforms: {
@@ -73,6 +84,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
         uEdgeGlow: { value: 0.8 },
         uTime: { value: 0 },
         uIsDark: { value: 1 },
+        ...globeUniforms,
       },
     });
   }
@@ -112,6 +124,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
     const wallHeightRatio = new Float32Array(wallVertCount);
     const wallCategoryId = new Float32Array(wallVertCount);
     const wallEdgeFactor = new Float32Array(wallVertCount);
+    const wallDir = new Float32Array(wallVertCount * 3);
 
     // 頂邊 / 底邊線：每環 N 點 → N 條線段 = 2N 頂點
     const lineVertCount = totalRingPoints * 2;
@@ -119,11 +132,13 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
     const topHeightRatio = new Float32Array(lineVertCount);
     const topCategoryId = new Float32Array(lineVertCount);
     const topEdgeFactor = new Float32Array(lineVertCount);
+    const topDir = new Float32Array(lineVertCount * 3);
 
     const botPos = new Float32Array(lineVertCount * 3);
     const botHeightRatio = new Float32Array(lineVertCount);
     const botCategoryId = new Float32Array(lineVertCount);
     const botEdgeFactor = new Float32Array(lineVertCount);
+    const botDir = new Float32Array(lineVertCount * 3);
 
     let wOff = 0, tOff = 0, bOff = 0;
 
@@ -146,62 +161,75 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
       const floorZ = f.floorM * mPerMercLat;
       const ceilZ = f.ceilingM * mPerMercLat;
 
-      // 預計算每點的 mercator xy
+      // 預計算每點的 mercator xy，以及貼球用的 ECEF 單位外法線
+      //（與 globeProject.ts 的 mercatorToEcef 同一組公式，只是省去 mercator 反投影）
       const mxs = new Float32Array(n);
       const mys = new Float32Array(n);
+      const dirs = new Float32Array(n * 3);
       for (let i = 0; i < n; i++) {
         const [lng, lat] = ring[i]!;
         const mc = mapboxgl.MercatorCoordinate.fromLngLat([lng, lat], 0);
         mxs[i] = mc.x;
         mys[i] = mc.y;
+        const lngRad = (lng * Math.PI) / 180;
+        const latRad = (lat * Math.PI) / 180;
+        const cosLat = Math.cos(latRad);
+        dirs[i * 3 + 0] = cosLat * Math.sin(lngRad);
+        dirs[i * 3 + 1] = -Math.sin(latRad);
+        dirs[i * 3 + 2] = cosLat * Math.cos(lngRad);
       }
 
       for (let i = 0; i < n; i++) {
         const j = (i + 1) % n;
-        const x0 = mxs[i]!, y0 = mys[i]!;
-        const x1 = mxs[j]!, y1 = mys[j]!;
 
         // Quad: (i,bot), (j,bot), (j,top), (i,top)
         // Triangle 1: i_bot, j_bot, j_top
         // Triangle 2: i_bot, j_top, i_top
-        const push = (x: number, y: number, z: number, hr: number, ef: number) => {
-          wallPos[wOff * 3 + 0] = x;
-          wallPos[wOff * 3 + 1] = y;
+        // k = 環點索引（xy 與 ECEF 方向都由它取），z = mercator 高度
+        const push = (k: number, z: number, hr: number, ef: number) => {
+          wallPos[wOff * 3 + 0] = mxs[k]!;
+          wallPos[wOff * 3 + 1] = mys[k]!;
           wallPos[wOff * 3 + 2] = z;
+          wallDir[wOff * 3 + 0] = dirs[k * 3 + 0]!;
+          wallDir[wOff * 3 + 1] = dirs[k * 3 + 1]!;
+          wallDir[wOff * 3 + 2] = dirs[k * 3 + 2]!;
           wallHeightRatio[wOff] = hr;
           wallCategoryId[wOff] = catIdx;
           wallEdgeFactor[wOff] = ef;
           wOff++;
         };
 
-        push(x0, y0, floorZ, 0, 0);
-        push(x1, y1, floorZ, 0, 0);
-        push(x1, y1, ceilZ, 1, 1);
+        push(i, floorZ, 0, 0);
+        push(j, floorZ, 0, 0);
+        push(j, ceilZ, 1, 1);
 
-        push(x0, y0, floorZ, 0, 0);
-        push(x1, y1, ceilZ, 1, 1);
-        push(x0, y0, ceilZ, 1, 1);
+        push(i, floorZ, 0, 0);
+        push(j, ceilZ, 1, 1);
+        push(i, ceilZ, 1, 1);
 
         // 頂邊線段：(i_top, j_top)
-        const pushLine = (arrPos: Float32Array, arrHR: Float32Array, arrCat: Float32Array, arrEF: Float32Array, offRef: { v: number },
-                         x: number, y: number, z: number, hr: number, ef: number) => {
+        const pushLine = (arrPos: Float32Array, arrDir: Float32Array, arrHR: Float32Array, arrCat: Float32Array, arrEF: Float32Array, offRef: { v: number },
+                         k: number, z: number, hr: number, ef: number) => {
           const o = offRef.v;
-          arrPos[o * 3 + 0] = x;
-          arrPos[o * 3 + 1] = y;
+          arrPos[o * 3 + 0] = mxs[k]!;
+          arrPos[o * 3 + 1] = mys[k]!;
           arrPos[o * 3 + 2] = z;
+          arrDir[o * 3 + 0] = dirs[k * 3 + 0]!;
+          arrDir[o * 3 + 1] = dirs[k * 3 + 1]!;
+          arrDir[o * 3 + 2] = dirs[k * 3 + 2]!;
           arrHR[o] = hr;
           arrCat[o] = catIdx;
           arrEF[o] = ef;
           offRef.v = o + 1;
         };
         const tRef = { v: tOff };
-        pushLine(topPos, topHeightRatio, topCategoryId, topEdgeFactor, tRef, x0, y0, ceilZ, 1, 1);
-        pushLine(topPos, topHeightRatio, topCategoryId, topEdgeFactor, tRef, x1, y1, ceilZ, 1, 1);
+        pushLine(topPos, topDir, topHeightRatio, topCategoryId, topEdgeFactor, tRef, i, ceilZ, 1, 1);
+        pushLine(topPos, topDir, topHeightRatio, topCategoryId, topEdgeFactor, tRef, j, ceilZ, 1, 1);
         tOff = tRef.v;
 
         const bRef = { v: bOff };
-        pushLine(botPos, botHeightRatio, botCategoryId, botEdgeFactor, bRef, x0, y0, floorZ, 0, 1);
-        pushLine(botPos, botHeightRatio, botCategoryId, botEdgeFactor, bRef, x1, y1, floorZ, 0, 1);
+        pushLine(botPos, botDir, botHeightRatio, botCategoryId, botEdgeFactor, bRef, i, floorZ, 0, 1);
+        pushLine(botPos, botDir, botHeightRatio, botCategoryId, botEdgeFactor, bRef, j, floorZ, 0, 1);
         bOff = bRef.v;
       }
     }
@@ -212,6 +240,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
     wallGeo.setAttribute("heightRatio", new THREE.BufferAttribute(wallHeightRatio.subarray(0, wOff), 1));
     wallGeo.setAttribute("categoryId", new THREE.BufferAttribute(wallCategoryId.subarray(0, wOff), 1));
     wallGeo.setAttribute("edgeFactor", new THREE.BufferAttribute(wallEdgeFactor.subarray(0, wOff), 1));
+    wallGeo.setAttribute("aDir", new THREE.BufferAttribute(wallDir.subarray(0, wOff * 3), 3));
     wallMat = makeWallMaterial();
     wallMesh = new THREE.Mesh(wallGeo, wallMat);
     wallMesh.frustumCulled = false;
@@ -222,6 +251,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
     topGeo.setAttribute("heightRatio", new THREE.BufferAttribute(topHeightRatio.subarray(0, tOff), 1));
     topGeo.setAttribute("categoryId", new THREE.BufferAttribute(topCategoryId.subarray(0, tOff), 1));
     topGeo.setAttribute("edgeFactor", new THREE.BufferAttribute(topEdgeFactor.subarray(0, tOff), 1));
+    topGeo.setAttribute("aDir", new THREE.BufferAttribute(topDir.subarray(0, tOff * 3), 3));
     topLineMat = makeLineMaterial(true);
     topLine = new THREE.LineSegments(topGeo, topLineMat);
     topLine.frustumCulled = false;
@@ -232,6 +262,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
     botGeo.setAttribute("heightRatio", new THREE.BufferAttribute(botHeightRatio.subarray(0, bOff), 1));
     botGeo.setAttribute("categoryId", new THREE.BufferAttribute(botCategoryId.subarray(0, bOff), 1));
     botGeo.setAttribute("edgeFactor", new THREE.BufferAttribute(botEdgeFactor.subarray(0, bOff), 1));
+    botGeo.setAttribute("aDir", new THREE.BufferAttribute(botDir.subarray(0, bOff * 3), 3));
     bottomLineMat = makeLineMaterial(false);
     bottomLine = new THREE.LineSegments(botGeo, bottomLineMat);
     bottomLine.frustumCulled = false;
@@ -309,7 +340,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
       }
     },
 
-    render(_gl: WebGLRenderingContext, matrix: number[]) {
+    render(_gl, matrix, projection, projectionToMercatorMatrix, projectionToMercatorTransition) {
       if (!renderer) return;
       const settings = opts.getSettings();
       if (!settings.enabled) return;
@@ -322,6 +353,23 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
       if (!hasVisibleOutput) return;
 
       applyUniforms();
+
+      // globe 貼球：Mapbox 每幀給 globe→mercator 矩陣 + 過渡係數（低 zoom 為球體）。
+      // 相機轉回 ECEF（inverse(globeToMerc)·camMerc）供 shader 做背面剔除——
+      // mercator 空間下球體是扭曲的，法線方位對不上，直接點積會誤判整片。
+      const isGlobe = projection?.name === "globe" && !!projectionToMercatorMatrix;
+      if (isGlobe) {
+        globeUniforms.uGlobeToMerc.value.fromArray(projectionToMercatorMatrix!);
+        globeUniforms.uTransition.value = Math.max(0, Math.min(1, projectionToMercatorTransition ?? 0));
+        const cam = mapRef?.getFreeCameraOptions().position;
+        if (cam) {
+          globeInvMatrix.copy(globeUniforms.uGlobeToMerc.value).invert();
+          globeUniforms.uCameraEcef.value.set(cam.x, cam.y, cam.z).applyMatrix4(globeInvMatrix);
+        }
+      } else {
+        globeUniforms.uGlobeToMerc.value.identity();
+        globeUniforms.uTransition.value = 1;
+      }
 
       camera.projectionMatrix = projectionMatrix.fromArray(matrix);
       renderer.resetState();

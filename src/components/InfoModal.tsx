@@ -252,6 +252,18 @@ function DataSourcesPage({ lang }: { lang: Lang }) {
       color: "#1ad9e5",
     },
     {
+      name: { zh: "管制空域 — OpenAIP", en: "Controlled Airspace — OpenAIP" },
+      source: "OpenAIP · CC BY-NC-SA 4.0",
+      desc: { zh: "限航區、禁航區、危險區、管制區（TMA/CTR）與飛航情報區（FIR）的立體邊界 — 涵蓋美國、英國、法國、德國、義大利、西班牙、荷蘭、土耳其、日本、中國、泰國。資料由 OpenAIP 社群維護，以 CC BY-NC-SA 4.0 授權釋出（僅限非商業使用），實際條款以 openaip.net 公告為準。", en: "3D boundaries of restricted, prohibited, danger, and control areas (TMA/CTR) plus flight information regions (FIR) — covering the US, UK, France, Germany, Italy, Spain, Netherlands, Türkiye, Japan, China, and Thailand. Maintained by the OpenAIP community and released under CC BY-NC-SA 4.0 (non-commercial use only); refer to openaip.net for current terms." },
+      color: "#ff5977",
+    },
+    {
+      name: { zh: "臺灣空域 — 民航局 eAIP", en: "Taiwan Airspace — CAA eAIP" },
+      source: "交通部民航局 eAIP（ais.caa.gov.tw）",
+      desc: { zh: "臺灣本島與周邊的限航區、禁航區、訓練空域與防空識別區（ADIZ）— 取自交通部民用航空局電子式飛航指南（eAIP）的 ENR 2.1／5.1／5.3／5.5 章節。本圖層僅供視覺化參考，不可作為飛航依據。", en: "Restricted, prohibited, and training areas plus the ADIZ around Taiwan — sourced from the Civil Aeronautics Administration (MOTC) electronic AIP, sections ENR 2.1/5.1/5.3/5.5. For visualization reference only; not for navigational use." },
+      color: "#ffbf40",
+    },
+    {
       name: { zh: "OpenStreetMap", en: "OpenStreetMap" },
       source: "OSM Overpass API",
       desc: { zh: "機場邊界多邊形 — 透過 Overpass API 擷取台灣、日本、香港等地機場的建築與跑道邊界，用於地圖上的機場區域渲染與光暈效果。", en: "Airport boundary polygons — retrieved via Overpass API for airports across Taiwan, Japan, Hong Kong, and more, used for airport area rendering and glow effects on the map." },
