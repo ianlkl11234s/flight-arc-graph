@@ -5,6 +5,7 @@ varying float vHeightRatio;
 varying float vCategoryId;
 varying float vEdgeFactor;
 varying vec2 vWorldXY;
+varying float vCull;   // globe 背面剔除（vert 端算，平面模式恆 1）
 
 uniform vec3 uColors[6];
 uniform float uEnabled[6];    // 0 = 隱藏 / 1 = 顯示（小於 0.5 會 discard）
@@ -58,5 +59,6 @@ void main() {
   col = mix(col, col * 0.55, isLight);
   alpha = alpha * mix(1.0, 0.55, isLight);
 
-  gl_FragColor = vec4(col, alpha * uOpacity);
+  // vCull：材質是 depthTest:false，球體背面完全靠這個係數藏（同靜態軌跡）
+  gl_FragColor = vec4(col, alpha * uOpacity * vCull);
 }
