@@ -11,3 +11,6 @@
 {"ts":"2026-08-21T06:42:06.318Z","label":"rank40-125","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"done","attempted":6200,"ok":6161,"empty":27,"failed":12,"requests":6189,"credits_est":248000,"done_total_after":82190}
 {"ts":"2026-08-21T08:23:39.481Z","label":"MMUN","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"done","attempted":219,"ok":219,"empty":0,"failed":0,"requests":219,"credits_est":8760,"done_total_after":82421}
 {"ts":"2026-08-21T08:29:49.073Z","label":"OPKC","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"done","attempted":80,"ok":80,"empty":0,"failed":0,"requests":80,"credits_est":3200,"done_total_after":82501}
+{"ts":"2026-09-15T12:40:26.760Z","label":"rank40-395","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"done","attempted":15,"ok":0,"empty":0,"failed":15,"requests":0,"credits_est":600,"done_total_after":82501}
+{"ts":"2026-09-15T12:41:54.216Z","label":"rank40-395","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"sigint","attempted":22,"ok":22,"empty":0,"failed":0,"requests":22,"credits_est":880,"done_total_after":82523}
+{"ts":"2026-09-16T00:55:27.438Z","label":"rank40-395","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"done","attempted":15282,"ok":15083,"empty":195,"failed":4,"requests":15282,"credits_est":611280,"done_total_after":97606}
