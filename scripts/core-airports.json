@@ -1,12 +1,12 @@
 {
- "generatedAt": "2026-08-30T02:43:29.445Z",
+ "generatedAt": "2026-09-16T02:08:03.210Z",
  "rule": "done >= 50 && done/scheduled >= 0.8（台灣時間切日）",
  "sourceSummary": {
   "newFormatDedupedFlights": 100261,
   "legacyRawFlights": 187327,
   "dedupedFlights": 187327,
   "activeQueryAirports": 1164,
-  "doneTracks": 82501,
+  "doneTracks": 97622,
   "parsedNewFormatFiles": 2721,
   "skippedInvalidFiles": 0
  },
@@ -16,7 +16,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 0
+     "done": 16
     }
    }
   },
@@ -29,7 +29,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
@@ -42,7 +42,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -59,7 +59,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -68,7 +68,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
-     "done": 0
+     "done": 6
     }
    }
   },
@@ -81,7 +81,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -90,7 +90,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -103,7 +103,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -112,7 +112,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -121,7 +121,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 69,
-     "done": 0
+     "done": 19
     }
    }
   },
@@ -134,7 +134,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -143,16 +143,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 0
+     "done": 22
     }
    }
   },
   "AYPY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 120,
-     "done": 3
+     "done": 118
     }
    }
   },
@@ -161,7 +163,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 0
+     "done": 9
     }
    }
   },
@@ -188,7 +190,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -197,7 +199,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 1
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -214,7 +216,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
-     "done": 0
+     "done": 20
     }
    }
   },
@@ -223,7 +225,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 2
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -236,7 +238,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -258,7 +260,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 0
+     "done": 7
     }
    }
   },
@@ -267,7 +269,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -280,7 +282,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -316,11 +318,13 @@
    }
   },
   "BIKF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 116,
-     "done": 66
+     "done": 116
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -333,7 +337,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -342,11 +346,13 @@
    "dateStats": {}
   },
   "CYEG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 184,
-     "done": 64
+     "done": 184
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -355,11 +361,13 @@
    }
   },
   "CYLW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 111,
-     "done": 58
+     "done": 111
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -368,11 +376,13 @@
    }
   },
   "CYQB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 112,
-     "done": 56
+     "done": 111
     }
    }
   },
@@ -383,7 +393,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 421,
-     "done": 395
+     "done": 421
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -438,7 +448,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 552,
-     "done": 533
+     "done": 552
     },
     "2026-02-19": {
      "scheduled": 17,
@@ -727,11 +737,13 @@
    }
   },
   "CYWG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 146,
-     "done": 58
+     "done": 146
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -740,11 +752,13 @@
    }
   },
   "CYXE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 52,
-     "done": 17
+     "done": 52
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -757,7 +771,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 362,
-     "done": 161
+     "done": 268
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -766,11 +780,13 @@
    }
   },
   "CYYJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 87,
-     "done": 52
+     "done": 87
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -783,7 +799,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 5
+     "done": 23
     }
    }
   },
@@ -1089,7 +1105,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 192,
-     "done": 182
+     "done": 192
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -1260,7 +1276,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 50,
-     "done": 6
+     "done": 47
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -1273,7 +1289,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -1282,7 +1298,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 101,
-     "done": 18
+     "done": 38
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -1565,7 +1581,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 246,
-     "done": 36
+     "done": 47
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -1666,7 +1682,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
-     "done": 0
+     "done": 1
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -1706,7 +1722,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 6
+     "done": 12
     }
    }
   },
@@ -1715,11 +1731,13 @@
    "dateStats": {}
   },
   "DTTA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 121,
-     "done": 76
+     "done": 121
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -1804,7 +1822,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
-     "done": 15
+     "done": 23
     }
    }
   },
@@ -1813,7 +1831,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 2
+     "done": 3
     }
    }
   },
@@ -1822,7 +1840,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 40,
-     "done": 5
+     "done": 40
     }
    }
   },
@@ -1831,7 +1849,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 58,
-     "done": 5
+     "done": 7
     }
    }
   },
@@ -1840,7 +1858,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 504,
-     "done": 183
+     "done": 305
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -1931,7 +1949,7 @@
     },
     "2026-02-18": {
      "scheduled": 117,
-     "done": 95
+     "done": 117
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -1948,7 +1966,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 103,
-     "done": 46
+     "done": 77
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -2057,7 +2075,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 34,
-     "done": 15
+     "done": 17
     }
    }
   },
@@ -2066,7 +2084,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -2077,7 +2095,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 995,
-     "done": 989
+     "done": 992
     },
     "2026-02-19": {
      "scheduled": 20,
@@ -2372,7 +2390,7 @@
     },
     "2026-02-18": {
      "scheduled": 253,
-     "done": 215
+     "done": 253
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -2469,11 +2487,13 @@
    }
   },
   "EDDK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 260,
-     "done": 111
+     "done": 259
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -2500,7 +2520,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 293,
-     "done": 243
+     "done": 293
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -2611,7 +2631,7 @@
     },
     "2026-02-18": {
      "scheduled": 727,
-     "done": 721
+     "done": 724
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -2824,11 +2844,13 @@
    }
   },
   "EDDN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 92,
-     "done": 43
+     "done": 91
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -2841,11 +2863,13 @@
    }
   },
   "EDDP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 196,
-     "done": 81
+     "done": 196
     },
     "2026-02-25": {
      "scheduled": 1,
@@ -2891,7 +2915,9 @@
    }
   },
   "EDDS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -2899,7 +2925,7 @@
     },
     "2026-02-18": {
      "scheduled": 148,
-     "done": 69
+     "done": 148
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -2932,11 +2958,13 @@
    }
   },
   "EDDV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 105,
-     "done": 47
+     "done": 105
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -2953,7 +2981,7 @@
     },
     "2026-02-18": {
      "scheduled": 60,
-     "done": 27
+     "done": 33
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -2966,7 +2994,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 8
+     "done": 28
     }
    }
   },
@@ -2975,7 +3003,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 44,
-     "done": 2
+     "done": 5
     }
    }
   },
@@ -2984,7 +3012,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 2
+     "done": 5
     }
    }
   },
@@ -2993,7 +3021,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 36,
-     "done": 8
+     "done": 36
     }
    }
   },
@@ -3011,7 +3039,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 6
+     "done": 10
     }
    }
   },
@@ -3020,7 +3048,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 4
+     "done": 12
     }
    }
   },
@@ -3029,7 +3057,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 10
+     "done": 11
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -3086,7 +3114,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 111,
-     "done": 29
+     "done": 30
     }
    }
   },
@@ -3104,7 +3132,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -3113,7 +3141,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 414,
-     "done": 122
+     "done": 171
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -3214,7 +3242,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 2
+     "done": 3
     }
    }
   },
@@ -3267,7 +3295,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 2
+     "done": 3
     }
    }
   },
@@ -3285,12 +3313,14 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 0
+     "done": 2
     }
    }
   },
   "EGAA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 2,
@@ -3298,7 +3328,7 @@
     },
     "2026-02-18": {
      "scheduled": 120,
-     "done": 69
+     "done": 120
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -3311,7 +3341,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 70,
-     "done": 54
+     "done": 55
     }
    }
   },
@@ -3326,7 +3356,7 @@
     },
     "2026-02-18": {
      "scheduled": 171,
-     "done": 157
+     "done": 171
     },
     "2026-02-25": {
      "scheduled": 4,
@@ -3534,11 +3564,13 @@
    }
   },
   "EGGD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 143,
-     "done": 64
+     "done": 143
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -3567,7 +3599,7 @@
     },
     "2026-02-18": {
      "scheduled": 90,
-     "done": 29
+     "done": 52
     }
    }
   },
@@ -3616,7 +3648,7 @@
     },
     "2026-02-18": {
      "scheduled": 42,
-     "done": 20
+     "done": 22
     }
    }
   },
@@ -3629,7 +3661,7 @@
     },
     "2026-02-18": {
      "scheduled": 43,
-     "done": 23
+     "done": 25
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -4110,7 +4142,7 @@
     },
     "2026-02-18": {
      "scheduled": 59,
-     "done": 16
+     "done": 28
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -4119,11 +4151,13 @@
    }
   },
   "EGNT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 74,
-     "done": 37
+     "done": 74
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -4208,7 +4242,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 126,
-     "done": 26
+     "done": 72
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -4249,7 +4283,9 @@
    }
   },
   "EGPD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -4257,7 +4293,7 @@
     },
     "2026-02-18": {
      "scheduled": 176,
-     "done": 40
+     "done": 174
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -4272,7 +4308,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 160,
-     "done": 158
+     "done": 160
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -4363,7 +4399,7 @@
     },
     "2026-02-18": {
      "scheduled": 223,
-     "done": 210
+     "done": 223
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -4563,7 +4599,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -4578,7 +4614,7 @@
     },
     "2026-02-18": {
      "scheduled": 1144,
-     "done": 1140
+     "done": 1144
     },
     "2026-02-19": {
      "scheduled": 27,
@@ -4859,7 +4895,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 26
+     "done": 31
     }
    }
   },
@@ -4874,7 +4910,7 @@
     },
     "2026-02-18": {
      "scheduled": 516,
-     "done": 512
+     "done": 513
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -4979,7 +5015,7 @@
     },
     "2026-02-18": {
      "scheduled": 44,
-     "done": 22
+     "done": 32
     },
     "2026-03-13": {
      "scheduled": 2,
@@ -5005,7 +5041,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 75,
-     "done": 30
+     "done": 41
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -5018,7 +5054,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 596,
-     "done": 215
+     "done": 322
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -5111,7 +5147,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -5120,7 +5156,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -5169,16 +5205,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 2
+     "done": 14
     }
    }
   },
   "ELLX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 174,
-     "done": 77
+     "done": 169
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -5266,7 +5304,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 175,
-     "done": 46
+     "done": 52
     }
    }
   },
@@ -5317,7 +5355,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 456,
-     "done": 400
+     "done": 451
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -5618,7 +5656,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 89,
-     "done": 37
+     "done": 45
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -5639,11 +5677,13 @@
    }
   },
   "EPKK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 174,
-     "done": 84
+     "done": 174
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -5704,7 +5744,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 64,
-     "done": 31
+     "done": 33
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -5853,7 +5893,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 53,
-     "done": 33
+     "done": 39
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -5884,7 +5924,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 101,
-     "done": 39
+     "done": 49
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -5897,7 +5937,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 2
+     "done": 3
     }
    }
   },
@@ -5906,7 +5946,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 1
+     "done": 5
     }
    }
   },
@@ -5919,7 +5959,7 @@
     },
     "2026-02-18": {
      "scheduled": 12,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -5928,7 +5968,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 2
+     "done": 3
     }
    }
   },
@@ -5941,7 +5981,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -5950,7 +5990,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 40,
-     "done": 3
+     "done": 40
     }
    }
   },
@@ -5968,7 +6008,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 1
+     "done": 2
     }
    }
   },
@@ -6026,7 +6066,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
-     "done": 0
+     "done": 11
     }
    }
   },
@@ -6044,7 +6084,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 31,
-     "done": 0
+     "done": 31
     }
    }
   },
@@ -6062,7 +6102,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 1
+     "done": 4
     }
    }
   },
@@ -6071,7 +6111,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
-     "done": 1
+     "done": 6
     }
    }
   },
@@ -6080,7 +6120,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 1
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -6098,11 +6138,13 @@
    }
   },
   "ESOW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 53,
-     "done": 0
+     "done": 53
     }
    }
   },
@@ -6111,7 +6153,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
-     "done": 2
+     "done": 33
     }
    }
   },
@@ -6124,7 +6166,7 @@
     },
     "2026-02-18": {
      "scheduled": 472,
-     "done": 125
+     "done": 238
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -6185,7 +6227,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 6
+     "done": 15
     }
    }
   },
@@ -6203,7 +6245,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 2
+     "done": 18
     }
    }
   },
@@ -6230,7 +6272,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
-     "done": 0
+     "done": 25
     }
    }
   },
@@ -6239,7 +6281,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -6248,7 +6290,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 30,
-     "done": 1
+     "done": 2
     }
    }
   },
@@ -6270,7 +6312,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 107,
-     "done": 38
+     "done": 47
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -6319,7 +6361,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 91,
-     "done": 35
+     "done": 39
     },
     "2026-02-26": {
      "scheduled": 3,
@@ -6352,7 +6394,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 0
+     "done": 17
     }
    }
   },
@@ -6365,7 +6407,7 @@
     },
     "2026-02-18": {
      "scheduled": 262,
-     "done": 26
+     "done": 149
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -6462,7 +6504,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 0
+     "done": 12
     }
    }
   },
@@ -6471,7 +6513,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 0
+     "done": 14
     }
    }
   },
@@ -6480,7 +6522,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 0
+     "done": 8
     }
    }
   },
@@ -6489,7 +6531,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 0
+     "done": 10
     }
    }
   },
@@ -6498,7 +6540,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 0
+     "done": 13
     }
    }
   },
@@ -6507,7 +6549,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 95,
-     "done": 0
+     "done": 7
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -6528,11 +6570,13 @@
    "dateStats": {}
   },
   "FAOR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 503,
-     "done": 39
+     "done": 497
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -6637,7 +6681,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 50,
-     "done": 0
+     "done": 26
     }
    }
   },
@@ -6654,7 +6698,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 0
+     "done": 8
     }
    }
   },
@@ -6663,7 +6707,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 7
     }
    }
   },
@@ -6672,7 +6716,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -6681,7 +6725,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 0
+     "done": 5
     }
    }
   },
@@ -6690,7 +6734,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -6699,7 +6743,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 0
+     "done": 8
     }
    }
   },
@@ -6708,7 +6752,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
+     "done": 7
     }
    }
   },
@@ -6717,16 +6761,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 0
+     "done": 18
     }
    }
   },
   "FBMN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 72,
-     "done": 1
+     "done": 67
     }
    }
   },
@@ -6739,7 +6785,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 0
+     "done": 23
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -6752,7 +6798,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 2
+     "done": 18
     }
    }
   },
@@ -6761,7 +6807,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 1
+     "done": 8
     }
    }
   },
@@ -6770,7 +6816,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 0
+     "done": 12
     }
    }
   },
@@ -6779,7 +6825,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 3
+     "done": 8
     }
    }
   },
@@ -6788,7 +6834,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
@@ -6797,7 +6843,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 2
+     "done": 16
     }
    }
   },
@@ -6819,7 +6865,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 73,
-     "done": 18
+     "done": 22
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -6937,7 +6983,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 2
+     "done": 3
     }
    }
   },
@@ -6950,7 +6996,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 8
     }
    }
   },
@@ -6959,7 +7005,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
-     "done": 2
+     "done": 33
     }
    }
   },
@@ -6972,7 +7018,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -6985,7 +7031,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -6994,7 +7040,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -7003,7 +7049,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 1
+     "done": 4
     }
    }
   },
@@ -7020,7 +7066,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -7029,7 +7075,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -7042,7 +7088,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -7119,7 +7165,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -7128,7 +7174,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 0
+     "done": 11
     }
    }
   },
@@ -7141,7 +7187,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 31,
-     "done": 2
+     "done": 31
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7154,7 +7200,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -7167,7 +7213,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -7176,7 +7222,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 9
     }
    }
   },
@@ -7185,7 +7231,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -7202,7 +7248,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 37,
-     "done": 4
+     "done": 37
     }
    }
   },
@@ -7211,7 +7257,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -7220,7 +7266,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
@@ -7229,7 +7275,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 0
+     "done": 6
     }
    }
   },
@@ -7238,7 +7284,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -7247,7 +7293,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
@@ -7256,7 +7302,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -7265,7 +7311,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 74,
-     "done": 7
+     "done": 13
     },
     "2026-02-25": {
      "scheduled": 4,
@@ -7355,7 +7401,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 0
+     "done": 18
     }
    }
   },
@@ -7368,7 +7414,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 8
     }
    }
   },
@@ -7386,7 +7432,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 1
+     "done": 13
     }
    }
   },
@@ -7395,7 +7441,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 1
+     "done": 17
     }
    }
   },
@@ -7404,7 +7450,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
@@ -7442,7 +7488,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 6
     }
    }
   },
@@ -7451,7 +7497,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -7464,7 +7510,7 @@
     },
     "2026-02-18": {
      "scheduled": 25,
-     "done": 3
+     "done": 25
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7477,7 +7523,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 28,
-     "done": 4
+     "done": 28
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7494,7 +7540,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 6
+     "done": 19
     }
    }
   },
@@ -7503,7 +7549,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 132,
-     "done": 82
+     "done": 98
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7518,7 +7564,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 367,
-     "done": 346
+     "done": 366
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -7535,11 +7581,13 @@
    }
   },
   "GCRR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 168,
-     "done": 109
+     "done": 168
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -7548,7 +7596,9 @@
    }
   },
   "GCTS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -7556,7 +7606,7 @@
     },
     "2026-02-18": {
      "scheduled": 252,
-     "done": 133
+     "done": 252
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7573,7 +7623,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 207,
-     "done": 81
+     "done": 122
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -7590,7 +7640,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 2
+     "done": 14
     }
    }
   },
@@ -7599,7 +7649,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 1
+     "done": 2
     }
    }
   },
@@ -7608,7 +7658,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 1
+     "done": 8
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -7621,7 +7671,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 74,
-     "done": 45
+     "done": 57
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7642,7 +7692,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 11
+     "done": 16
     }
    }
   },
@@ -7651,7 +7701,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 9
+     "done": 10
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7673,7 +7723,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 57,
-     "done": 34
+     "done": 37
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7694,7 +7744,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 5
+     "done": 7
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7707,7 +7757,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 4
+     "done": 10
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7722,7 +7772,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 219,
-     "done": 197
+     "done": 218
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -7824,7 +7874,9 @@
    }
   },
   "GMMX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 2,
@@ -7832,7 +7884,7 @@
     },
     "2026-02-18": {
      "scheduled": 198,
-     "done": 96
+     "done": 198
     }
    }
   },
@@ -7859,7 +7911,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 62,
-     "done": 23
+     "done": 41
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7916,7 +7968,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 7
+     "done": 17
     }
    }
   },
@@ -7925,7 +7977,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -7934,7 +7986,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 5
+     "done": 20
     },
     "2026-02-26": {
      "scheduled": 1,
@@ -7997,7 +8049,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 367,
-     "done": 345
+     "done": 355
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -8115,7 +8167,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 2
+     "done": 13
     }
    }
   },
@@ -8124,7 +8176,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 6
+     "done": 26
     },
     "2026-02-26": {
      "scheduled": 1,
@@ -8252,7 +8304,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 174,
-     "done": 76
+     "done": 118
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8273,7 +8325,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 130,
-     "done": 48
+     "done": 80
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8286,7 +8338,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 4
+     "done": 42
     }
    }
   },
@@ -8295,16 +8347,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 0
+     "done": 12
     }
    }
   },
   "HKJK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 217,
-     "done": 49
+     "done": 211
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8401,7 +8455,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
-     "done": 0
+     "done": 16
     }
    }
   },
@@ -8410,7 +8464,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 106,
-     "done": 12
+     "done": 28
     },
     "2026-02-25": {
      "scheduled": 1,
@@ -8471,7 +8525,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 98,
-     "done": 10
+     "done": 16
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8536,7 +8590,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 71,
-     "done": 12
+     "done": 33
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8629,7 +8683,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 239,
-     "done": 115
+     "done": 140
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -8653,16 +8707,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 57,
-     "done": 28
+     "done": 29
     }
    }
   },
   "KALB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 109,
-     "done": 75
+     "done": 88
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -8677,7 +8733,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1889,
-     "done": 1850
+     "done": 1870
     },
     "2026-02-19": {
      "scheduled": 37,
@@ -8752,7 +8808,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 603,
-     "done": 592
+     "done": 595
     },
     "2026-02-19": {
      "scheduled": 21,
@@ -8765,7 +8821,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 127,
-     "done": 50
+     "done": 59
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8774,11 +8830,13 @@
    }
   },
   "KBDL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 183,
-     "done": 129
+     "done": 157
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -8791,7 +8849,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 261,
-     "done": 111
+     "done": 128
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -8815,11 +8873,13 @@
    }
   },
   "KBOI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 227,
-     "done": 144
+     "done": 226
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -8926,7 +8986,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 129,
-     "done": 105
+     "done": 128
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -8950,11 +9010,13 @@
    }
   },
   "KBWI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 521,
-     "done": 319
+     "done": 520
     },
     "2026-02-19": {
      "scheduled": 16,
@@ -8967,7 +9029,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 136,
-     "done": 74
+     "done": 81
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -8980,7 +9042,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 136,
-     "done": 72
+     "done": 81
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -9002,11 +9064,13 @@
    }
   },
   "KCHS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 269,
-     "done": 145
+     "done": 269
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -9025,7 +9089,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 259,
-     "done": 256
+     "done": 257
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -9100,11 +9164,13 @@
    }
   },
   "KCOS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 84,
-     "done": 58
+     "done": 84
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -9119,7 +9185,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 368,
-     "done": 359
+     "done": 365
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -9132,11 +9198,13 @@
    }
   },
   "KDAL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 478,
-     "done": 226
+     "done": 476
     },
     "2026-02-19": {
      "scheduled": 23,
@@ -9151,7 +9219,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 881,
-     "done": 874
+     "done": 876
     },
     "2026-02-19": {
      "scheduled": 27,
@@ -9475,7 +9543,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 112,
-     "done": 79
+     "done": 80
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -9503,7 +9571,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 111,
-     "done": 44
+     "done": 50
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -9518,7 +9586,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1013,
-     "done": 1007
+     "done": 1010
     },
     "2026-02-19": {
      "scheduled": 24,
@@ -9547,7 +9615,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 95,
-     "done": 58
+     "done": 60
     }
    }
   },
@@ -9556,7 +9624,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 105,
-     "done": 65
+     "done": 74
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -9586,7 +9654,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 135,
-     "done": 111
+     "done": 121
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -9599,7 +9667,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 152,
-     "done": 101
+     "done": 112
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -9608,11 +9676,13 @@
    }
   },
   "KGSO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 189,
-     "done": 98
+     "done": 189
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -9621,11 +9691,13 @@
    }
   },
   "KGSP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 124,
-     "done": 90
+     "done": 102
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -9634,11 +9706,13 @@
    }
   },
   "KHOU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 401,
-     "done": 184
+     "done": 400
     },
     "2026-02-19": {
      "scheduled": 13,
@@ -9651,7 +9725,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 236,
-     "done": 102
+     "done": 128
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -9664,7 +9738,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 92,
-     "done": 70
+     "done": 72
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -9679,7 +9753,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 653,
-     "done": 625
+     "done": 651
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -10055,7 +10129,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 139,
-     "done": 57
+     "done": 63
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -10070,7 +10144,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 478,
-     "done": 477
+     "done": 478
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -10083,7 +10157,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 61,
-     "done": 41
+     "done": 47
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -10092,11 +10166,13 @@
    }
   },
   "KJAX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 193,
-     "done": 142
+     "done": 193
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -10111,7 +10187,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1128,
-     "done": 1117
+     "done": 1120
     },
     "2026-02-19": {
      "scheduled": 37,
@@ -10430,7 +10506,7 @@
     },
     "2026-02-18": {
      "scheduled": 1296,
-     "done": 1281
+     "done": 1289
     },
     "2026-02-19": {
      "scheduled": 50,
@@ -10733,7 +10809,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 973,
-     "done": 963
+     "done": 970
     },
     "2026-02-19": {
      "scheduled": 30,
@@ -10746,7 +10822,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 283,
-     "done": 72
+     "done": 84
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -10761,7 +10837,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 281,
-     "done": 233
+     "done": 281
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -10809,11 +10885,13 @@
    }
   },
   "KMDW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 381,
-     "done": 227
+     "done": 381
     },
     "2026-02-19": {
      "scheduled": 17,
@@ -10828,7 +10906,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 519,
-     "done": 505
+     "done": 519
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -10880,11 +10958,13 @@
    }
   },
   "KMKE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 189,
-     "done": 142
+     "done": 154
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -10910,7 +10990,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 154,
-     "done": 83
+     "done": 84
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -10925,7 +11005,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 702,
-     "done": 689
+     "done": 702
     },
     "2026-02-19": {
      "scheduled": 16,
@@ -10940,7 +11020,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 368,
-     "done": 367
+     "done": 368
     },
     "2026-02-19": {
      "scheduled": 11,
@@ -10953,7 +11033,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 171,
-     "done": 46
+     "done": 58
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -10981,7 +11061,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 191,
-     "done": 127
+     "done": 141
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -10994,7 +11074,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 193,
-     "done": 132
+     "done": 147
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -11590,11 +11670,13 @@
    }
   },
   "KORF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 171,
-     "done": 118
+     "done": 171
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -11609,7 +11691,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 408,
-     "done": 398
+     "done": 408
     },
     "2026-02-19": {
      "scheduled": 13,
@@ -11624,7 +11706,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 421,
-     "done": 408
+     "done": 420
     },
     "2026-02-19": {
      "scheduled": 15,
@@ -11639,7 +11721,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 732,
-     "done": 717
+     "done": 731
     },
     "2026-02-19": {
      "scheduled": 24,
@@ -11911,11 +11993,13 @@
    }
   },
   "KPIE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 137,
-     "done": 15
+     "done": 137
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -11943,7 +12027,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 244,
-     "done": 69
+     "done": 75
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -11958,7 +12042,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 146,
-     "done": 119
+     "done": 146
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -11967,11 +12051,13 @@
    }
   },
   "KPVD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 120,
-     "done": 90
+     "done": 108
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -11984,7 +12070,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 77,
-     "done": 44
+     "done": 53
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -11997,7 +12083,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 201,
-     "done": 54
+     "done": 56
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -12012,7 +12098,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 470,
-     "done": 466
+     "done": 468
     },
     "2026-02-19": {
      "scheduled": 12,
@@ -12025,7 +12111,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 93,
-     "done": 58
+     "done": 63
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -12034,11 +12120,13 @@
    }
   },
   "KRIC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 231,
-     "done": 142
+     "done": 230
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -12053,7 +12141,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 140,
-     "done": 123
+     "done": 139
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -12066,7 +12154,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 124,
-     "done": 69
+     "done": 80
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -12075,11 +12163,13 @@
    }
   },
   "KRSW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 300,
-     "done": 223
+     "done": 300
     },
     "2026-02-19": {
      "scheduled": 13,
@@ -12103,11 +12193,13 @@
    }
   },
   "KSAT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 317,
-     "done": 189
+     "done": 316
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -12116,11 +12208,13 @@
    }
   },
   "KSAV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 255,
-     "done": 104
+     "done": 255
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -12133,7 +12227,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 80,
-     "done": 56
+     "done": 57
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -12142,11 +12236,13 @@
    }
   },
   "KSBD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 71,
-     "done": 20
+     "done": 71
     }
    }
   },
@@ -12166,7 +12262,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 545,
-     "done": 535
+     "done": 545
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -12482,7 +12578,9 @@
    }
   },
   "KSFB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -12490,7 +12588,7 @@
     },
     "2026-02-18": {
      "scheduled": 646,
-     "done": 5
+     "done": 646
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -12509,7 +12607,7 @@
     },
     "2026-02-18": {
      "scheduled": 916,
-     "done": 908
+     "done": 910
     },
     "2026-02-19": {
      "scheduled": 33,
@@ -12850,7 +12948,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 311,
-     "done": 303
+     "done": 311
     },
     "2026-02-19": {
      "scheduled": 13,
@@ -12878,7 +12976,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 276,
-     "done": 98
+     "done": 122
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -12908,7 +13006,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 94,
-     "done": 80
+     "done": 83
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -12921,7 +13019,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 275,
-     "done": 101
+     "done": 135
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -12936,7 +13034,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 527,
-     "done": 520
+     "done": 527
     },
     "2026-02-19": {
      "scheduled": 16,
@@ -12949,7 +13047,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 146,
-     "done": 90
+     "done": 105
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -12962,7 +13060,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 190,
-     "done": 107
+     "done": 114
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -12975,7 +13073,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 231,
-     "done": 98
+     "done": 104
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -12990,7 +13088,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 98,
-     "done": 87
+     "done": 88
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -13003,7 +13101,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 85,
-     "done": 40
+     "done": 48
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -13072,16 +13170,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 4
+     "done": 5
     }
    }
   },
   "LBSF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 143,
-     "done": 66
+     "done": 142
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -13174,7 +13274,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 3
+     "done": 18
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -13183,11 +13283,13 @@
    }
   },
   "LCEN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 90,
-     "done": 28
+     "done": 72
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -13200,7 +13302,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 116,
-     "done": 65
+     "done": 82
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -13297,7 +13399,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 1
+     "done": 8
     }
    }
   },
@@ -13310,7 +13412,7 @@
     },
     "2026-02-18": {
      "scheduled": 21,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -13319,7 +13421,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 1
+     "done": 3
     }
    }
   },
@@ -13328,16 +13430,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 2
+     "done": 6
     }
    }
   },
   "LDZA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 99,
-     "done": 43
+     "done": 99
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -13418,12 +13522,14 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
-     "done": 0
+     "done": 1
     }
    }
   },
   "LEAL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 2,
@@ -13431,7 +13537,7 @@
     },
     "2026-02-18": {
      "scheduled": 218,
-     "done": 102
+     "done": 218
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -13440,11 +13546,13 @@
    }
   },
   "LEBB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 80,
-     "done": 42
+     "done": 80
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -13457,7 +13565,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 721,
-     "done": 280
+     "done": 483
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -13558,7 +13666,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 16
+     "done": 18
     }
    }
   },
@@ -13578,7 +13686,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1082,
-     "done": 1071
+     "done": 1077
     },
     "2026-02-19": {
      "scheduled": 24,
@@ -13685,7 +13793,7 @@
     },
     "2026-02-18": {
      "scheduled": 293,
-     "done": 259
+     "done": 293
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -13702,16 +13810,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 4
+     "done": 6
     }
    }
   },
   "LEPA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 208,
-     "done": 69
+     "done": 208
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -13724,12 +13834,14 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 40,
-     "done": 1
+     "done": 2
     }
    }
   },
   "LEVC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -13737,7 +13849,7 @@
     },
     "2026-02-18": {
      "scheduled": 151,
-     "done": 67
+     "done": 151
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -13750,7 +13862,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 17
+     "done": 18
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -13759,11 +13871,13 @@
    }
   },
   "LEZL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 144,
-     "done": 64
+     "done": 144
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -13776,7 +13890,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 86,
-     "done": 48
+     "done": 67
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -13795,7 +13909,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 174,
-     "done": 168
+     "done": 174
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -13835,7 +13949,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 196,
-     "done": 176
+     "done": 195
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -13882,7 +13996,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 185,
-     "done": 171
+     "done": 185
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -13905,7 +14019,7 @@
     },
     "2026-02-18": {
      "scheduled": 231,
-     "done": 212
+     "done": 231
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -13990,7 +14104,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 111,
-     "done": 20
+     "done": 23
     }
    }
   },
@@ -14039,7 +14153,7 @@
     },
     "2026-02-18": {
      "scheduled": 1184,
-     "done": 1175
+     "done": 1183
     },
     "2026-02-19": {
      "scheduled": 19,
@@ -14331,7 +14445,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
-     "done": 11
+     "done": 39
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -14344,7 +14458,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 101,
-     "done": 57
+     "done": 77
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -14357,11 +14471,13 @@
    }
   },
   "LFSB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 153,
-     "done": 67
+     "done": 153
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -14402,7 +14518,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
-     "done": 12
+     "done": 27
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -14518,7 +14634,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
-     "done": 25
+     "done": 33
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -14535,7 +14651,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 12
+     "done": 13
     }
    }
   },
@@ -14544,7 +14660,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 9
+     "done": 13
     }
    }
   },
@@ -14553,7 +14669,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 4
+     "done": 5
     }
    }
   },
@@ -14562,7 +14678,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -14575,7 +14691,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
-     "done": 13
+     "done": 20
     },
     "2026-03-06": {
      "scheduled": 1,
@@ -14592,16 +14708,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 21
+     "done": 23
     }
    }
   },
   "LGTS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 89,
-     "done": 62
+     "done": 72
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -14616,7 +14734,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 278,
-     "done": 238
+     "done": 277
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -14714,7 +14832,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 1
+     "done": 2
     }
    }
   },
@@ -14723,7 +14841,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 79,
-     "done": 18
+     "done": 24
     }
    }
   },
@@ -14732,7 +14850,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -14741,7 +14859,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 2
+     "done": 8
     }
    }
   },
@@ -14750,7 +14868,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 2
+     "done": 5
     }
    }
   },
@@ -14759,7 +14877,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 51,
-     "done": 0
+     "done": 4
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -14785,7 +14903,7 @@
     },
     "2026-02-18": {
      "scheduled": 568,
-     "done": 207
+     "done": 323
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -15046,7 +15164,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 236,
-     "done": 41
+     "done": 94
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -15127,7 +15245,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 119,
-     "done": 22
+     "done": 33
     }
    }
   },
@@ -15136,7 +15254,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 3
+     "done": 7
     }
    }
   },
@@ -15149,7 +15267,7 @@
     },
     "2026-02-18": {
      "scheduled": 348,
-     "done": 135
+     "done": 163
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -15162,11 +15280,13 @@
    }
   },
   "LIPE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 129,
-     "done": 57
+     "done": 129
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -15199,7 +15319,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 52,
-     "done": 8
+     "done": 23
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -15212,7 +15332,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 0
+     "done": 3
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -15234,16 +15354,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 26
+     "done": 29
     }
    }
   },
   "LIPZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 167,
-     "done": 93
+     "done": 167
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -15292,7 +15414,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 118,
-     "done": 29
+     "done": 63
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -15309,7 +15431,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 625,
-     "done": 239
+     "done": 336
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -15454,11 +15576,13 @@
    }
   },
   "LIRN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 118,
-     "done": 47
+     "done": 118
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -15511,11 +15635,13 @@
    }
   },
   "LIRQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 74,
-     "done": 44
+     "done": 74
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -15537,7 +15663,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 62,
-     "done": 17
+     "done": 32
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -15598,7 +15724,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 7
+     "done": 41
     }
    }
   },
@@ -15607,16 +15733,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 2
+     "done": 7
     }
    }
   },
   "LKPR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 249,
-     "done": 130
+     "done": 249
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -15840,16 +15968,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 22
+     "done": 26
     }
    }
   },
   "LMML": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 179,
-     "done": 52
+     "done": 177
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -15870,7 +16000,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 68,
-     "done": 22
+     "done": 25
     }
    }
   },
@@ -15879,7 +16009,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 76,
-     "done": 19
+     "done": 27
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -15920,7 +16050,7 @@
     },
     "2026-02-18": {
      "scheduled": 491,
-     "done": 216
+     "done": 356
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -16185,7 +16315,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 79,
-     "done": 33
+     "done": 55
     },
     "2026-03-12": {
      "scheduled": 1,
@@ -16225,7 +16355,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 31,
-     "done": 2
+     "done": 31
     },
     "2026-03-12": {
      "scheduled": 2,
@@ -16242,11 +16372,13 @@
    }
   },
   "LPPR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 220,
-     "done": 119
+     "done": 220
     },
     "2026-03-12": {
      "scheduled": 12,
@@ -16267,7 +16399,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 565,
-     "done": 268
+     "done": 392
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -16376,16 +16508,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 45,
-     "done": 20
+     "done": 34
     }
    }
   },
   "LROP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 114,
-     "done": 63
+     "done": 110
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -16585,7 +16719,7 @@
     },
     "2026-02-18": {
      "scheduled": 599,
-     "done": 291
+     "done": 425
     },
     "2026-02-19": {
      "scheduled": 12,
@@ -16690,11 +16824,13 @@
    }
   },
   "LTAC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 202,
-     "done": 50
+     "done": 202
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -16719,11 +16855,13 @@
    }
   },
   "LTAI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 195,
-     "done": 56
+     "done": 195
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -16760,7 +16898,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 19
+     "done": 39
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -16773,16 +16911,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 44,
-     "done": 16
+     "done": 41
     }
    }
   },
   "LTBJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 146,
-     "done": 46
+     "done": 146
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -16799,11 +16939,13 @@
    }
   },
   "LTDB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 23
+     "done": 65
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -16812,11 +16954,13 @@
    }
   },
   "LTFJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 598,
-     "done": 161
+     "done": 598
     },
     "2026-02-19": {
      "scheduled": 19,
@@ -16867,7 +17011,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1221,
-     "done": 1206
+     "done": 1217
     },
     "2026-02-19": {
      "scheduled": 26,
@@ -17156,7 +17300,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 77,
-     "done": 36
+     "done": 52
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -17225,11 +17369,13 @@
    }
   },
   "LYBE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 130,
-     "done": 47
+     "done": 129
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17326,7 +17472,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 6
     }
    }
   },
@@ -17335,7 +17481,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 35,
-     "done": 7
+     "done": 35
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17356,16 +17502,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
-     "done": 4
+     "done": 12
     }
    }
   },
   "MDPC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 210,
-     "done": 113
+     "done": 210
     },
     "2026-02-19": {
      "scheduled": 11,
@@ -17378,7 +17526,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 119,
-     "done": 63
+     "done": 94
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -17391,7 +17539,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 55,
-     "done": 37
+     "done": 41
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17404,7 +17552,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 408,
-     "done": 45
+     "done": 83
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -17413,11 +17561,13 @@
    }
   },
   "MHLM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 64,
-     "done": 14
+     "done": 64
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17430,7 +17580,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
-     "done": 6
+     "done": 16
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -17443,7 +17593,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 24,
-     "done": 4
+     "done": 24
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -17452,11 +17602,13 @@
    }
   },
   "MKJS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 61,
-     "done": 48
+     "done": 58
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -17465,11 +17617,13 @@
    }
   },
   "MMGL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 302,
-     "done": 90
+     "done": 302
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -17478,11 +17632,13 @@
    }
   },
   "MMMX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 645,
-     "done": 235
+     "done": 636
     },
     "2026-02-19": {
      "scheduled": 16,
@@ -17495,7 +17651,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 149,
-     "done": 69
+     "done": 108
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -17504,11 +17660,13 @@
    }
   },
   "MMSD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 146,
-     "done": 79
+     "done": 118
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17536,7 +17694,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 35,
-     "done": 8
+     "done": 35
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17545,11 +17703,13 @@
    }
   },
   "MPTO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 433,
-     "done": 108
+     "done": 432
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -17562,7 +17722,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 262,
-     "done": 64
+     "done": 118
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -17571,11 +17731,13 @@
    }
   },
   "MSLP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 127,
-     "done": 60
+     "done": 104
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -17588,7 +17750,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 46,
-     "done": 3
+     "done": 46
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -17601,7 +17763,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 47,
-     "done": 1
+     "done": 47
     }
    }
   },
@@ -17619,16 +17781,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "MUHA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 54,
-     "done": 26
+     "done": 54
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -17641,7 +17805,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 3
+     "done": 4
     }
    }
   },
@@ -17650,7 +17814,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 4
+     "done": 6
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -17663,7 +17827,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 5
+     "done": 10
     }
    }
   },
@@ -17672,7 +17836,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 34,
-     "done": 8
+     "done": 10
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17685,7 +17849,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 267,
-     "done": 107
+     "done": 132
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -17698,7 +17862,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -17707,7 +17871,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 1
+     "done": 9
     }
    }
   },
@@ -17716,7 +17880,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 4
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -17729,7 +17893,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -17738,7 +17902,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -17747,7 +17911,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -17756,7 +17920,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 0
+     "done": 13
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -17769,7 +17933,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 0
+     "done": 16
     }
    }
   },
@@ -17778,7 +17942,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
-     "done": 0
+     "done": 11
     }
    }
   },
@@ -17787,16 +17951,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 3
+     "done": 7
     }
    }
   },
   "NZAA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 383,
-     "done": 101
+     "done": 383
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17981,7 +18147,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 281,
-     "done": 21
+     "done": 102
     },
     "2026-03-26": {
      "scheduled": 1,
@@ -17994,7 +18160,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 122,
-     "done": 16
+     "done": 42
     }
    }
   },
@@ -18003,7 +18169,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 189,
-     "done": 10
+     "done": 56
     }
    }
   },
@@ -18025,7 +18191,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 35,
-     "done": 9
+     "done": 14
     },
     "2026-02-25": {
      "scheduled": 8,
@@ -18156,11 +18322,13 @@
    }
   },
   "OBBI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 220,
-     "done": 114
+     "done": 220
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -18211,7 +18379,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 68
+     "done": 77
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -18272,7 +18440,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 2
+     "done": 3
     },
     "2026-02-26": {
      "scheduled": 2,
@@ -18310,11 +18478,13 @@
    }
   },
   "OEDF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 224,
-     "done": 129
+     "done": 224
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -18395,7 +18565,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 14
+     "done": 17
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -18524,11 +18694,13 @@
    }
   },
   "OEMA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 262,
-     "done": 124
+     "done": 262
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -18836,7 +19008,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 46,
-     "done": 41
+     "done": 44
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -18915,7 +19087,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 0
+     "done": 2
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -18962,11 +19134,13 @@
    }
   },
   "OIIE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 57,
-     "done": 25
+     "done": 57
     },
     "2026-02-25": {
      "scheduled": 16,
@@ -18999,7 +19173,7 @@
     },
     "2026-02-18": {
      "scheduled": 106,
-     "done": 2
+     "done": 5
     },
     "2026-02-26": {
      "scheduled": 1,
@@ -19021,7 +19195,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 1
+     "done": 2
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -19093,7 +19267,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 0
+     "done": 3
     },
     "2026-02-25": {
      "scheduled": 3,
@@ -19128,11 +19302,13 @@
    }
   },
   "OJAI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 174,
-     "done": 100
+     "done": 174
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -19229,7 +19405,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 2
+     "done": 19
     },
     "2026-02-25": {
      "scheduled": 1,
@@ -19250,16 +19426,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 2
+     "done": 10
     }
    }
   },
   "OKKK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 264,
-     "done": 136
+     "done": 264
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -19296,11 +19474,13 @@
    }
   },
   "OLBA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 109,
-     "done": 55
+     "done": 109
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -19394,6 +19574,7 @@
   },
   "OMAA": {
    "fullDates": [
+    "2026-02-18",
     "2026-02-25",
     "2026-02-28",
     "2026-04-05"
@@ -19405,7 +19586,7 @@
     },
     "2026-02-18": {
      "scheduled": 291,
-     "done": 184
+     "done": 245
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -19606,7 +19787,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 36,
-     "done": 0
+     "done": 2
     },
     "2026-03-07": {
      "scheduled": 2,
@@ -19628,6 +19809,7 @@
   },
   "OMDB": {
    "fullDates": [
+    "2026-02-18",
     "2026-02-25",
     "2026-02-28",
     "2026-04-05"
@@ -19639,7 +19821,7 @@
     },
     "2026-02-18": {
      "scheduled": 662,
-     "done": 382
+     "done": 533
     },
     "2026-02-19": {
      "scheduled": 12,
@@ -19940,11 +20122,13 @@
    }
   },
   "OMDW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 250,
-     "done": 72
+     "done": 250
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -20049,7 +20233,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 44,
-     "done": 3
+     "done": 6
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -20074,7 +20258,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 9
+     "done": 19
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -20091,7 +20275,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 305,
-     "done": 123
+     "done": 201
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -20116,11 +20300,13 @@
    }
   },
   "OOMS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 205,
-     "done": 93
+     "done": 205
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -20222,7 +20408,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 1
+     "done": 3
     },
     "2026-02-25": {
      "scheduled": 4,
@@ -20311,11 +20497,13 @@
    "dateStats": {}
   },
   "OPIS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 94,
-     "done": 60
+     "done": 94
     },
     "2026-02-25": {
      "scheduled": 19,
@@ -20535,11 +20723,13 @@
    }
   },
   "OPLA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 82,
-     "done": 43
+     "done": 82
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -20636,7 +20826,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
-     "done": 17
+     "done": 21
     },
     "2026-02-25": {
      "scheduled": 10,
@@ -20826,7 +21016,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 2
+     "done": 5
     },
     "2026-02-26": {
      "scheduled": 1,
@@ -20895,7 +21085,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -20904,7 +21094,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
-     "done": 4
+     "done": 7
     },
     "2026-02-25": {
      "scheduled": 10,
@@ -20997,7 +21187,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 85,
-     "done": 21
+     "done": 60
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -21042,11 +21232,13 @@
    }
   },
   "OTBD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 62,
-     "done": 4
+     "done": 62
     },
     "2026-04-26": {
      "scheduled": 1,
@@ -21102,7 +21294,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
-     "done": 13
+     "done": 20
     }
    }
   },
@@ -21123,11 +21315,13 @@
    "dateStats": {}
   },
   "PANC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 361,
-     "done": 169
+     "done": 361
     },
     "2026-02-19": {
      "scheduled": 19,
@@ -21424,7 +21618,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
-     "done": 0
+     "done": 11
     }
    }
   },
@@ -21433,7 +21627,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 95,
-     "done": 33
+     "done": 45
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -21526,11 +21720,13 @@
    }
   },
   "PHNL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 582,
-     "done": 158
+     "done": 582
     },
     "2026-02-19": {
      "scheduled": 16,
@@ -21543,7 +21739,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 253,
-     "done": 58
+     "done": 149
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -21556,7 +21752,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -21565,7 +21761,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -21574,7 +21770,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -21583,7 +21779,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -21592,7 +21788,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -26011,7 +26207,7 @@
     },
     "2026-02-18": {
      "scheduled": 656,
-     "done": 649
+     "done": 651
     },
     "2026-02-19": {
      "scheduled": 420,
@@ -26750,7 +26946,7 @@
     },
     "2026-02-18": {
      "scheduled": 592,
-     "done": 585
+     "done": 589
     },
     "2026-02-19": {
      "scheduled": 51,
@@ -27071,7 +27267,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 464,
-     "done": 460
+     "done": 462
     },
     "2026-02-19": {
      "scheduled": 36,
@@ -29473,7 +29669,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 228,
-     "done": 227
+     "done": 228
     },
     "2026-02-19": {
      "scheduled": 13,
@@ -32209,7 +32405,7 @@
     },
     "2026-02-18": {
      "scheduled": 1244,
-     "done": 1206
+     "done": 1209
     },
     "2026-02-19": {
      "scheduled": 28,
@@ -33185,7 +33381,7 @@
     },
     "2026-02-18": {
      "scheduled": 1187,
-     "done": 1178
+     "done": 1181
     },
     "2026-02-19": {
      "scheduled": 50,
@@ -35075,7 +35271,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 1
+     "done": 26
     }
    }
   },
@@ -35392,7 +35588,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 24,
-     "done": 22
+     "done": 24
     }
    }
   },
@@ -35724,7 +35920,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
-     "done": 19
+     "done": 21
     }
    }
   },
@@ -35742,7 +35938,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
-     "done": 23
+     "done": 27
     }
    }
   },
@@ -35762,7 +35958,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 68,
-     "done": 57
+     "done": 68
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36079,7 +36275,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
-     "done": 30
+     "done": 33
     }
    }
   },
@@ -36088,7 +36284,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
-     "done": 0
+     "done": 7
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36101,7 +36297,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 329,
-     "done": 0
+     "done": 37
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -36114,7 +36310,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 87,
-     "done": 1
+     "done": 13
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36127,7 +36323,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 229,
-     "done": 47
+     "done": 89
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -36140,7 +36336,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 61,
-     "done": 0
+     "done": 3
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36171,7 +36367,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 58,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -36238,7 +36434,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 0
+     "done": 13
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -36251,7 +36447,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 341,
-     "done": 7
+     "done": 40
     }
    }
   },
@@ -36260,7 +36456,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -36269,7 +36465,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 274,
-     "done": 3
+     "done": 30
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -36282,7 +36478,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 140,
-     "done": 0
+     "done": 28
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36295,7 +36491,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 69,
-     "done": 0
+     "done": 15
     }
    }
   },
@@ -36304,7 +36500,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 1
+     "done": 21
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36317,7 +36513,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 53,
-     "done": 0
+     "done": 16
     }
    }
   },
@@ -36326,7 +36522,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 142,
-     "done": 0
+     "done": 20
     }
    }
   },
@@ -36335,7 +36531,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 126,
-     "done": 1
+     "done": 24
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36348,7 +36544,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 392,
-     "done": 22
+     "done": 66
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -36433,7 +36629,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 137,
-     "done": 0
+     "done": 17
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36442,11 +36638,13 @@
    }
   },
   "SBGR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 714,
-     "done": 73
+     "done": 711
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -36543,7 +36741,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 0
+     "done": 12
     }
    }
   },
@@ -36552,7 +36750,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 263,
-     "done": 10
+     "done": 18
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -36565,7 +36763,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 69,
-     "done": 0
+     "done": 21
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36578,7 +36776,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 91,
-     "done": 0
+     "done": 11
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36591,7 +36789,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 144,
-     "done": 0
+     "done": 32
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36604,7 +36802,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 76,
-     "done": 0
+     "done": 12
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36617,7 +36815,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -36635,7 +36833,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 223,
-     "done": 1
+     "done": 36
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36648,7 +36846,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 221,
-     "done": 0
+     "done": 8
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36661,7 +36859,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 56,
-     "done": 0
+     "done": 15
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36674,7 +36872,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 38,
-     "done": 0
+     "done": 11
     }
    }
   },
@@ -36683,7 +36881,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 580,
-     "done": 0
+     "done": 3
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -36696,7 +36894,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 207,
-     "done": 1
+     "done": 28
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -36709,7 +36907,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 133,
-     "done": 0
+     "done": 19
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -36722,7 +36920,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 381,
-     "done": 36
+     "done": 100
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -36731,11 +36929,13 @@
    }
   },
   "SGAS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 131,
-     "done": 2
+     "done": 130
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -36748,7 +36948,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -36757,16 +36957,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
-     "done": 0
+     "done": 16
     }
    }
   },
   "SKBO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 762,
-     "done": 112
+     "done": 756
     },
     "2026-02-19": {
      "scheduled": 16,
@@ -36779,7 +36981,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -36788,7 +36990,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 35,
-     "done": 1
+     "done": 35
     }
    }
   },
@@ -36797,7 +36999,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 0
+     "done": 41
     }
    }
   },
@@ -36806,7 +37008,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -36815,16 +37017,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
+     "done": 7
     }
    }
   },
   "SLVR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 51,
-     "done": 4
+     "done": 51
     }
    }
   },
@@ -36833,7 +37037,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 5
+     "done": 14
     }
    }
   },
@@ -36842,7 +37046,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 3
+     "done": 9
     }
    }
   },
@@ -36860,7 +37064,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -36869,7 +37073,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 433,
-     "done": 57
+     "done": 133
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -36922,16 +37126,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 77,
-     "done": 0
+     "done": 4
     }
    }
   },
   "SUMU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 61,
-     "done": 6
+     "done": 61
     }
    }
   },
@@ -36940,7 +37146,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 0
+     "done": 17
     }
    }
   },
@@ -36949,7 +37155,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -36958,7 +37164,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 0
+     "done": 14
     }
    }
   },
@@ -36967,16 +37173,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 38,
-     "done": 0
+     "done": 38
     }
    }
   },
   "SVMI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 142,
-     "done": 1
+     "done": 142
     }
    }
   },
@@ -36985,7 +37193,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 9
     }
    }
   },
@@ -36994,7 +37202,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 0
+     "done": 14
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37007,7 +37215,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 78,
-     "done": 25
+     "done": 48
     }
    }
   },
@@ -37016,7 +37224,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 4
+     "done": 17
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37025,11 +37233,13 @@
    }
   },
   "TJSJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 377,
-     "done": 167
+     "done": 377
     },
     "2026-02-19": {
      "scheduled": 12,
@@ -37042,7 +37252,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 30,
-     "done": 3
+     "done": 30
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37055,7 +37265,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 80,
-     "done": 40
+     "done": 56
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -37068,7 +37278,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
-     "done": 3
+     "done": 20
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37081,7 +37291,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 154,
-     "done": 37
+     "done": 57
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -37094,16 +37304,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 8
     }
    }
   },
   "TUPJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 56,
-     "done": 10
+     "done": 56
     }
    }
   },
@@ -37112,16 +37324,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 30,
-     "done": 2
+     "done": 30
     }
    }
   },
   "UAAA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 158,
-     "done": 44
+     "done": 158
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -37210,7 +37424,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 98,
-     "done": 10
+     "done": 63
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -37275,11 +37489,13 @@
    }
   },
   "UBBB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 172,
-     "done": 43
+     "done": 172
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -37444,7 +37660,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
+     "done": 3
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37457,7 +37673,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
-     "done": 0
+     "done": 19
     }
    }
   },
@@ -37466,7 +37682,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 65,
-     "done": 10
+     "done": 33
     },
     "2026-02-25": {
      "scheduled": 5,
@@ -37559,7 +37775,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 3
+     "done": 10
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37572,7 +37788,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 5
+     "done": 7
     }
    }
   },
@@ -37581,7 +37797,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 96,
-     "done": 35
+     "done": 72
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37690,7 +37906,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 227,
-     "done": 11
+     "done": 112
     },
     "2026-02-25": {
      "scheduled": 6,
@@ -37755,7 +37971,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 14
+     "done": 20
     },
     "2026-02-25": {
      "scheduled": 4,
@@ -37824,7 +38040,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 130,
-     "done": 8
+     "done": 30
     },
     "2026-02-25": {
      "scheduled": 6,
@@ -37913,11 +38129,13 @@
    }
   },
   "UUEE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 388,
-     "done": 56
+     "done": 388
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38018,11 +38236,13 @@
    }
   },
   "UUWW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 236,
-     "done": 24
+     "done": 236
     },
     "2026-02-25": {
      "scheduled": 16,
@@ -38123,7 +38343,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 2
+     "done": 5
     }
    }
   },
@@ -38132,7 +38352,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 2
+     "done": 7
     }
    }
   },
@@ -38141,7 +38361,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 0
+     "done": 9
     }
    }
   },
@@ -38150,7 +38370,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 0
+     "done": 9
     }
    }
   },
@@ -38159,16 +38379,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 8
     }
    }
   },
   "UZTT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 220,
-     "done": 55
+     "done": 201
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38269,11 +38491,13 @@
    }
   },
   "VAAH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 245,
-     "done": 125
+     "done": 244
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -38569,7 +38793,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
-     "done": 26
+     "done": 28
     }
    }
   },
@@ -38578,7 +38802,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 45,
-     "done": 25
+     "done": 29
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38591,7 +38815,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 20
+     "done": 22
     }
    }
   },
@@ -38600,7 +38824,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 96,
-     "done": 52
+     "done": 61
     }
    }
   },
@@ -38609,7 +38833,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 46,
-     "done": 26
+     "done": 28
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38622,7 +38846,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 72,
-     "done": 43
+     "done": 50
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38635,7 +38859,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 6
+     "done": 8
     },
     "2026-03-09": {
      "scheduled": 1,
@@ -38648,7 +38872,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 184,
-     "done": 107
+     "done": 124
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38849,7 +39073,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 2
+     "done": 13
     }
    }
   },
@@ -38867,7 +39091,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -39187,7 +39411,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 78,
-     "done": 48
+     "done": 60
     },
     "2026-03-13": {
      "scheduled": 3,
@@ -39200,11 +39424,13 @@
    }
   },
   "VEBN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 77,
-     "done": 60
+     "done": 67
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -39217,7 +39443,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 88,
-     "done": 56
+     "done": 68
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -39234,11 +39460,13 @@
    }
   },
   "VECC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 334,
-     "done": 188
+     "done": 334
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -39359,7 +39587,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 108,
-     "done": 56
+     "done": 78
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -39384,7 +39612,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 28,
-     "done": 6
+     "done": 16
     }
    }
   },
@@ -39393,7 +39621,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 50,
-     "done": 33
+     "done": 38
     },
     "2026-02-25": {
      "scheduled": 6,
@@ -39649,7 +39877,7 @@
     },
     "2026-02-18": {
      "scheduled": 944,
-     "done": 906
+     "done": 924
     },
     "2026-02-19": {
      "scheduled": 217,
@@ -40214,7 +40442,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 120,
-     "done": 63
+     "done": 80
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -40271,7 +40499,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 51,
-     "done": 38
+     "done": 39
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -40284,7 +40512,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 47
+     "done": 51
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -40588,16 +40816,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 2
+     "done": 23
     }
    }
   },
   "VNKT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 202,
-     "done": 76
+     "done": 190
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -40978,11 +41208,13 @@
    }
   },
   "VOCL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 56,
-     "done": 31
+     "done": 56
     },
     "2026-02-25": {
      "scheduled": 17,
@@ -41071,7 +41303,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 90,
-     "done": 53
+     "done": 64
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -41084,7 +41316,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 90,
-     "done": 64
+     "done": 71
     },
     "2026-02-25": {
      "scheduled": 1,
@@ -41252,7 +41484,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 53,
-     "done": 34
+     "done": 39
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -41432,7 +41664,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 36,
-     "done": 26
+     "done": 36
     }
    }
   },
@@ -41495,7 +41727,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 82,
-     "done": 48
+     "done": 55
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -41588,7 +41820,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 54,
-     "done": 36
+     "done": 39
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -41643,7 +41875,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 5
+     "done": 7
     }
    }
   },
@@ -41652,7 +41884,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 7
+     "done": 9
     }
    }
   },
@@ -41770,7 +42002,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 700,
-     "done": 698
+     "done": 700
     },
     "2026-02-19": {
      "scheduled": 16,
@@ -42069,7 +42301,7 @@
     },
     "2026-02-18": {
      "scheduled": 1119,
-     "done": 1109
+     "done": 1116
     },
     "2026-02-19": {
      "scheduled": 39,
@@ -42678,7 +42910,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 37,
-     "done": 33
+     "done": 37
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -42989,7 +43221,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
-     "done": 36
+     "done": 39
     }
    }
   },
@@ -42998,7 +43230,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 36,
-     "done": 34
+     "done": 36
     }
    }
   },
@@ -43027,7 +43259,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 119,
-     "done": 104
+     "done": 119
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -44313,7 +44545,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 3
+     "done": 5
     }
    }
   },
@@ -44322,11 +44554,13 @@
    "dateStats": {}
   },
   "VYYY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 71,
-     "done": 55
+     "done": 70
     },
     "2026-02-24": {
      "scheduled": 2,
@@ -44682,11 +44916,13 @@
    }
   },
   "WBKK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 167,
-     "done": 120
+     "done": 167
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -46016,7 +46252,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 70,
-     "done": 34
+     "done": 38
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -46049,7 +46285,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 6
+     "done": 17
     }
    }
   },
@@ -46068,7 +46304,7 @@
     },
     "2026-02-18": {
      "scheduled": 1033,
-     "done": 1022
+     "done": 1027
     },
     "2026-02-19": {
      "scheduled": 31,
@@ -46365,11 +46601,13 @@
    }
   },
   "YBBN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 492,
-     "done": 200
+     "done": 492
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -46622,7 +46860,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 180,
-     "done": 73
+     "done": 78
     }
    }
   },
@@ -46640,7 +46878,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 95,
-     "done": 25
+     "done": 30
     }
    }
   },
@@ -46649,7 +46887,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 156,
-     "done": 2
+     "done": 4
     }
    }
   },
@@ -46658,7 +46896,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 12
+     "done": 14
     }
    }
   },
@@ -46667,7 +46905,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 71,
-     "done": 49
+     "done": 55
     }
    }
   },
@@ -46879,7 +47117,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 246,
-     "done": 98
+     "done": 122
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -46908,7 +47146,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 132,
-     "done": 14
+     "done": 27
     },
     "2026-02-28": {
      "scheduled": 1,
@@ -46934,7 +47172,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 395,
-     "done": 134
+     "done": 160
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -47234,7 +47472,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 11
+     "done": 25
     }
    }
   },
@@ -47245,7 +47483,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1162,
-     "done": 1131
+     "done": 1142
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -47540,7 +47778,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1056,
-     "done": 1005
+     "done": 1007
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -47621,7 +47859,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 75,
-     "done": 33
+     "done": 48
     }
    }
   },
@@ -47630,7 +47868,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 230,
-     "done": 81
+     "done": 128
     }
    }
   },
@@ -47639,7 +47877,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 51,
-     "done": 15
+     "done": 17
     }
    }
   },
@@ -47648,7 +47886,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 18
+     "done": 30
     }
    }
   },
@@ -47657,16 +47895,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 249,
-     "done": 125
+     "done": 160
     }
    }
   },
   "ZBTJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 390,
-     "done": 206
+     "done": 383
     }
    }
   },
@@ -47675,7 +47915,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 296,
-     "done": 152
+     "done": 215
     }
    }
   },
@@ -47684,7 +47924,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 8
+     "done": 10
     }
    }
   },
@@ -47988,11 +48228,13 @@
    }
   },
   "ZGHA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 550,
-     "done": 231
+     "done": 475
     }
    }
   },
@@ -48001,7 +48243,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 124,
-     "done": 53
+     "done": 73
     }
    }
   },
@@ -48010,16 +48252,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 293,
-     "done": 154
+     "done": 208
     }
    }
   },
   "ZGOW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 322,
-     "done": 173
+     "done": 322
     }
    }
   },
@@ -48028,7 +48272,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 284,
-     "done": 155
+     "done": 211
     }
    }
   },
@@ -48336,11 +48580,13 @@
    }
   },
   "ZHCC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 600,
-     "done": 280
+     "done": 597
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -48625,7 +48871,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 11
+     "done": 18
     },
     "2026-02-26": {
      "scheduled": 2,
@@ -48967,16 +49213,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 28,
-     "done": 13
+     "done": 17
     }
    }
   },
   "ZJHK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 605,
-     "done": 300
+     "done": 571
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -48997,11 +49245,13 @@
    }
   },
   "ZJSY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 441,
-     "done": 239
+     "done": 436
     }
    }
   },
@@ -49010,7 +49260,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -49028,7 +49278,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 174,
-     "done": 91
+     "done": 121
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -49041,7 +49291,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 12
+     "done": 15
     }
    }
   },
@@ -49050,7 +49300,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 292,
-     "done": 132
+     "done": 174
     }
    }
   },
@@ -49090,7 +49340,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 14
+     "done": 17
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -49103,7 +49353,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 237,
-     "done": 85
+     "done": 118
     }
    }
   },
@@ -50128,7 +50378,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 388,
-     "done": 193
+     "done": 284
     }
    }
   },
@@ -50137,7 +50387,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 34,
-     "done": 19
+     "done": 27
     }
    }
   },
@@ -50146,7 +50396,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 354,
-     "done": 182
+     "done": 261
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -50427,11 +50677,13 @@
    }
   },
   "ZSNJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 617,
-     "done": 314
+     "done": 613
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -50708,7 +50960,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 292,
-     "done": 141
+     "done": 196
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -50727,7 +50979,7 @@
     },
     "2026-02-18": {
      "scheduled": 1544,
-     "done": 1520
+     "done": 1529
     },
     "2026-02-19": {
      "scheduled": 34,
@@ -51207,7 +51459,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 216,
-     "done": 98
+     "done": 148
     },
     "2026-04-27": {
      "scheduled": 1,
@@ -51220,7 +51472,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 56,
-     "done": 26
+     "done": 36
     }
    }
   },
@@ -51231,7 +51483,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 772,
-     "done": 753
+     "done": 760
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -51521,11 +51773,13 @@
    }
   },
   "ZSWX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 210,
-     "done": 138
+     "done": 172
     }
    }
   },
@@ -51534,7 +51788,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 280,
-     "done": 143
+     "done": 192
     }
    }
   },
@@ -51543,7 +51797,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 52,
-     "done": 36
+     "done": 46
     }
    }
   },
@@ -51552,7 +51806,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 163,
-     "done": 98
+     "done": 128
     }
    }
   },
@@ -51561,7 +51815,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 79,
-     "done": 38
+     "done": 57
     }
    }
   },
@@ -51570,7 +51824,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 74,
-     "done": 27
+     "done": 39
     }
    }
   },
@@ -51842,7 +52096,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 432,
-     "done": 160
+     "done": 244
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -51855,7 +52109,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 114,
-     "done": 57
+     "done": 86
     }
    }
   },
@@ -52167,11 +52421,13 @@
    }
   },
   "ZUUU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 622,
-     "done": 322
+     "done": 617
     },
     "2026-04-01": {
      "scheduled": 1,
@@ -52188,7 +52444,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 14
+     "done": 20
     }
    }
   },
@@ -52197,7 +52453,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 452,
-     "done": 147
+     "done": 236
     },
     "2026-02-27": {
      "scheduled": 1,
@@ -52214,16 +52470,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 52,
-     "done": 39
+     "done": 47
     }
    }
   },
   "ZYCC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 401,
-     "done": 204
+     "done": 394
     }
    }
   },
@@ -52263,11 +52521,13 @@
    }
   },
   "ZYTX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 464,
-     "done": 241
+     "done": 464
     }
    }
   },
@@ -52276,7 +52536,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 50,
-     "done": 40
+     "done": 44
     }
    }
   }
