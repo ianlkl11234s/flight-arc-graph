@@ -7,7 +7,7 @@
 
 > **狀態快照 @ 2026-09-16**：Batch 2＋3 實際抓取範圍已清空（`--rank 40-395 --dry-run` 複驗 **0 筆**）；本期 track-done **82,501 → 97,622**，manifest **82,390 → 97,511**。
 > **✅ 全鏈已上線**：本地 split、Atlas、S3 與 Zeabur 同步均完成（2,941 座機場檔／97,511 不重複航班），正式站 manifest 已驗收一致。
-> 🔜 **下次抓取**：先與 FR24 dashboard 對帳本期實際餘額，再從 Batch 4 `--rank 396-673` 開始；本地保守帳為已花 **~613,520 credits**、尚餘 **~52,480**。
+> 🔜 **2026-10 下次抓取**：先與 FR24 dashboard 確認新週期額度，再依序完成 Batch 4、5。9/16 dry-run 上限為 **9,464 + 4,268 = 13,732 筆／549,280 credits**；兩批可能含重疊航班，因此實花只會更低。若下月仍有 666K，預期可完成 Top-1000 全計劃。
 > 💰 成本：時刻表 **3 credits/筆**、軌跡 **40 credits/筆**；估算一律以 FR24 dashboard 為準。
 
 ### 📅 2026-09 週期成果（9/15–16，Batch 2＋3）
@@ -42,14 +42,32 @@
 - **失敗全數救回**：16 筆（502／504／`fetch failed`）用 `retry-failed-tracks.ts` 100% 補齊。其中 11 筆 `fetch failed` 集中在 09:30–10:20 —— **筆電闔蓋導致睡眠斷網**（`caffeinate -dims` 擋得住閒置睡眠，擋不住 clamshell sleep；那段時間抓取速率從 1,250 筆/時掉到 189 筆/時）。長跑要嘛保持開蓋，要嘛接電源＋外接螢幕。
 - **字母序前置策略奏效**：段 2 用 `--airports` 把亞太 27 座前置，Batch 2 的 46% 待抓量因此不受額度耗盡影響；最終被砍的 2,888 筆散落歐美中東，沒有任何地理區整批落空。
 
-### ⏭️ 下一輪建議
+### ⏭️ 2026-10 下一輪接續清單
 
-| 優先 | 範圍 | 待抓（現值）| credits |
+| 優先 | 範圍 | 9/16 dry-run 待抓 | credits 上限 |
 |---|---|---|---|
-| 1 | Batch 4 `--rank 396-673` | 以開跑前 dry-run 為準 | 約 467K |
-| 2 | Batch 5 `--rank 674-1000` | 以開跑前 dry-run 為準 | 約 177K |
+| 1 | Batch 4 `--rank 396-673` | 9,464 | 378,560 |
+| 2 | Batch 5 `--rank 674-1000` | 4,268 | 170,720 |
+| — | 分開估算上限 | 13,732 | 549,280 |
 
-Batch 2＋3 的實際抓取範圍已清空；下一輪先以 FR24 dashboard 對帳，再對 Batch 4 執行 dry-run。⚠️ 老規矩：**估額度一律以 `--dry-run` 為準**（表列是「出發機場」歸屬，實抓是「起點或終點」命中）。
+Batch 2＋3 的實際抓取範圍已清空。Batch 4、5 分開 dry-run 可能重複計入兩批互飛的同一航班；先完成 Batch 4 後，Batch 5 的實際 todo 會下降。因此 **549,280 credits 是上限，不是預測實花**。
+
+下月開工順序：
+
+1. 從 FR24 dashboard 取得新週期可用 credits；不要沿用本地推估餘額。
+2. 核對 `track-done.ndjson` 行數（目前 **97,622**），再同步更新 `campaign-top1000.json` 的 `track_done_baseline`、`manual_remaining`、`manual_remaining_as_of` 三欄。
+3. 跑 `campaign-status.ts`，再以相同精確 UTC 窗重跑 Batch 4 dry-run；確認後執行 Batch 4。
+4. Batch 4 完成後重新 dry-run Batch 5，再用剩餘額度收尾。
+5. retry 只處理連線／5xx 失敗，不重抓確認為 404 或空軌跡的項目；最後依 `/track-round` 完成 split、Atlas、S3、Zeabur 與驗收。
+
+```bash
+node --import tsx scripts/campaign-status.ts
+node --import tsx scripts/fetch-tracks.ts \
+  --airports-file scripts/top1000-airports.json --rank 396-673 \
+  --from-time 2026-02-17T16:00:00Z --to-time 2026-02-18T16:00:00Z --dry-run
+```
+
+⚠️ 老規矩：**估額度一律以 `--dry-run` 為準**（campaign-status 表列是「出發機場」歸屬，實抓是「起點或終點」命中）。
 
 ### 🔴 字母序陷阱（通用教訓，已驗證兩輪）
 
