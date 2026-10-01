@@ -1,4 +1,4 @@
-import type { DisplayMode, Region, RenderMode, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
+import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
 import type { ColorTheme } from "../types/colorTheme";
 import type { AirspaceSettings } from "../types/airspace";
 import type { AirportColorMode, AirportAssignment } from "../types/airportColors";
@@ -10,8 +10,8 @@ import type { AirportMeta } from "../data/airportMeta";
 import type { AtlasColorMode } from "../map/atlasGlowLayer";
 import { useTheme } from "../styles/ThemeContext";
 import { FONT, LAYOUT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
-import { Chip, Panel, PanelBody, PanelHeader, Segmented } from "../ui";
-import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, IconRouteAnalysis, IconCamera } from "./sidebar/primitives";
+import { Chip, Panel, PanelBody, PanelHeader, Section, Segmented } from "../ui";
+import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, IconRouteAnalysis, IconCamera, IconRadar } from "./sidebar/primitives";
 import type { ScenePreset } from "./sidebar/scenePresets";
 import { SettingsPanel } from "./sidebar/panels/SettingsPanel";
 import { SetsPanel } from "./sidebar/panels/SetsPanel";
@@ -25,19 +25,21 @@ export { SCENE_PRESETS, type ScenePreset } from "./sidebar/scenePresets";
 /* ── Types ───────────────────────────────────────────────── */
 
 export type PanelId = "settings" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
-type WorkspaceId = "explore" | "selection" | "view" | "analyze";
+type WorkspaceId = "explore" | "selection" | "view" | "airspace" | "analyze";
 
 const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
   explore: "atlas",
   selection: "sets",
   view: "settings",
+  airspace: "airspace",
   analyze: "summary",
 };
 
 function getWorkspace(panel: PanelId | null): WorkspaceId | null {
   if (panel === "atlas") return "explore";
   if (panel === "sets" || panel === "calendar") return "selection";
-  if (panel === "settings" || panel === "colors" || panel === "airspace") return "view";
+  if (panel === "settings" || panel === "colors") return "view";
+  if (panel === "airspace") return "airspace";
   if (panel === "summary" || panel === "analysis") return "analyze";
   return null;
 }
@@ -166,6 +168,10 @@ export interface IconRailSidebarProps {
   // 探索面板頂部的區域 chip（Q3，取代舊頂部 Region 按鈕列）
   regions: Array<{ id: Region; label: string }>;
   onRegionSelect: (r: Region) => void;
+  // 空域快照 workspace（Q4）：資料來源切換（航線軌跡／空域快照）
+  dataSource: DataSource;
+  hasFused: boolean;
+  onDataSourceChange: (s: DataSource) => void;
   // 展開「探索地圖總覽」workspace 時觸發（用來飛相機到俯瞰視角）
   onExploreOpen?: () => void;
 }
@@ -203,15 +209,19 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
     : activeWorkspace === "selection"
       ? [{ id: "sets", label: "機場" }, { id: "calendar", label: "日期" }]
       : activeWorkspace === "view"
-        ? [{ id: "settings", label: "顯示" }, { id: "colors", label: "色彩" }, { id: "airspace", label: "空域" }]
-        : [{ id: "summary", label: "總覽" }, { id: "analysis", label: "篩選" }, { id: "stats", label: "統計" }];
+        ? [{ id: "settings", label: "顯示" }, { id: "colors", label: "色彩" }]
+        : activeWorkspace === "airspace"
+          ? []
+          : [{ id: "summary", label: "總覽" }, { id: "analysis", label: "篩選" }, { id: "stats", label: "統計" }];
   const workspaceTitle = activeWorkspace === "explore"
     ? "探索機場"
     : activeWorkspace === "selection"
       ? props.setName ?? (props.airportSet ? "自訂機場組合" : props.selectedAirport)
       : activeWorkspace === "view"
-        ? "呈現與空域"
-        : "航班分析";
+        ? "呈現"
+        : activeWorkspace === "airspace"
+          ? "空域快照"
+          : "航班分析";
 
   const toggleWorkspace = (workspace: WorkspaceId) => {
     setActivePanel(getWorkspace(activePanel) === workspace ? null : WORKSPACE_DEFAULT_PANEL[workspace]);
@@ -223,7 +233,9 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
       ? "SELECTION · 機場"
       : activeWorkspace === "view"
         ? "VIEW · 呈現"
-        : "ANALYZE · 分析";
+        : activeWorkspace === "airspace"
+          ? "AIRSPACE · 空域"
+          : "ANALYZE · 分析";
 
   return (
     <>
@@ -295,9 +307,17 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         <RailIcon
           active={activeWorkspace === "view"}
           onClick={() => toggleWorkspace("view")}
-          title="顯示、色彩與空域"
+          title="顯示與色彩"
         >
           <IconLayers />
+        </RailIcon>
+
+        <RailIcon
+          active={activeWorkspace === "airspace"}
+          onClick={() => toggleWorkspace("airspace")}
+          title="空域快照"
+        >
+          <IconRadar />
         </RailIcon>
 
         <RailIcon
@@ -346,7 +366,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                   : ""}
               </div>
             )}
-            <Segmented<PanelId | "stats">
+            {workspaceTabs.length > 1 && <Segmented<PanelId | "stats">
               fullWidth
               ariaLabel="面板分頁"
               options={workspaceTabs.map((tab) => ({ value: tab.id, label: tab.label }))}
@@ -355,7 +375,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                 if (id === "stats") props.onStatsClick();
                 else setActivePanel(id);
               }}
-            />
+            />}
           </div>
           <PanelBody>
           {activePanel === "settings" && <SettingsPanel {...props} />}
@@ -399,6 +419,26 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onAirportColorReset={props.onAirportColorReset}
               compareModeActive={props.compareModeActive}
             />
+          )}
+          {activePanel === "airspace" && (
+            <Section title="SOURCE · 資料來源">
+              <Segmented<DataSource>
+                fullWidth
+                ariaLabel="資料來源"
+                options={[
+                  { value: "api", label: "航線軌跡" },
+                  { value: "fused", label: "空域快照", disabled: !props.hasFused },
+                ]}
+                value={props.dataSource}
+                onChange={props.onDataSourceChange}
+              />
+              <div style={{ fontSize: SIZE.s10, color: tokens.fg3, lineHeight: 1.5 }}>
+                {props.dataSource === "fused"
+                  ? "切回航線軌跡：回到單一機場範圍、天數重設為 1 天、靜態軌跡透明度回到預設。"
+                  : "切到空域快照：改看整個區域某天的空中快照，天數重設為 1 天、靜態軌跡調淡，並拉遠到區域視角。"}
+                {!props.hasFused && " 目前沒有空域快照資料。"}
+              </div>
+            </Section>
           )}
           {activePanel === "airspace" && (
             <AirspacePanel

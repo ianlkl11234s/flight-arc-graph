@@ -29,7 +29,6 @@ import { TimelineControls } from "./components/TimelineControls";
 import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
-import { DataSourceToggle } from "./components/DataSourceToggle";
 import { DepArrToggle, type DepArrFilter } from "./components/DepArrToggle";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
@@ -49,7 +48,7 @@ import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOver
 import { setFrozenAnimTime } from "./three/animClock";
 import { ThemeProvider } from "./styles/ThemeContext";
 import { FONT, LAYOUT, Z } from "./styles/tokens";
-import { Button, Caption, type CaptionMetaItem } from "./ui";
+import { Button, Caption, Segmented, type CaptionMetaItem } from "./ui";
 
 // ── Atlas 機場點：點擊 popup ──
 interface AtlasProps {
@@ -2063,6 +2062,9 @@ export default function App() {
             atlasGlowSize={atlasGlowSize}
             onAtlasGlowSizeChange={setAtlasGlowSize}
             onExploreOpen={() => mapRef.current?.flyTo({ ...EXPLORE_OVERVIEW_CAMERA, duration: 2000 })}
+            dataSource={dataSource}
+            hasFused={hasFused}
+            onDataSourceChange={setDataSource}
             regions={REGION_ORDER.map((r) => ({ id: r, label: REGION_CONFIG[r].label }))}
             onRegionSelect={(r) => {
               setRegion(r);
@@ -2172,12 +2174,6 @@ export default function App() {
                   </button>
                 )}
               </div>
-              <DataSourceToggle
-                dataSource={dataSource}
-                hasFused={hasFused}
-                isDarkTheme={isDarkTheme}
-                onChange={setDataSource}
-              />
               <DepArrToggle
                 filter={depArrFilter}
                 isDarkTheme={isDarkTheme}
@@ -2514,10 +2510,13 @@ export default function App() {
                         </button>
                       ))}
                       <span style={{ color: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center" }}>|</span>
-                      <DataSourceToggle
-                        dataSource={dataSource}
-                        hasFused={hasFused}
-                        isDarkTheme={true}
+                      <Segmented<DataSource>
+                        ariaLabel="資料來源"
+                        options={[
+                          { value: "api", label: "航線軌跡" },
+                          { value: "fused", label: "空域快照", disabled: !hasFused },
+                        ]}
+                        value={dataSource}
                         onChange={setDataSource}
                       />
                       <DepArrToggle
