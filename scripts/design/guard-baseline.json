@@ -21,7 +21,7 @@
       "rgba": 8
     },
     "src/components/DeepAnalysisPanel.tsx": {
-      "hex": 4,
+      "hex": 0,
       "rgba": 0
     },
     "src/components/DepArrToggle.tsx": {
@@ -103,10 +103,6 @@
     "src/components/sidebar/scenePresets.ts": {
       "hex": 0,
       "rgba": 0
-    },
-    "src/components/sidebar/theme.ts": {
-      "hex": 22,
-      "rgba": 14
     },
     "src/ui/Button.tsx": {
       "hex": 0,

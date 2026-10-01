@@ -3,7 +3,6 @@ import { getAirportInfo } from "../../map/cameraPresets";
 import { useTheme } from "../../styles/ThemeContext";
 import { FONT, RADIUS, SIZE, SPACE } from "../../styles/tokens";
 import { themeVars } from "../../ui/vars";
-import type { ThemeColors } from "./theme";
 
 /* ── Sub-components ──────────────────────────────────────── */
 
@@ -12,21 +11,23 @@ export function RailIcon({
   onClick,
   children,
   title,
-  theme,
 }: {
   active: boolean;
   onClick: () => void;
   children: ReactNode;
   title: string;
-  theme: ThemeColors;
 }) {
+  const { tokens } = useTheme();
   return (
     <button
+      type="button"
       title={title}
       aria-label={title}
       aria-pressed={active}
       onClick={onClick}
+      className="fa-focus fa-hover-fg"
       style={{
+        ...themeVars(tokens),
         position: "relative",
         width: 44,
         height: 44,
@@ -35,154 +36,27 @@ export function RailIcon({
         justifyContent: "center",
         background: "none",
         border: "none",
-        borderRadius: 8,
+        borderRadius: RADIUS.base,
         cursor: "pointer",
-        color: active ? theme.ACTIVE_TEXT : theme.DIM,
-        filter: active ? "none" : "brightness(0.85)",
-        transition: "color 0.15s, filter 0.15s",
-      }}
-      onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.filter = "brightness(1.3)";
-      }}
-      onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.filter = "brightness(0.85)";
+        color: active ? tokens.fg1 : tokens.fg3,
+        transition: "color 0.15s",
       }}
     >
       {active && (
         <span
+          aria-hidden="true"
           style={{
             position: "absolute",
             left: -6,
             top: 10,
             bottom: 10,
-            width: 3,
-            borderRadius: 2,
-            background: theme.ACCENT_BLUE,
+            width: 2,
+            background: tokens.accent,
           }}
         />
       )}
       {children}
     </button>
-  );
-}
-
-export function SectionHeader({ children, theme }: { children: string; theme: ThemeColors }) {
-  return (
-    <div
-      style={{
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: "0.05em",
-        textTransform: "uppercase",
-        color: theme.DIM,
-        marginTop: 12,
-        marginBottom: 6,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function ToggleButtons<T extends string>({
-  options,
-  value,
-  onChange,
-  disabledValues,
-  theme,
-}: {
-  options: { value: T; label: string }[];
-  value: T;
-  onChange: (v: T) => void;
-  disabledValues?: Set<T>;
-  theme: ThemeColors;
-}) {
-  return (
-    <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-      {options.map((opt) => {
-        const isActive = value === opt.value;
-        const isDisabled = disabledValues?.has(opt.value);
-        return (
-          <button
-            key={opt.value}
-            disabled={isDisabled}
-            onClick={() => onChange(opt.value)}
-            style={{
-              flex: 1,
-              padding: "5px 0",
-              fontSize: 11,
-              fontFamily: FONT.ui,
-              border: `1px solid ${isActive ? theme.ACTIVE_BORDER : theme.BORDER}`,
-              borderRadius: 4,
-              background: isActive ? theme.ACTIVE_BG : "transparent",
-              color: isDisabled ? theme.DISABLED_TEXT : isActive ? theme.ACTIVE_TEXT : theme.ACCENT,
-              cursor: isDisabled ? "not-allowed" : "pointer",
-              transition: "all 0.15s",
-            }}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-export function SliderRow({
-  label,
-  value,
-  min,
-  max,
-  step,
-  format,
-  onChange,
-  theme,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  format?: (v: number) => string;
-  onChange: (v: number) => void;
-  theme: ThemeColors;
-}) {
-  const display = format ? format(value) : String(value);
-  return (
-    <div style={{ marginBottom: 6 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: 11,
-          fontFamily: FONT.ui,
-          color: theme.ACCENT,
-          marginBottom: 2,
-        }}
-      >
-        <span>{label}</span>
-        <span style={{ color: theme.DIM }}>{display}</span>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{
-          width: "100%",
-          height: 4,
-          appearance: "none",
-          WebkitAppearance: "none",
-          background: theme.SLIDER_TRACK,
-          borderRadius: 2,
-          outline: "none",
-          cursor: "pointer",
-          accentColor: theme.ACCENT_BLUE,
-        }}
-      />
-    </div>
   );
 }
 
@@ -328,44 +202,3 @@ export function AirportCheckboxRow({
     </button>
   );
 }
-
-export function StatRow({ label, value, sub, theme }: { label: string; value: string | number; sub?: string; theme: ThemeColors }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "3px 0" }}>
-      <span style={{ fontSize: 11, color: theme.DIM, fontFamily: FONT.ui }}>{label}</span>
-      <span style={{ fontSize: 13, fontWeight: 600, color: theme.ACCENT, fontFamily: FONT.ui }}>
-        {value}
-        {sub && <span style={{ fontSize: 10, color: theme.DIM, marginLeft: 4, fontWeight: 400 }}>{sub}</span>}
-      </span>
-    </div>
-  );
-}
-
-export function MiniBar({ items, theme }: { items: { label: string; value: number; color?: string }[]; theme: ThemeColors }) {
-  const max = Math.max(...items.map((i) => i.value), 1);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {items.map((item) => (
-        <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui, width: 32, textAlign: "right", flexShrink: 0 }}>
-            {item.label}
-          </span>
-          <div style={{ flex: 1, height: 10, background: theme.SLIDER_TRACK, borderRadius: 3, overflow: "hidden" }}>
-            <div style={{
-              width: `${(item.value / max) * 100}%`,
-              height: "100%",
-              background: item.color ?? theme.ACCENT_BLUE,
-              borderRadius: 3,
-              transition: "width 0.3s ease",
-            }} />
-          </div>
-          <span style={{ fontSize: 10, color: theme.ACCENT, fontFamily: FONT.ui, width: 28, textAlign: "right", flexShrink: 0 }}>
-            {item.value}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** 24h 迷你熱力條 */

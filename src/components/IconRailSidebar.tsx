@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 import type { DisplayMode, Region, RenderMode, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
 import type { ColorTheme } from "../types/colorTheme";
 import type { AirspaceSettings } from "../types/airspace";
@@ -9,8 +9,9 @@ import type { FlightFilters } from "../data/classify";
 import type { AirportManifestEntry } from "../data/flightLoader";
 import type { AirportMeta } from "../data/airportMeta";
 import type { AtlasColorMode } from "../map/atlasGlowLayer";
-import { FONT } from "../styles/tokens";
-import { getThemeColors, RAIL_WIDTH, PANEL_WIDTH } from "./sidebar/theme";
+import { useTheme } from "../styles/ThemeContext";
+import { FONT, LAYOUT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
+import { Panel, PanelBody, PanelHeader, Segmented } from "../ui";
 import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, IconRouteAnalysis, IconCamera } from "./sidebar/primitives";
 import type { ScenePreset } from "./sidebar/scenePresets";
 import { SettingsPanel } from "./sidebar/panels/SettingsPanel";
@@ -185,7 +186,7 @@ const ATLAS_BADGE_KEYFRAMES = `
 
 export function IconRailSidebar(props: IconRailSidebarProps) {
   const [activePanel, setActivePanel] = useState<PanelId | null>("sets");
-  const theme = getThemeColors(props.isDarkTheme);
+  const { tokens } = useTheme();
   const activeWorkspace = getWorkspace(activePanel);
   const activeSelection = props.airportSet ?? [props.selectedAirport];
   const selectedDate = props.selectedDate;
@@ -213,25 +214,13 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
     ));
   };
 
-  const panelStyle: CSSProperties = {
-    position: "absolute",
-    left: RAIL_WIDTH + 8,
-    top: 116,
-    zIndex: 20,
-    width: PANEL_WIDTH,
-    maxHeight: "70vh",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-    background: theme.BG_PANEL,
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
-    border: `1px solid ${theme.BORDER}`,
-    borderRadius: 12,
-    padding: "12px 14px",
-    color: theme.ACCENT,
-    animation: "iconRailFadeIn 0.25s ease-out",
-  };
+  const workspaceEyebrow = activeWorkspace === "explore"
+    ? "EXPLORE · 探索"
+    : activeWorkspace === "selection"
+      ? "SELECTION · 機場"
+      : activeWorkspace === "view"
+        ? "VIEW · 呈現"
+        : "ANALYZE · 分析";
 
   return (
     <>
@@ -243,17 +232,17 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           position: "absolute",
           left: 0,
           top: 0,
-          width: RAIL_WIDTH,
-          zIndex: 20,
-          background: theme.BG_RAIL,
+          width: LAYOUT.railWidth,
+          zIndex: Z.panel,
+          background: tokens.rail,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           paddingTop: 36,
-          paddingBottom: 8,
-          borderRight: `1px solid ${theme.BORDER}`,
-          borderBottom: `1px solid ${theme.BORDER}`,
-          borderRadius: "0 0 8px 0",
+          paddingBottom: SPACE.s8,
+          borderRight: `1px solid ${tokens.border}`,
+          borderBottom: `1px solid ${tokens.border}`,
+          borderRadius: `0 0 ${RADIUS.base}px 0`,
         }}
       >
         {/* Logo */}
@@ -264,7 +253,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: theme.ACCENT_BLUE,
+            color: tokens.fg1,
           }}
         >
           <IconPlaneMark />
@@ -275,8 +264,8 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           style={{
             width: 28,
             height: 1,
-            background: theme.BORDER,
-            margin: "8px 0",
+            background: tokens.border,
+            margin: `${SPACE.s8}px 0`,
           }}
         />
 
@@ -288,7 +277,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             if (opening) props.onExploreOpen?.();
           }}
           title="探索地圖總覽"
-          theme={theme}
         >
           <IconGlobeNetwork />
         </RailIcon>
@@ -297,7 +285,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           active={activeWorkspace === "selection"}
           onClick={() => toggleWorkspace("selection")}
           title="選擇機場與日期"
-          theme={theme}
         >
           <IconPinPlus />
         </RailIcon>
@@ -306,7 +293,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           active={activeWorkspace === "view"}
           onClick={() => toggleWorkspace("view")}
           title="顯示、色彩與空域"
-          theme={theme}
         >
           <IconLayers />
         </RailIcon>
@@ -315,7 +301,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           active={activeWorkspace === "analyze"}
           onClick={() => toggleWorkspace("analyze")}
           title="分析航班"
-          theme={theme}
         >
           <IconRouteAnalysis />
         </RailIcon>
@@ -324,7 +309,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           active={false}
           onClick={props.onCaptureClick}
           title="擷取與錄製"
-          theme={theme}
         >
           <IconCamera />
         </RailIcon>
@@ -332,39 +316,19 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
 
       {/* Floating Panel */}
       {activePanel !== null && (
-        <div style={panelStyle}>
-          {/* Close button */}
-          <button
-            onClick={() => setActivePanel(null)}
-            style={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              width: 22,
-              height: 22,
-              borderRadius: "50%",
-              background: theme.CLOSE_BG,
-              border: `1px solid ${theme.CLOSE_BORDER}`,
-              color: theme.DIM,
-              fontSize: 12,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1,
-            }}
-          >
-            ✕
-          </button>
-          <div style={{ paddingRight: 26, marginBottom: 12, flexShrink: 0 }}>
-            <div style={{ fontSize: 9, letterSpacing: 1.6, color: theme.ACCENT_BLUE, fontFamily: FONT.ui }}>
-              FLIGHT ARC / {activeWorkspace?.toUpperCase()}
-            </div>
-            <div style={{ marginTop: 4, fontSize: 16, fontWeight: 600, color: theme.ACTIVE_TEXT }}>
-              {workspaceTitle}
-            </div>
+        <Panel
+          ariaLabel={workspaceTitle}
+          maxHeight="70vh"
+          style={{ top: 116, animation: "iconRailFadeIn 0.25s ease-out" }}
+        >
+          <PanelHeader
+            eyebrow={workspaceEyebrow}
+            title={workspaceTitle}
+            onClose={() => setActivePanel(null)}
+          />
+          <div style={{ padding: `${SPACE.s8}px ${SPACE.s12}px 0`, display: "flex", flexDirection: "column", gap: SPACE.s8, flex: "none" }}>
             {(activeWorkspace === "selection" || activeWorkspace === "explore") && (
-              <div style={{ marginTop: 5, fontSize: 10, color: theme.DIM, fontFamily: FONT.ui, lineHeight: 1.45 }}>
+              <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data, lineHeight: 1.45 }}>
                 {activeSelection.length} 座機場
                 {selectedDate ? ` · ${selectedDate}` : ""}
                 {selectedDate && selectedAvailable < activeSelection.length
@@ -372,34 +336,18 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                   : ""}
               </div>
             )}
-            <div style={{ display: "flex", gap: 4, marginTop: 10, flexWrap: "wrap" }}>
-              {workspaceTabs.map((tab) => {
-                const active = tab.id === activePanel;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      if (tab.id === "stats") props.onStatsClick();
-                      else setActivePanel(tab.id);
-                    }}
-                    style={{
-                      padding: "5px 9px",
-                      borderRadius: 6,
-                      border: `1px solid ${active ? theme.ACTIVE_BORDER : theme.BORDER}`,
-                      background: active ? theme.ACTIVE_BTN_BG : "transparent",
-                      color: active ? theme.ACTIVE_TEXT : theme.DIM,
-                      cursor: "pointer",
-                      fontSize: 10,
-                      fontFamily: FONT.ui,
-                    }}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
+            <Segmented<PanelId | "stats">
+              fullWidth
+              ariaLabel="面板分頁"
+              options={workspaceTabs.map((tab) => ({ value: tab.id, label: tab.label }))}
+              value={activePanel}
+              onChange={(id) => {
+                if (id === "stats") props.onStatsClick();
+                else setActivePanel(id);
+              }}
+            />
           </div>
-          <div style={{ minHeight: 0, overflowY: "auto", flex: "1 1 auto" }}>
+          <PanelBody>
           {activePanel === "settings" && <SettingsPanel {...props} />}
           {activePanel === "sets" && (
             <SetsPanel
@@ -467,8 +415,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onFiltersChange={props.onFlightFiltersChange}
               scaleByAircraftSize={props.scaleByAircraftSize}
               onScaleByAircraftSizeChange={props.onScaleByAircraftSizeChange}
-              isDarkTheme={props.isDarkTheme}
-              theme={theme}
             />
           )}
           {activePanel === "atlas" && (
@@ -485,8 +431,8 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               airportCatalog={props.airportCatalog}
             />
           )}
-          </div>
-        </div>
+          </PanelBody>
+        </Panel>
       )}
     </>
   );
