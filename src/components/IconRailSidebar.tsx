@@ -416,7 +416,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onClearSet={props.onClearSet}
               onExitSetMode={props.onExitSetMode}
               onSceneSelect={props.onSceneSelect}
-              theme={theme}
             />
           )}
           {activePanel === "calendar" && (

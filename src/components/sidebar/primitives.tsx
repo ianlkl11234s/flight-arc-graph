@@ -1,6 +1,8 @@
 import { type ReactNode } from "react";
 import { getAirportInfo } from "../../map/cameraPresets";
-import { FONT } from "../../styles/tokens";
+import { useTheme } from "../../styles/ThemeContext";
+import { FONT, RADIUS, SIZE, SPACE } from "../../styles/tokens";
+import { themeVars } from "../../ui/vars";
 import type { ThemeColors } from "./theme";
 
 /* ── Sub-components ──────────────────────────────────────── */
@@ -246,50 +248,6 @@ export function IconCamera() {
 
 /* ── SetsPanel: 多機場組合檢視 ─────────────────────────────── */
 
-export function SetChip({ icao, onRemove, theme }: {
-  icao: string;
-  onRemove: () => void;
-  theme: ThemeColors;
-}) {
-  const info = getAirportInfo(icao);
-  const label = info?.iata ?? icao;
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        padding: "2px 4px 2px 8px",
-        background: theme.ACTIVE_BTN_BG,
-        border: `1px solid ${theme.ACTIVE_BORDER}`,
-        borderRadius: 12,
-        fontSize: 11,
-        fontFamily: FONT.ui,
-        color: theme.ACTIVE_TEXT,
-        lineHeight: 1.4,
-      }}
-      title={info?.name ?? icao}
-    >
-      {label}
-      <button
-        onClick={onRemove}
-        style={{
-          width: 16, height: 16, padding: 0,
-          background: "transparent", border: "none",
-          color: theme.DIM, cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 12, lineHeight: 1, borderRadius: "50%",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = theme.ACCENT; }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = theme.DIM; }}
-        title="移除"
-      >
-        ×
-      </button>
-    </span>
-  );
-}
-
 export function AirportCheckboxRow({
   icao,
   name,
@@ -299,7 +257,6 @@ export function AirportCheckboxRow({
   matchReason,
   disabled = false,
   onToggle,
-  theme,
 }: {
   icao: string;
   name: string;
@@ -309,52 +266,61 @@ export function AirportCheckboxRow({
   matchReason?: string;
   disabled?: boolean;
   onToggle: () => void;
-  theme: ThemeColors;
 }) {
+  const { tokens } = useTheme();
   const info = getAirportInfo(icao);
   return (
     <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
       onClick={onToggle}
       disabled={disabled}
       title={disabled ? "目前尚無可載入的軌跡資料" : undefined}
+      className="fa-focus fa-hover"
       style={{
+        ...themeVars(tokens),
         display: "flex",
         alignItems: "center",
-        gap: 10,
-        padding: "6px 8px",
-        background: checked ? theme.ACTIVE_BTN_BG : "transparent",
+        gap: SPACE.s8 + SPACE.s2,
+        padding: `${SPACE.s6}px ${SPACE.s8}px`,
+        background: checked ? tokens.accentSoft : "transparent",
         border: "none",
-        borderRadius: 6,
+        borderRadius: RADIUS.base,
         cursor: disabled ? "not-allowed" : "pointer",
         textAlign: "left",
         width: "100%",
-        transition: "background 0.15s",
+        fontFamily: FONT.ui,
         opacity: disabled ? 0.52 : 1,
       }}
-      onMouseEnter={(e) => { if (!checked && !disabled) e.currentTarget.style.background = theme.HOVER_BG; }}
-      onMouseLeave={(e) => { if (!checked && !disabled) e.currentTarget.style.background = "transparent"; }}
     >
       <span
+        aria-hidden="true"
         style={{
           width: 14, height: 14, flexShrink: 0,
-          borderRadius: 3,
-          border: `1.5px solid ${checked ? theme.ACTIVE_BORDER : theme.BORDER}`,
-          background: checked ? theme.ACTIVE_BORDER : "transparent",
+          borderRadius: RADIUS.base,
+          boxSizing: "border-box",
+          border: `1px solid ${checked ? tokens.accent : tokens.border}`,
+          background: checked ? tokens.accent : "transparent",
           display: "flex", alignItems: "center", justifyContent: "center",
-          color: "#fff", fontSize: 10, lineHeight: 1,
+          color: tokens.accentInk,
         }}
       >
-        {checked ? "✓" : ""}
+        {checked && (
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square">
+            <path d="M2 5.2l2.2 2.2L8 3" />
+          </svg>
+        )}
       </span>
       <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontSize: 12, color: checked ? theme.ACTIVE_TEXT : theme.ACCENT, lineHeight: 1.3 }}>
+        <div style={{ fontSize: SIZE.s11, color: checked ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
           {info?.name ?? name}
         </div>
-        <div style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>
+        <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data }}>
           {info?.iata || iata || icao} / {icao}{coverage ? ` · ${coverage}` : ""}
         </div>
         {matchReason && (
-          <div style={{ fontSize: 9, color: theme.DIM, marginTop: 2 }}>
+          <div style={{ fontSize: SIZE.s9, color: tokens.fg3, marginTop: SPACE.s2 }}>
             符合：{matchReason}
           </div>
         )}

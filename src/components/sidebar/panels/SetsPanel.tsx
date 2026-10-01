@@ -4,9 +4,12 @@ import type { AirportManifestEntry } from "../../../data/flightLoader";
 import type { AirportMeta } from "../../../data/airportMeta";
 import { getContinentLabel, getCountryLabel, searchAirports, type AirportSearchCandidate } from "../../../data/airportSearch";
 import { getAirportInfo } from "../../../map/cameraPresets";
-import { FONT } from "../../../styles/tokens";
-import type { ThemeColors } from "../theme";
-import { SetChip, AirportCheckboxRow } from "../primitives";
+import { useTheme } from "../../../styles/ThemeContext";
+import { FONT, RADIUS, SIZE, SPACE } from "../../../styles/tokens";
+import { Button, Chip, Section } from "../../../ui";
+import { IconChevron } from "../../../ui/icons";
+import { themeVars } from "../../../ui/vars";
+import { AirportCheckboxRow } from "../primitives";
 import { SCENE_PRESETS, type ScenePreset } from "../scenePresets";
 
 export function SetsPanel({
@@ -23,7 +26,6 @@ export function SetsPanel({
   onClearSet,
   onExitSetMode,
   onSceneSelect,
-  theme,
 }: {
   airports: string[];
   airportCatalog: Record<string, AirportManifestEntry>;
@@ -38,8 +40,8 @@ export function SetsPanel({
   onClearSet: () => void;
   onExitSetMode: () => void;
   onSceneSelect: (scene: ScenePreset) => void;
-  theme: ThemeColors;
 }) {
+  const { tokens } = useTheme();
   const available = new Set(airports);
   const selectedSet = new Set(airportSet);
   const [search, setSearch] = useState("");
@@ -127,92 +129,112 @@ export function SetsPanel({
     ? savedSets.find((s) => s.shortName === setName)?.id ?? null
     : null;
 
+  const rowBase = {
+    ...themeVars(tokens),
+    display: "flex",
+    alignItems: "center",
+    gap: SPACE.s8,
+    width: "100%",
+    background: "transparent",
+    border: "none",
+    textAlign: "left" as const,
+    cursor: "pointer",
+    fontFamily: FONT.ui,
+  };
+  const eyebrow = { fontSize: SIZE.s9, color: tokens.fg3, letterSpacing: ".18em", textTransform: "uppercase" as const, fontFamily: FONT.data };
+
+  const airportRow = (icao: string) => {
+    const meta = airportMeta[icao];
+    const selectable = available.has(icao);
+    return (
+      <AirportCheckboxRow
+        key={icao}
+        icao={icao}
+        name={meta?.nameZh || meta?.name || icao}
+        iata={meta?.iata}
+        checked={selectedSet.has(icao)}
+        coverage={selectable ? undefined : "尚無軌跡"}
+        disabled={!selectable}
+        onToggle={() => onToggleAirport(icao)}
+      />
+    );
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s2 }}>
       <div
         style={{
           position: "sticky",
-          top: 0,
+          top: -SPACE.s4,
           zIndex: 2,
           flexShrink: 0,
-          paddingBottom: 2,
-          background: theme.BG_RAIL,
-          boxShadow: `0 1px 0 ${theme.BORDER}`,
+          display: "flex",
+          flexDirection: "column",
+          gap: SPACE.s8,
+          padding: `${SPACE.s4}px 0 ${SPACE.s8}px`,
+          background: tokens.mapBg,
+          boxShadow: `0 1px 0 ${tokens.border}`,
         }}
       >
         {/* Header: 已選 + 動作 */}
-        <div style={{ padding: "4px 8px 6px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ fontSize: 11, color: theme.ACCENT, lineHeight: 1.3 }}>
-            已選 <strong style={{ color: theme.ACTIVE_TEXT }}>{airportSet.length}</strong> 座
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: SPACE.s8 }}>
+          <div style={{ fontSize: SIZE.s11, color: tokens.fg2, lineHeight: 1.3, fontFamily: FONT.ui }}>
+            已選 <strong style={{ color: tokens.fg1, fontFamily: FONT.data }}>{airportSet.length}</strong> 座
             {setName && (
-              <span style={{ marginLeft: 6, fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>· {setName}</span>
+              <span style={{ marginLeft: SPACE.s6, fontSize: SIZE.s10, color: tokens.fg3 }}>· {setName}</span>
             )}
           </div>
-          <div style={{ display: "flex", gap: 4 }}>
-            <button
-              onClick={onClearSet}
-              disabled={airportSet.length === 0}
-              style={{
-                padding: "2px 8px", fontSize: 10, borderRadius: 4,
-                background: "transparent", border: `1px solid ${theme.BORDER}`,
-                color: airportSet.length === 0 ? theme.DISABLED_TEXT : theme.DIM,
-                cursor: airportSet.length === 0 ? "default" : "pointer",
-              }}
-            >
-              清空
-            </button>
+          <div style={{ display: "flex", gap: SPACE.s4 }}>
+            <Button onClick={onClearSet} disabled={airportSet.length === 0}>清空</Button>
             {setMode && (
-              <button
-                onClick={onExitSetMode}
-                style={{
-                  padding: "2px 8px", fontSize: 10, borderRadius: 4,
-                  background: "transparent", border: `1px solid ${theme.BORDER}`,
-                  color: theme.DIM, cursor: "pointer",
-                }}
-                title="退出組合模式（回到單一機場）"
-              >
-                退出
-              </button>
+              <Button onClick={onExitSetMode} title="退出組合模式（回到單一機場）">退出</Button>
             )}
           </div>
         </div>
 
         {/* Selected chips */}
         {airportSet.length > 0 && (
-          <div style={{ padding: "4px 8px 8px", display: "flex", flexWrap: "wrap", gap: 4 }}>
-            {airportSet.map((icao) => (
-              <SetChip key={icao} icao={icao} onRemove={() => onToggleAirport(icao)} theme={theme} />
-            ))}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: SPACE.s4 }}>
+            {airportSet.map((icao) => {
+              const info = getAirportInfo(icao);
+              return (
+                <Chip
+                  key={icao}
+                  selected
+                  label={info?.iata ?? icao}
+                  title={info?.name ?? icao}
+                  onRemove={() => onToggleAirport(icao)}
+                />
+              );
+            })}
           </div>
         )}
 
-        <div style={{ height: 1, background: theme.BORDER, margin: "2px 8px 6px" }} />
-
-        <div style={{ padding: "2px 8px 8px" }}>
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="搜尋機場、國家、洲別、ICAO / IATA"
-            aria-label="搜尋機場"
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "8px 10px",
-              borderRadius: 7,
-              border: `1px solid ${theme.BORDER}`,
-              background: theme.SELECT_BG,
-              color: theme.ACTIVE_TEXT,
-              fontFamily: FONT.ui,
-              fontSize: 11,
-              outline: "none",
-            }}
-          />
-        </div>
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="搜尋機場、國家、洲別、ICAO / IATA"
+          aria-label="搜尋機場"
+          className="fa-focus"
+          style={{
+            ...themeVars(tokens),
+            width: "100%",
+            boxSizing: "border-box",
+            height: 28,
+            padding: `0 ${SPACE.s8 + SPACE.s2}px`,
+            borderRadius: RADIUS.base,
+            border: `1px solid ${tokens.border}`,
+            background: tokens.ctl,
+            color: tokens.fg1,
+            fontFamily: FONT.ui,
+            fontSize: SIZE.s11,
+          }}
+        />
       </div>
 
       {search.trim() && (
-        <div style={{ padding: "0 4px 8px" }}>
-          <div style={{ fontSize: 10, color: theme.DIM, padding: "0 4px 4px" }}>
+        <div style={{ paddingBottom: SPACE.s8 }}>
+          <div style={{ fontSize: SIZE.s10, color: tokens.fg3, padding: `${SPACE.s4}px ${SPACE.s4}px` }}>
             {searchResults.length > 0
               ? searchResults.length > 60
                 ? `顯示前 60 座／共 ${searchResults.length} 座`
@@ -232,7 +254,6 @@ export function SetsPanel({
                 matchReason={result.matchReason}
                 disabled={!result.selectable}
                 onToggle={() => onToggleAirport(result.icao)}
-                theme={theme}
               />
             );
           })}
@@ -240,69 +261,55 @@ export function SetsPanel({
       )}
 
       {filteredScenes.length > 0 && (
-        <div style={{ margin: "0 4px 6px" }}>
-          <button
-            onClick={() => setScenesOpen((open) => !open)}
-            aria-expanded={scenesOpen}
-            style={{
-              display: "flex", alignItems: "center", width: "100%", gap: 7,
-              padding: "6px 4px", background: "transparent", border: "none",
-              color: theme.DIM, cursor: "pointer", textAlign: "left", fontSize: 10,
-            }}
-          >
-            <span style={{ width: 9 }}>{scenesOpen ? "▼" : "▶"}</span>
-            <span style={{ flex: 1, letterSpacing: 1.1 }}>場景預設</span>
-            <span style={{ fontFamily: FONT.ui }}>{filteredScenes.length}</span>
-          </button>
-          {scenesOpen && filteredScenes.map((scene) => (
+        <Section
+          title="SCENES · 場景預設"
+          collapsible
+          open={scenesOpen}
+          onToggle={setScenesOpen}
+          right={<span style={{ fontFamily: FONT.data, fontSize: SIZE.s10, letterSpacing: 0 }}>{filteredScenes.length}</span>}
+        >
+          {filteredScenes.map((scene) => (
             <button
               key={scene.id}
+              type="button"
               onClick={() => onSceneSelect(scene)}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%",
-                padding: "6px 8px", background: "transparent", border: "none",
-                borderRadius: 6, cursor: "pointer", textAlign: "left",
-              }}
-              onMouseEnter={(event) => { event.currentTarget.style.background = theme.HOVER_BG; }}
-              onMouseLeave={(event) => { event.currentTarget.style.background = "transparent"; }}
+              className="fa-focus fa-hover"
+              style={{ ...rowBase, padding: `${SPACE.s6}px ${SPACE.s8}px`, borderRadius: RADIUS.base }}
             >
-              <span style={{ width: 3, height: 24, borderRadius: 2, background: theme.SCENE_BAR, flexShrink: 0 }} />
+              <span style={{ width: 2, height: 24, background: tokens.accent, flexShrink: 0 }} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 12, color: theme.ACCENT }}>{scene.name}</div>
-                <div style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>{scene.desc}</div>
+                <div style={{ fontSize: SIZE.s11, color: tokens.fg1 }}>{scene.name}</div>
+                <div style={{ fontSize: SIZE.s10, color: tokens.fg3 }}>{scene.desc}</div>
               </div>
             </button>
           ))}
-        </div>
+        </Section>
       )}
 
       {/* Saved Sets */}
-      <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, padding: "2px 8px 4px" }}>
-        預設組合
-      </div>
+      <div style={{ ...eyebrow, padding: `${SPACE.s8}px ${SPACE.s8}px ${SPACE.s4}px` }}>PRESETS · 預設組合</div>
       {savedSets.map((s) => {
         const isActive = s.id === matchedSavedSetId;
         return (
           <button
             key={s.id}
+            type="button"
+            aria-pressed={isActive}
             onClick={() => onApplySet(s)}
+            className="fa-focus fa-hover"
             style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "6px 8px",
-              background: isActive ? theme.ACTIVE_BTN_BG : "transparent",
-              border: "none", borderRadius: 6,
-              cursor: "pointer", textAlign: "left", width: "100%",
-              transition: "background 0.15s",
+              ...rowBase,
+              padding: `${SPACE.s6}px ${SPACE.s8}px`,
+              background: isActive ? tokens.accentSoft : "transparent",
+              borderRadius: RADIUS.base,
             }}
-            onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = theme.HOVER_BG; }}
-            onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
           >
-            <span style={{ width: 3, height: 24, borderRadius: 2, background: isActive ? theme.ACCENT_BLUE : theme.SCENE_BAR, flexShrink: 0 }} />
+            <span style={{ width: 2, height: 24, background: isActive ? tokens.accent : tokens.border, flexShrink: 0 }} />
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 12, color: isActive ? theme.ACTIVE_TEXT : theme.ACCENT, lineHeight: 1.3 }}>
+              <div style={{ fontSize: SIZE.s11, color: isActive ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
                 {s.name}
               </div>
-              <div style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>
+              <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data }}>
                 {s.icaos.length} 座 · {s.icaos.slice(0, 4).join(" · ")}{s.icaos.length > 4 ? " …" : ""}
               </div>
             </div>
@@ -310,12 +317,12 @@ export function SetsPanel({
         );
       })}
 
-      <div style={{ height: 1, background: theme.BORDER, margin: "8px 8px 6px" }} />
+      <div style={{ height: 1, background: tokens.border, margin: `${SPACE.s8}px 0 ${SPACE.s4}px` }} />
 
       {/* Complete airport directory: Taiwan / Japan / continent → country → airport */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "2px 8px 4px" }}>
-        <span style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2 }}>全部機場</span>
-        <span style={{ fontSize: 9, color: theme.DIM, fontFamily: FONT.ui }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: SPACE.s6, padding: `${SPACE.s2}px ${SPACE.s8}px ${SPACE.s4}px` }}>
+        <span style={eyebrow}>ALL · 全部機場</span>
+        <span style={{ fontSize: SIZE.s9, color: tokens.fg3, fontFamily: FONT.data }}>
           {catalogIcaos.length.toLocaleString()} 座 · {airports.length.toLocaleString()} 座可加入
         </span>
       </div>
@@ -326,80 +333,40 @@ export function SetsPanel({
         return (
           <div key={continent.key}>
             <button
+              type="button"
+              aria-expanded={open}
               onClick={() => toggleSetKey(setOpenContinents, continent.key)}
-              style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "4px 8px", width: "100%",
-                background: "transparent", border: "none",
-                cursor: "pointer", textAlign: "left",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = theme.HOVER_BG; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              className="fa-focus fa-hover"
+              style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px`, color: tokens.fg3 }}
             >
-              <span style={{ fontSize: 9, color: theme.DIM, width: 8, display: "inline-block" }}>
-                {open ? "▼" : "▶"}
-              </span>
-              <span style={{ fontSize: 11, color: theme.ACCENT, flex: 1 }}>
-                {continent.label}
-              </span>
-              <span style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>
+              <IconChevron size={9} direction={open ? "down" : "right"} />
+              <span style={{ fontSize: SIZE.s11, color: tokens.fg1, flex: 1 }}>{continent.label}</span>
+              <span style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data }}>
                 {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{continentIcaos.length}
               </span>
             </button>
-            {open && continent.flattenCountries && continentIcaos.map((icao) => {
-              const meta = airportMeta[icao];
-              const selectable = available.has(icao);
-              return (
-                <div key={icao} style={{ paddingLeft: 8 }}>
-                  <AirportCheckboxRow
-                    icao={icao}
-                    name={meta?.nameZh || meta?.name || icao}
-                    iata={meta?.iata}
-                    checked={selectedSet.has(icao)}
-                    coverage={selectable ? undefined : "尚無軌跡"}
-                    disabled={!selectable}
-                    onToggle={() => onToggleAirport(icao)}
-                    theme={theme}
-                  />
-                </div>
-              );
-            })}
+            {open && continent.flattenCountries && continentIcaos.map((icao) => (
+              <div key={icao} style={{ paddingLeft: SPACE.s8 }}>{airportRow(icao)}</div>
+            ))}
             {open && !continent.flattenCountries && continent.countries.map((country) => {
               const countryOpen = openCountries.has(country.key);
               const selectedInCountry = country.icaos.filter((icao) => selectedSet.has(icao)).length;
               return (
-                <div key={country.key} style={{ paddingLeft: 8 }}>
+                <div key={country.key} style={{ paddingLeft: SPACE.s8 }}>
                   <button
+                    type="button"
+                    aria-expanded={countryOpen}
                     onClick={() => toggleSetKey(setOpenCountries, country.key)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 6, width: "100%",
-                      padding: "4px 8px", background: "transparent", border: "none",
-                      cursor: "pointer", textAlign: "left",
-                    }}
+                    className="fa-focus fa-hover"
+                    style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px`, color: tokens.fg3 }}
                   >
-                    <span style={{ fontSize: 8, color: theme.DIM, width: 8 }}>{countryOpen ? "▼" : "▶"}</span>
-                    <span style={{ fontSize: 10, color: theme.ACCENT, flex: 1 }}>{country.label}</span>
-                    <span style={{ fontSize: 9, color: theme.DIM, fontFamily: FONT.ui }}>
+                    <IconChevron size={8} direction={countryOpen ? "down" : "right"} />
+                    <span style={{ fontSize: SIZE.s10, color: tokens.fg2, flex: 1 }}>{country.label}</span>
+                    <span style={{ fontSize: SIZE.s9, color: tokens.fg3, fontFamily: FONT.data }}>
                       {selectedInCountry > 0 ? `${selectedInCountry}/` : ""}{country.icaos.length}
                     </span>
                   </button>
-                  {countryOpen && country.icaos.map((icao) => {
-                    const meta = airportMeta[icao];
-                    const selectable = available.has(icao);
-                    return (
-                      <AirportCheckboxRow
-                        key={icao}
-                        icao={icao}
-                        name={meta?.nameZh || meta?.name || icao}
-                        iata={meta?.iata}
-                        checked={selectedSet.has(icao)}
-                        coverage={selectable ? undefined : "尚無軌跡"}
-                        disabled={!selectable}
-                        onToggle={() => onToggleAirport(icao)}
-                        theme={theme}
-                      />
-                    );
-                  })}
+                  {countryOpen && country.icaos.map((icao) => airportRow(icao))}
                 </div>
               );
             })}
