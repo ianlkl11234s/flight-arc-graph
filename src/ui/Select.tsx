@@ -47,7 +47,7 @@ export function Select<T extends string | number>({
       style={{
         position: "relative",
         display: fullWidth || label ? "flex" : "inline-flex",
-        flex: label ? 1 : undefined,
+        flex: label && width === undefined ? 1 : undefined,
         width: fullWidth ? "100%" : width,
         minWidth: 0,
       }}

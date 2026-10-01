@@ -42,6 +42,7 @@ export function Segmented<T extends string | number>({
         ...themeVars(tokens),
         display: fullWidth ? "flex" : "inline-flex",
         width: fullWidth ? "100%" : undefined,
+        alignSelf: fullWidth ? undefined : "flex-start",
         border: `1px solid ${tokens.border}`,
         borderRadius: RADIUS.base,
         overflow: "hidden",

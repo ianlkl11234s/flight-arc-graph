@@ -107,6 +107,70 @@
     "src/components/sidebar/theme.ts": {
       "hex": 22,
       "rgba": 14
+    },
+    "src/ui/Button.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Chip.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/DockCard.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Modal.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Panel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/PanelHeader.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Section.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Segmented.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Select.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Slider.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/StatCard.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/StatusBar.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Toggle.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/icons.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/index.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/vars.ts": {
+      "hex": 0,
+      "rgba": 0
     }
   }
 }
