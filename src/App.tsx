@@ -46,8 +46,8 @@ import { getAircraftInfo, type AircraftCategory as AcCat } from "./data/aircraft
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
 import { setFrozenAnimTime } from "./three/animClock";
-import { ThemeProvider } from "./styles/ThemeContext";
-import { FONT, LAYOUT, Z } from "./styles/tokens";
+import { ThemeProvider, useTheme } from "./styles/ThemeContext";
+import { FONT, LAYOUT, SIZE, SPACE, Z } from "./styles/tokens";
 import { Button, Caption, Segmented, type CaptionMetaItem } from "./ui";
 
 // ── Atlas 機場點：點擊 popup ──
@@ -91,6 +91,45 @@ function buildAtlasPopupHtml(p: AtlasProps): string {
     <div style="font-size:12px;color:#333;line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
     ${p.status !== "planned" ? `<button data-atlas-add="${escapeHtml(p.icao)}" style="margin-top:8px;width:100%;padding:6px 8px;border:1px solid #3b82f6;border-radius:6px;background:#eaf3ff;color:#174ea6;font:600 11px monospace;cursor:pointer">+ 加入 Selection</button>` : ""}
   </div>`;
+}
+
+/** 左上字標 FLIGHT ARC + 相機 HUD（座標、zoom、俯角、方位）。 */
+function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: number; pitch: number; bearing: number } }) {
+  const { tokens } = useTheme();
+  const lat = `${Math.abs(cameraInfo.lat).toFixed(4)}°${cameraInfo.lat >= 0 ? "N" : "S"}`;
+  const lng = `${Math.abs(cameraInfo.lng).toFixed(4)}°${cameraInfo.lng >= 0 ? "E" : "W"}`;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: LAYOUT.panelLeft + SPACE.s8,
+        top: SPACE.s16,
+        zIndex: Z.mapOverlay,
+        display: "flex",
+        alignItems: "baseline",
+        gap: SPACE.s12 + SPACE.s2,
+        pointerEvents: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ fontFamily: FONT.data, fontSize: SIZE.s12, fontWeight: 600, letterSpacing: ".18em", color: tokens.fg1 }}>
+        FLIGHT ARC
+      </span>
+      <span
+        title={cameraInfo.zoom < 3 ? "Drag globe · Scroll to zoom" : "Right-drag to rotate · Scroll to zoom"}
+        style={{
+          fontFamily: FONT.data,
+          fontSize: SIZE.s10,
+          letterSpacing: ".04em",
+          color: tokens.fg3,
+          fontVariantNumeric: "tabular-nums",
+          pointerEvents: "auto",
+        }}
+      >
+        {lat} {lng} · z{cameraInfo.zoom.toFixed(1)} · 俯角 {cameraInfo.pitch}° · 方位 {cameraInfo.bearing}°
+      </span>
+    </div>
+  );
 }
 
 function LoadingIndicator({ loadingProgress, isDarkTheme }: {
@@ -552,9 +591,6 @@ export default function App() {
       ? `Flight Network · ${airportSet.length} Airport${airportSet.length === 1 ? "" : "s"}`
       : "Build a Flight Network")
     : airportMeta[selectedAirport]?.name ?? getAirportInfo(selectedAirport)?.name ?? selectedAirport;
-  const selectionEyebrow = airportSet
-    ? "FLIGHT ARC / NETWORK STUDY"
-    : "FLIGHT ARC / AIRPORT VIEW";
   const selectionCodeLabel = airportSet
     ? airportSet.join(" · ")
     : (() => {
@@ -2111,71 +2147,8 @@ export default function App() {
             />
           </div>
 
-          {/* 頂部控制列（sidebar 右邊） */}
-          <div
-            style={{
-              position: "absolute",
-              top: 16,
-              left: 72,
-              zIndex: 10,
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-            }}
-          >
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <div style={{ minWidth: 210 }}>
-                <div style={{ fontSize: 9, color: "#64aaff", fontFamily: FONT.ui, letterSpacing: 1.8 }}>
-                  {selectionEyebrow}
-                </div>
-                <h1
-                  style={{
-                    margin: "2px 0 0",
-                    fontSize: 26,
-                    color: isDarkTheme ? "#fff" : "#333",
-                    fontFamily: FONT.ui,
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  {selectionTitle}
-                </h1>
-              </div>
-              <div
-                style={{
-                  padding: "4px 8px 4px 10px",
-                  background: isDarkTheme ? "rgba(100,170,255,0.14)" : "rgba(59,130,246,0.1)",
-                  border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.36)" : "#3B82F6"}`,
-                  borderRadius: 14,
-                  fontSize: 10,
-                  fontFamily: FONT.ui,
-                  color: isDarkTheme ? "rgba(255,255,255,0.78)" : "#1a1a1a",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                }}
-                title={airportSet?.join(", ") ?? selectedAirport}
-              >
-                <span>{airportSet?.length ?? 1} airport{(airportSet?.length ?? 1) === 1 ? "" : "s"} · {finalFlights.length} flights · {timeline.selectedDate}</span>
-                {airportSet && (
-                  <button
-                    onClick={exitSetMode}
-                    style={{
-                      width: 16, height: 16, padding: 0, borderRadius: "50%",
-                      background: "transparent",
-                      border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"}`,
-                      color: "inherit",
-                      cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 10, lineHeight: 1,
-                    }}
-                    title="退出組合模式"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          {/* 左上：字標 + 相機 HUD */}
+          <Brand cameraInfo={cameraInfo} />
 
           {/* 時間軸 */}
           <TimelineControls
@@ -2228,62 +2201,9 @@ export default function App() {
             onCapture={() => setCaptureMode(true)}
             onInfo={() => setShowInfo(true)}
           />
-          <div
-            style={{
-              position: "absolute",
-              top: 60,
-              right: 16,
-              zIndex: Z.mapOverlay,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 10,
-                fontFamily: FONT.ui,
-                color: isDarkTheme ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)",
-                letterSpacing: 0.5,
-              }}
-            >
-              {cameraInfo.zoom < 3
-                ? "Drag globe · Scroll to zoom"
-                : "Right-drag to rotate · Scroll to zoom"}
-            </div>
-          </div>
-
           {/* Loading indicator — 畫面中央，完成後淡出 */}
           <LoadingIndicator loadingProgress={loadingProgress} isDarkTheme={isDarkTheme} />
 
-          {/* 航班數 + 相機資訊 */}
-          <div
-            style={{
-              position: "absolute",
-              top: 76,
-              left: 72,
-              zIndex: 10,
-              background: isDarkTheme ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)",
-              backdropFilter: "blur(8px)",
-              borderRadius: 6,
-              padding: "4px 10px",
-            }}
-          >
-            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: FONT.ui }}>
-              {finalFlights.length} flights
-              {airportSet !== null
-                ? ` (${setName ?? `${airportSet.length} airports`})`
-                : scope === "region" && ` (${REGION_CONFIG[region].label})`}
-              {loadingProgress && ` · loading ${loadingProgress.loaded}...`}
-              {` · ${timeline.selectedDate}`}
-              {timeline.rangeDays > 1 && ` +${timeline.rangeDays - 1}d`}
-            </div>
-            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)", fontSize: 11, fontFamily: FONT.ui }}>
-              {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
-            </div>
-            {!loading && !loadingProgress && displayedFlights.length === 0 && (
-              <div style={{ color: isDarkTheme ? "rgba(255,180,80,0.55)" : "rgba(180,120,0,0.6)", fontSize: 10, fontFamily: FONT.ui, marginTop: 2 }}>
-                此日期範圍無航班資料
-              </div>
-            )}
-          </div>
         </>
       )}
 
