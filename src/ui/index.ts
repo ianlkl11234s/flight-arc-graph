@@ -8,3 +8,6 @@ export { Toggle, type ToggleProps } from "./Toggle";
 export { Slider, type SliderProps, type SliderSingleProps, type SliderRangeProps } from "./Slider";
 export { Chip, ChipGroup, type ChipProps, type ChipGroupProps } from "./Chip";
 export { StatCard, StatGrid, type StatCardProps } from "./StatCard";
+export { DockCard, type DockCardProps, type DockKV } from "./DockCard";
+export { StatusBar, type StatusBarProps, type StatusState } from "./StatusBar";
+export { Modal, type ModalProps } from "./Modal";
