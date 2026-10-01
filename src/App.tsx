@@ -26,6 +26,7 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { AirportSelector } from "./components/AirportSelector";
 import { FlightPicker } from "./components/FlightPicker";
 import { TimelineControls } from "./components/TimelineControls";
+import { Timeline, type HourBin } from "./components/Timeline";
 import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
@@ -983,6 +984,39 @@ export default function App() {
     }
     return { arr, dep };
   }, [finalFlights, activeIcaoSet]);
+
+  // 時間軸直方圖：每小時進場（arr_time）／離場（dep_time）數。多日 Compare 依各日窗口分段，
+  // 避免跨月窗口產生上千格。
+  const hourBins = useMemo<HourBin[]>(() => {
+    const segs: Array<[number, number]> = timeline.isMultiDateMode && timeline.dateWindowStarts.length > 0
+      ? timeline.dateWindowStarts.map((st, i) => [st, timeline.dateWindowEnds[i]!] as [number, number]).sort((a, b) => a[0] - b[0])
+      : [[timeline.windowStart, timeline.windowEnd]];
+    const bins: HourBin[] = [];
+    const segIndex: Array<{ start: number; end: number; offset: number }> = [];
+    for (const [st, en] of segs) {
+      if (!(en > st)) continue;
+      const offset = bins.length;
+      for (let t = st; t <= en; t += 3600) bins.push({ start: t, arr: 0, dep: 0 });
+      segIndex.push({ start: st, end: en, offset });
+    }
+    const add = (t: number, key: "arr" | "dep") => {
+      if (!t) return;
+      for (const sg of segIndex) {
+        if (t >= sg.start && t <= sg.end) {
+          const b = bins[sg.offset + Math.floor((t - sg.start) / 3600)];
+          if (b) b[key]++;
+          return;
+        }
+      }
+    };
+    // 區域範圍（非組合）沒有「本地機場」：每班的降落／起飛時刻都算
+    const regionWide = scope === "region" && airportSet === null;
+    for (const f of finalFlights) {
+      if (regionWide || activeIcaoSet.has(f.dest_icao)) add(f.arr_time, "arr");
+      if (regionWide || activeIcaoSet.has(f.origin_icao)) add(f.dep_time, "dep");
+    }
+    return bins;
+  }, [finalFlights, activeIcaoSet, scope, airportSet, timeline.isMultiDateMode, timeline.dateWindowStarts, timeline.dateWindowEnds, timeline.windowStart, timeline.windowEnd]);
 
   // 用於 FlightPicker 的航班列表（airport filter；set 模式則 union 所有 set 機場）
   const pickableFlights = useMemo(() => {
@@ -2117,10 +2151,13 @@ export default function App() {
           <div
             style={{
               position: "absolute",
-              left: LAYOUT.panelLeft + 8,
-              bottom: 136,
+              left: LAYOUT.panelLeft + SPACE.s8,
+              bottom: LAYOUT.mapBottomInset,
               zIndex: Z.mapOverlay,
-              maxWidth: 520,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: SPACE.s12,
               pointerEvents: "none",
             }}
           >
@@ -2144,37 +2181,39 @@ export default function App() {
                   </Button>
                 </>
               ) : undefined}
+              style={{ maxWidth: 520 }}
+            />
+            {/* 時間軸膠囊（R4；底邊 = mapBottomInset，與 dock 共用，R5） */}
+            <Timeline
+              playing={timeline.playing}
+              speed={timeline.speed}
+              progress={timeline.progress}
+              currentTime={timeline.currentTime}
+              windowStart={timeline.windowStart}
+              windowEnd={timeline.windowEnd}
+              selectedDate={timeline.selectedDate}
+              rangeDays={timeline.rangeDays}
+              availableDates={availableDates}
+              fullDates={fullDates}
+              dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
+              selectedDates={timeline.selectedDates}
+              isMultiDateMode={timeline.isMultiDateMode}
+              hourBins={hourBins}
+              onToggle={timeline.toggle}
+              onSpeedChange={timeline.setSpeed}
+              onSeekByProgress={timeline.seekByProgress}
+              onSeek={timeline.seek}
+              onDateShift={timeline.shiftDate}
+              onDateSelect={timeline.setSelectedDate}
+              onRangeDaysChange={timeline.setRangeDays}
+              onToggleMultiDate={timeline.toggleMultiDate}
+              onClearMultiDates={timeline.clearMultiDates}
             />
           </div>
 
           {/* 左上：字標 + 相機 HUD */}
           <Brand cameraInfo={cameraInfo} />
 
-          {/* 時間軸 */}
-          <TimelineControls
-            playing={timeline.playing}
-            speed={timeline.speed}
-            progress={timeline.progress}
-            currentTime={timeline.currentTime}
-            windowStart={timeline.windowStart}
-            windowEnd={timeline.windowEnd}
-            selectedDate={timeline.selectedDate}
-            rangeDays={timeline.rangeDays}
-            availableDates={availableDates}
-            fullDates={fullDates}
-            dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
-            selectedDates={timeline.selectedDates}
-            isMultiDateMode={timeline.isMultiDateMode}
-            isDarkTheme={isDarkTheme}
-            onToggle={timeline.toggle}
-            onSpeedChange={timeline.setSpeed}
-            onSeekByProgress={timeline.seekByProgress}
-            onDateShift={timeline.shiftDate}
-            onDateSelect={timeline.setSelectedDate}
-            onRangeDaysChange={timeline.setRangeDays}
-            onToggleMultiDate={timeline.toggleMultiDate}
-            onClearMultiDates={timeline.clearMultiDates}
-          />
 
           <OrientationOrb
             bearing={cameraInfo.bearing}
