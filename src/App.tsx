@@ -280,6 +280,8 @@ export default function App() {
     airspaceDates,
     regionDatesMap,
     regionFullDatesMap,
+    loadError,
+    retryLoad,
   } = useFlightData(
     dataSource,
     scope,
@@ -2146,7 +2148,7 @@ export default function App() {
               code={captionCode}
               name={captionName}
               meta={captionMeta}
-              notice={!loading && !loadingProgress && displayedFlights.length === 0 ? "此日期範圍無航班資料" : undefined}
+              notice={!loading && !loadingProgress && !loadError && displayedFlights.length === 0 ? "此日期範圍無航班資料" : undefined}
               onExit={airportSet ? exitSetMode : undefined}
               exitLabel="退出組合模式"
               actions={railPanel === null ? (
@@ -2248,6 +2250,8 @@ export default function App() {
             count={allFlights.length}
             loaded={loadingProgress?.loaded}
             playing={timeline.playing}
+            failed={loadError !== null}
+            onRetry={retryLoad}
           />
 
         </>

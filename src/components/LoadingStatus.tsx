@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { SPACE, Z } from "../styles/tokens";
-import { StatusBar, type StatusState } from "../ui";
+import { Button, StatusBar, type StatusState } from "../ui";
 import {
   createLoadingStatusController,
   HIDDEN_LOADING_STATUS,
@@ -20,18 +20,21 @@ interface LoadingStatusProps {
   loaded?: number;
   /** 時間軸播放中：完成時不跳「已載入」 */
   playing: boolean;
+  /** 這次載入失敗（網路／伺服器錯誤）：狀態條停著顯示失敗，直到重試或下一次載入 */
+  failed: boolean;
+  onRetry: () => void;
 }
 
 /**
  * 右上工具列下方的載入狀態條（spec R6）。節奏在 ui/loadingStatusController，外觀是 ui/StatusBar。
  * 取代舊的畫面中央 LoadingIndicator 膠囊。手機版不掛。
  */
-export function LoadingStatus({ loading, label, count, loaded, playing }: LoadingStatusProps) {
+export function LoadingStatus({ loading, label, count, loaded, playing, failed, onRetry }: LoadingStatusProps) {
   const [view, setView] = useState<LoadingStatusView>(HIDDEN_LOADING_STATUS);
   const controllerRef = useRef<ReturnType<typeof createLoadingStatusController> | null>(null);
   const prevLoadingRef = useRef(loading);
-  const latest = useRef({ label, count, playing });
-  latest.current = { label, count, playing };
+  const latest = useRef({ label, count, playing, failed });
+  latest.current = { label, count, playing, failed };
 
   useEffect(() => {
     const controller = createLoadingStatusController({ onChange: setView });
@@ -49,8 +52,16 @@ export function LoadingStatus({ loading, label, count, loaded, playing }: Loadin
     if (!controller || prev === loading) return;
     controller.setPlaying(latest.current.playing);
     if (loading) controller.handle({ type: "start", label: latest.current.label });
+    else if (latest.current.failed) controller.handle({ type: "fail", label: latest.current.label, persist: true });
     else controller.handle({ type: "done", count: latest.current.count });
   }, [loading]);
+
+  // 錯誤被清掉但沒有新的載入（理論上不會發生）→ 收起失敗訊息
+  useEffect(() => {
+    if (!failed && controllerRef.current?.view.phase === "error" && controllerRef.current.view.visible) {
+      controllerRef.current.handle({ type: "clear" });
+    }
+  }, [failed]);
 
   if (!view.visible && view.label === "" && view.count === 0) return null;
 
@@ -85,6 +96,7 @@ export function LoadingStatus({ loading, label, count, loaded, playing }: Loadin
         state={state}
         message={message}
         detail={state === "loading" && loaded ? `${loaded.toLocaleString()} 班` : undefined}
+        action={state === "error" ? <Button variant="ghost" onClick={onRetry}>重試</Button> : undefined}
       />
     </div>
   );
