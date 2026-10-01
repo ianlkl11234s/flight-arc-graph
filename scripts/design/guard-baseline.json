@@ -10,13 +10,17 @@
     },
     "src/components/AirspaceInfoCard.tsx": {
       "hex": 5,
-      "rgba": 17
+      "rgba": 8
     },
     "src/components/CinemaBar.tsx": {
       "hex": 0,
       "rgba": 0
     },
     "src/components/DeepAnalysisPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/Dock.tsx": {
       "hex": 0,
       "rgba": 0
     },
@@ -49,6 +53,10 @@
       "rgba": 0
     },
     "src/components/StyleSelector.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/Timeline.tsx": {
       "hex": 0,
       "rgba": 0
     },
@@ -161,6 +169,10 @@
       "rgba": 0
     },
     "src/ui/index.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/timelineExpand.ts": {
       "hex": 0,
       "rgba": 0
     },

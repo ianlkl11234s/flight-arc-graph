@@ -31,6 +31,7 @@ import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
 import { Toolbar } from "./components/Toolbar";
+import { Dock, DockItem } from "./components/Dock";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
 import { IconRailSidebar, type ScenePreset, type PanelId } from "./components/IconRailSidebar";
@@ -204,13 +205,11 @@ function OrientationOrb({
   bearing,
   pitch,
   isDarkTheme,
-  avoidAirspaceCard,
   onReset,
 }: {
   bearing: number;
   pitch: number;
   isDarkTheme: boolean;
-  avoidAirspaceCard: boolean;
   onReset: () => void;
 }) {
   const axisScale = Math.max(0.38, Math.cos((pitch * Math.PI) / 180));
@@ -237,10 +236,7 @@ function OrientationOrb({
       aria-label="恢復北上南下、無傾斜的地球方向"
       title="Reset orientation · North up"
       style={{
-        position: "absolute",
-        right: avoidAirspaceCard ? 398 : 18,
-        bottom: 92,
-        zIndex: 12,
+        display: "block",
         width: 52,
         height: 52,
         padding: 3,
@@ -255,7 +251,7 @@ function OrientationOrb({
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         cursor: "pointer",
-        transition: "right 220ms ease, border-color 180ms ease, transform 180ms ease, background 180ms ease",
+        transition: "border-color 180ms ease, transform 180ms ease, background 180ms ease",
       }}
       onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
@@ -2214,20 +2210,40 @@ export default function App() {
           {/* 左上：字標 + 相機 HUD */}
           <Brand cameraInfo={cameraInfo} />
 
-
-          <OrientationOrb
-            bearing={cameraInfo.bearing}
-            pitch={cameraInfo.pitch}
-            isDarkTheme={isDarkTheme}
-            avoidAirspaceCard={airspaceSelection !== null}
-            onReset={() => {
-              mapRef.current?.easeTo({
-                bearing: 0,
-                pitch: 0,
-                duration: 800,
-              });
-            }}
-          />
+          {/* 右下 dock：方位球 + 點擊資訊卡（R1、R5） */}
+          <Dock>
+            <DockItem align="end">
+              <OrientationOrb
+                bearing={cameraInfo.bearing}
+                pitch={cameraInfo.pitch}
+                isDarkTheme={isDarkTheme}
+                onReset={() => {
+                  mapRef.current?.easeTo({
+                    bearing: 0,
+                    pitch: 0,
+                    duration: 800,
+                  });
+                }}
+              />
+            </DockItem>
+            {airspaceSelection && (
+              <DockItem>
+                <AirspaceInfoCard
+                  selected={airspaceSelection.selected}
+                  others={airspaceSelection.others}
+                  onSelect={(f) => {
+                    setAirspaceSelection((prev) => {
+                      if (!prev) return { selected: f, others: [] };
+                      const others = [prev.selected, ...prev.others].filter((o) => o.id !== f.id);
+                      return { selected: f, others };
+                    });
+                  }}
+                  onClose={() => setAirspaceSelection(null)}
+                  isDarkTheme={isDarkTheme}
+                />
+              </DockItem>
+            )}
+          </Dock>
 
           {/* 右上唯一工具列（R3） */}
           <Toolbar
@@ -2558,22 +2574,6 @@ export default function App() {
       {/* ── Info Modal ── */}
       <InfoModal open={showInfo} onClose={() => setShowInfo(false)} isMobile={isMobile} />
 
-      {/* ── Airspace Info Card ── */}
-      {!captureMode && !isMobile && airspaceSelection && (
-        <AirspaceInfoCard
-          selected={airspaceSelection.selected}
-          others={airspaceSelection.others}
-          onSelect={(f) => {
-            setAirspaceSelection((prev) => {
-              if (!prev) return { selected: f, others: [] };
-              const others = [prev.selected, ...prev.others].filter((o) => o.id !== f.id);
-              return { selected: f, others };
-            });
-          }}
-          onClose={() => setAirspaceSelection(null)}
-          isDarkTheme={isDarkTheme}
-        />
-      )}
     </div>
     </ThemeProvider>
   );

@@ -2,6 +2,7 @@ import type React from "react";
 import type { AirspaceFeature } from "../data/airspaceLoader";
 import { AIRSPACE_CATEGORIES } from "../types/airspace";
 import { FONT } from "../styles/tokens";
+import { DockCard } from "../ui";
 
 interface AirspaceInfoCardProps {
   selected: AirspaceFeature;
@@ -37,73 +38,21 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
   const badge = getCategoryBadge(selected, isDarkTheme);
   const hasClass = selected.airspaceClass && selected.airspaceClass.trim() !== "";
 
-  const bgColor = isDarkTheme ? "rgba(10, 12, 16, 0.82)" : "rgba(255, 255, 255, 0.92)";
-  const borderColor = isDarkTheme ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)";
   const textColor = isDarkTheme ? "#E5E7EB" : "#1a1a1a";
   const dimColor = isDarkTheme ? "#8a909b" : "#6b7280";
   const sectionBg = isDarkTheme ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
   const warningBg = isDarkTheme ? "rgba(245, 158, 11, 0.12)" : "rgba(245, 158, 11, 0.18)";
   const warningBorder = "rgba(245, 158, 11, 0.45)";
 
+  // 外殼 = DockCard（右下 dock，R1）；內文與關閉行為不變
   return (
-    <div
-      style={{
-        position: "absolute",
-        right: 20,
-        bottom: 20,
-        width: 360,
-        maxHeight: "65vh",
-        display: "flex",
-        flexDirection: "column",
-        background: bgColor,
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
-        border: `1px solid ${borderColor}`,
-        borderRadius: 14,
-        color: textColor,
-        boxShadow: isDarkTheme
-          ? "0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(100,170,255,0.08) inset"
-          : "0 10px 30px rgba(0,0,0,0.12)",
-        zIndex: 22,
-        overflow: "hidden",
-        animation: "airspaceCardIn 0.22s ease-out",
-      }}
-    >
-      <style>{`
-        @keyframes airspaceCardIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-
-      {/* Header */}
-      <div style={{ padding: "14px 16px 10px 16px", position: "relative" }}>
-        <button
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            width: 24,
-            height: 24,
-            borderRadius: "50%",
-            background: isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-            border: `1px solid ${borderColor}`,
-            color: dimColor,
-            fontSize: 12,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          ✕
-        </button>
-
+    <DockCard eyebrow="AIRSPACE · 空域" title={selected.nameZh} onClose={onClose} closeLabel="關閉空域資訊">
+      <div style={{ maxHeight: "50vh", overflowY: "auto", display: "flex", flexDirection: "column" }}>
         {/* Category badge */}
         <div
           style={{
             display: "inline-flex",
+            alignSelf: "flex-start",
             alignItems: "center",
             gap: 6,
             padding: "3px 8px",
@@ -130,18 +79,14 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
           </span>
         </div>
 
-        <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: "0.01em", lineHeight: 1.25 }}>
-          {selected.nameZh}
-        </div>
         {selected.nameEn && (
-          <div style={{ fontSize: 12, color: dimColor, marginTop: 2, fontFamily: FONT.ui }}>
+          <div style={{ fontSize: 12, color: dimColor, marginBottom: 10, fontFamily: FONT.ui }}>
             {selected.nameEn}
           </div>
         )}
-      </div>
 
-      {/* Scroll area */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 14px 16px" }}>
+        {/* Scroll area */}
+        <div>
         {/* Altitude */}
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
           <MetricBlock label="FLOOR" value={selected.floorRaw || "—"} dim={dimColor} bg={sectionBg} />
@@ -258,8 +203,9 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
             </div>
           </>
         )}
+        </div>
       </div>
-    </div>
+    </DockCard>
   );
 }
 
