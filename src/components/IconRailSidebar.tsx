@@ -342,7 +342,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         <Panel
           ariaLabel={workspaceTitle}
           maxHeight="70vh"
-          style={{ top: 116, animation: "iconRailFadeIn 0.25s ease-out" }}
+          style={{ animation: "iconRailFadeIn 0.25s ease-out" }}
         >
           <PanelHeader
             eyebrow={workspaceEyebrow}
