@@ -37,8 +37,8 @@
       "rgba": 6
     },
     "src/components/IconRailSidebar.tsx": {
-      "hex": 36,
-      "rgba": 26
+      "hex": 11,
+      "rgba": 11
     },
     "src/components/InfoModal.tsx": {
       "hex": 12,
@@ -63,6 +63,22 @@
     "src/components/TimelineControls.tsx": {
       "hex": 4,
       "rgba": 43
+    },
+    "src/components/sidebar/charts.tsx": {
+      "hex": 2,
+      "rgba": 1
+    },
+    "src/components/sidebar/primitives.tsx": {
+      "hex": 1,
+      "rgba": 0
+    },
+    "src/components/sidebar/scenePresets.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/theme.ts": {
+      "hex": 22,
+      "rgba": 14
     }
   }
 }

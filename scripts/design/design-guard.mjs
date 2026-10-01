@@ -2,7 +2,7 @@
 // Design guard ratchet：寫死色碼（hex / rgb(a)）數量只准降、不准升。
 //   node scripts/design/design-guard.mjs           # 與 baseline 比對，任一檔增加 → exit 1
 //   node scripts/design/design-guard.mjs --update  # 數字全部不升時寫回；有任何上升 → 拒絕
-// 掃描：src/components/**/*.tsx 與 src/App.tsx；排除 colorTheme.ts、src/three/**、src/map/**
+// 掃描：src/components/**/*.{ts,tsx} 與 src/App.tsx；排除 colorTheme.ts、src/three/**、src/map/**
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, resolve, relative, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,7 +22,7 @@ function walk(dir) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
     if (e.isDirectory()) out.push(...walk(p));
-    else if (e.name.endsWith(".tsx")) out.push(p);
+    else if (e.name.endsWith(".tsx") || e.name.endsWith(".ts")) out.push(p);
   }
   return out;
 }
