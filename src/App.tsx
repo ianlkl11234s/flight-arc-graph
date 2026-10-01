@@ -32,6 +32,7 @@ import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
 import { Toolbar } from "./components/Toolbar";
 import { Dock, DockItem } from "./components/Dock";
+import { LoadingStatus } from "./components/LoadingStatus";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
 import { IconRailSidebar, type ScenePreset, type PanelId } from "./components/IconRailSidebar";
@@ -132,73 +133,6 @@ function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: n
       >
         {lat} {lng} · z{cameraInfo.zoom.toFixed(1)} · 俯角 {cameraInfo.pitch}° · 方位 {cameraInfo.bearing}°
       </span>
-    </div>
-  );
-}
-
-function LoadingIndicator({ loadingProgress, isDarkTheme }: {
-  loadingProgress: { loaded: number; label: string } | null;
-  isDarkTheme: boolean;
-}) {
-  const [fadeOut, setFadeOut] = useState(false);
-  const [visible, setVisible] = useState(false);
-  const [lastCount, setLastCount] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => {
-    if (loadingProgress) {
-      setVisible(true);
-      setFadeOut(false);
-      setLastCount(loadingProgress.loaded);
-    } else if (visible) {
-      setFadeOut(true);
-      timerRef.current = setTimeout(() => setVisible(false), 1200);
-    }
-    return () => clearTimeout(timerRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!loadingProgress, loadingProgress?.loaded]);
-
-  if (!visible) return null;
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        zIndex: 15,
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        padding: "16px 28px",
-        background: isDarkTheme ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.8)",
-        backdropFilter: "blur(12px)",
-        borderRadius: 10,
-        border: `1px solid ${isDarkTheme ? "rgba(180,60,60,0.6)" : "rgba(180,60,60,0.5)"}`,
-        opacity: fadeOut ? 0 : 1,
-        transition: "opacity 1s ease-out",
-        pointerEvents: "none",
-      }}
-    >
-      <div
-        style={{
-          width: 12,
-          height: 12,
-          borderRadius: "50%",
-          background: fadeOut ? "#4a4" : "#c44",
-          animation: fadeOut ? "none" : "pulse 1s ease-in-out infinite",
-        }}
-      />
-      <span style={{
-        fontSize: 15,
-        fontFamily: FONT.ui,
-        fontWeight: 500,
-        color: isDarkTheme ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
-      }}>
-        {fadeOut ? `${lastCount} flights loaded` : `Loading ${loadingProgress?.label ?? "..."}` }
-      </span>
-      <style>{`@keyframes pulse { 0%,100% { opacity:0.3 } 50% { opacity:1 } }`}</style>
     </div>
   );
 }
@@ -1742,6 +1676,12 @@ export default function App() {
     ...(loadingProgress ? [{ label: "載入中", value: loadingProgress.loaded.toLocaleString() }] : []),
   ];
 
+  // 狀態條的載入對象：機場／組合／區域 · 日期（R9：不露 region key 等內部代號）
+  const statusLabel = `${captionCode} · `
+    + (timeline.isMultiDateMode
+      ? `${timeline.selectedDates.length} 日`
+      : `${timeline.selectedDate}${timeline.rangeDays > 1 ? ` +${timeline.rangeDays - 1}d` : ""}`);
+
   if (!hasCompletedInitialLoad && loading && allFlights.length === 0) {
     return <LoadingScreen />;
   }
@@ -2301,8 +2241,14 @@ export default function App() {
             onCapture={() => setCaptureMode(true)}
             onInfo={() => setShowInfo(true)}
           />
-          {/* Loading indicator — 畫面中央，完成後淡出 */}
-          <LoadingIndicator loadingProgress={loadingProgress} isDarkTheme={isDarkTheme} />
+          {/* 工具列下方載入狀態條（R6） */}
+          <LoadingStatus
+            loading={loading}
+            label={statusLabel}
+            count={allFlights.length}
+            loaded={loadingProgress?.loaded}
+            playing={timeline.playing}
+          />
 
         </>
       )}
