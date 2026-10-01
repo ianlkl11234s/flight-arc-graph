@@ -1,4 +1,4 @@
-import { useState, useMemo, type CSSProperties, type ReactNode } from "react";
+import { useState, useMemo, useEffect, type CSSProperties, type ReactNode } from "react";
 import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
 import type { AircraftFilterKey } from "../data/aircraftCategories";
 import { COLOR_THEMES, type ColorTheme } from "../types/colorTheme";
@@ -1809,6 +1809,15 @@ function CalendarPanel({
 
   const [viewYear, setViewYear] = useState(initDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(initDate.getMonth());
+
+  // 選定日期變動時，月曆翻到該月
+  useEffect(() => {
+    if (!selectedDate) return;
+    const [y, m] = selectedDate.split("-").map(Number);
+    if (!y || !m) return;
+    setViewYear(y);
+    setViewMonth(m - 1);
+  }, [selectedDate]);
 
   const daysInMonth = getDaysInMonth(viewYear, viewMonth);
   const firstDay = getFirstDayOfWeek(viewYear, viewMonth);
