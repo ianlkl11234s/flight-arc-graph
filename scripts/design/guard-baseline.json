@@ -81,8 +81,8 @@
       "rgba": 0
     },
     "src/components/sidebar/panels/ColorThemePanel.tsx": {
-      "hex": 1,
-      "rgba": 7
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/sidebar/panels/SetsPanel.tsx": {
       "hex": 0,

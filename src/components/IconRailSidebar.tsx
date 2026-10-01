@@ -440,7 +440,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onAirportColorOverride={props.onAirportColorOverride}
               onAirportColorReset={props.onAirportColorReset}
               compareModeActive={props.compareModeActive}
-              theme={theme}
             />
           )}
           {activePanel === "airspace" && (
