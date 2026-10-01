@@ -23,7 +23,11 @@ import {
   computeTimelineDepArr,
 } from "../data/flightStats";
 import type { TimelineSlot } from "../data/flightStats";
-import { FONT } from "../styles/tokens";
+import { useTheme } from "../styles/ThemeContext";
+import { BLUR, FONT, RADIUS, SPACE } from "../styles/tokens";
+import { Button, Chip, PanelHeader, Section, Segmented } from "../ui";
+import { IconChevron } from "../ui/icons";
+import { mix } from "../ui/vars";
 
 interface Props {
   /** 全部航班（給 ALL REGION tab — 客觀統計，不受 sidebar filter 影響） */
@@ -31,88 +35,53 @@ interface Props {
   /** 已套用 Deep Analysis filter 的航班（給 AIRPORT tab — 跟篩選同步） */
   filteredFlights: Flight[];
   selectedAirport: string;
-  isDarkTheme: boolean;
+  /** 已不再用於取色（改走 useTheme）；保留欄位避免動 App.tsx，P4 一併移除 */
+  isDarkTheme?: boolean;
   onClose: () => void;
   onSelectAirport: (icao: string) => void;
   onSelectFlight: (flightId: string) => void;
 }
 
-/* ── Color tokens (matching Pencil design) ── */
+/* ── Colors：由 useTheme().tokens 映射（沿用原本的語意名稱） ── */
 
-const C = {
-  bg: "#0C0C0C",
-  cardBg: "#141414",
-  divider: "#2f2f2f",
-  textWhite: "#FFFFFF",
-  textGray: "#888888",
-  textDim: "#8a8a8a",
-  textMuted: "#6a6a6a",
-  barFull: "#888888",
-  bar80: "#88888880",
-  bar60: "#88888860",
-  bar40: "#88888840",
-  tabActiveBg: "#88888820",
-  depLine: "#aaaaaa",
-  arrLine: "#666666",
-};
-
-/* ── Light theme overrides ── */
-
-const CL = {
-  bg: "rgba(245,245,250,0.95)",
-  cardBg: "rgba(0,0,0,0.04)",
-  divider: "rgba(0,0,0,0.08)",
-  textWhite: "#1a1a1a",
-  textGray: "#666666",
-  textDim: "#777777",
-  textMuted: "#999999",
-  barFull: "#888888",
-  bar80: "#88888880",
-  bar60: "#88888860",
-  bar40: "#88888840",
-  tabActiveBg: "rgba(0,0,0,0.08)",
-  depLine: "#555555",
-  arrLine: "#999999",
-};
-
-function t(dark: boolean) { return dark ? C : CL; }
+function useColors() {
+  const { tokens } = useTheme();
+  return {
+    bg: tokens.panel,
+    tooltipBg: tokens.mapBg,
+    cardBg: tokens.ctl,
+    divider: tokens.border,
+    textWhite: tokens.fg1,
+    textGray: tokens.fg2,
+    textDim: tokens.fg2,
+    textMuted: tokens.fg3,
+    barFull: tokens.fg2,
+    bar80: mix(tokens.fg2, 80),
+    bar60: mix(tokens.fg2, 60),
+    bar40: mix(tokens.fg2, 40),
+    depLine: tokens.fg1,
+    arrLine: tokens.fg3,
+    ink: tokens.mapBg,
+  };
+}
 
 const font = FONT.ui;
 
 /* ── Reusable: Divider ── */
 
-function Divider({ dark }: { dark: boolean }) {
-  return <div style={{ height: 1, background: t(dark).divider, width: "100%" }} />;
+function Divider() {
+  const colors = useColors();
+  return <div style={{ height: 1, background: colors.divider, width: "100%" }} />;
 }
 
-/* ── Reusable: Collapsible Section ── */
+/* ── Reusable: 統計區塊（ui Section 可收合 + 版面留白） ── */
 
-function Section({
-  title, dark, right, children, defaultOpen = true,
-}: {
-  title: string; dark: boolean; right?: React.ReactNode;
-  children: React.ReactNode; defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  const colors = t(dark);
+function Block({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div style={{ padding: "10px 20px", display: "flex", flexDirection: "column", gap: open ? 8 : 0 }}>
-      <div
-        onClick={() => setOpen((o) => !o)}
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", cursor: "pointer", userSelect: "none" }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textGray} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.2s ease" }}>
-            <path d="m6 9 6 6 6-6" />
-          </svg>
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, color: colors.textWhite, fontFamily: font }}>
-            {title}
-          </span>
-        </div>
-        {right}
-      </div>
-      {open && children}
+    <div style={{ padding: "10px 20px" }}>
+      <Section title={title} collapsible right={right} gap={SPACE.s8}>
+        {children}
+      </Section>
     </div>
   );
 }
@@ -120,12 +89,11 @@ function Section({
 /* ── Reusable: Dep/Arr Line Chart (supports single-day & multi-day timeline) ── */
 
 function DepArrLineChart({
-  data, dark,
+  data,
 }: {
   data: TimelineSlot[];
-  dark: boolean;
 }) {
-  const colors = t(dark);
+  const colors = useColors();
   const [hover, setHover] = useState<number | null>(null);
 
   const N = data.length;
@@ -238,7 +206,7 @@ function DepArrLineChart({
           ...(flipTooltip
             ? { right: `${((W - x(hover)) / W * 100 + 3)}%` }
             : { left: `${(x(hover) / W * 100 + 3)}%` }),
-          background: colors.bg, border: `1px solid ${colors.divider}`, borderRadius: 4,
+          background: colors.tooltipBg, border: `1px solid ${colors.divider}`, borderRadius: RADIUS.base,
           padding: "3px 8px", fontSize: 9, fontFamily: font, pointerEvents: "none", zIndex: 10,
           whiteSpace: "nowrap",
         }}>
@@ -258,26 +226,17 @@ function DepArrLineChart({
 /* ── Reusable: Show More / Show All buttons ── */
 
 function ShowMoreButton({
-  total, dark, expanded, onShowMore, onShowAll,
+  total, expanded, onShowMore, onShowAll,
 }: {
-  total: number; dark: boolean; expanded: boolean;
+  total: number; expanded: boolean;
   onShowMore: () => void; onShowAll: () => void;
 }) {
-  const colors = t(dark);
   if (total <= 5) return null;
 
   if (expanded) {
     // Already showing 15 — offer "Show all" as drill-down
     if (total > 15) {
-      return (
-        <button onClick={onShowAll} style={{
-          background: "none", border: "none", cursor: "pointer", fontFamily: font,
-          fontSize: 10, fontWeight: 500, color: colors.textMuted, padding: "4px 0",
-          width: "100%", textAlign: "center",
-        }}>
-          Show all ({total}) →
-        </button>
-      );
+      return <Button variant="ghost" fullWidth onClick={onShowAll}>Show all ({total}) →</Button>;
     }
     return null;
   }
@@ -285,25 +244,21 @@ function ShowMoreButton({
   // Showing initial 5 — offer "Show more"
   const remaining = Math.min(total - 5, 10);
   return (
-    <button onClick={onShowMore} style={{
-      background: "none", border: "none", cursor: "pointer", fontFamily: font,
-      fontSize: 10, fontWeight: 500, color: colors.textMuted, padding: "4px 0",
-      width: "100%", textAlign: "center",
-    }}>
-      ▼ Show more (+{remaining})
-    </button>
+    <Button variant="ghost" fullWidth icon={<IconChevron size={9} />} onClick={onShowMore}>
+      Show more (+{remaining})
+    </Button>
   );
 }
 
 /* ── Reusable: Horizontal Bar with label + percentage ── */
 
 function HBar({
-  label, percentage, barWidth, dark, labelWidth = 38, opacity,
+  label, percentage, barWidth, labelWidth = 38, opacity,
 }: {
-  label: string; percentage: string; barWidth: number; dark: boolean; labelWidth?: number; opacity?: number;
+  label: string; percentage: string; barWidth: number; labelWidth?: number; opacity?: number;
 }) {
-  const colors = t(dark);
-  const fill = opacity ? `${colors.barFull}${Math.round(opacity * 255).toString(16).padStart(2, "0")}` : colors.barFull;
+  const colors = useColors();
+  const fill = opacity ? mix(colors.barFull, opacity * 100) : colors.barFull;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
       <span style={{ width: labelWidth, fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font, flexShrink: 0 }}>
@@ -322,13 +277,13 @@ function HBar({
 /* ── Airport Tab ── */
 
 function AirportTab({
-  flights, icao, dark, drillDown, setDrillDown, onSelectFlight,
+  flights, icao, drillDown, setDrillDown, onSelectFlight,
 }: {
-  flights: Flight[]; icao: string; dark: boolean;
+  flights: Flight[]; icao: string;
   drillDown: StatsDrillDown | null; setDrillDown: (d: StatsDrillDown | null) => void;
   onSelectFlight: (id: string) => void;
 }) {
-  const colors = t(dark);
+  const colors = useColors();
   const info = AIRPORT_INFO[icao];
 
   // Date filter (multi-select: empty = ALL)
@@ -383,12 +338,9 @@ function AirportTab({
     const routeFlights = getRouteFlights(flights, originIcao, destIcao);
     return (
       <div style={{ padding: "10px 20px" }}>
-        <button onClick={() => setDrillDown(null)} style={{
-          background: "none", border: "none", color: colors.textGray, fontSize: 11,
-          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
-        }}>
-          {"< Back"}
-        </button>
+        <div style={{ marginBottom: 8 }}>
+          <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
+        </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{drillDown.label}</div>
         <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {routeFlights.length} flights
@@ -419,12 +371,9 @@ function AirportTab({
     if (!group) return null;
     return (
       <div style={{ padding: "10px 20px" }}>
-        <button onClick={() => setDrillDown(null)} style={{
-          background: "none", border: "none", color: colors.textGray, fontSize: 11,
-          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
-        }}>
-          {"< Back"}
-        </button>
+        <div style={{ marginBottom: 8 }}>
+          <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
+        </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>
           {info?.iata ?? icao} → {group.country}
         </div>
@@ -452,12 +401,9 @@ function AirportTab({
   if (drillDown?.type === "all-routes") {
     return (
       <div style={{ padding: "10px 20px" }}>
-        <button onClick={() => setDrillDown(null)} style={{
-          background: "none", border: "none", color: colors.textGray, fontSize: 11,
-          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
-        }}>
-          {"< Back"}
-        </button>
+        <div style={{ marginBottom: 8 }}>
+          <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
+        </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Routes</div>
         <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {topRoutes.length} routes from {info?.iata ?? icao}
@@ -493,12 +439,9 @@ function AirportTab({
   if (drillDown?.type === "all-destinations") {
     return (
       <div style={{ padding: "10px 20px" }}>
-        <button onClick={() => setDrillDown(null)} style={{
-          background: "none", border: "none", color: colors.textGray, fontSize: 11,
-          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
-        }}>
-          {"< Back"}
-        </button>
+        <div style={{ marginBottom: 8 }}>
+          <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
+        </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Destinations</div>
         <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {countries.length} regions from {info?.iata ?? icao}
@@ -526,12 +469,9 @@ function AirportTab({
   if (drillDown?.type === "all-aircraft") {
     return (
       <div style={{ padding: "10px 20px" }}>
-        <button onClick={() => setDrillDown(null)} style={{
-          background: "none", border: "none", color: colors.textGray, fontSize: 11,
-          fontFamily: font, cursor: "pointer", padding: 0, marginBottom: 8,
-        }}>
-          {"< Back"}
-        </button>
+        <div style={{ marginBottom: 8 }}>
+          <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
+        </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Aircraft Types</div>
         <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {aircraft.length} types at {info?.iata ?? icao}
@@ -540,7 +480,7 @@ function AirportTab({
           {aircraft.map((a) => {
             const pct = Math.round((a.count / totalAircraft) * 100);
             return <HBar key={a.type} label={a.type} percentage={`${pct}%`}
-              barWidth={(a.count / aircraft[0]!.count) * 100} dark={dark}
+              barWidth={(a.count / aircraft[0]!.count) * 100}
               opacity={Math.max(a.count / aircraft[0]!.count, 0.15)} />;
           })}
         </div>
@@ -577,47 +517,37 @@ function AirportTab({
       </div>
 
       {/* Date Selector */}
-      <div style={{ padding: "0 20px 6px", display: "flex", gap: 4, flexWrap: "wrap" }}>
-        <button onClick={() => setSelectedDates([])} style={{
-          padding: "3px 10px", fontSize: 10, fontWeight: selectedDates.length === 0 ? 700 : 500,
-          fontFamily: font, cursor: "pointer", border: "none", borderRadius: 2,
-          color: selectedDates.length === 0 ? colors.textWhite : colors.textMuted,
-          background: selectedDates.length === 0 ? colors.tabActiveBg : "transparent",
-          transition: "all 0.15s ease",
-        }}>ALL</button>
-        {availableDates.map((d) => {
-          const active = selectedDates.includes(d);
-          return (
-            <button key={d} onClick={() => {
+      <div style={{ padding: "0 20px 6px", display: "flex", gap: SPACE.s4, flexWrap: "wrap" }}>
+        <Chip label="ALL" selected={selectedDates.length === 0} onClick={() => setSelectedDates([])} />
+        {availableDates.map((d) => (
+          <Chip
+            key={d}
+            label={d.slice(5).replace("-", "/")}
+            selected={selectedDates.includes(d)}
+            onClick={() => {
               setSelectedDates((prev) =>
                 prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()
               );
-            }} style={{
-              padding: "3px 8px", fontSize: 10, fontWeight: active ? 700 : 500,
-              fontFamily: font, cursor: "pointer", border: "none", borderRadius: 2,
-              color: active ? colors.textWhite : colors.textMuted,
-              background: active ? colors.tabActiveBg : "transparent",
-              transition: "all 0.15s ease",
-            }}>{d.slice(5).replace("-", "/")}</button>
-          );
-        })}
+            }}
+          />
+        ))}
       </div>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Dep/Arr Timeline Chart */}
-      <Section title="DEPARTURES & ARRIVALS" dark={dark}
+      <Block title="DEPARTURES & ARRIVALS"
         right={<span style={{ fontSize: 9, fontWeight: 500, color: colors.textDim, fontFamily: font }}>
           {depArr.departures}↑ {depArr.arrivals}↓
         </span>}
       >
-        <DepArrLineChart data={depArrTimeline} dark={dark} />
-      </Section>
+        <DepArrLineChart data={depArrTimeline} />
+      </Block>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Hourly Pattern — vertical bar chart */}
-      <Section title="HOURLY PATTERN" dark={dark}
+      <Block title="HOURLY PATTERN"
         right={<span style={{ fontSize: 9, fontWeight: 500, color: colors.textGray, fontFamily: font }}>
           Peak {String(peakHour.hour).padStart(2, "0")}-{String(peakEnd).padStart(2, "0")}
         </span>}
@@ -642,18 +572,18 @@ function AirportTab({
             </span>
           ))}
         </div>
-      </Section>
+      </Block>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Airlines Share — stacked horizontal bar */}
-      <Section title="AIRLINES SHARE" dark={dark}>
+      <Block title="AIRLINES SHARE">
         <div style={{ display: "flex", gap: 2, height: 24, width: "100%" }}>
           {airlines.slice(0, 4).map((a, i) => {
             const pct = Math.round((a.count / totalAirlines) * 100);
             const widthPx = Math.max((a.count / totalAirlines) * 100, 8);
             const fills = [colors.barFull, colors.bar80, colors.bar60, colors.bar40];
-            const textColors = [C.bg, C.bg, C.bg, colors.textWhite];
+            const textColors = [colors.ink, colors.ink, colors.ink, colors.textWhite];
             return (
               <div key={a.code} style={{
                 width: `${widthPx}%`, height: "100%", background: fills[i],
@@ -674,12 +604,12 @@ function AirportTab({
             </div>
           )}
         </div>
-      </Section>
+      </Block>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Top Routes — card style */}
-      <Section title="TOP ROUTES" dark={dark}
+      <Block title="TOP ROUTES"
         right={<span style={{ fontSize: 9, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
           {topRoutes.length}
         </span>}
@@ -705,15 +635,15 @@ function AirportTab({
             </div>
           </div>
         ))}
-        <ShowMoreButton total={topRoutes.length} dark={dark} expanded={routesMore}
+        <ShowMoreButton total={topRoutes.length} expanded={routesMore}
           onShowMore={() => setRoutesMore(true)}
           onShowAll={() => setDrillDown({ type: "all-routes", key: icao, label: "All Routes" })} />
-      </Section>
+      </Block>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Top Destinations — country list */}
-      <Section title="TOP DESTINATIONS" dark={dark}
+      <Block title="TOP DESTINATIONS"
         right={<span style={{ fontSize: 9, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
           {countries.length}
         </span>}
@@ -730,15 +660,15 @@ function AirportTab({
             <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
           </div>
         ))}
-        <ShowMoreButton total={countries.length} dark={dark} expanded={destMore}
+        <ShowMoreButton total={countries.length} expanded={destMore}
           onShowMore={() => setDestMore(true)}
           onShowAll={() => setDrillDown({ type: "all-destinations", key: icao, label: "All Destinations" })} />
-      </Section>
+      </Block>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Aircraft Types — horizontal bars */}
-      <Section title="AIRCRAFT TYPES" dark={dark}
+      <Block title="AIRCRAFT TYPES"
         right={<span style={{ fontSize: 9, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
           {aircraft.length}
         </span>}
@@ -747,38 +677,37 @@ function AirportTab({
           const pct = Math.round((a.count / totalAircraft) * 100);
           const opacity = i < 4 ? [1, 0.5, 0.37, 0.25][i]! : 0.2;
           return <HBar key={a.type} label={a.type} percentage={`${pct}%`}
-            barWidth={(a.count / aircraft[0]!.count) * 100} dark={dark} opacity={opacity} />;
+            barWidth={(a.count / aircraft[0]!.count) * 100} opacity={opacity} />;
         })}
-        <ShowMoreButton total={aircraft.length} dark={dark} expanded={aircraftMore}
+        <ShowMoreButton total={aircraft.length} expanded={aircraftMore}
           onShowMore={() => setAircraftMore(true)}
           onShowAll={() => setDrillDown({ type: "all-aircraft", key: icao, label: "All Aircraft Types" })} />
-      </Section>
+      </Block>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Fleet Mix */}
-      <Section title="FLEET MIX" dark={dark}>
+      <Block title="FLEET MIX">
         {fleetMix.map((fm, i) => {
           const opacities = [1, 0.5, 0.25];
           return <HBar key={fm.category} label={fm.category} percentage={`${fm.percentage}%`}
-            barWidth={fm.count > 0 ? (fm.count / fleetMix[0]!.count) * 100 : 0}
-            dark={dark} labelWidth={80} opacity={opacities[i]} />;
+            barWidth={fm.count > 0 ? (fm.count / fleetMix[0]!.count) * 100 : 0} labelWidth={80} opacity={opacities[i]} />;
         })}
-      </Section>
+      </Block>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Flight Duration */}
-      <Section title="FLIGHT DURATION" dark={dark}>
+      <Block title="FLIGHT DURATION">
         {duration.map((b) => {
           const pct = Math.round((b.count / totalDuration) * 100);
           const maxCount = Math.max(...duration.map((d) => d.count), 1);
           const ratio = b.count / maxCount;
           const opacity = ratio > 0.7 ? 1 : ratio > 0.4 ? 0.5 : 0.25;
           return <HBar key={b.label} label={b.label} percentage={`${pct}%`}
-            barWidth={(b.count / maxCount) * 100} dark={dark} labelWidth={36} opacity={opacity} />;
+            barWidth={(b.count / maxCount) * 100} labelWidth={36} opacity={opacity} />;
         })}
-      </Section>
+      </Block>
     </>
   );
 }
@@ -786,11 +715,11 @@ function AirportTab({
 /* ── All Region Tab ── */
 
 function AllTaiwanTab({
-  flights, dark, onSelectAirport,
+  flights, onSelectAirport,
 }: {
-  flights: Flight[]; dark: boolean; onSelectAirport: (icao: string) => void;
+  flights: Flight[]; onSelectAirport: (icao: string) => void;
 }) {
-  const colors = t(dark);
+  const colors = useColors();
   const comparison = useMemo(() => computeAirportComparison(flights), [flights]);
   const reachable = useMemo(() => computeReachableDestinations(flights), [flights]);
   const domestic = useMemo(() => computeDomesticRoutes(flights), [flights]);
@@ -798,7 +727,7 @@ function AllTaiwanTab({
   return (
     <>
       {/* Airport Comparison */}
-      <Section title="AIRPORT COMPARISON" dark={dark}>
+      <Block title="AIRPORT COMPARISON">
         {comparison.map((a) => {
           const barW = (a.count / (comparison[0]?.count ?? 1)) * 100;
           return (
@@ -818,12 +747,12 @@ function AllTaiwanTab({
             </div>
           );
         })}
-      </Section>
+      </Block>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Reachable Destinations */}
-      <Section title="REACHABLE DESTINATIONS" dark={dark}>
+      <Block title="REACHABLE DESTINATIONS">
         {reachable.slice(0, 8).map((g) => (
           <div key={g.country} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -838,12 +767,12 @@ function AllTaiwanTab({
             </div>
           </div>
         ))}
-      </Section>
+      </Block>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Domestic Routes */}
-      <Section title="DOMESTIC ROUTES" dark={dark}>
+      <Block title="DOMESTIC ROUTES">
         {domestic.length === 0 ? (
           <span style={{ fontSize: 11, color: colors.textMuted, fontFamily: font }}>No domestic routes</span>
         ) : domestic.slice(0, 8).map((r) => (
@@ -859,7 +788,7 @@ function AllTaiwanTab({
             <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
           </div>
         ))}
-      </Section>
+      </Block>
     </>
   );
 }
@@ -867,9 +796,10 @@ function AllTaiwanTab({
 /* ── Main Panel ── */
 
 export function FlightStatsPanel({
-  allFlights, filteredFlights, selectedAirport, isDarkTheme: dark, onClose, onSelectAirport, onSelectFlight,
+  allFlights, filteredFlights, selectedAirport, onClose, onSelectAirport, onSelectFlight,
 }: Props) {
-  const colors = t(dark);
+  const colors = useColors();
+  const { tokens } = useTheme();
   const [tab, setTab] = useState<StatsTab>("airport");
   const [drillDown, setDrillDown] = useState<StatsDrillDown | null>(null);
   const [visible, setVisible] = useState(true);
@@ -900,7 +830,7 @@ export function FlightStatsPanel({
   return (
     <div style={{
       position: "fixed", top: 0, right: 0, bottom: 0, width: panelWidth, zIndex: 50,
-      background: colors.bg, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+      background: colors.bg, backdropFilter: `blur(${BLUR}px)`, WebkitBackdropFilter: `blur(${BLUR}px)`,
       borderLeft: `1px solid ${colors.divider}`,
       display: "flex", flexDirection: "column", fontFamily: font,
       transform: visible ? "translateX(0)" : "translateX(100%)",
@@ -909,9 +839,9 @@ export function FlightStatsPanel({
       {/* Hover + drag styles */}
       <style>{`
         .fp-row { transition: background 0.12s ease; }
-        .fp-row:hover { background: ${dark ? "rgba(136,136,136,0.08)" : "rgba(0,0,0,0.04)"} !important; }
+        .fp-row:hover { background: ${mix(tokens.fg1, 8)} !important; }
         .fp-card { transition: filter 0.12s ease; }
-        .fp-card:hover { filter: brightness(${dark ? 1.4 : 0.95}); }
+        .fp-card:hover { background: ${mix(tokens.fg1, 10)} !important; }
         .fp-bar { transition: filter 0.12s ease; }
         .fp-bar:hover { filter: brightness(1.5); }
         .fp-drag { opacity: 0; transition: opacity 0.2s ease; }
@@ -927,45 +857,32 @@ export function FlightStatsPanel({
       </div>
 
       {/* Header */}
-      <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 16, fontWeight: 600, color: colors.textWhite }}>{`Flight Statistics`}</span>
-          <button onClick={handleClose} style={{
-            width: 28, height: 28, borderRadius: "50%", background: "transparent",
-            border: "none", color: colors.textGray, fontSize: 16, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            ✕
-          </button>
-        </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s8, flexShrink: 0 }}>
+        <PanelHeader eyebrow="STATS · 統計" title="Flight Statistics" onClose={handleClose} />
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 0, width: "100%" }}>
-          {(["airport", "region"] as const).map((id) => {
-            const active = tab === id;
-            const label = id === "airport" ? "AIRPORT" : "ALL REGION";
-            return (
-              <button key={id} onClick={() => { setTab(id); setDrillDown(null); }} style={{
-                padding: "4px 10px", fontSize: 11, fontWeight: active ? 700 : 500,
-                letterSpacing: 0.5, fontFamily: font, cursor: "pointer", border: "none",
-                color: active ? colors.textGray : colors.textMuted,
-                background: active ? colors.tabActiveBg : "transparent",
-              }}>
-                {label}
-              </button>
-            );
-          })}
+        <div style={{ padding: `0 ${SPACE.s12}px ${SPACE.s8}px` }}>
+          <Segmented<StatsTab>
+            fullWidth
+            ariaLabel="統計範圍"
+            options={[
+              { value: "airport", label: "AIRPORT" },
+              { value: "region", label: "ALL REGION" },
+            ]}
+            value={tab}
+            onChange={(id) => { setTab(id); setDrillDown(null); }}
+          />
         </div>
       </div>
 
-      <Divider dark={dark} />
+      <Divider />
 
       {/* Scrollable Content */}
       <div style={{ flex: 1, overflowY: "auto" }}>
         {tab === "airport" ? (
-          <AirportTab flights={filteredFlights} icao={selectedAirport} dark={dark}
+          <AirportTab flights={filteredFlights} icao={selectedAirport}
             drillDown={drillDown} setDrillDown={setDrillDown} onSelectFlight={onSelectFlight} />
         ) : (
-          <AllTaiwanTab flights={allFlights} dark={dark} onSelectAirport={handleSelectAirport} />
+          <AllTaiwanTab flights={allFlights} onSelectAirport={handleSelectAirport} />
         )}
       </div>
     </div>
