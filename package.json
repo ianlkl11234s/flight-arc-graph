@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
+    "design:guard": "node scripts/design/design-guard.mjs && node scripts/design/check-tokens-sync.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "fetch:flights": "tsx scripts/fetch-flights.ts",

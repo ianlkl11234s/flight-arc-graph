@@ -1,0 +1,68 @@
+{
+  "files": {
+    "src/App.tsx": {
+      "hex": 42,
+      "rgba": 122
+    },
+    "src/components/AirportSelector.tsx": {
+      "hex": 2,
+      "rgba": 4
+    },
+    "src/components/AirspaceInfoCard.tsx": {
+      "hex": 5,
+      "rgba": 17
+    },
+    "src/components/CinemaBar.tsx": {
+      "hex": 20,
+      "rgba": 49
+    },
+    "src/components/DataSourceToggle.tsx": {
+      "hex": 2,
+      "rgba": 8
+    },
+    "src/components/DeepAnalysisPanel.tsx": {
+      "hex": 4,
+      "rgba": 0
+    },
+    "src/components/DepArrToggle.tsx": {
+      "hex": 2,
+      "rgba": 8
+    },
+    "src/components/FlightPicker.tsx": {
+      "hex": 4,
+      "rgba": 12
+    },
+    "src/components/FlightStatsPanel.tsx": {
+      "hex": 24,
+      "rgba": 6
+    },
+    "src/components/IconRailSidebar.tsx": {
+      "hex": 36,
+      "rgba": 26
+    },
+    "src/components/InfoModal.tsx": {
+      "hex": 12,
+      "rgba": 14
+    },
+    "src/components/LoadingScreen.tsx": {
+      "hex": 3,
+      "rgba": 15
+    },
+    "src/components/MobileBottomSheet.tsx": {
+      "hex": 0,
+      "rgba": 3
+    },
+    "src/components/RecordingGuide.tsx": {
+      "hex": 0,
+      "rgba": 4
+    },
+    "src/components/StyleSelector.tsx": {
+      "hex": 2,
+      "rgba": 4
+    },
+    "src/components/TimelineControls.tsx": {
+      "hex": 4,
+      "rgba": 43
+    }
+  }
+}
