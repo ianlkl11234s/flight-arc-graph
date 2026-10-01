@@ -267,6 +267,9 @@ function computeLodBand(zoom: number, current: LodLevel): LodLevel {
 }
 
 // 「探索地圖總覽」地球 icon 展開時飛去的固定俯瞰視角
+/** 探索面板區域 chip 的順序（原頂部 Region 按鈕列） */
+const REGION_ORDER: Region[] = ["TW", "JP", "HK", "KR", "TH", "US", "UK", "CN", "world", "all"];
+
 const EXPLORE_OVERVIEW_CAMERA = {
   center: [119.0049, 22.5292] as [number, number],
   zoom: 2.5,
@@ -2060,6 +2063,16 @@ export default function App() {
             atlasGlowSize={atlasGlowSize}
             onAtlasGlowSizeChange={setAtlasGlowSize}
             onExploreOpen={() => mapRef.current?.flyTo({ ...EXPLORE_OVERVIEW_CAMERA, duration: 2000 })}
+            regions={REGION_ORDER.map((r) => ({ id: r, label: REGION_CONFIG[r].label }))}
+            onRegionSelect={(r) => {
+              setRegion(r);
+              setScope("airport");
+              const cfg = REGION_CONFIG[r];
+              if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
+              // 日期：切機場後由「機場改變」effect 處理（目前日期不可用才跳 preferredDate）
+              // 飛到預設機場視角
+              mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
+            }}
           />
 
           {/* 左下圖說：在看什麼（機場／組合、日期、班數、進離場）+ 進站引導（Q6） */}
@@ -2171,41 +2184,6 @@ export default function App() {
                 onChange={setDepArrFilter}
               />
             </div>
-            {/* Region shortcuts only appear while explicitly browsing a region. */}
-            {scope === "region" && airportSet === null && <div style={{ display: "flex", gap: 4 }}>
-              {(["TW", "JP", "HK", "KR", "TH", "US", "UK", "CN", "world", "all"] as Region[]).map((r) => {
-                const isActive = region === r;
-                return (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      setRegion(r);
-                      setScope("airport");
-                      const cfg = REGION_CONFIG[r];
-                      if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
-                      // 日期：切機場後由「機場改變」effect 處理（目前日期不可用才跳 preferredDate）
-                      // 飛到預設機場視角
-                      mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
-                    }}
-                    style={{
-                      padding: "3px 10px",
-                      fontSize: 11,
-                      fontFamily: FONT.ui,
-                      fontWeight: isActive ? 600 : 400,
-                      letterSpacing: 1,
-                      border: `1px solid ${isActive ? "#64aaff" : isDarkTheme ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"}`,
-                      borderRadius: 4,
-                      background: isActive ? "rgba(100,170,255,0.2)" : "transparent",
-                      color: isActive ? "#fff" : isDarkTheme ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)",
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {REGION_CONFIG[r].label}
-                  </button>
-                );
-              })}
-            </div>}
           </div>
 
           {/* 時間軸 */}

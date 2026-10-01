@@ -10,7 +10,7 @@ import type { AirportMeta } from "../data/airportMeta";
 import type { AtlasColorMode } from "../map/atlasGlowLayer";
 import { useTheme } from "../styles/ThemeContext";
 import { FONT, LAYOUT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
-import { Panel, PanelBody, PanelHeader, Segmented } from "../ui";
+import { Chip, Panel, PanelBody, PanelHeader, Segmented } from "../ui";
 import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, IconRouteAnalysis, IconCamera } from "./sidebar/primitives";
 import type { ScenePreset } from "./sidebar/scenePresets";
 import { SettingsPanel } from "./sidebar/panels/SettingsPanel";
@@ -163,6 +163,9 @@ export interface IconRailSidebarProps {
   onAtlasColorModeChange: (m: AtlasColorMode) => void;
   atlasGlowSize: number;
   onAtlasGlowSizeChange: (v: number) => void;
+  // 探索面板頂部的區域 chip（Q3，取代舊頂部 Region 按鈕列）
+  regions: Array<{ id: Region; label: string }>;
+  onRegionSelect: (r: Region) => void;
   // 展開「探索地圖總覽」workspace 時觸發（用來飛相機到俯瞰視角）
   onExploreOpen?: () => void;
 }
@@ -327,6 +330,13 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             onClose={() => setActivePanel(null)}
           />
           <div style={{ padding: `${SPACE.s8}px ${SPACE.s12}px 0`, display: "flex", flexDirection: "column", gap: SPACE.s8, flex: "none" }}>
+            {activeWorkspace === "explore" && (
+              <div role="group" aria-label="區域" style={{ display: "flex", flexWrap: "wrap", gap: SPACE.s4 }}>
+                {props.regions.map((r) => (
+                  <Chip key={r.id} label={r.label} selected={props.region === r.id} onClick={() => props.onRegionSelect(r.id)} />
+                ))}
+              </div>
+            )}
             {(activeWorkspace === "selection" || activeWorkspace === "explore") && (
               <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data, lineHeight: 1.45 }}>
                 {activeSelection.length} 座機場
