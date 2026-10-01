@@ -16,7 +16,7 @@ import {
   searchAirports,
   type AirportSearchCandidate,
 } from "../data/airportSearch";
-import { CAMERA_PRESETS, getAirportInfo } from "../map/cameraPresets";
+import { getAirportInfo } from "../map/cameraPresets";
 import type { AtlasColorMode } from "../map/atlasGlowLayer";
 import {
   getDepArrCount,
@@ -226,7 +226,7 @@ function getThemeColors(isDark: boolean): ThemeColors {
 
 /* ── Types ───────────────────────────────────────────────── */
 
-type PanelId = "settings" | "locations" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
+type PanelId = "settings" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
 type WorkspaceId = "explore" | "selection" | "view" | "analyze";
 
 const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
@@ -237,7 +237,7 @@ const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
 };
 
 function getWorkspace(panel: PanelId | null): WorkspaceId | null {
-  if (panel === "locations" || panel === "atlas") return "explore";
+  if (panel === "atlas") return "explore";
   if (panel === "sets" || panel === "calendar") return "selection";
   if (panel === "settings" || panel === "colors" || panel === "airspace") return "view";
   if (panel === "summary" || panel === "analysis") return "analyze";
@@ -910,75 +910,6 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
   );
 }
 
-function AirportButton({ preset, isActive, onAirportChange, onLocationJump, theme, meta, metaInfo }: {
-  preset: { icao: string; name: string };
-  isActive: boolean;
-  onAirportChange: (icao: string) => void;
-  onLocationJump: (icao: string) => void;
-  theme: ThemeColors;
-  /** manifest 目錄資訊：有給才顯示完整度標記（◐ = 被動收集，資料不完整） */
-  meta?: AirportManifestEntry;
-  /** metadata（IATA fallback：無 AIRPORT_INFO 覆寫的長尾機場才用得到） */
-  metaInfo?: AirportMeta;
-}) {
-  const info = getAirportInfo(preset.icao);
-  const iata = info?.iata ?? metaInfo?.iata ?? preset.icao;
-  const isPartial = meta ? !meta.isCore : false;
-  return (
-    <button
-      onClick={() => { onAirportChange(preset.icao); onLocationJump(preset.icao); }}
-      title={meta ? (isPartial ? `${meta.flights} flights · 被動收集，資料不完整` : `${meta.flights} flights`) : undefined}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "6px 8px",
-        background: isActive ? theme.ACTIVE_BTN_BG : "transparent",
-        border: "none",
-        borderRadius: 6,
-        cursor: "pointer",
-        textAlign: "left",
-        transition: "background 0.15s",
-        width: "100%",
-      }}
-      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = theme.HOVER_BG; }}
-      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
-    >
-      <span style={{ width: 3, height: 24, borderRadius: 2, background: isActive ? theme.ACCENT_BLUE : theme.BORDER, flexShrink: 0 }} />
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontSize: 12, color: isActive ? theme.ACTIVE_TEXT : theme.ACCENT, lineHeight: 1.3 }}>
-          {info?.name ?? preset.name}
-        </div>
-        <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
-          {iata} / {preset.icao}
-        </div>
-      </div>
-      {meta && (
-        <span style={{ fontSize: 9, color: theme.DIM, fontFamily: "monospace", flexShrink: 0 }}>
-          {isPartial ? "◐ " : ""}{meta.flights}
-        </span>
-      )}
-    </button>
-  );
-}
-
-const KNOWN_PREFIXES = ["RC", "RJ", "RO", "VH", "RK", "VT", "K", "EG"];
-// 中國大陸：ICAO 開頭 Z，排除北韓 ZK、蒙古 ZM（照抄 split-tracks.ts getRegion）
-const isCnIcao = (icao: string) =>
-  icao.startsWith("Z") && !icao.startsWith("ZK") && !icao.startsWith("ZM");
-const REGION_ICAO_MATCH: Record<string, (icao: string) => boolean> = {
-  TW: (icao) => icao.startsWith("RC"),
-  JP: (icao) => icao.startsWith("RJ") || icao.startsWith("RO"),
-  HK: (icao) => icao.startsWith("VH"),
-  KR: (icao) => icao.startsWith("RK"),
-  TH: (icao) => icao.startsWith("VT"),
-  US: (icao) => icao.startsWith("K"),
-  UK: (icao) => icao.startsWith("EG"),
-  CN: (icao) => isCnIcao(icao),
-  world: (icao) => !KNOWN_PREFIXES.some((p) => icao.startsWith(p)) && !isCnIcao(icao),
-  all: () => true,
-};
-
 const REGION_LABELS: Record<string, string> = {
   TW: "台灣 Taiwan",
   JP: "日本 Japan",
@@ -990,284 +921,6 @@ const REGION_LABELS: Record<string, string> = {
   CN: "中國 China",
   world: "World",
 };
-
-function LocationsPanel({
-  airports,
-  airportCatalog,
-  airportMeta,
-  selectedAirport,
-  onAirportChange,
-  onLocationJump,
-  onSceneSelect,
-  region,
-  theme,
-}: Pick<IconRailSidebarProps, "airports" | "airportCatalog" | "airportMeta" | "selectedAirport" | "onAirportChange" | "onLocationJump" | "onSceneSelect" | "region"> & { theme: ThemeColors }) {
-  const [search, setSearch] = useState("");
-  const [showTail, setShowTail] = useState(false);
-
-  // Use CAMERA_PRESETS order, filtered by available airports + region
-  const available = new Set(airports);
-  const matchRegion = REGION_ICAO_MATCH[region] || (() => true);
-  const ordered = CAMERA_PRESETS.filter((p) => available.has(p.icao) && matchRegion(p.icao));
-
-  // 搜尋：涵蓋 manifest 全部機場（不限 camera presets），core 優先
-  // 名稱/IATA 比對先查 AIRPORT_INFO（中文覆寫），再 fallback 到 metadata（涵蓋無 preset 的長尾機場）
-  const q = search.trim().toUpperCase();
-  const searchResults = useMemo(() => {
-    if (!q) return null;
-    const matched = Object.keys(airportCatalog).filter((icao) => {
-      if (icao.includes(q)) return true;
-      const info = getAirportInfo(icao);
-      if (info && (info.iata.toUpperCase().includes(q) || info.name.toUpperCase().includes(q))) return true;
-      const m = airportMeta[icao];
-      if (m && (m.iata.toUpperCase().includes(q) || m.name.toUpperCase().includes(q))) return true;
-      return false;
-    });
-    matched.sort((a, b) => (airportCatalog[b]?.flights ?? 0) - (airportCatalog[a]?.flights ?? 0));
-    return {
-      core: matched.filter((i) => airportCatalog[i]?.isCore),
-      tail: matched.filter((i) => !airportCatalog[i]?.isCore),
-    };
-  }, [q, airportCatalog, airportMeta]);
-
-  const selectedMeta = airportCatalog[selectedAirport];
-  const renderIcao = (icao: string) => (
-    <AirportButton
-      key={icao}
-      preset={{ icao, name: getAirportInfo(icao)?.name ?? airportMeta[icao]?.name ?? icao }}
-      isActive={icao === selectedAirport}
-      onAirportChange={onAirportChange}
-      onLocationJump={onLocationJump}
-      theme={theme}
-      meta={airportCatalog[icao]}
-      metaInfo={airportMeta[icao]}
-    />
-  );
-
-  // 「其他機場」：manifest 有資料、屬於本 region、但沒 curated preset 的機場（依 flights 降冪）
-  const OTHER_CAP = 30;
-  const presetIcaos = useMemo(() => new Set(CAMERA_PRESETS.map((p) => p.icao)), []);
-  const otherAirports = (matchFn: (icao: string) => boolean) =>
-    Object.keys(airportCatalog)
-      .filter((icao) => available.has(icao) && matchFn(icao) && !presetIcaos.has(icao))
-      .sort((a, b) => (airportCatalog[b]?.flights ?? 0) - (airportCatalog[a]?.flights ?? 0));
-
-  const renderOtherBlock = (others: string[]) => {
-    if (others.length === 0) return null;
-    return (
-      <>
-        <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "6px 8px 2px" }}>
-          其他機場 Other ({others.length})
-        </div>
-        {others.slice(0, OTHER_CAP).map(renderIcao)}
-        {others.length > OTHER_CAP && (
-          <div style={{ fontSize: 10, color: theme.DIM, padding: "2px 8px 6px" }}>
-            共 {others.length} 座，可用搜尋
-          </div>
-        )}
-      </>
-    );
-  };
-
-  // Group by region when "all"
-  const groupedByRegion = region === "all"
-    ? (["TW", "JP", "HK", "KR", "TH", "US", "UK", "CN", "world"] as const).map((r) => {
-        const match = REGION_ICAO_MATCH[r]!;
-        return {
-          key: r,
-          label: REGION_LABELS[r],
-          presets: CAMERA_PRESETS.filter((p) => available.has(p.icao) && match(p.icao)),
-          others: otherAirports(match),
-        };
-      }).filter((g) => g.presets.length > 0 || g.others.length > 0)
-    : null;
-
-  // 場景依 region 篩選
-  const filteredScenes = SCENE_PRESETS.filter(
-    (s) => !s.region || s.region === region || region === "all",
-  );
-
-  // JP 機場分組（依起降次數排名）
-  const JP_MAJOR: Set<string> = new Set([
-    "RJTT", "RJAA", "RJBB", "ROAH", "RJFF", "RJCC", "RJOO", "RJGG", "RJFK", "RJSS",
-  ]);
-  const JP_MEDIUM: Set<string> = new Set([
-    "RJFT", "RJFM", "RJBE", "RJFU", "RJOM", "ROIG", "RJOT", "RJOA", "ROMY",
-    "RJFO", "RJCH", "RJFR", "RJOB", "RJCB", "RJOK",
-  ]);
-  const JP_SPECIAL: Set<string> = new Set(["RJNA"]);
-
-  const isJPGrouped = region === "JP";
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {/* 場景預設 */}
-      {filteredScenes.length > 0 && (
-        <>
-          <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "4px 8px 2px", marginTop: 2 }}>
-            場景 Scene
-          </div>
-          {filteredScenes.map((scene) => (
-            <button
-              key={scene.id}
-              onClick={() => onSceneSelect(scene)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "6px 8px",
-                background: "transparent",
-                border: "none",
-                borderRadius: 6,
-                cursor: "pointer",
-                textAlign: "left",
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = theme.HOVER_BG; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-            >
-              <span style={{ width: 3, height: 24, borderRadius: 2, background: theme.SCENE_BAR, flexShrink: 0 }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 12, color: theme.ACCENT, lineHeight: 1.3 }}>{scene.name}</div>
-                <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>{scene.desc}</div>
-              </div>
-            </button>
-          ))}
-          <div style={{ height: 1, background: theme.BORDER, margin: "6px 8px" }} />
-        </>
-      )}
-
-      {/* 機場搜尋（涵蓋 manifest 全部機場，含未在下方清單的長尾機場） */}
-      <input
-        type="text"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="搜尋機場 ICAO / IATA / 名稱"
-        style={{
-          margin: "0 8px 6px",
-          padding: "6px 8px",
-          fontSize: 11,
-          fontFamily: "monospace",
-          background: "transparent",
-          border: `1px solid ${theme.BORDER}`,
-          borderRadius: 6,
-          color: theme.ACTIVE_TEXT,
-          outline: "none",
-        }}
-      />
-
-      {/* 選中機場為被動收集時的資料品質提示 */}
-      {selectedMeta && !selectedMeta.isCore && (
-        <div
-          style={{
-            margin: "0 8px 6px",
-            padding: "6px 8px",
-            fontSize: 10,
-            lineHeight: 1.5,
-            borderRadius: 6,
-            border: "1px solid rgba(255,166,0,0.35)",
-            background: "rgba(255,166,0,0.08)",
-            color: theme.ACCENT,
-          }}
-        >
-          ◐ {selectedAirport} 為被動收集資料：僅含與主動抓取機場之間的航班，非該機場完整流量
-        </div>
-      )}
-
-      {/* 機場列表 */}
-      {searchResults ? (
-        /* 搜尋結果：core 優先，長尾收合 */
-        <>
-          <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "6px 8px 2px" }}>
-            核心機場 ({searchResults.core.length})
-          </div>
-          {searchResults.core.slice(0, 30).map(renderIcao)}
-          {searchResults.core.length === 0 && (
-            <div style={{ fontSize: 11, color: theme.DIM, padding: "2px 8px 6px" }}>無符合的核心機場</div>
-          )}
-          {searchResults.tail.length > 0 && (
-            <>
-              <button
-                onClick={() => setShowTail((v) => !v)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "6px 8px 2px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 10,
-                  color: theme.DIM,
-                  letterSpacing: 1.2,
-                  textTransform: "uppercase",
-                }}
-              >
-                {showTail ? "▾" : "▸"} 更多機場（資料不完整）({searchResults.tail.length})
-              </button>
-              {showTail && searchResults.tail.slice(0, 30).map(renderIcao)}
-              {showTail && searchResults.tail.length > 30 && (
-                <div style={{ fontSize: 10, color: theme.DIM, padding: "2px 8px 6px" }}>
-                  僅顯示前 30 筆，請輸入更精確的關鍵字
-                </div>
-              )}
-            </>
-          )}
-        </>
-      ) : groupedByRegion ? (
-        /* All regions: grouped */
-        groupedByRegion.map((group) => (
-          <div key={group.key}>
-            <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "6px 8px 2px" }}>
-              {group.label} ({group.presets.length})
-            </div>
-            {group.presets.map((preset) => (
-              <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} meta={airportCatalog[preset.icao]} />
-            ))}
-            {renderOtherBlock(group.others)}
-          </div>
-        ))
-      ) : isJPGrouped ? (
-        /* Japan: tiered by flight volume */
-        <>
-          {([
-            { label: "主要空港 Major", filter: (icao: string) => JP_MAJOR.has(icao) },
-            { label: "中型空港 Regional", filter: (icao: string) => JP_MEDIUM.has(icao) },
-            { label: "小型空港 Local", filter: (icao: string) => !JP_MAJOR.has(icao) && !JP_MEDIUM.has(icao) && !JP_SPECIAL.has(icao) },
-            { label: "特別 Special", filter: (icao: string) => JP_SPECIAL.has(icao) },
-          ] as const).map(({ label, filter }) => {
-            const group = ordered.filter((p) => filter(p.icao));
-            if (group.length === 0) return null;
-            return (
-              <div key={label}>
-                <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "6px 8px 2px" }}>
-                  {label} ({group.length})
-                </div>
-                {group.map((preset) => (
-                  <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} meta={airportCatalog[preset.icao]} />
-                ))}
-              </div>
-            );
-          })}
-          {renderOtherBlock(otherAirports(matchRegion))}
-        </>
-      ) : (
-        /* Other single region */
-        <>
-          {ordered.length > 0 && (
-            <div style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px 2px" }}>
-              機場 Airport ({ordered.length})
-            </div>
-          )}
-          {ordered.map((preset) => (
-            <AirportButton key={preset.icao} preset={preset} isActive={preset.icao === selectedAirport} onAirportChange={onAirportChange} onLocationJump={onLocationJump} theme={theme} meta={airportCatalog[preset.icao]} />
-          ))}
-          {renderOtherBlock(otherAirports(matchRegion))}
-        </>
-      )}
-    </div>
-  );
-}
 
 /* ── SetsPanel: 多機場組合檢視 ─────────────────────────────── */
 
@@ -3190,19 +2843,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           </div>
           <div style={{ minHeight: 0, overflowY: "auto", flex: "1 1 auto" }}>
           {activePanel === "settings" && <SettingsPanel {...props} theme={theme} />}
-          {activePanel === "locations" && (
-            <LocationsPanel
-              airports={props.airports}
-              airportCatalog={props.airportCatalog}
-              airportMeta={props.airportMeta}
-              selectedAirport={props.selectedAirport}
-              onAirportChange={props.onAirportChange}
-              onLocationJump={props.onLocationJump}
-              onSceneSelect={props.onSceneSelect}
-              region={props.region}
-              theme={theme}
-            />
-          )}
           {activePanel === "sets" && (
             <SetsPanel
               airports={props.airports}
