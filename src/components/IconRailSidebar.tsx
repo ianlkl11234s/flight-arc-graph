@@ -315,7 +315,6 @@ export interface IconRailSidebarProps {
   onStatsClick: () => void;
   onCaptureClick: () => void;
   // Info
-  onInfoClick: () => void;
   // Day/Night
   showTerminator: boolean;
   onTerminatorChange: (v: boolean) => void;

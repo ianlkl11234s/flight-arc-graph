@@ -1968,7 +1968,6 @@ export default function App() {
             rangeDays={timeline.rangeDays}
             onStatsClick={() => setShowStats(true)}
             onCaptureClick={() => setCaptureMode(true)}
-            onInfoClick={() => setShowInfo(true)}
             showTerminator={showTerminator}
             onTerminatorChange={setShowTerminator}
             colorThemeKey={colorThemeKey}
