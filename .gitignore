@@ -45,3 +45,4 @@ exploration/
 .claude/todos/
 .claude/settings.local.json
 .claude/.cache/
+docs/design/direction-showcase/out/

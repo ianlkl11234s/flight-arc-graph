@@ -1,0 +1,687 @@
+<title>Flight Arc 視覺方向</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&family=Barlow+Semi+Condensed:wght@500;600&family=Barlow:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&family=Red+Hat+Text:wght@400;500;600&display=swap">
+<style>
+/* Layout: quiet page shell; the subject is a scaled 1280×800 app stage + component sheet, re-skinned per direction (A/F families). */
+:root{
+  --bg:#f3f4f5; --fg:#16191c; --muted:#5d656d; --line:#d9dde1; --card:#ffffff; --pick:#1f5fa8;
+  --shell-font:"IBM Plex Sans",-apple-system,"PingFang TC","Noto Sans TC",sans-serif;
+  --shell-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1012; --fg:#e7eaed; --muted:#98a1aa; --line:#2a2f34; --card:#161a1d; --pick:#7fb2ff; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1012; --fg:#e7eaed; --muted:#98a1aa; --line:#2a2f34; --card:#161a1d; --pick:#7fb2ff; color-scheme:dark}
+
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--shell-font);font-size:15px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+header h1{font-size:26px;line-height:1.25;margin:0 0 6px;font-weight:600;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:74ch}
+.mono{font-family:var(--shell-mono);font-variant-numeric:tabular-nums}
+.controls{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;margin-block:-10px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--card)}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--fg);padding:7px 12px;cursor:pointer;border-right:1px solid var(--line);display:inline-flex;align-items:center;gap:6px}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg button:focus-visible{outline:2px solid var(--pick);outline-offset:-2px}
+.seg .dot{width:10px;height:10px;border-radius:50%;display:inline-block;border:1px solid rgba(127,127,127,.4)}
+.seg .new{font-size:10px;letter-spacing:.06em;opacity:.7}
+.ctl-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:8px}
+.stage-wrap{width:100%;max-width:100%;position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.stage{width:1280px;height:800px;transform-origin:0 0;position:absolute;left:0;top:0}
+.hint{font-size:13px;color:var(--muted);margin-top:-18px}
+h2{font-size:18px;margin:0 0 4px;font-weight:600}
+.sub{color:var(--muted);font-size:14px;margin:0 0 14px;max-width:74ch}
+.dirnote{border-left:3px solid var(--fg);padding:2px 0 2px 14px;font-size:14px;color:var(--fg);max-width:84ch;margin:0}
+.dirnote b{font-weight:600}
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.strip-cell{display:flex;flex-direction:column;gap:8px;min-width:0}
+.strip-cell .tag{font-size:13px;font-weight:600}
+.mini.frame{position:relative;inset:auto;border-radius:8px;overflow:hidden;border:1px solid var(--line);height:540px}
+.mini .panel{position:absolute!important;left:12px!important;top:12px!important;width:calc(100% - 24px)!important;max-width:288px}
+@media (max-width:1000px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.strip{grid-template-columns:minmax(0,1fr)}}
+.sheet.frame{position:relative;inset:auto;border-radius:8px;border:1px solid var(--line);padding:24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;align-items:start;overflow:hidden}
+@media (max-width:520px){.sheet.frame{grid-template-columns:minmax(0,1fr);padding:14px}}
+.spec{display:flex;flex-direction:column;gap:8px;min-width:0}
+.spec>.lab{font-family:var(--shell-mono);font-size:11px;letter-spacing:.06em;color:var(--fg3);text-transform:uppercase}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:1080px;font-size:13px}
+th,td{text-align:left;vertical-align:top;padding:9px 11px;border-bottom:1px solid var(--line)}
+thead th{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap}
+tbody th{color:var(--muted);font-weight:500;white-space:nowrap}
+tr:last-child td,tr:last-child th{border-bottom:0}
+.src{font-size:13px;color:var(--muted)}
+
+/* ─────────── Mock app: generic anatomy ─────────── */
+.frame{position:absolute;inset:0;overflow:hidden;background:var(--map-bg);color:var(--fg1);font-family:var(--ui-font);font-size:var(--body-size);-webkit-font-smoothing:antialiased;--edge:var(--accent)}
+.frame canvas.map{position:absolute;inset:0;width:100%;height:100%}
+.frame .num{font-family:var(--data-font);font-variant-numeric:tabular-nums}
+
+/* A 塔台儀表 */
+.dir-a{--ui-font:"JetBrains Mono","PingFang TC","Noto Sans TC",monospace;--data-font:"JetBrains Mono",monospace;--title-font:"JetBrains Mono","PingFang TC",monospace;--title-size:14px;--title-weight:500;--body-size:11px;--eyebrow-size:9px;--eyebrow-track:.18em;--radius:2px;--ctl-radius:2px;--blur:10px;--pad:12px;--cap-size:30px;--cap-weight:500;--cap-track:.04em}
+.dir-a.mode-dark{--map-bg:#05070a;--panel:rgba(11,13,15,.62);--border:rgba(214,222,230,.16);--fg1:#e7ebee;--fg2:#a2abb3;--fg3:#69727a;--ctl:rgba(255,255,255,.05);--shadow:none;--rail:rgba(7,9,11,.8)}
+.dir-a.mode-light{--map-bg:#e8eaec;--panel:rgba(248,249,250,.78);--border:rgba(18,24,30,.18);--fg1:#10151a;--fg2:#4c555d;--fg3:#7d868e;--ctl:rgba(0,0,0,.04);--shadow:none;--rail:rgba(240,242,244,.85)}
+/* F 玻璃座艙 */
+.dir-f{--ui-font:"B612","PingFang TC","Noto Sans TC",sans-serif;--data-font:"B612 Mono",ui-monospace,monospace;--title-font:"B612","PingFang TC",sans-serif;--title-size:14px;--title-weight:700;--body-size:11px;--eyebrow-size:9.5px;--eyebrow-track:.08em;--radius:4px;--ctl-radius:3px;--blur:6px;--pad:12px;--cap-size:32px;--cap-weight:700;--cap-track:.02em}
+.dir-f.mode-dark{--map-bg:#000;--panel:rgba(0,0,0,.78);--border:rgba(255,255,255,.24);--fg1:#f4f4f4;--fg2:#b8b8b8;--fg3:#7a7a7a;--ctl:rgba(255,255,255,.06);--shadow:none;--rail:#000}
+.dir-f.mode-light{--map-bg:#e4e6e8;--panel:rgba(255,255,255,.9);--border:rgba(0,0,0,.3);--fg1:#0c0c0c;--fg2:#3c3c3c;--fg3:#777;--ctl:rgba(0,0,0,.05);--shadow:none;--rail:#f2f3f4}
+/* G 夜航跑道燈 (A family) */
+.dir-g{--ui-font:"Barlow","PingFang TC","Noto Sans TC",sans-serif;--data-font:"JetBrains Mono",monospace;--title-font:"Barlow Semi Condensed","PingFang TC",sans-serif;--title-size:17px;--title-weight:600;--body-size:12px;--eyebrow-size:9.5px;--eyebrow-track:.2em;--radius:3px;--ctl-radius:3px;--blur:14px;--pad:13px;--cap-size:40px;--cap-weight:600;--cap-track:.06em}
+.dir-g.mode-dark{--map-bg:#04060a;--panel:rgba(8,11,16,.5);--border:rgba(200,215,235,.14);--fg1:#eef2f6;--fg2:#a5afba;--fg3:#6a7480;--ctl:rgba(255,255,255,.05);--shadow:none;--rail:rgba(4,6,10,.55)}
+.dir-g.mode-light{--map-bg:#e9ecef;--panel:rgba(250,251,252,.7);--border:rgba(20,30,40,.16);--fg1:#0f1720;--fg2:#4a5562;--fg3:#808a96;--ctl:rgba(0,0,0,.04);--shadow:none;--rail:rgba(244,246,248,.7)}
+/* H HUD (F family) */
+.dir-h{--ui-font:"B612 Mono","PingFang TC","Noto Sans TC",monospace;--data-font:"B612 Mono",monospace;--title-font:"B612 Mono","PingFang TC",monospace;--title-size:14px;--title-weight:700;--body-size:11px;--eyebrow-size:9.5px;--eyebrow-track:.14em;--radius:0px;--ctl-radius:0px;--blur:3px;--pad:12px;--cap-size:34px;--cap-weight:400;--cap-track:.12em}
+.dir-h.mode-dark{--map-bg:#020403;--panel:rgba(0,0,0,.2);--border:color-mix(in srgb,var(--accent) 42%,transparent);--fg1:color-mix(in srgb,var(--accent) 30%,#ffffff);--fg2:color-mix(in srgb,var(--accent) 75%,#6f6f6f);--fg3:color-mix(in srgb,var(--accent) 45%,#3a3a3a);--ctl:color-mix(in srgb,var(--accent) 6%,transparent);--shadow:none;--rail:transparent}
+.dir-h.mode-light{--map-bg:#e7eae7;--panel:rgba(255,255,255,.35);--border:color-mix(in srgb,var(--accent) 50%,transparent);--fg1:color-mix(in srgb,var(--accent) 45%,#000);--fg2:color-mix(in srgb,var(--accent) 80%,#333);--fg3:color-mix(in srgb,var(--accent) 50%,#999);--ctl:color-mix(in srgb,var(--accent) 6%,transparent);--shadow:none;--rail:transparent}
+/* I 平流層 (A family, glass) */
+.dir-i{--ui-font:"Geist","PingFang TC","Noto Sans TC",sans-serif;--data-font:"Geist Mono",ui-monospace,monospace;--title-font:"Geist","PingFang TC",sans-serif;--title-size:16px;--title-weight:600;--body-size:11.5px;--eyebrow-size:9.5px;--eyebrow-track:.14em;--radius:10px;--ctl-radius:6px;--blur:24px;--pad:14px;--cap-size:38px;--cap-weight:500;--cap-track:-.01em}
+.dir-i.mode-dark{--map-bg:#04060c;--panel:rgba(150,180,230,.07);--border:rgba(200,220,255,.16);--fg1:#f2f6fc;--fg2:#a9b4c6;--fg3:#6e7a8e;--ctl:rgba(200,220,255,.07);--shadow:inset 0 1px 0 rgba(255,255,255,.08);--rail:rgba(150,180,230,.04)}
+.dir-i.mode-light{--map-bg:#e8ecf2;--panel:rgba(255,255,255,.42);--border:rgba(30,50,90,.12);--fg1:#0f1a2c;--fg2:#475570;--fg3:#8592a8;--ctl:rgba(30,50,90,.05);--shadow:0 10px 30px rgba(30,50,90,.1),inset 0 1px 0 rgba(255,255,255,.7);--rail:rgba(255,255,255,.35)}
+/* J 航向顯示 ND (F family) */
+.dir-j{--ui-font:"B612","PingFang TC","Noto Sans TC",sans-serif;--data-font:"B612 Mono",ui-monospace,monospace;--title-font:"B612","PingFang TC",sans-serif;--title-size:14px;--title-weight:700;--body-size:11px;--eyebrow-size:9.5px;--eyebrow-track:.1em;--radius:4px;--ctl-radius:3px;--blur:10px;--pad:12px;--cap-size:32px;--cap-weight:700;--cap-track:.03em}
+.dir-j.mode-dark{--map-bg:#03060f;--panel:rgba(4,10,26,.62);--border:rgba(120,160,255,.22);--fg1:#eef3ff;--fg2:#a3b0cc;--fg3:#66739a;--ctl:rgba(120,160,255,.07);--shadow:none;--rail:rgba(3,6,15,.7)}
+.dir-j.mode-light{--map-bg:#e7eaf2;--panel:rgba(250,251,255,.8);--border:rgba(30,50,120,.22);--fg1:#0c1430;--fg2:#3f4a6c;--fg3:#7c86a6;--ctl:rgba(30,50,120,.05);--shadow:none;--rail:rgba(245,247,252,.85)}
+/* K 紅眼航班 (A family) */
+.dir-k{--ui-font:"Red Hat Text","PingFang TC","Noto Sans TC",sans-serif;--data-font:"Red Hat Mono",ui-monospace,monospace;--title-font:"Red Hat Text","PingFang TC",sans-serif;--title-size:15px;--title-weight:600;--body-size:11.5px;--eyebrow-size:9.5px;--eyebrow-track:.16em;--radius:2px;--ctl-radius:2px;--blur:12px;--pad:12px;--cap-size:34px;--cap-weight:500;--cap-track:.04em}
+.dir-k.mode-dark{--map-bg:#060304;--panel:rgba(16,7,7,.55);--border:rgba(255,130,110,.16);--fg1:#f3e6e2;--fg2:#b49a94;--fg3:#7a625c;--ctl:rgba(255,130,110,.06);--shadow:none;--rail:rgba(8,4,4,.7)}
+.dir-k.mode-light{--map-bg:#efe9e7;--panel:rgba(253,250,249,.78);--border:rgba(90,30,20,.18);--fg1:#2a1410;--fg2:#6b4b44;--fg3:#a08680;--ctl:rgba(90,30,20,.04);--shadow:none;--rail:rgba(248,244,243,.8)}
+/* L 晨昏線 (A family) */
+.dir-l{--ui-font:"Geist","PingFang TC","Noto Sans TC",sans-serif;--data-font:"Geist Mono",ui-monospace,monospace;--title-font:"Geist","PingFang TC",sans-serif;--title-size:15px;--title-weight:600;--body-size:11.5px;--eyebrow-size:9.5px;--eyebrow-track:.16em;--radius:6px;--ctl-radius:4px;--blur:16px;--pad:13px;--cap-size:36px;--cap-weight:500;--cap-track:.02em}
+.dir-l.mode-dark{--map-bg:#05060c;--panel:rgba(10,12,22,.5);--border:rgba(210,215,240,.13);--fg1:#f1f1f6;--fg2:#a9abbe;--fg3:#6d7084;--ctl:rgba(255,255,255,.05);--shadow:none;--rail:rgba(6,7,14,.6)}
+.dir-l.mode-light{--map-bg:#ecebef;--panel:rgba(252,251,253,.72);--border:rgba(30,30,60,.14);--fg1:#15151f;--fg2:#4d4e62;--fg3:#8a8b9e;--ctl:rgba(0,0,0,.04);--shadow:none;--rail:rgba(246,245,248,.75)}
+.dir-l{--edge:linear-gradient(90deg,var(--accent),#8ec5ff 55%,transparent)}
+.dir-l.mode-light{--edge:linear-gradient(90deg,var(--accent),#2f6fbf 55%,transparent)}
+
+/* rail */
+.rail{position:absolute;left:0;top:0;bottom:0;width:56px;background:var(--rail);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding-top:14px;gap:6px;backdrop-filter:blur(var(--blur))}
+.rail .logo{width:26px;height:26px;margin-bottom:14px;color:var(--fg1)}
+.rail .ri{width:36px;height:36px;display:grid;place-items:center;color:var(--fg3);border-radius:var(--ctl-radius);position:relative}
+.rail .ri svg{width:18px;height:18px}
+.rail .ri.on{color:var(--fg1);background:var(--ctl)}
+.fam-a .rail .ri.on::before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:2px;background:var(--accent)}
+.fam-f .rail .ri.on{color:var(--accent);outline:1px solid var(--accent);outline-offset:-1px;background:transparent}
+.dir-i .rail{border-right:0}
+.dir-i .rail .ri.on{background:var(--ctl);border-radius:10px}
+.dir-g .rail .ri.on::before{box-shadow:0 0 8px var(--accent)}
+
+.brand{position:absolute;left:72px;top:16px;display:flex;align-items:baseline;gap:14px}
+.brand .wm{font-family:var(--title-font);font-weight:600;font-size:13px;letter-spacing:.18em;color:var(--fg1)}
+.dir-i .brand .wm,.dir-l .brand .wm{letter-spacing:.08em}
+.brand .hud{font-family:var(--data-font);font-size:10px;color:var(--fg3);letter-spacing:.04em}
+.fam-f .brand .hud{color:var(--accent)}
+
+/* panel */
+.panel{position:absolute;left:68px;top:52px;width:288px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);backdrop-filter:blur(var(--blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--blur)) saturate(1.2);color:var(--fg1)}
+.ticks .panel::before,.ticks .panel::after{content:"";position:absolute;width:8px;height:8px;border-color:var(--accent);border-style:solid;opacity:.8}
+.ticks .panel::before{left:-1px;top:-1px;border-width:1px 0 0 1px}
+.ticks .panel::after{right:-1px;bottom:-1px;border-width:0 1px 1px 0}
+.lights .panel::before,.lights .card::before{content:"";position:absolute;left:12px;right:12px;top:-1px;height:2px;background:radial-gradient(circle,var(--accent) 0 1px,transparent 1.5px) 0 0/12px 2px repeat-x;opacity:.85;filter:drop-shadow(0 0 2px var(--accent))}
+.edge .panel::before,.edge .card::before{content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:var(--edge)}
+.stripe .panel::before,.stripe .card::before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:2px;background:var(--accent);border-radius:var(--radius) var(--radius) 0 0}
+.card{position:relative}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;padding:10px var(--pad);border-bottom:1px solid var(--border)}
+.inv .panel>.ph{background:var(--fg1);color:var(--map-bg);border-radius:calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;padding:7px var(--pad)}
+.inv .panel>.ph .eyebrow,.inv .panel>.ph .x{color:inherit;opacity:.7}
+.dir-i .ph{border-bottom:0;padding-top:14px}
+.eyebrow{font-size:var(--eyebrow-size);letter-spacing:var(--eyebrow-track);text-transform:uppercase;color:var(--fg3);font-family:var(--data-font)}
+.ptitle{font-family:var(--title-font);font-size:var(--title-size);font-weight:var(--title-weight);margin-top:3px;line-height:1.25}
+.dir-g .ptitle{letter-spacing:.02em}
+.x{width:24px;height:24px;display:grid;place-items:center;color:var(--fg3);border-radius:var(--ctl-radius);flex:none}
+.pb{padding:4px var(--pad) var(--pad);display:flex;flex-direction:column;gap:12px}
+.sec{display:flex;flex-direction:column;gap:7px}
+.sec-h{display:flex;align-items:center;gap:8px;font-size:var(--eyebrow-size);letter-spacing:var(--eyebrow-track);text-transform:uppercase;color:var(--fg3);font-family:var(--data-font);padding-top:6px}
+.sec-h::after{content:"";flex:1;height:1px;background:var(--border)}
+.fam-f .sec-h{color:var(--accent)}
+.dir-i .sec-h::after,.dir-l .sec-h::after{background:linear-gradient(90deg,var(--border),transparent)}
+.search{display:flex;align-items:center;gap:8px;height:28px;padding:0 10px;background:var(--ctl);border:1px solid var(--border);border-radius:var(--ctl-radius);color:var(--fg3);font-size:var(--body-size)}
+.dir-h .search{background:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-family:var(--data-font);font-size:10.5px;padding:3px 8px;border-radius:var(--ctl-radius);border:1px solid var(--border);background:var(--ctl);color:var(--fg2);cursor:pointer}
+.chip.on{color:var(--fg1);background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:color-mix(in srgb,var(--accent) 60%,transparent)}
+.fam-f .chip.on{color:var(--accent2);border-color:var(--accent2);background:transparent}
+.dir-h .chip.on{color:var(--map-bg);background:var(--accent);border-color:var(--accent)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:var(--body-size);color:var(--fg1)}
+.row .v{color:var(--fg2)}
+.fam-f .row .v{color:var(--accent)}
+.tg{width:28px;height:16px;border-radius:99px;background:color-mix(in srgb,var(--fg1) 18%,transparent);position:relative;cursor:pointer;border:0;padding:0;flex:none}
+.tg::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--fg1);transition:transform .15s}
+.tg[aria-pressed="true"]{background:var(--accent)}
+.tg[aria-pressed="true"]::after{transform:translateX(12px);background:var(--accent-ink)}
+.fam-a .tg,.fam-a .tg::after{border-radius:1px}
+.dir-i .tg,.dir-i .tg::after,.dir-l .tg,.dir-l .tg::after{border-radius:99px}
+.dir-g .tg[aria-pressed="true"]{box-shadow:0 0 10px color-mix(in srgb,var(--accent) 55%,transparent)}
+.fam-f .tg{width:34px;border-radius:2px;background:transparent;border:1px solid var(--fg3)}
+.fam-f .tg::after{border-radius:1px;background:var(--fg3);width:13px;height:10px;top:2px}
+.fam-f .tg[aria-pressed="true"]{border-color:var(--accent);background:transparent}
+.fam-f .tg[aria-pressed="true"]::after{background:var(--accent);transform:translateX(15px)}
+.sl{display:flex;flex-direction:column;gap:5px}
+.sl input{appearance:none;-webkit-appearance:none;width:100%;height:2px;background:color-mix(in srgb,var(--fg1) 20%,transparent);outline:none;margin:6px 0}
+.sl input::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--accent);cursor:pointer;border:0}
+.sl input::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--accent);border:0}
+.fam-a .sl input::-webkit-slider-thumb,.fam-f .sl input::-webkit-slider-thumb{border-radius:0;width:6px;height:14px}
+.fam-a .sl input::-moz-range-thumb,.fam-f .sl input::-moz-range-thumb{border-radius:0;width:6px;height:14px}
+.dir-i .sl input::-webkit-slider-thumb,.dir-l .sl input::-webkit-slider-thumb{border-radius:50%;width:12px;height:12px;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.sw{display:flex;gap:7px;flex-wrap:wrap}
+.swb{width:34px;height:16px;border-radius:var(--ctl-radius);border:1px solid var(--border);cursor:pointer;padding:0}
+.swb[aria-pressed="true"]{outline:1.5px solid var(--fg1);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.st{padding:7px 8px;background:var(--ctl);border-radius:var(--ctl-radius);display:flex;flex-direction:column;gap:2px;min-width:0}
+.fam-f .st,.dir-h .st{background:transparent;border:1px solid var(--border)}
+.st .k{font-size:9.5px;color:var(--fg3)}
+.st .n{font-family:var(--data-font);font-size:15px;font-weight:500;color:var(--fg1);font-variant-numeric:tabular-nums;white-space:nowrap}
+.fam-f .st .n{color:var(--accent)}
+.dir-g .st .n,.dir-i .st .n,.dir-l .st .n{font-family:var(--title-font);font-size:18px}
+.st .s{font-size:9.5px;color:var(--fg2);font-family:var(--data-font)}
+
+/* toolbar */
+.tb{position:absolute;right:16px;top:14px;display:flex;align-items:center;gap:6px}
+.tg-grp{display:flex;align-items:center;height:28px;background:var(--panel);border:1px solid var(--border);border-radius:var(--ctl-radius);backdrop-filter:blur(var(--blur));overflow:hidden}
+.tbb{font:inherit;font-size:var(--body-size);height:100%;padding:0 11px;border:0;background:transparent;color:var(--fg2);cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tbb+.tbb{border-left:1px solid var(--border)}
+.tbb[aria-pressed="true"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.dir-h .tbb[aria-pressed="true"]{color:var(--map-bg);background:var(--accent)}
+.dir-i .tbb+.tbb{border-left:0}
+.dir-i .tg-grp{padding:2px;gap:2px}
+.dir-i .tbb{border-radius:4px}
+.tbb svg{width:14px;height:14px}
+.tbb i.rd{width:7px;height:7px;border-radius:50%;background:#e5484d;display:inline-block}
+
+/* caption */
+.cap{position:absolute;left:72px;bottom:72px;display:flex;flex-direction:column;gap:5px;pointer-events:none;color:var(--fg1)}
+.cap .c1{display:flex;align-items:baseline;gap:12px}
+.cap .code{font-family:var(--title-font);font-size:var(--cap-size);font-weight:var(--cap-weight);line-height:1;letter-spacing:var(--cap-track)}
+.cap .name{font-size:13px;color:var(--fg2)}
+.cap .c2{font-family:var(--data-font);font-size:10.5px;color:var(--fg2);letter-spacing:.03em;display:flex;gap:12px;flex-wrap:wrap}
+.cap .c2 b{color:var(--fg1);font-weight:500}
+.fam-a .cap{border-left:2px solid var(--accent);padding-left:12px}
+.dir-i .cap,.dir-l .cap{border-left:0;padding-left:0}
+.dir-l .cap::after{content:"";height:1px;width:220px;background:var(--edge);margin-top:4px}
+.dir-g .cap{border-left-color:transparent;padding-left:0}
+.dir-g .cap::before{content:"";display:block;width:180px;height:2px;margin-bottom:6px;background:radial-gradient(circle,var(--accent) 0 1px,transparent 1.5px) 0 0/10px 2px repeat-x;filter:drop-shadow(0 0 2px var(--accent))}
+.fam-f .cap .code,.fam-f .cap .c2 b{color:var(--accent)}
+.dir-h .cap .code{border:1px solid var(--accent);padding:4px 10px 3px}
+
+/* timeline */
+.tl{position:absolute;left:68px;bottom:16px;height:40px;width:300px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);backdrop-filter:blur(var(--blur));box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;padding:0 10px;transition:width .25s ease;overflow:hidden}
+.dir-i .tl,.dir-l .tl{border-radius:99px;padding-left:8px}
+.tl.open{width:640px}
+.tl.static{position:relative;left:auto;bottom:auto;width:100%;max-width:640px}
+.play{width:24px;height:24px;border-radius:var(--ctl-radius);border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;cursor:pointer;flex:none;padding:0}
+.dir-i .play,.dir-l .play{border-radius:50%}
+.fam-f .play{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.play svg{width:10px;height:10px}
+.clock{font-family:var(--data-font);font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;flex:none;min-width:44px}
+.fam-f .clock{color:var(--accent)}
+.tz{font-family:var(--data-font);font-size:9px;color:var(--fg3);flex:none;letter-spacing:.08em}
+.hist{flex:1;height:30px;display:flex;align-items:center;gap:1px;min-width:0;cursor:pointer}
+.hist .hb{flex:1;display:flex;flex-direction:column;height:100%;gap:1px}
+.hist .u,.hist .d{width:100%;background:color-mix(in srgb,var(--fg1) 28%,transparent)}
+.hist .hb.cur .u,.hist .hb.cur .d{background:var(--accent)}
+.hist .top,.hist .bot{flex:1;display:flex;align-items:flex-end}
+.hist .bot{align-items:flex-start}
+.spd{display:flex;flex:none;gap:2px}
+.spd button{font:inherit;font-family:var(--data-font);font-size:10px;border:0;background:transparent;color:var(--fg3);padding:3px 5px;cursor:pointer;border-radius:var(--ctl-radius)}
+.spd button[aria-pressed="true"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.tl .more{display:flex;align-items:center;gap:10px;flex:1;min-width:0;opacity:0;transition:opacity .2s}
+.tl.open .more{opacity:1}
+.mini-bar{flex:1;height:2px;background:color-mix(in srgb,var(--fg1) 18%,transparent);position:relative;min-width:40px}
+.mini-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.tl.open .mini-bar{display:none}
+
+/* dock + cards */
+.dock{position:absolute;right:16px;bottom:16px;width:260px;display:flex;flex-direction:column;gap:8px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);backdrop-filter:blur(var(--blur)) saturate(1.2);box-shadow:var(--shadow);padding:10px var(--pad);color:var(--fg1);min-width:0}
+.fl-top{display:flex;justify-content:space-between;align-items:baseline;margin:3px 0 6px;gap:8px}
+.cs{font-family:var(--title-font);font-size:18px;font-weight:var(--title-weight)}
+.fam-f .cs{color:var(--accent)}
+.route{font-family:var(--data-font);font-size:11px;color:var(--fg2)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:10.5px;margin:0}
+.kv dt{color:var(--fg3)} .kv dd{margin:0;color:var(--fg1);font-family:var(--data-font);text-align:right}
+.fam-f .kv dd{color:var(--accent)}
+.lg{display:flex;flex-direction:column;gap:6px}
+.ramp{height:4px;border-radius:1px}
+.ramp-l{display:flex;justify-content:space-between;font-family:var(--data-font);font-size:9px;color:var(--fg3)}
+.lg-row{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--fg2)}
+.lg-row i{width:18px;height:2px;display:inline-block}
+
+/* component sheet */
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:inherit;font-size:var(--body-size);height:28px;padding:0 12px;border-radius:var(--ctl-radius);border:1px solid var(--border);background:var(--ctl);color:var(--fg1);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--fg2)}
+.btn.danger{color:#ff6b6b;border-color:color-mix(in srgb,#ff6b6b 45%,transparent);background:transparent}
+.mode-light .btn.danger{color:#c62828}
+.fam-f .btn.pri{background:transparent;color:var(--accent);border-color:var(--accent)}
+.dir-g .btn.pri{box-shadow:0 0 14px color-mix(in srgb,var(--accent) 35%,transparent)}
+.sel{display:flex;align-items:center;justify-content:space-between;height:28px;padding:0 10px;border:1px solid var(--border);border-radius:var(--ctl-radius);background:var(--ctl);font-size:var(--body-size);color:var(--fg1);min-width:150px;gap:10px}
+.sel span:last-child{color:var(--fg3);font-size:9px}
+.segc{display:inline-flex;border:1px solid var(--border);border-radius:var(--ctl-radius);overflow:hidden}
+.segc button{font:inherit;font-size:var(--body-size);border:0;background:transparent;color:var(--fg2);padding:5px 10px;cursor:pointer}
+.segc button+button{border-left:1px solid var(--border)}
+.segc button[aria-pressed="true"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.cb{display:flex;align-items:center;gap:8px;font-size:var(--body-size)}
+.cb i{width:12px;height:12px;border:1px solid var(--fg3);border-radius:2px;display:grid;place-items:center}
+.cb i.on{background:var(--accent);border-color:var(--accent)}
+.cb i.on::after{content:"";width:6px;height:3px;border-left:1.5px solid var(--accent-ink);border-bottom:1.5px solid var(--accent-ink);transform:rotate(-45deg) translate(1px,-1px)}
+.tip{display:inline-block;background:var(--fg1);color:var(--map-bg);font-size:10.5px;padding:4px 8px;border-radius:var(--ctl-radius);font-family:var(--data-font)}
+.cine{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cine .sep{width:1px;height:18px;background:var(--border)}
+.kf{display:flex;gap:4px}
+.kf span{font-family:var(--data-font);font-size:10px;border:1px solid var(--border);padding:3px 6px;border-radius:var(--ctl-radius);color:var(--fg2)}
+.kf span.on{border-color:var(--accent);color:var(--accent)}
+.recdot{display:flex;align-items:center;gap:6px;font-family:var(--data-font);font-size:12px}
+.recdot i{width:8px;height:8px;border-radius:50%;background:#e5484d;box-shadow:0 0 8px #e5484d}
+.heat{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));gap:2px}
+.heat i{height:16px;border-radius:1px;background:var(--accent)}
+.heat-l{display:flex;justify-content:space-between;font-family:var(--data-font);font-size:9px;color:var(--fg3)}
+.bars{display:flex;flex-direction:column;gap:5px}
+.bar{display:grid;grid-template-columns:34px 1fr 30px;gap:8px;align-items:center;font-size:10.5px}
+.bar .c{font-family:var(--data-font);color:var(--fg1)}
+.bar .t{position:relative;height:14px;display:flex;align-items:center}
+.bar .t i{position:absolute;left:0;top:3px;bottom:3px;background:color-mix(in srgb,var(--accent) 50%,transparent);border-radius:1px}
+.bar .t span{position:relative;padding-left:6px;color:var(--fg1);font-size:10px}
+.bar .n{font-family:var(--data-font);color:var(--fg2);text-align:right}
+.prof{width:100%;height:auto;display:block}
+.load{display:flex;flex-direction:column;gap:6px}
+.load .pbar{height:2px;background:color-mix(in srgb,var(--fg1) 15%,transparent);position:relative}
+.load .pbar i{position:absolute;left:0;top:0;bottom:0;width:62%;background:var(--accent);box-shadow:0 0 6px color-mix(in srgb,var(--accent) 60%,transparent)}
+.modal{max-width:380px}
+.modal h4{font-family:var(--title-font);font-size:calc(var(--title-size) + 2px);font-weight:var(--title-weight);margin:4px 0 6px}
+.modal p{margin:0 0 12px;color:var(--fg2);font-size:var(--body-size);line-height:1.6}
+.toast{display:inline-flex;align-items:center;gap:8px}
+.toast i{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.phone{width:280px;height:560px;max-width:100%;border-radius:30px;border:6px solid color-mix(in srgb,var(--fg1) 20%,transparent);position:relative;overflow:hidden;background:var(--map-bg);margin:0 auto}
+.phone canvas{position:absolute;inset:0;width:100%;height:100%}
+.bs{position:absolute;left:0;right:0;bottom:0;background:var(--panel);backdrop-filter:blur(var(--blur)) saturate(1.2);border-top:1px solid var(--border);border-radius:calc(var(--radius) + 8px) calc(var(--radius) + 8px) 0 0;padding:8px 14px 14px;display:flex;flex-direction:column;gap:9px}
+.bs .grab{width:36px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--fg1) 30%,transparent);align-self:center}
+.ptop{position:absolute;left:12px;right:12px;top:14px;display:flex;justify-content:space-between;align-items:center}
+.ptop .wm{font-family:var(--title-font);font-size:11px;letter-spacing:.14em;font-weight:600}
+.atlas{display:flex;flex-direction:column;gap:6px;max-width:260px}
+.atlas .hd{display:flex;align-items:baseline;gap:8px}
+.atlas .hd b{font-family:var(--title-font);font-size:18px;font-weight:var(--title-weight)}
+.fam-f .atlas .hd b{color:var(--accent)}
+.spark{width:100%;height:28px;display:block}
+.spec-row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Flight Arc 主體頁面 · A／F 延伸版本</h1>
+    <p>從 A 塔台儀表和 F 玻璃座艙延伸出六個新方向，全部用無襯線或等寬字，面板偏乾淨透明。每個方向有三組強調色可以換。軌跡保持現在的夜空光軌，起降染色放在右上的「染色」切換。背景是 <span class="mono">2026-02-18</span> 桃園機場 85 km 內的 <span class="mono" id="hdrN">—</span> 班真實軌跡，時間為台灣時間。</p>
+  </header>
+
+  <div class="controls">
+    <div><span class="ctl-label">方向</span><span class="seg" role="group" aria-label="視覺方向" id="dirSeg"></span></div>
+    <div><span class="ctl-label">強調色</span><span class="seg" role="group" aria-label="強調色" id="accSeg"></span></div>
+    <div><span class="ctl-label">底圖</span>
+      <span class="seg" role="group" aria-label="底圖明暗">
+        <button id="m-dark" aria-pressed="true">深色</button>
+        <button id="m-light" aria-pressed="false">淺色</button>
+      </span></div>
+  </div>
+
+  <p class="dirnote" id="dirNote"></p>
+  <div class="stage-wrap" id="stageWrap"><div class="stage" id="stage"></div></div>
+  <p class="hint">畫面可以操作：起降篩選、染色方式、2D/3D、距離環、亮度、六組軌跡配色；按播放可以看光球移動，點直方圖可以跳到某個小時。</p>
+
+  <section>
+    <h2>其他元件</h2>
+    <p class="sub">把同一個方向套到網站的其他元件：錄影列、統計、機場星圖懸停卡、航班高度剖面、載入、對話框、提示、手機版。方向、強調色和底圖都跟著上方的切換走。</p>
+    <div class="sheet frame" id="sheet"></div>
+  </section>
+
+  <section>
+    <h2>機場面板並排</h2>
+    <p class="sub">八個方向用各自的第一組強調色，畫同一個機場面板。</p>
+    <div class="strip" id="strip"></div>
+  </section>
+
+  <section>
+    <h2>取捨</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th></th><th>A 塔台儀表</th><th>F 玻璃座艙</th><th>G 夜航跑道燈</th><th>H 抬頭顯示</th><th>I 平流層</th><th>J 航向顯示</th><th>K 紅眼航班</th><th>L 晨昏線</th></tr></thead>
+      <tbody>
+        <tr><th>源自</th><td>原版</td><td>原版</td><td>A</td><td>F</td><td>A</td><td>F</td><td>A</td><td>A</td></tr>
+        <tr><th>意象</th><td>雷達幕</td><td>駕駛艙螢幕</td><td>夜間進場看到的跑道燈</td><td>戰機、民航機的 HUD</td><td>巡航高度看出去的冷空氣</td><td>導航顯示器上的航路</td><td>夜間座艙的紅色照明</td><td>巡航時看到的日夜交界</td></tr>
+        <tr><th>字體</th><td>JetBrains Mono</td><td>B612、B612 Mono</td><td>Barlow、Barlow Semi Condensed、JetBrains Mono</td><td>B612 Mono</td><td>Geist、Geist Mono</td><td>B612、B612 Mono</td><td>Red Hat Text、Red Hat Mono</td><td>Geist、Geist Mono</td></tr>
+        <tr><th>透明度</th><td>中</td><td>低（黑底）</td><td>高</td><td>最高，幾乎只剩線</td><td>最高，毛玻璃</td><td>中</td><td>中</td><td>中高</td></tr>
+        <tr><th>特徵</th><td>對角刻度、琥珀</td><td>反白標題條、青色數值</td><td>面板上緣有一排燈點</td><td>整體單色，所有字跟著強調色</td><td>大圓角、重度模糊、柔和高光</td><td>上緣 2px 色條、洋紅航路</td><td>暗紅色系，暗處也不刺眼</td><td>上緣一道晨光到夜藍的漸層</td></tr>
+        <tr><th>強調色</th><td>琥珀／磷光綠／冷白</td><td>航電青／洋紅／綠</td><td>跑道頭綠／滑行道藍／進場燈白</td><td>HUD 綠／琥珀／冰藍</td><td>冰藍／極光紫／薄荷</td><td>FMS 洋紅／航向青／綠</td><td>夜航紅／琥珀／玫瑰</td><td>晨光珊瑚／金／薄暮藍</td></tr>
+        <tr><th>風險</th><td>中英混排要調字距</td><td>淺色版較難做</td><td>燈點裝飾用多會俗</td><td>單色讀久了累，統計圖難分類</td><td>透明度高，亮軌跡上的文字要守對比</td><td>和 F 很像，差異在藍底</td><td>紅色和起降染色的橘撞色</td><td>漸層只能用在一兩處</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <p class="src">資料來源：FR24 flight-tracks，桃園機場 2026-02-18 機場檔，只保留 85 km 內、依台灣時間起降落在當天的航班。畫面為斜視投影並誇大高度，跑道位置是示意。航空公司名稱依呼號前三碼對照。載入進度、錄影計時、對話框文字是展示用的狀態，不是實際數據。</p>
+</div>
+
+<script>
+const DATA = __DATA__;
+const FL = DATA.f;
+// family: a = A 系（細線、刻度、左側強調線），f = F 系（框線、強調色數值）
+const DIRS = [
+  {k:'a',n:'A 塔台儀表',fam:'a',mods:'ticks',note:'<b>A 塔台儀表</b>（原版）：等寬字、半透明石墨面板、對角刻度。強調色只用在選中和播放中。',
+    acc:[{n:'琥珀',d:'#f2a93b',l:'#a86200',di:'#1a1206'},{n:'磷光綠',d:'#7be3a0',l:'#1d7a4a',di:'#04140b'},{n:'冷白',d:'#dfe8f2',l:'#26313d',di:'#0b0f14'}]},
+  {k:'f',n:'F 玻璃座艙',fam:'f',mods:'inv',note:'<b>F 玻璃座艙</b>（原版）：Airbus 為駕駛艙設計的 B612 字體，黑底白框，標題條反白，數值用強調色，選中用第二色。',
+    acc:[{n:'航電青',d:'#2fe3e3',l:'#007a8a',di:'#001414',a2:['#ff5fd2','#b3007f']},{n:'洋紅',d:'#ff5fd2',l:'#b3007f',di:'#1a0013',a2:['#2fe3e3','#007a8a']},{n:'綠',d:'#5dff8f',l:'#0d7a33',di:'#00140a',a2:['#2fe3e3','#007a8a']}]},
+  {k:'g',n:'G 夜航跑道燈',fam:'a',mods:'lights',isNew:1,note:'<b>G 夜航跑道燈</b>（源自 A）：夜間進場時看到的跑道燈。面板更透明，上緣有一排會微微發光的燈點；字體換成 Barlow，標題用半窄體，數字仍用等寬。',
+    acc:[{n:'跑道頭綠',d:'#5ef0a0',l:'#0f8a4f',di:'#03140b'},{n:'滑行道藍',d:'#5aa8ff',l:'#1f63c4',di:'#030c1a'},{n:'進場燈白',d:'#f3eee2',l:'#5d5546',di:'#14120c'}]},
+  {k:'h',n:'H 抬頭顯示',fam:'f',mods:'',isNew:1,note:'<b>H 抬頭顯示</b>（源自 F）：像 HUD 那樣幾乎只剩線條和字。面板接近全透明，整個介面是單色，所有文字都跟著強調色變。',
+    acc:[{n:'HUD 綠',d:'#8dff9e',l:'#0b7a2a',di:'#021006'},{n:'琥珀',d:'#ffc46b',l:'#9a5c00',di:'#140c00'},{n:'冰藍',d:'#9fe6ff',l:'#0a6b8f',di:'#02101a'}]},
+  {k:'i',n:'I 平流層',fam:'a',mods:'',isNew:1,note:'<b>I 平流層</b>（源自 A）：巡航高度那種冷而透的空氣。毛玻璃面板、重度模糊、大圓角、上緣一道柔和高光，字體是 Geist。這個方向最乾淨。',
+    acc:[{n:'冰藍',d:'#a8dcff',l:'#1b6aa8',di:'#04101a'},{n:'極光紫',d:'#c7b8ff',l:'#5a3fc0',di:'#0d0820'},{n:'薄荷',d:'#9ff0d4',l:'#0d7a5c',di:'#03140f'}]},
+  {k:'j',n:'J 航向顯示',fam:'f',mods:'stripe',isNew:1,note:'<b>J 航向顯示</b>（源自 F）：導航顯示器（ND）的配色。深藍半透明面板取代 F 的純黑，上緣有一條 2px 色條，主色是 FMS 航路的洋紅。',
+    acc:[{n:'FMS 洋紅',d:'#ff5fd2',l:'#b3007f',di:'#1a0013',a2:['#3fe0ff','#0a6b8f']},{n:'航向青',d:'#3fe0ff',l:'#0a6b8f',di:'#001018',a2:['#ff5fd2','#b3007f']},{n:'綠',d:'#6dff8f',l:'#0d7a33',di:'#00140a',a2:['#3fe0ff','#0a6b8f']}]},
+  {k:'k',n:'K 紅眼航班',fam:'a',mods:'ticks',isNew:1,note:'<b>K 紅眼航班</b>（源自 A）：夜航時座艙調暗的紅色照明，暗處看也不刺眼。整體偏暖，字體是 Red Hat。',
+    acc:[{n:'夜航紅',d:'#ff5a4a',l:'#b3261a',di:'#180403'},{n:'琥珀',d:'#ffa23a',l:'#a35600',di:'#180c00'},{n:'玫瑰',d:'#ff7a9a',l:'#b02a52',di:'#18040a'}]},
+  {k:'l',n:'L 晨昏線',fam:'a',mods:'edge',isNew:1,note:'<b>L 晨昏線</b>（源自 A）：長途航班巡航時看到的日夜交界。面板上緣和圖說下方各有一道從晨光到夜藍的漸層線，其他地方保持素淨，字體是 Geist。',
+    acc:[{n:'晨光珊瑚',d:'#ffb199',l:'#b4492c',di:'#1a0c08'},{n:'金',d:'#ffd27a',l:'#946200',di:'#181000'},{n:'薄暮藍',d:'#8ec5ff',l:'#1f5fa8',di:'#030c18'}]},
+];
+const COLOR_THEMES = { // src/types/colorTheme.ts
+  default:{name:'Default',trail:['#4d99ff','#33ccee','#8066ff','#4de6b3','#9980ff'],grad:['#fbe2bc','#ffc880','#80bfff']},
+  warm:{name:'Warm',trail:['#ff9944','#ffcc33','#ff6633','#ffaa66','#ff7744'],grad:['#ffdd66','#ff8833','#ff5533']},
+  ocean:{name:'Ocean',trail:['#2288cc','#22ccaa','#3366bb','#44ddbb','#2299aa'],grad:['#44ddbb','#2299aa','#1144aa']},
+  neon:{name:'Neon',trail:['#ff44cc','#44ff88','#44ddff','#ffff44','#cc44ff'],grad:['#44ff88','#44ddff','#cc44ff']},
+  mono:{name:'Mono',trail:['#cccccc','#aaaaaa','#dddddd','#bbbbbb','#eeeeee'],grad:['#ffffff','#cccccc','#888888']},
+  sunset:{name:'Sunset',trail:['#ff4466','#ff8844','#cc44aa','#ff6655','#aa44cc'],grad:['#ff6644','#cc44aa','#6633bb']},
+};
+const TKEYS = Object.keys(COLOR_THEMES);
+const DEPARR = {dark:['#5fb4ff','#ff9b55'], light:['#1f6fbf','#c4561b']};
+const AIRLINES = {EVA:'長榮航空',CAL:'中華航空',SJX:'星宇航空',TTW:'台灣虎航',CPA:'國泰航空',APJ:'樂桃航空',TGW:'酷航',VJC:'越捷航空'};
+
+const HOURS = Array.from({length:24},()=>({a:0,d:0}));
+FL.forEach(f=>{const h=Math.floor(f.k/60)%24; f.a?HOURS[h].a++:HOURS[h].d++;});
+const nArr = FL.filter(f=>f.a).length, nDep = FL.length-nArr;
+const peakH = HOURS.reduce((b,h,i)=>h.a+h.d>HOURS[b].a+HOURS[b].d?i:b,0);
+const cnt = {}; FL.forEach(f=>{const o=f.a?f.o:f.d; if(o) cnt[o]=(cnt[o]||0)+1;});
+const topPort = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+const alc = {}; FL.forEach(f=>{const p=f.c.slice(0,3); if(p) alc[p]=(alc[p]||0)+1;});
+const topAl = Object.entries(alc).sort((a,b)=>b[1]-a[1]).slice(0,6);
+const tyc = {}; FL.forEach(f=>{tyc[f.ty]=(tyc[f.ty]||0)+1;});
+const topTy = Object.entries(tyc).sort((a,b)=>b[1]-a[1]).slice(0,4);
+const SEL = FL.find(f=>f.a && f.c.startsWith('CAL') && f.o==='VHHH') || FL.find(f=>f.a);
+document.getElementById('hdrN').textContent = FL.length.toLocaleString();
+const pad2 = n=>String(n).padStart(2,'0');
+const hhmm = m=>pad2(Math.floor(m/60)%24)+':'+pad2(Math.floor(m%60));
+const D = k=>DIRS.find(d=>d.k===k);
+
+const st = {dir:'i', acc:{}, mode:'dark', filter:'all', colorBy:'alt', proj3d:true, rings:true, bright:.8, theme:'default', min:SEL?SEL.k-6:18*60, playing:false, speed:10, tlOpen:true};
+DIRS.forEach(d=>st.acc[d.k]=0);
+try{const d=localStorage.getItem('fa-dir3'); if(d&&D(d)) st.dir=d;}catch(e){}
+
+const ICON = {
+  logo:'<svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 19c5-9 12-13 20-14"/><path d="M3 19c6-4 12-5 19-3" opacity=".55"/><circle cx="3" cy="19" r="1.6" fill="currentColor"/></svg>',
+  globe:'<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="9" cy="9" r="7"/><path d="M2 9h14M9 2c2.5 2.2 2.5 11.8 0 14M9 2c-2.5 2.2-2.5 11.8 0 14"/></svg>',
+  pin:'<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M9 16s5-4.6 5-8.5A5 5 0 0 0 4 7.5C4 11.4 9 16 9 16z"/><circle cx="9" cy="7.5" r="1.8"/></svg>',
+  layers:'<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M9 2l7 4-7 4-7-4 7-4z"/><path d="M2 10l7 4 7-4"/></svg>',
+  bars:'<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 15V9M7.5 15V4M12 15v-7M16 15H2"/></svg>',
+  aperture:'<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="9" cy="9" r="7"/><circle cx="9" cy="9" r="2.6"/></svg>',
+  x:'<svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 2l8 8M10 2l-8 8"/></svg>',
+  search:'<svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="5" cy="5" r="3.6"/><path d="M8 8l3 3"/></svg>',
+  play:'<svg viewBox="0 0 10 10" fill="currentColor"><path d="M2 1l7 4-7 4z"/></svg>',
+  pause:'<svg viewBox="0 0 10 10" fill="currentColor"><path d="M2 1h2v8H2zM6 1h2v8H6z"/></svg>',
+  info:'<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="6"/><path d="M7 6v4M7 4v.3"/></svg>',
+  map:'<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 3l4-1.5 4 1.5 4-1.5v9.5l-4 1.5-4-1.5-4 1.5z"/><path d="M5 1.5v10M9 3v10"/></svg>',
+  orbit:'<svg viewBox="0 0 14 14" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3"><ellipse cx="7" cy="7" rx="6" ry="2.6"/><circle cx="7" cy="7" r="1.4" fill="currentColor"/></svg>',
+};
+const frameCls = k=>{const d=D(k); return `frame dir-${k} fam-${d.fam} ${d.mods} mode-${st.mode}`;};
+function applyAccent(el,k,i){const a=D(k).acc[i??st.acc[k]], dk=st.mode==='dark';
+  el.style.setProperty('--accent',dk?a.d:a.l); el.style.setProperty('--accent-ink',dk?a.di:'#ffffff');
+  el.style.setProperty('--accent2',a.a2?(dk?a.a2[0]:a.a2[1]):(dk?a.d:a.l));}
+
+/* ─── markup ─── */
+const secH = t=>`<div class="sec-h"><span>${t}</span></div>`;
+function swatches(){return TKEYS.map(k=>{const t=COLOR_THEMES[k];return `<button class="swb" data-tk="${k}" aria-pressed="${st.theme===k}" aria-label="軌跡配色 ${t.name}" title="${t.name}" style="background:linear-gradient(90deg,${t.grad.join(',')})"></button>`}).join('');}
+function panelHTML(pfx){
+  return `<div class="panel">
+    <div class="ph"><div><div class="eyebrow">Selection · 機場</div><div class="ptitle">桃園國際機場</div></div><div class="x">${ICON.x}</div></div>
+    <div class="pb">
+      <div class="search">${ICON.search}<span>搜尋 ICAO、IATA 或城市</span></div>
+      <div class="sec">${secH('最近瀏覽')}
+        <div class="chips"><button class="chip on">RCTP</button><button class="chip" disabled title="展示頁只載入 RCTP">RCSS</button><button class="chip" disabled title="展示頁只載入 RCTP">RJAA</button><button class="chip" disabled title="展示頁只載入 RCTP">VHHH</button></div></div>
+      <div class="sec">${secH('顯示')}
+        <div class="row"><span>高度抬升</span><button class="tg" data-k="proj3d" id="${pfx}-tg3d" aria-pressed="${st.proj3d}" aria-label="高度抬升"></button></div>
+        <div class="row"><span>距離環 10 / 20 / 40 / 80 km</span><button class="tg" data-k="rings" id="${pfx}-tgr" aria-pressed="${st.rings}" aria-label="距離環"></button></div>
+        <div class="sl"><div class="row"><span>軌跡亮度</span><span class="v num" data-bv>${Math.round(st.bright*100)}%</span></div><input type="range" min="15" max="100" value="${Math.round(st.bright*100)}" id="${pfx}-br" aria-label="軌跡亮度"></div>
+      </div>
+      <div class="sec">${secH('軌跡配色 · '+COLOR_THEMES[st.theme].name)}<div class="sw">${swatches()}</div></div>
+      <div class="sec">${secH('當日')}
+        <div class="stats">
+          <div class="st"><span class="k">航班</span><span class="n">${FL.length}</span><span class="s">進 ${nArr} · 離 ${nDep}</span></div>
+          <div class="st"><span class="k">尖峰小時</span><span class="n">${pad2(peakH)}:00</span><span class="s">${HOURS[peakH].a+HOURS[peakH].d} 班</span></div>
+          <div class="st"><span class="k">最多往來</span><span class="n">${topPort[0]}</span><span class="s">${topPort[1]} 班</span></div>
+        </div></div>
+    </div></div>`;
+}
+function timelineHTML(extraCls,id){
+  return `<div class="tl ${extraCls}" ${id?`id="${id}"`:''}>
+    <button class="play" ${id?'id="play"':''} aria-label="播放">${st.playing?ICON.pause:ICON.play}</button>
+    <span class="clock" ${id?'id="clock"':''}>${hhmm(st.min)}</span><span class="tz">TPE</span>
+    <div class="mini-bar"><i ${id?'id="mb"':''} style="width:${st.min/1440*100}%"></i></div>
+    <div class="more"><div class="hist">${HOURS.map((h,i)=>`<div class="hb${i===Math.floor(st.min/60)?' cur':''}" data-h="${i}" title="${pad2(i)}:00 進 ${h.a} · 離 ${h.d}"><div class="top"><div class="u" style="height:${h.a/3.2}px"></div></div><div class="bot"><div class="d" style="height:${h.d/3.2}px"></div></div></div>`).join('')}</div>
+      <div class="spd">${[1,10,60].map(s=>`<button data-s="${s}" aria-pressed="${st.speed===s}">×${s}</button>`).join('')}</div></div>
+  </div>`;
+}
+function legendHTML(){
+  if(st.colorBy==='alt'){const g=COLOR_THEMES[st.theme].grad;
+    return `<div class="ramp" style="background:linear-gradient(90deg,${g.join(',')})"></div><div class="ramp-l"><span>地面</span><span>4,500 m</span><span>9,000 m+</span></div>`;}
+  const [a,d]=DEPARR[st.mode];
+  return `<div class="lg-row"><i style="background:${a}"></i>進場</div><div class="lg-row"><i style="background:${d}"></i>離場</div>`;
+}
+function stageHTML(){
+  const ar = SEL;
+  return `<canvas class="map" id="cv" width="1280" height="800"></canvas>
+  <nav class="rail"><div class="logo">${ICON.logo}</div>
+    <div class="ri" title="探索">${ICON.globe}</div><div class="ri on" title="機場">${ICON.pin}</div><div class="ri" title="呈現">${ICON.layers}</div><div class="ri" title="分析">${ICON.bars}</div><div style="flex:1"></div><div class="ri" title="錄影" style="margin-bottom:14px">${ICON.aperture}</div></nav>
+  <div class="brand"><span class="wm">FLIGHT ARC</span><span class="hud">25.0777°N 121.2328°E · R 85 km · 俯角 ${st.proj3d?'52°':'90°'}</span></div>
+  ${panelHTML('s')}
+  <div class="tb">
+    <div class="tg-grp" role="group" aria-label="起降"><button class="tbb" data-f="all" aria-pressed="${st.filter==='all'}">全部</button><button class="tbb" data-f="arr" aria-pressed="${st.filter==='arr'}">進場</button><button class="tbb" data-f="dep" aria-pressed="${st.filter==='dep'}">離場</button></div>
+    <div class="tg-grp" role="group" aria-label="染色"><button class="tbb" data-cb="alt" aria-pressed="${st.colorBy==='alt'}">高度染色</button><button class="tbb" data-cb="da" aria-pressed="${st.colorBy==='da'}">起降染色</button></div>
+    <div class="tg-grp"><button class="tbb" data-p="0" aria-pressed="${!st.proj3d}">2D</button><button class="tbb" data-p="1" aria-pressed="${st.proj3d}">3D</button></div>
+    <div class="tg-grp"><button class="tbb" title="底圖">${ICON.map}</button><button class="tbb"><i class="rd"></i>錄影</button><button class="tbb" title="說明">${ICON.info}</button></div>
+  </div>
+  <div class="cap"><div class="c1"><span class="code">RCTP</span><span class="name">桃園國際機場</span></div>
+    <div class="c2"><span>2026-02-18 週三 · 台灣時間</span><span><b>${FL.length}</b> 班</span><span>進場 <b>${nArr}</b></span><span>離場 <b>${nDep}</b></span></div></div>
+  ${timelineHTML(st.tlOpen?'open':'','tl')}
+  <div class="dock">
+    <div class="card"><div class="eyebrow">選取航班</div>
+      <div class="fl-top"><span class="cs">${ar.c}</span><span class="route">${ar.o} → ${ar.d}</span></div>
+      <dl class="kv"><dt>機型</dt><dd>${ar.ty}</dd><dt>落地</dt><dd>${hhmm(ar.k)} TPE</dd><dt>85 km 內航跡點</dt><dd>${ar.p.length/4}</dd></dl></div>
+    <div class="card lg"><div class="eyebrow">圖例 · ${st.colorBy==='alt'?'高度':'起降'}</div>${legendHTML()}</div>
+  </div>`;
+}
+function profileSVG(){
+  const p=SEL.p, pts=[]; for(let i=0;i<p.length;i+=4){pts.push([Math.hypot(p[i],p[i+1])/10, p[i+2]*10]);}
+  const W=300,H=110,L=34,B=18, maxD=85, maxA=Math.max(3000,Math.ceil(Math.max(...pts.map(q=>q[1]))/1000)*1000);
+  const x=d=>L+(1-d/maxD)*(W-L-6), y=a=>H-B-(a/maxA)*(H-B-8);
+  const path=pts.map((q,i)=>(i?'L':'M')+x(q[0]).toFixed(1)+' '+y(q[1]).toFixed(1)).join(' ');
+  const grid=[0,maxA/2,maxA].map(a=>`<line x1="${L}" x2="${W-6}" y1="${y(a)}" y2="${y(a)}" stroke="var(--border)" stroke-width="1"/><text x="${L-4}" y="${y(a)+3}" text-anchor="end" font-size="8.5" fill="var(--fg3)" font-family="var(--data-font)">${(a/1000).toFixed(a%1000?1:0)}k</text>`).join('');
+  const xt=[80,40,20,0].map(d=>`<text x="${x(d)}" y="${H-5}" text-anchor="middle" font-size="8.5" fill="var(--fg3)" font-family="var(--data-font)">${d}</text>`).join('');
+  return `<svg class="prof" viewBox="0 0 ${W} ${H}" role="img" aria-label="${SEL.c} 進場高度剖面">${grid}${xt}<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.6"/><circle cx="${x(pts[pts.length-1][0])}" cy="${y(pts[pts.length-1][1])}" r="2.6" fill="var(--accent)"/></svg>`;
+}
+function sparkSVG(){const mx=Math.max(...HOURS.map(h=>h.a+h.d));const W=240,H=28;
+  const pts=HOURS.map((h,i)=>`${(i/23*W).toFixed(1)},${(H-2-(h.a+h.d)/mx*(H-4)).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>`;}
+function sheetHTML(){
+  const mx=Math.max(...HOURS.map(h=>h.a+h.d)), amx=topAl[0][1];
+  return `
+  <div class="spec"><span class="lab">基礎控制</span><div class="card" style="display:flex;flex-direction:column;gap:12px">
+    <div class="btns"><button class="btn pri">開啟機場</button><button class="btn">加入組合</button><button class="btn ghost">取消</button><button class="btn danger">清除組合</button></div>
+    <div class="spec-row"><div class="sel"><span>2026-02-18 週三</span><span>▼</span></div><div class="segc"><button aria-pressed="true">單日</button><button aria-pressed="false">多日</button><button aria-pressed="false">範圍</button></div></div>
+    <div class="spec-row"><div class="cb"><i class="on"></i>顯示光球</div><div class="cb"><i></i>空域極光</div><div class="cb"><i class="on"></i>晨昏線</div></div>
+    <div class="spec-row" style="align-items:center"><button class="tg" aria-pressed="true" aria-label="開"></button><button class="tg" aria-pressed="false" aria-label="關"></button><span class="tip">${SEL.c} · 落地 ${hhmm(SEL.k)}</span></div>
+    <div class="sl" style="max-width:240px"><div class="row"><span>軌跡寬度</span><span class="v num">1.4 px</span></div><input type="range" value="40" aria-label="軌跡寬度範例"></div>
+  </div></div>
+  <div class="spec"><span class="lab">錄影列 Cinema</span><div class="card"><div class="cine">
+    <span class="recdot"><i></i>00:12.4</span><span class="sep"></span>
+    <div class="segc"><button aria-pressed="false">×0.5</button><button aria-pressed="true">×1</button><button aria-pressed="false">×2</button></div>
+    <button class="btn" style="height:24px">${ICON.orbit}Orbit</button>
+    <span class="sep"></span><div class="kf"><span class="on">K1</span><span>K2</span><span>K3</span><span>＋</span></div>
+    <div class="sel" style="min-width:0;height:24px"><span>4K · 3840×2160</span><span>▼</span></div>
+    <button class="btn pri" style="height:24px">停止並匯出</button>
+  </div></div></div>
+  <div class="spec"><span class="lab">時間軸（展開）</span>${timelineHTML('open static','')}</div>
+  <div class="spec"><span class="lab">統計面板</span><div class="card" style="display:flex;flex-direction:column;gap:10px">
+    <div><div class="eyebrow">Analyze · 統計</div><div class="ptitle">RCTP · 2026-02-18</div></div>
+    ${secH('24 小時起降')}<div class="heat">${HOURS.map((h,i)=>`<i title="${pad2(i)}:00 ${h.a+h.d} 班" style="opacity:${(0.08+0.92*(h.a+h.d)/mx).toFixed(2)}"></i>`).join('')}</div><div class="heat-l"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+    ${secH('航空公司 Top 6')}<div class="bars">${topAl.map(([c,n])=>`<div class="bar"><span class="c">${c}</span><span class="t"><i style="width:${n/amx*100}%"></i><span>${AIRLINES[c]||''}</span></span><span class="n">${n}</span></div>`).join('')}</div>
+    ${secH('機型')}<div class="chips">${topTy.map(([t,n])=>`<span class="chip">${t} · ${n}</span>`).join('')}</div>
+  </div></div>
+  <div class="spec"><span class="lab">機場星圖懸停卡</span><div class="card atlas">
+    <div class="eyebrow">Atlas · 機場</div>
+    <div class="hd"><b>RCTP</b><span class="route">TPE · 桃園國際機場</span></div>
+    <dl class="kv"><dt>2026-02-18</dt><dd>${FL.length} 班</dd><dt>進場／離場</dt><dd>${nArr} / ${nDep}</dd></dl>
+    ${sparkSVG()}
+    <div class="btns"><button class="btn pri">開啟機場</button><button class="btn ghost">加入組合</button></div>
+  </div></div>
+  <div class="spec"><span class="lab">航班高度剖面（距跑道頭 km × 高度 m）</span><div class="card" style="display:flex;flex-direction:column;gap:6px">
+    <div class="fl-top" style="margin:0"><span class="cs">${SEL.c}</span><span class="route">${SEL.o} → ${SEL.d} · ${SEL.ty}</span></div>
+    ${profileSVG()}
+  </div></div>
+  <div class="spec"><span class="lab">載入狀態與提示</span><div style="display:flex;flex-direction:column;gap:10px">
+    <div class="card load"><div class="row"><span>載入 RCTP · 2026-02-18</span><span class="v num">10.1 / 16.3 MB</span></div><div class="pbar"><i></i></div><span class="eyebrow">L0 全解析 · 拉遠後切換 L1</span></div>
+    <div class="card toast"><i></i><span>已複製分享連結</span></div>
+  </div></div>
+  <div class="spec"><span class="lab">對話框</span><div class="card modal">
+    <div class="eyebrow">About</div><h4>關於 Flight Arc</h4>
+    <p>以機場為中心，重播一天之內每一架飛機的起降軌跡。資料來自 FR24，高度單位為公尺，時間為台灣時間。</p>
+    <div class="btns" style="justify-content:flex-end"><button class="btn ghost">稍後</button><button class="btn pri">開始探索</button></div>
+  </div></div>
+  <div class="spec"><span class="lab">手機版</span><div class="phone"><canvas id="phoneCv" width="268" height="548"></canvas>
+    <div class="ptop"><span class="wm">FLIGHT ARC</span><div class="tg-grp" style="height:24px"><button class="tbb" aria-pressed="true">3D</button><button class="tbb">${ICON.info}</button></div></div>
+    <div class="bs"><div class="grab"></div>
+      <div style="display:flex;align-items:baseline;gap:8px"><span class="ptitle" style="margin:0">RCTP</span><span class="route">桃園國際機場</span></div>
+      <div class="segc" style="align-self:flex-start"><button aria-pressed="true">全部</button><button aria-pressed="false">進場</button><button aria-pressed="false">離場</button></div>
+      <div class="row"><span class="clock">${hhmm(st.min)}</span><div class="mini-bar"><i style="width:${st.min/1440*100}%"></i></div><button class="play" aria-label="播放範例">${ICON.play}</button></div>
+    </div></div></div>`;
+}
+
+/* ─── canvas: night-sky trails (unchanged across directions) ─── */
+const CX=760, CY=430, SC=4.7, MAXALT=9000;
+let DPR=Math.min(2,window.devicePixelRatio||1);
+let base=null, baseKey='';
+const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+function lerpStops(stops,t){t=Math.max(0,Math.min(1,t));const n=stops.length-1,s=Math.min(n-1,Math.floor(t*n)),u=t*n-s;const a=hex2rgb(stops[s]),b=hex2rgb(stops[s+1]);return a.map((v,i)=>Math.round(v+(b[i]-v)*u));}
+function P(x,y,z){ if(!st.proj3d) return [CX+x/10*SC, CY-y/10*SC]; return [CX+x/10*SC, CY-y/10*SC*.62 - z*10*.024]; }
+function cssv(el,n){return getComputedStyle(el).getPropertyValue(n).trim();}
+function keep(f){return st.filter==='all'||(st.filter==='arr'?f.a:!f.a);}
+function rgba(c,a){return `rgba(${c[0]},${c[1]},${c[2]},${a})`;}
+function darkenForLight(c){return c.map(v=>Math.round(v*.62));}
+function buildBase(frame){
+  const key=[st.dir,st.mode,st.filter,st.colorBy,st.proj3d,st.rings,st.bright,st.theme].join('|');
+  if(key===baseKey&&base) return base;
+  baseKey=key; base=base||document.createElement('canvas');
+  base.width=1280*DPR; base.height=800*DPR;
+  const c=base.getContext('2d'); c.setTransform(DPR,0,0,DPR,0,0);
+  const dark=st.mode==='dark', fg=cssv(frame,'--fg1');
+  c.globalCompositeOperation='source-over'; c.globalAlpha=1; c.fillStyle=cssv(frame,'--map-bg'); c.fillRect(0,0,1280,800);
+  if(dark){ let s=7; const rnd=()=>((s=(s*16807)%2147483647)/2147483647);
+    for(let i=0;i<260;i++){c.fillStyle=`rgba(220,230,255,${(.15+rnd()*.45).toFixed(2)})`;const z=rnd()<.92?1:1.6;c.fillRect(rnd()*1280,rnd()*800,z,z);} }
+  if(st.rings){
+    c.strokeStyle=fg; c.fillStyle=fg; c.lineWidth=1; c.font=`10px ${cssv(frame,'--data-font')}`;
+    [10,20,40,80].forEach(r=>{c.globalAlpha=dark?.1:.16;c.beginPath();c.ellipse(CX,CY,r*SC,r*SC*(st.proj3d?.62:1),0,0,Math.PI*2);c.stroke();
+      c.globalAlpha=dark?.32:.5;c.fillText(r+' km',CX+r*SC*.72+4,CY-r*SC*(st.proj3d?.62:1)*.7-4);});
+  }
+  const ang=(90-53)*Math.PI/180; c.strokeStyle=fg; c.globalAlpha=dark?.55:.75; c.lineWidth=1.4;
+  [-.9,.9].forEach(o=>{const ox=Math.cos(ang+Math.PI/2)*o, oy=Math.sin(ang+Math.PI/2)*o;
+    const a=P((ox-Math.cos(ang)*1.85)*10,(oy-Math.sin(ang)*1.85)*10,0), b=P((ox+Math.cos(ang)*1.85)*10,(oy+Math.sin(ang)*1.85)*10,0);
+    c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();});
+  const NB=20, buckets=Array.from({length:NB},()=>new Path2D()), daP=[new Path2D(),new Path2D()];
+  FL.forEach(f=>{ if(!keep(f)) return; const p=f.p; let prev=P(p[0],p[1],p[2]);
+    if(st.colorBy==='da'){const pp=daP[f.a?0:1]; pp.moveTo(prev[0],prev[1]); for(let i=4;i<p.length;i+=4){const q=P(p[i],p[i+1],p[i+2]); pp.lineTo(q[0],q[1]);} return;}
+    for(let i=4;i<p.length;i+=4){const q=P(p[i],p[i+1],p[i+2]); const t=((p[i+2]+p[i-2])*5)/MAXALT; const b=Math.min(NB-1,Math.floor(Math.max(0,t)*NB));
+      buckets[b].moveTo(prev[0],prev[1]); buckets[b].lineTo(q[0],q[1]); prev=q;} });
+  c.globalCompositeOperation=dark?'lighter':'source-over'; c.lineCap='round'; c.lineJoin='round';
+  const passes=dark?[[3.2,.05],[1,.24]]:[[1,.45]];
+  passes.forEach(([w,a])=>{c.lineWidth=w; c.globalAlpha=Math.min(1,a*st.bright);
+    if(st.colorBy==='da'){DEPARR[st.mode].forEach((col,i)=>{c.strokeStyle=col;c.stroke(daP[i]);});}
+    else buckets.forEach((path,i)=>{let col=lerpStops(COLOR_THEMES[st.theme].grad,(i+.5)/NB); if(!dark) col=darkenForLight(col); c.strokeStyle=rgba(col,1); c.stroke(path);}); });
+  c.globalAlpha=1; c.globalCompositeOperation='source-over';
+  return base;
+}
+function drawOrbs(c){
+  const dark=st.mode==='dark', th=COLOR_THEMES[st.theme], tNow=st.min*6, tWin=72;
+  c.globalCompositeOperation=dark?'lighter':'source-over'; c.lineCap='round';
+  FL.forEach((f,fi)=>{ if(!keep(f)) return; const p=f.p;
+    if(p[3]>tNow||p[p.length-1]<tNow-tWin) return;
+    let col=st.colorBy==='da'?hex2rgb(DEPARR[st.mode][f.a?0:1]):hex2rgb(th.trail[fi%5]); if(!dark) col=darkenForLight(col);
+    const seg=[]; for(let i=0;i<p.length;i+=4){const t=p[i+3]; if(t<tNow-tWin) continue; if(t>tNow) break; seg.push([P(p[i],p[i+1],p[i+2]),t]);}
+    for(let j=1;j<seg.length;j++){const age=1-(tNow-seg[j][1])/tWin; c.strokeStyle=rgba(col,(.12+.75*age).toFixed(3)); c.lineWidth=.8+1.4*age; c.beginPath(); c.moveTo(seg[j-1][0][0],seg[j-1][0][1]); c.lineTo(seg[j][0][0],seg[j][0][1]); c.stroke();}
+    const last=seg.length?seg[seg.length-1][0]:null;
+    if(last){ const g=c.createRadialGradient(last[0],last[1],0,last[0],last[1],9);
+      g.addColorStop(0,rgba(col,dark?.9:.8)); g.addColorStop(.35,rgba(col,dark?.35:.25)); g.addColorStop(1,rgba(col,0));
+      c.fillStyle=g; c.beginPath(); c.arc(last[0],last[1],9,0,Math.PI*2); c.fill();
+      c.fillStyle=dark?'rgba(255,255,255,.95)':rgba(col,1); c.beginPath(); c.arc(last[0],last[1],1.5,0,Math.PI*2); c.fill(); } });
+  c.globalCompositeOperation='source-over';
+}
+function draw(){
+  const frame=document.getElementById('frame'), cv=document.getElementById('cv'); if(!cv) return;
+  const c=cv.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.drawImage(buildBase(frame),0,0);
+  c.setTransform(DPR,0,0,DPR,0,0); drawOrbs(c);
+  if(SEL&&keep(SEL)){ const acc=cssv(frame,'--accent'); const p=SEL.p;
+    c.strokeStyle=acc; c.lineWidth=1.8; c.globalAlpha=.9; c.setLineDash([5,4]); c.beginPath();
+    for(let i=0;i<p.length;i+=4){const q=P(p[i],p[i+1],p[i+2]); i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]);} c.stroke(); c.setLineDash([]);
+    const e=P(p[p.length-4],p[p.length-3],p[p.length-2]); c.globalAlpha=1; c.lineWidth=1.4; c.beginPath(); c.arc(e[0],e[1],6,0,Math.PI*2); c.stroke(); }
+  c.globalAlpha=1;
+  const ck=document.getElementById('clock'); if(ck) ck.textContent=hhmm(st.min);
+  const mb=document.getElementById('mb'); if(mb) mb.style.width=(st.min/1440*100)+'%';
+  document.querySelectorAll('#tl .hb').forEach(b=>b.classList.toggle('cur',+b.dataset.h===Math.floor(st.min/60)%24));
+}
+function drawPhone(){ const pc=document.getElementById('phoneCv'); if(!pc||!base) return;
+  const c=pc.getContext('2d'); const w=pc.width,h=pc.height, sh=560, sw=sh*w/h;
+  c.drawImage(base,(CX-sw/2+40)*DPR,(CY-sh/2+40)*DPR,sw*DPR,sh*DPR,0,0,w,h); }
+
+/* ─── render + wire ─── */
+function renderControls(){
+  const ds=document.getElementById('dirSeg');
+  ds.innerHTML=DIRS.map(d=>`<button data-d="${d.k}" aria-pressed="${st.dir===d.k}">${d.n}${d.isNew?'<span class="new">新</span>':''}</button>`).join('');
+  ds.querySelectorAll('button').forEach(b=>b.onclick=()=>{st.dir=b.dataset.d; try{localStorage.setItem('fa-dir3',st.dir)}catch(e){} render();});
+  const as=document.getElementById('accSeg'), d=D(st.dir);
+  as.innerHTML=d.acc.map((a,i)=>`<button data-ai="${i}" aria-pressed="${st.acc[st.dir]===i}"><span class="dot" style="background:${st.mode==='dark'?a.d:a.l}"></span>${a.n}</button>`).join('');
+  as.querySelectorAll('button').forEach(b=>b.onclick=()=>{st.acc[st.dir]=+b.dataset.ai; render();});
+  document.getElementById('dirNote').innerHTML=d.note;
+}
+function render(){
+  renderControls();
+  const stage=document.getElementById('stage');
+  stage.innerHTML=`<div class="${frameCls(st.dir)}" id="frame">${stageHTML()}</div>`;
+  const frame=document.getElementById('frame'); applyAccent(frame,st.dir);
+  const cv=document.getElementById('cv'); cv.width=1280*DPR; cv.height=800*DPR;
+  baseKey=''; wire(frame); draw();
+  const sheet=document.getElementById('sheet'); sheet.className=`sheet ${frameCls(st.dir)}`; applyAccent(sheet,st.dir); sheet.innerHTML=sheetHTML();
+  sheet.querySelectorAll('button,input').forEach(el=>{el.tabIndex=-1;});
+  drawPhone(); renderStrip(); fit();
+}
+function renderStrip(){
+  const strip=document.getElementById('strip');
+  strip.innerHTML=DIRS.map(d=>`<div class="strip-cell"><span class="tag">${d.n}</span><div class="mini ${frameCls(d.k)}" data-d="${d.k}">${panelHTML('strip-'+d.k)}</div></div>`).join('');
+  strip.querySelectorAll('.mini').forEach(m=>{ applyAccent(m,m.dataset.d,0);
+    m.querySelectorAll('input,button').forEach(el=>{el.disabled=true;el.tabIndex=-1;});
+    m.style.backgroundImage=`radial-gradient(ellipse at 75% 70%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%)`; });
+}
+function wire(frame){
+  frame.querySelectorAll('.tg[data-k]').forEach(b=>b.onclick=()=>{st[b.dataset.k]=!st[b.dataset.k]; render();});
+  const br=frame.querySelector('#s-br'); br.oninput=()=>{st.bright=br.value/100; frame.querySelector('[data-bv]').textContent=br.value+'%'; draw();};
+  br.onchange=()=>drawPhone();
+  frame.querySelectorAll('.swb').forEach(b=>b.onclick=()=>{st.theme=b.dataset.tk; render();});
+  frame.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{st.filter=b.dataset.f; render();});
+  frame.querySelectorAll('[data-cb]').forEach(b=>b.onclick=()=>{st.colorBy=b.dataset.cb; render();});
+  frame.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{st.proj3d=b.dataset.p==='1'; render();});
+  frame.querySelectorAll('#tl [data-s]').forEach(b=>b.onclick=()=>{st.speed=+b.dataset.s; frame.querySelectorAll('#tl [data-s]').forEach(x=>x.setAttribute('aria-pressed',x===b));});
+  frame.querySelectorAll('#tl .hb').forEach(b=>b.onclick=()=>{st.min=+b.dataset.h*60+30; draw();});
+  const tl=frame.querySelector('#tl');
+  tl.onmouseenter=()=>{st.tlOpen=true;tl.classList.add('open');};
+  tl.onmouseleave=()=>{setTimeout(()=>{if(!tl.matches(':hover')){st.tlOpen=false;tl.classList.remove('open');}},1200);};
+  frame.querySelector('#play').onclick=()=>{st.playing=!st.playing; frame.querySelector('#play').innerHTML=st.playing?ICON.pause:ICON.play; if(st.playing){last=performance.now(); requestAnimationFrame(tick);}};
+}
+let last=0;
+function tick(now){ if(!st.playing) return; const dt=Math.min(.1,(now-last)/1000); last=now; st.min=(st.min+dt*st.speed)%1440; draw(); requestAnimationFrame(tick); }
+function fit(){ const w=document.getElementById('stageWrap'), s=w.clientWidth/1280; document.getElementById('stage').style.transform=`scale(${s})`; w.style.height=(800*s)+'px'; }
+['dark','light'].forEach(m=>document.getElementById('m-'+m).onclick=()=>{st.mode=m; ['m-dark','m-light'].forEach(id=>document.getElementById(id).setAttribute('aria-pressed',id==='m-'+m)); render();});
+window.addEventListener('resize',fit);
+render();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{baseKey='';draw();drawPhone();});
+</script>
