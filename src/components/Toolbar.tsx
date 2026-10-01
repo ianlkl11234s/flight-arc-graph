@@ -25,6 +25,11 @@ function IconInfo() {
   );
 }
 
+/** 工具列高度（Segmented／Button 28 + padding 4×2 + border 1×2） */
+export const TOOLBAR_HEIGHT = 38;
+/** 工具列下緣再空 8px：右上狀態條、右側統計浮層的 top */
+export const BELOW_TOOLBAR = SPACE.s16 + TOOLBAR_HEIGHT + SPACE.s8;
+
 function Divider() {
   const { tokens } = useTheme();
   return <span aria-hidden="true" style={{ width: 1, height: 16, background: tokens.border, flex: "none" }} />;

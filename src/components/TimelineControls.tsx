@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FONT } from "../styles/tokens";
+import { FONT, Z } from "../styles/tokens";
 
 interface Props {
   playing: boolean;
@@ -147,7 +147,7 @@ export function TimelineControls({
         bottom: 16,
         left: 16,
         right: 16,
-        zIndex: 10,
+        zIndex: Z.mapOverlay,
       }}
     >
       {/* 日期導航列 */}
@@ -196,14 +196,14 @@ export function TimelineControls({
             {/* 點外面關閉 */}
             <div
               onClick={() => setCalendarOpen(false)}
-              style={{ position: "fixed", inset: 0, zIndex: 29 }}
+              style={{ position: "fixed", inset: 0, zIndex: Z.popover - 1 }}
             />
             <div
               style={{
                 position: "absolute",
                 bottom: "calc(100% + 8px)",
                 left: 0,
-                zIndex: 30,
+                zIndex: Z.popover,
                 background: isDarkTheme ? "rgba(25,25,25,0.95)" : "rgba(255,255,255,0.96)",
                 border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"}`,
                 borderRadius: 8,

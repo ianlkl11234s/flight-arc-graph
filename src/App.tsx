@@ -51,6 +51,7 @@ import { setFrozenAnimTime } from "./three/animClock";
 import { ThemeProvider, useTheme } from "./styles/ThemeContext";
 import { FONT, LAYOUT, SIZE, SPACE, Z } from "./styles/tokens";
 import { Button, Caption, Segmented, type CaptionMetaItem } from "./ui";
+import { ALL_OVERLAYS_CLOSED, overlaysOpen, overlaysToClose, type OverlayKey, type OverlayState } from "./ui/overlayMutex";
 
 // ── Atlas 機場點：點擊 popup ──
 interface AtlasProps {
@@ -1653,6 +1654,24 @@ export default function App() {
     };
   }, [trackMode, selectedFlightId]);
 
+  // ── 浮層互斥（R2）：只看「剛由關變開」的那個，關掉其他；Capture 進入時全關 ──
+  const overlayState: OverlayState = useMemo(
+    () => ({ rail: railPanel !== null, stats: showStats, info: showInfo }),
+    [railPanel, showStats, showInfo],
+  );
+  const prevOverlayRef = useRef<OverlayState>(ALL_OVERLAYS_CLOSED);
+  const closeOverlay = useCallback((key: OverlayKey) => {
+    if (key === "rail") setRailPanel(null);
+    else if (key === "stats") setShowStats(false);
+    else setShowInfo(false);
+  }, []);
+  useEffect(() => {
+    const prev = prevOverlayRef.current;
+    prevOverlayRef.current = overlayState;
+    const toClose = captureMode ? overlaysOpen(overlayState) : overlaysToClose(prev, overlayState);
+    toClose.forEach(closeOverlay);
+  }, [overlayState, captureMode, closeOverlay]);
+
   // ESC 退出拍攝模式
   useEffect(() => {
     if (!captureMode) return;
@@ -1729,7 +1748,7 @@ export default function App() {
               style={{
                 position: "absolute",
                 inset: 0,
-                zIndex: 20,
+                zIndex: Z.panel,
                 pointerEvents: "none",
                 background:
                   "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 80%, rgba(0,0,0,0.6) 100%)",
@@ -1743,7 +1762,7 @@ export default function App() {
                 position: "absolute",
                 top: isMobile ? 16 : 32,
                 left: isMobile ? 16 : 32,
-                zIndex: 21,
+                zIndex: Z.toolbar,
                 pointerEvents: "none",
               }}
             >
@@ -1814,7 +1833,7 @@ export default function App() {
                 position: "absolute",
                 top: isMobile ? 120 : 140,
                 left: isMobile ? 16 : 32,
-                zIndex: 21,
+                zIndex: Z.toolbar,
                 padding: "5px 14px",
                 borderRadius: 16,
                 border: "1px solid rgba(255,255,255,0.2)",
@@ -1877,7 +1896,7 @@ export default function App() {
                 position: "absolute",
                 top: 16,
                 right: 16,
-                zIndex: 21,
+                zIndex: Z.toolbar,
                 width: 48,
                 height: 48,
                 borderRadius: 24,
@@ -1894,7 +1913,7 @@ export default function App() {
                 position: "absolute",
                 bottom: 32,
                 right: 32,
-                zIndex: 21,
+                zIndex: Z.toolbar,
                 padding: "4px 12px",
                 background: "rgba(255,255,255,0.08)",
                 border: "1px solid rgba(255,255,255,0.15)",
@@ -1916,7 +1935,7 @@ export default function App() {
               position: "absolute",
               top: isMobile ? 16 : 32,
               right: isMobile ? 16 : 32,
-              zIndex: 51,
+              zIndex: Z.toast,
               display: "flex",
               gap: 6,
             }}>
@@ -2273,7 +2292,7 @@ export default function App() {
               left: 0,
               right: 0,
               height: 44,
-              zIndex: 10,
+              zIndex: Z.mapOverlay,
               display: "flex",
               alignItems: "center",
               gap: 8,
@@ -2365,7 +2384,7 @@ export default function App() {
               top: 44,
               left: 0,
               right: 0,
-              zIndex: 10,
+              zIndex: Z.mapOverlay,
               padding: "8px 12px",
               background: "rgba(0,0,0,0.4)",
               backdropFilter: "blur(12px)",
@@ -2524,7 +2543,7 @@ export default function App() {
             position: "absolute",
             left: tooltipInfo.x + 12,
             top: tooltipInfo.y - 10,
-            zIndex: 30,
+            zIndex: Z.popover,
             background: isDarkTheme ? "rgba(10,10,20,0.9)" : "rgba(255,255,255,0.95)",
             backdropFilter: "blur(12px)",
             border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.4)" : "rgba(59,130,246,0.3)"}`,

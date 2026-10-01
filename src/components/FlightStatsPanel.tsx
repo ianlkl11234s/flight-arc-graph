@@ -24,7 +24,8 @@ import {
 } from "../data/flightStats";
 import type { TimelineSlot } from "../data/flightStats";
 import { useTheme } from "../styles/ThemeContext";
-import { BLUR, FONT, RADIUS, SPACE } from "../styles/tokens";
+import { BLUR, FONT, RADIUS, SPACE, Z } from "../styles/tokens";
+import { BELOW_TOOLBAR } from "./Toolbar";
 import { Button, Chip, PanelHeader, Section, Segmented } from "../ui";
 import { IconChevron } from "../ui/icons";
 import { mix } from "../ui/vars";
@@ -207,7 +208,7 @@ function DepArrLineChart({
             ? { right: `${((W - x(hover)) / W * 100 + 3)}%` }
             : { left: `${(x(hover) / W * 100 + 3)}%` }),
           background: colors.tooltipBg, border: `1px solid ${colors.divider}`, borderRadius: RADIUS.base,
-          padding: "3px 8px", fontSize: 9, fontFamily: font, pointerEvents: "none", zIndex: 10,
+          padding: "3px 8px", fontSize: 9, fontFamily: font, pointerEvents: "none", zIndex: 1,
           whiteSpace: "nowrap",
         }}>
           <div style={{ color: colors.textWhite, fontWeight: 600 }}>
@@ -829,7 +830,7 @@ export function FlightStatsPanel({
 
   return (
     <div style={{
-      position: "fixed", top: 0, right: 0, bottom: 0, width: panelWidth, zIndex: 50,
+      position: "fixed", top: BELOW_TOOLBAR, right: 0, bottom: 0, width: panelWidth, zIndex: Z.panel,
       background: colors.bg, backdropFilter: `blur(${BLUR}px)`, WebkitBackdropFilter: `blur(${BLUR}px)`,
       borderLeft: `1px solid ${colors.divider}`,
       display: "flex", flexDirection: "column", fontFamily: font,
@@ -851,7 +852,7 @@ export function FlightStatsPanel({
       {/* Drag handle */}
       <div className="fp-drag" onMouseDown={handleDragStart} style={{
         position: "absolute", left: 0, top: 0, bottom: 0, width: 6,
-        cursor: "col-resize", zIndex: 51, display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "col-resize", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center",
       }}>
         <div style={{ width: 3, height: 48, borderRadius: 2, background: colors.textMuted }} />
       </div>
