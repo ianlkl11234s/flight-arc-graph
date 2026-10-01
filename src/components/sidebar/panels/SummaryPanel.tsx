@@ -2,21 +2,21 @@ import { useMemo } from "react";
 import type { Region, Scope, Flight } from "../../../types";
 import { getAirportInfo } from "../../../map/cameraPresets";
 import { getDepArrCount, computeTopRoutes, getAirlineStats, getFleetMix, getFlightDurationDistribution, computeHourlyStats, computeDailyStats, computeAirportComparison, getUniqueDays } from "../../../data/flightStats";
-import { FONT } from "../../../styles/tokens";
-import type { ThemeColors } from "../theme";
-import { SectionHeader, StatRow, MiniBar } from "../primitives";
-import { HourlyHeatmap, DailyTrendChart } from "../charts";
+import { useTheme } from "../../../styles/ThemeContext";
+import { FONT, RADIUS, SIZE, SPACE } from "../../../styles/tokens";
+import { Section, StatCard } from "../../../ui";
+import { HourlyHeatmap, DailyTrendChart, MiniBar } from "../charts";
 
 /* ── Summary Panel ──────────────────────────────────────── */
 
-export function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays, theme }: {
+export function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays }: {
   flights: Flight[];
   selectedAirport: string;
   scope: Scope;
   region: Region;
   rangeDays: number;
-  theme: ThemeColors;
 }) {
+  const { tokens } = useTheme();
   const airportInfo = getAirportInfo(selectedAirport);
   const isAirportScope = scope === "airport";
 
@@ -51,12 +51,11 @@ export function SummaryPanel({ flights, selectedAirport, scope, region, rangeDay
 
   if (flights.length === 0) {
     return (
-      <>
-        <SectionHeader theme={theme}>Summary</SectionHeader>
-        <div style={{ fontSize: 11, color: theme.NO_DATA_TEXT, fontFamily: FONT.ui, textAlign: "center", padding: "20px 0" }}>
+      <Section title="SUMMARY · 總覽">
+        <div style={{ fontSize: SIZE.s11, color: tokens.fg3, fontFamily: FONT.ui, textAlign: "center", padding: "20px 0" }}>
           No flight data loaded
         </div>
-      </>
+      </Section>
     );
   }
 
@@ -65,91 +64,70 @@ export function SummaryPanel({ flights, selectedAirport, scope, region, rangeDay
     const { depArr, topRoutes, airlines, fleetMix, durations, peakHour, days, total, hourly, daily } = airportStats;
     return (
       <>
-        <SectionHeader theme={theme}>
-          {airportInfo ? `${airportInfo.iata} — ${airportInfo.name}` : selectedAirport}
-        </SectionHeader>
-
-        {/* Key metrics */}
-        <div style={{ marginBottom: 10, padding: "6px 8px", background: theme.HOVER_BG, borderRadius: 8 }}>
-          <StatRow label="Total" value={total} sub={`${days}d`} theme={theme} />
-          <StatRow label="Dep" value={depArr.departures} theme={theme} />
-          <StatRow label="Arr" value={depArr.arrivals} theme={theme} />
-          <StatRow label="Peak" value={`${String(peakHour.hour).padStart(2, "0")}:00`} sub={`${peakHour.count} flights`} theme={theme} />
-        </div>
+        <Section title={airportInfo ? `${airportInfo.iata} — ${airportInfo.name}` : selectedAirport}>
+          {/* Key metrics */}
+          <div style={{ padding: `${SPACE.s6}px ${SPACE.s8}px`, background: tokens.ctl, borderRadius: RADIUS.base }}>
+            <StatCard layout="row" label="Total" value={total} sub={`${days}d`} />
+            <StatCard layout="row" label="Dep" value={depArr.departures} />
+            <StatCard layout="row" label="Arr" value={depArr.arrivals} />
+            <StatCard layout="row" label="Peak" value={`${String(peakHour.hour).padStart(2, "0")}:00`} sub={`${peakHour.count} flights`} />
+          </div>
+        </Section>
 
         {/* Hourly Heatmap */}
-        <SectionHeader theme={theme}>Hourly Activity</SectionHeader>
-        <HourlyHeatmap hourly={hourly} theme={theme} />
+        <Section title="HOURLY · 時段分布">
+          <HourlyHeatmap hourly={hourly} />
+        </Section>
 
         {/* Daily Trend (only for multi-day ranges) */}
         {rangeDays > 1 && daily.length > 1 && (
-          <>
-            <SectionHeader theme={theme}>Daily Trend</SectionHeader>
-            <DailyTrendChart daily={daily} theme={theme} />
-          </>
+          <Section title="TREND · 每日趨勢">
+            <DailyTrendChart daily={daily} />
+          </Section>
         )}
 
         {/* Top Routes */}
         {topRoutes.length > 0 && (
-          <>
-            <SectionHeader theme={theme}>Top Routes</SectionHeader>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 10 }}>
+          <Section title="ROUTES · 熱門航線">
+            <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s2 }}>
               {topRoutes.map((r) => (
-                <div key={r.destIcao} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontFamily: FONT.ui, padding: "2px 0" }}>
-                  <span style={{ color: theme.ACCENT }}>
+                <div key={r.destIcao} style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.s11, fontFamily: FONT.ui, padding: `${SPACE.s2}px 0` }}>
+                  <span style={{ color: tokens.fg1 }}>
                     {r.originIata}→{r.destIata}
-                    <span style={{ color: theme.DIM, marginLeft: 4, fontSize: 10 }}>{r.airlines.join("/")}</span>
+                    <span style={{ color: tokens.fg3, marginLeft: SPACE.s4, fontSize: SIZE.s10 }}>{r.airlines.join("/")}</span>
                   </span>
-                  <span style={{ color: theme.ACCENT_BLUE, fontWeight: 600 }}>{r.count}</span>
+                  <span style={{ color: tokens.accent, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums" }}>{r.count}</span>
                 </div>
               ))}
             </div>
-          </>
+          </Section>
         )}
 
         {/* Top Airlines */}
         {airlines.length > 0 && (
-          <>
-            <SectionHeader theme={theme}>Airlines</SectionHeader>
-            <MiniBar
-              items={airlines.slice(0, 5).map((a) => ({ label: a.code, value: a.count }))}
-              theme={theme}
-            />
-            <div style={{ height: 8 }} />
-          </>
+          <Section title="AIRLINES · 航空公司">
+            <MiniBar items={airlines.slice(0, 5).map((a) => ({ label: a.code, value: a.count }))} />
+          </Section>
         )}
 
         {/* Fleet Mix */}
         {fleetMix.length > 0 && (
-          <>
-            <SectionHeader theme={theme}>Fleet Mix</SectionHeader>
-            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+          <Section title="FLEET · 機型組成">
+            <div style={{ display: "flex", gap: SPACE.s6 }}>
               {fleetMix.filter((f) => f.count > 0).map((f) => (
-                <div key={f.category} style={{
-                  flex: 1,
-                  textAlign: "center",
-                  padding: "4px 0",
-                  borderRadius: 6,
-                  background: theme.HOVER_BG,
-                  border: `1px solid ${theme.BORDER}`,
-                }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: theme.ACCENT, fontFamily: FONT.ui }}>{f.percentage}%</div>
-                  <div style={{ fontSize: 9, color: theme.DIM }}>{f.category}</div>
+                <div key={f.category} style={{ flex: 1, minWidth: 0 }}>
+                  <StatCard label={f.category} value={`${f.percentage}%`} />
                 </div>
               ))}
             </div>
-          </>
+          </Section>
         )}
 
         {/* Duration Distribution */}
         {durations.some((d) => d.count > 0) && (
-          <>
-            <SectionHeader theme={theme}>Duration</SectionHeader>
-            <MiniBar
-              items={durations.filter((d) => d.count > 0).map((d) => ({ label: d.label, value: d.count }))}
-              theme={theme}
-            />
-          </>
+          <Section title="DURATION · 飛行時間">
+            <MiniBar items={durations.filter((d) => d.count > 0).map((d) => ({ label: d.label, value: d.count }))} />
+          </Section>
         )}
       </>
     );
@@ -162,27 +140,20 @@ export function SummaryPanel({ flights, selectedAirport, scope, region, rangeDay
 
     return (
       <>
-        <SectionHeader theme={theme}>{`${regionLabel} Overview`}</SectionHeader>
-
-        <div style={{ marginBottom: 10, padding: "6px 8px", background: theme.HOVER_BG, borderRadius: 8 }}>
-          <StatRow label="Total" value={totalFlights.toLocaleString()} theme={theme} />
-          <StatRow label="Airports" value={uniqueAirports} theme={theme} />
-          <StatRow label="Domestic" value={domestic.toLocaleString()} theme={theme} />
-          <StatRow label="Int'l" value={international.toLocaleString()} theme={theme} />
-        </div>
+        <Section title={`${regionLabel} Overview`}>
+          <div style={{ padding: `${SPACE.s6}px ${SPACE.s8}px`, background: tokens.ctl, borderRadius: RADIUS.base }}>
+            <StatCard layout="row" label="Total" value={totalFlights.toLocaleString()} />
+            <StatCard layout="row" label="Airports" value={uniqueAirports} />
+            <StatCard layout="row" label="Domestic" value={domestic.toLocaleString()} />
+            <StatCard layout="row" label="Int'l" value={international.toLocaleString()} />
+          </div>
+        </Section>
 
         {/* Airport Ranking */}
         {comparison.length > 0 && (
-          <>
-            <SectionHeader theme={theme}>Airport Ranking</SectionHeader>
-            <MiniBar
-              items={comparison.slice(0, 8).map((a) => ({
-                label: a.iata,
-                value: a.count,
-              }))}
-              theme={theme}
-            />
-          </>
+          <Section title="RANKING · 機場排名">
+            <MiniBar items={comparison.slice(0, 8).map((a) => ({ label: a.iata, value: a.count }))} />
+          </Section>
         )}
       </>
     );

@@ -65,8 +65,8 @@
       "rgba": 43
     },
     "src/components/sidebar/charts.tsx": {
-      "hex": 2,
-      "rgba": 1
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/sidebar/panels/AirspacePanel.tsx": {
       "hex": 1,

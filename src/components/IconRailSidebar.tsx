@@ -457,7 +457,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               scope={props.scope}
               region={props.region}
               rangeDays={props.rangeDays}
-              theme={theme}
             />
           )}
           {activePanel === "analysis" && (
