@@ -65,6 +65,9 @@ export function useFlightData(
   // Phase 2-2：identity 不含 lod——同一份「機場/日期選擇」下換 zoom band 只是背景升
   // /降解析度，不該清空目前畫面（見下方主 effect）。
   const lastLoadIdentityRef = useRef<string | null>(null);
+  // 最近一次「成功」載入的 identity：lod-only 換層失敗時，只有畫面上真的有這份資料才算「畫面仍有效」
+  // （首次載入還沒完成就因飛行中 zoom 換層而被 lod-only 載入取代時，畫面其實是空的）。
+  const lastSuccessIdentityRef = useRef<string | null>(null);
   const currentLod: LodLevel = lod ?? "l0";
 
   const requestedDates = useMemo(() => {
@@ -169,15 +172,17 @@ export function useFlightData(
     // true——只有「起點」的 setLoading(true)／清空畫面才依 isLodOnlyChange 略過）。
     const finishLoad = (flights: Flight[]) => {
       if (loadIdRef.current !== loadId) return;
+      lastSuccessIdentityRef.current = identity;
       setTrackFlights(flights);
+      setLoadError(null);
       setLoadingProgress(null);
       setLoading(false);
     };
     const failLoad = (error: unknown) => {
       if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
       if (loadIdRef.current !== loadId) return;
-      // lod-only 的背景升級失敗時保留目前畫面，不清空已顯示的資料，也不報錯（畫面仍有效）。
-      if (!isLodOnlyChange) {
+      // lod-only 的背景升級失敗、且畫面上已有這份資料時：保留畫面、不報錯（畫面仍有效）。
+      if (!isLodOnlyChange || lastSuccessIdentityRef.current !== identity) {
         setTrackFlights([]);
         setLoadError(error instanceof Error ? error.message : String(error));
         console.warn("[useFlightData] load failed", error);

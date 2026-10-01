@@ -35,6 +35,10 @@ export function LoadingStatus({ loading, label, count, loaded, playing, failed, 
   const prevLoadingRef = useRef(loading);
   const latest = useRef({ label, count, playing, failed });
   latest.current = { label, count, playing, failed };
+  // 上一次 commit 時的播放狀態。切機場那一輪 App 的自動播放 effect 會立刻 play()，
+  // 所以「切換當下是否在播放」要看切換前那一刻，否則暫停中切換也會被當成播放中。
+  const committedPlayingRef = useRef(playing);
+  const playingAtStartRef = useRef(false);
 
   useEffect(() => {
     const controller = createLoadingStatusController({ onChange: setView });
@@ -50,11 +54,18 @@ export function LoadingStatus({ loading, label, count, loaded, playing, failed, 
     prevLoadingRef.current = loading;
     const controller = controllerRef.current;
     if (!controller || prev === loading) return;
-    controller.setPlaying(latest.current.playing);
+    if (loading) playingAtStartRef.current = committedPlayingRef.current;
+    // 播放中不跳「已載入」：切換當下在播放、完成時也還在播放
+    controller.setPlaying(playingAtStartRef.current && latest.current.playing);
     if (loading) controller.handle({ type: "start", label: latest.current.label });
     else if (latest.current.failed) controller.handle({ type: "fail", label: latest.current.label, persist: true });
     else controller.handle({ type: "done", count: latest.current.count });
   }, [loading]);
+
+  // 放在 [loading] effect 之後：該 effect 讀到的是上一輪 commit 的值
+  useEffect(() => {
+    committedPlayingRef.current = playing;
+  });
 
   // 錯誤被清掉但沒有新的載入（理論上不會發生）→ 收起失敗訊息
   useEffect(() => {
