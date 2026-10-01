@@ -1,6 +1,7 @@
 import React from "react";
 import type { CinemaMode, CameraKeyframe, CinemaPhase, EasingType, SavedSequence } from "../hooks/useCinemaCamera";
 import type { RecordingState, HQExportProgress } from "../hooks/useCanvasRecorder";
+import { FONT } from "../styles/tokens";
 
 /* ── Duration Input (m:ss) ── */
 function DurationInput({ value, onChange, min = 0, max = 5999, compact = false }: {
@@ -15,12 +16,12 @@ function DurationInput({ value, onChange, min = 0, max = 5999, compact = false }
     borderRadius: 4,
     color: "#fff",
     fontSize: compact ? 11 : 12,
-    fontFamily: "monospace",
+    fontFamily: FONT.ui,
     padding: compact ? "2px 3px" : "3px 4px",
     textAlign: "center",
   };
   const labelStyle: React.CSSProperties = {
-    color: "rgba(255,255,255,0.5)", fontSize: compact ? 9 : 10, fontFamily: "monospace",
+    color: "rgba(255,255,255,0.5)", fontSize: compact ? 9 : 10, fontFamily: FONT.ui,
   };
   const clamp = (newM: number, newS: number) => {
     const total = Math.max(min, Math.min(max, newM * 60 + newS));
@@ -154,7 +155,7 @@ export function CinemaBar({
       : (dark ? "rgba(60,60,60,0.4)" : "rgba(40,40,40,0.5)"),
     color: active ? "#fff" : "rgba(255,255,255,0.6)",
     fontSize: 13,
-    fontFamily: "monospace",
+    fontFamily: FONT.ui,
     cursor: "pointer",
     fontWeight: active ? 600 : 400,
     backdropFilter: "blur(8px)",
@@ -164,7 +165,7 @@ export function CinemaBar({
   const labelStyle: React.CSSProperties = {
     color: "rgba(255,255,255,0.45)",
     fontSize: 11,
-    fontFamily: "monospace",
+    fontFamily: FONT.ui,
     letterSpacing: 0.5,
   };
 
@@ -181,7 +182,7 @@ export function CinemaBar({
     background: active ? "rgba(255,255,255,0.12)" : "transparent",
     color: active ? "#fff" : "rgba(255,255,255,0.5)",
     fontSize: 12,
-    fontFamily: "monospace",
+    fontFamily: FONT.ui,
     cursor: "pointer",
   });
 
@@ -213,7 +214,7 @@ export function CinemaBar({
           border: panelBorder,
           color: "rgba(255,255,255,0.6)",
           fontSize: 13,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           cursor: "pointer",
         }}
       >
@@ -245,14 +246,14 @@ export function CinemaBar({
       {cinemaPhase === "play" ? (
         /* ── Playing: 精簡 UI ── */
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ color: "#fff", fontSize: 13, fontFamily: "monospace" }}>
+          <span style={{ color: "#fff", fontSize: 13, fontFamily: FONT.ui }}>
             ▶ KF {currentKfIndex + 1}/{keyframes.length}{loop ? " ⟳" : ""}
           </span>
           <div style={{ flex: 1, height: 3, background: "rgba(255,255,255,0.15)", borderRadius: 2, minWidth: 100 }}>
             <div style={{ width: `${sequenceProgress * 100}%`, height: "100%", background: "#fff", borderRadius: 2, transition: "width 0.1s" }} />
           </div>
           {isRecording && (
-            <span style={{ color: "#ff4444", fontSize: 12, fontFamily: "monospace", animation: "pulse 1s ease-in-out infinite" }}>
+            <span style={{ color: "#ff4444", fontSize: 12, fontFamily: FONT.ui, animation: "pulse 1s ease-in-out infinite" }}>
               REC {formatTime(recordingTime)}
             </span>
           )}
@@ -293,7 +294,7 @@ export function CinemaBar({
                   onChange={(e) => onOrbitSpeedChange(Number(e.target.value))}
                   style={sliderStyle}
                 />
-                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, fontFamily: "monospace", minWidth: 40 }}>
+                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, fontFamily: FONT.ui, minWidth: 40 }}>
                   {orbitSpeed.toFixed(1)}&deg;/s
                 </span>
               </div>
@@ -359,7 +360,7 @@ export function CinemaBar({
                     >
                       ⇄
                     </button>
-                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "monospace" }}>
+                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: FONT.ui }}>
                       {formatDuration(totalDuration)}{pingpong ? " ×2" : ""}
                     </span>
                   </>
@@ -398,7 +399,7 @@ export function CinemaBar({
                       borderRadius: 8,
                       color: "#fff",
                       fontSize: 12,
-                      fontFamily: "monospace",
+                      fontFamily: FONT.ui,
                       padding: "4px 8px",
                       outline: "none",
                     }}
@@ -431,10 +432,10 @@ export function CinemaBar({
                       borderRadius: 6,
                       background: "rgba(255,255,255,0.05)",
                     }}>
-                      <span style={{ flex: 1, color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "monospace" }}>
+                      <span style={{ flex: 1, color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: FONT.ui }}>
                         {seq.name}
                       </span>
-                      <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "monospace" }}>
+                      <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: FONT.ui }}>
                         {seq.keyframes.length} KF
                       </span>
                       <button
@@ -468,10 +469,10 @@ export function CinemaBar({
                         borderRadius: 8,
                         background: "rgba(255,255,255,0.05)",
                       }}>
-                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "monospace", minWidth: 20 }}>
+                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: FONT.ui, minWidth: 20 }}>
                           {i + 1}.
                         </span>
-                        <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "monospace", minWidth: 45 }}>
+                        <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: FONT.ui, minWidth: 45 }}>
                           z{kf.zoom.toFixed(1)}
                         </span>
                         <DurationInput value={kf.duration} onChange={(sec) => onUpdateKeyframe(kf.id, { duration: sec })} min={1} max={5999} />
@@ -484,7 +485,7 @@ export function CinemaBar({
                             borderRadius: 4,
                             color: "rgba(255,255,255,0.7)",
                             fontSize: 10,
-                            fontFamily: "monospace",
+                            fontFamily: FONT.ui,
                             padding: "2px 4px",
                           }}
                         >
@@ -506,7 +507,7 @@ export function CinemaBar({
                         paddingLeft: 28,
                         paddingBottom: 2,
                       }}>
-                        <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: "monospace" }}>hold</span>
+                        <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: FONT.ui }}>hold</span>
                         <button
                           onClick={() => {
                             if (kf.hold) {
@@ -540,7 +541,7 @@ export function CinemaBar({
                                 borderRadius: 4,
                                 color: "rgba(255,255,255,0.7)",
                                 fontSize: 10,
-                                fontFamily: "monospace",
+                                fontFamily: FONT.ui,
                                 padding: "1px 4px",
                               }}
                             >
@@ -568,7 +569,7 @@ export function CinemaBar({
                                     borderRadius: 4,
                                     color: "#fff",
                                     fontSize: 10,
-                                    fontFamily: "monospace",
+                                    fontFamily: FONT.ui,
                                     padding: "1px 3px",
                                     textAlign: "center" as const,
                                   }}

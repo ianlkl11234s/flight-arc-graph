@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FONT } from "../styles/tokens";
 
 interface Props {
   playing: boolean;
@@ -37,7 +38,7 @@ const getBtnStyle = (dark: boolean): React.CSSProperties => ({
   padding: "4px 10px",
   fontSize: 14,
   cursor: "pointer",
-  fontFamily: "monospace",
+  fontFamily: FONT.ui,
   backdropFilter: "blur(8px)",
 });
 
@@ -48,7 +49,7 @@ const getSelectStyle = (dark: boolean): React.CSSProperties => ({
   borderRadius: 4,
   padding: "4px 8px",
   fontSize: 13,
-  fontFamily: "monospace",
+  fontFamily: FONT.ui,
   backdropFilter: "blur(8px)",
 });
 
@@ -136,7 +137,7 @@ export function TimelineControls({
     cursor: "pointer",
     fontSize: 14,
     padding: "2px 8px",
-    fontFamily: "monospace",
+    fontFamily: FONT.ui,
   };
 
   return (
@@ -178,7 +179,7 @@ export function TimelineControls({
             padding: 0,
             color: isDarkTheme ? "#fff" : "rgba(50,50,50,0.9)",
             fontSize: isMobile ? 14 : 13,
-            fontFamily: "monospace",
+            fontFamily: FONT.ui,
             fontWeight: 600,
             letterSpacing: 0.5,
             minWidth: isMobile ? 90 : 80,
@@ -226,7 +227,7 @@ export function TimelineControls({
                 >
                   ‹
                 </button>
-                <span style={{ fontSize: 12, fontFamily: "monospace", fontWeight: 600, color: calTextMain }}>
+                <span style={{ fontSize: 12, fontFamily: FONT.ui, fontWeight: 600, color: calTextMain }}>
                   {viewYear}/{String(viewMonth + 1).padStart(2, "0")}
                 </span>
                 <button
@@ -241,7 +242,7 @@ export function TimelineControls({
                 {WEEKDAYS.map((w) => (
                   <div
                     key={w}
-                    style={{ textAlign: "center", fontSize: 10, fontFamily: "monospace", color: calTextDim }}
+                    style={{ textAlign: "center", fontSize: 10, fontFamily: FONT.ui, color: calTextDim }}
                   >
                     {w}
                   </div>
@@ -282,7 +283,7 @@ export function TimelineControls({
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: 11,
-                        fontFamily: "monospace",
+                        fontFamily: FONT.ui,
                         border: "none",
                         borderRadius: 6,
                         position: "relative",
@@ -442,7 +443,7 @@ export function TimelineControls({
           style={{
             color: isDarkTheme ? "rgba(200,200,200,0.6)" : "rgba(255,255,255,0.7)",
             fontSize: 13,
-            fontFamily: "monospace",
+            fontFamily: FONT.ui,
           }}
         >
           {formatDateTime(currentTime)}
@@ -470,7 +471,7 @@ export function TimelineControls({
           justifyContent: "space-between",
           color: isDarkTheme ? "rgba(180,180,180,0.4)" : "rgba(0,0,0,0.3)",
           fontSize: 10,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           marginTop: 2,
         }}
       >

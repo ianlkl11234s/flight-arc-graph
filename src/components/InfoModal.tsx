@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TIPS_BY_CATEGORY } from "../data/tips";
+import { FONT } from "../styles/tokens";
 
 type BottomTab = "guide" | "about" | "profile";
 type GuidePage = "getting-started" | "feature-legend" | "data-sources" | "tips";
@@ -21,7 +22,7 @@ const S = {
   text: "rgba(255,255,255,0.85)",
   sub: "rgba(255,255,255,0.5)",
   active: "#64aaff",
-  font: "monospace",
+  font: FONT.ui,
 } as const;
 
 /* ── i18n helper ── */

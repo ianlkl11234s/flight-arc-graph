@@ -1,3 +1,4 @@
+import { FONT } from "../styles/tokens";
 export type DepArrFilter = "all" | "dep" | "arr";
 
 interface DepArrToggleProps {
@@ -24,7 +25,7 @@ export function DepArrToggle({ filter, isDarkTheme, onChange }: DepArrToggleProp
             style={{
               padding: "4px 8px",
               fontSize: 11,
-              fontFamily: "monospace",
+              fontFamily: FONT.ui,
               fontWeight: isActive ? 600 : 400,
               cursor: "pointer",
               transition: "all 0.15s",

@@ -1,4 +1,5 @@
 import type { DataSource } from "../types";
+import { FONT } from "../styles/tokens";
 
 interface DataSourceToggleProps {
   dataSource: DataSource;
@@ -40,7 +41,7 @@ export function DataSourceToggle({
               padding: "4px 10px",
               fontSize: 11,
               cursor: disabled ? "not-allowed" : "pointer",
-              fontFamily: "monospace",
+              fontFamily: FONT.ui,
               backdropFilter: "blur(8px)",
               whiteSpace: "nowrap",
               opacity: disabled ? 0.35 : 1,

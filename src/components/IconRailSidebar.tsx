@@ -29,6 +29,7 @@ import {
   computeAirportComparison,
   getUniqueDays,
 } from "../data/flightStats";
+import { FONT } from "../styles/tokens";
 
 /* ── Scene Presets ─────────────────────────────────────── */
 
@@ -508,7 +509,7 @@ function ToggleButtons<T extends string>({
               flex: 1,
               padding: "5px 0",
               fontSize: 11,
-              fontFamily: "monospace",
+              fontFamily: FONT.ui,
               border: `1px solid ${isActive ? theme.ACTIVE_BORDER : theme.BORDER}`,
               borderRadius: 4,
               background: isActive ? theme.ACTIVE_BG : "transparent",
@@ -552,7 +553,7 @@ function SliderRow({
           display: "flex",
           justifyContent: "space-between",
           fontSize: 11,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           color: theme.ACCENT,
           marginBottom: 2,
         }}
@@ -660,7 +661,7 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
           background: theme.ACTIVE_BTN_BG,
           color: theme.ACCENT,
           fontSize: 10,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           lineHeight: 1.45,
         }}>
           Current selection · {props.airportSet.length} airport{props.airportSet.length === 1 ? "" : "s"}
@@ -700,7 +701,7 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
             borderRadius: 4,
             padding: "5px 6px",
             fontSize: 11,
-            fontFamily: "monospace",
+            fontFamily: FONT.ui,
             cursor: "pointer",
             marginBottom: 8,
           }}
@@ -732,7 +733,7 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
             alignItems: "center",
             gap: 8,
             fontSize: 11,
-            fontFamily: "monospace",
+            fontFamily: FONT.ui,
             color: props.timeWindow ? theme.ACTIVE_TEXT : theme.ACCENT,
             cursor: "pointer",
             marginBottom: 8,
@@ -764,7 +765,7 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
           alignItems: "center",
           gap: 8,
           fontSize: 11,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           color: props.farView ? theme.ACTIVE_TEXT : theme.ACCENT,
           cursor: "pointer",
           marginBottom: 8,
@@ -799,7 +800,7 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
         />
       </div>
       {props.mapStyleId === "satellite" && (
-        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontFamily: "monospace", color: theme.DIM, cursor: "pointer", marginBottom: 8 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontFamily: FONT.ui, color: theme.DIM, cursor: "pointer", marginBottom: 8 }}>
           <input type="checkbox" checked={props.showTerminator} onChange={(e) => props.onTerminatorChange(e.target.checked)} />
           Day/Night
         </label>
@@ -819,7 +820,7 @@ function SettingsPanel(props: IconRailSidebarProps & { theme: ThemeColors }) {
           background: theme.SELECT_BG,
           color: theme.ACCENT,
           fontSize: 10,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           cursor: "pointer",
         }}
       >
@@ -941,7 +942,7 @@ function SetChip({ icao, onRemove, theme }: {
         border: `1px solid ${theme.ACTIVE_BORDER}`,
         borderRadius: 12,
         fontSize: 11,
-        fontFamily: "monospace",
+        fontFamily: FONT.ui,
         color: theme.ACTIVE_TEXT,
         lineHeight: 1.4,
       }}
@@ -1027,7 +1028,7 @@ function AirportCheckboxRow({
         <div style={{ fontSize: 12, color: checked ? theme.ACTIVE_TEXT : theme.ACCENT, lineHeight: 1.3 }}>
           {info?.name ?? name}
         </div>
-        <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+        <div style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>
           {info?.iata || iata || icao} / {icao}{coverage ? ` · ${coverage}` : ""}
         </div>
         {matchReason && (
@@ -1176,7 +1177,7 @@ function SetsPanel({
           <div style={{ fontSize: 11, color: theme.ACCENT, lineHeight: 1.3 }}>
             已選 <strong style={{ color: theme.ACTIVE_TEXT }}>{airportSet.length}</strong> 座
             {setName && (
-              <span style={{ marginLeft: 6, fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>· {setName}</span>
+              <span style={{ marginLeft: 6, fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>· {setName}</span>
             )}
           </div>
           <div style={{ display: "flex", gap: 4 }}>
@@ -1233,7 +1234,7 @@ function SetsPanel({
               border: `1px solid ${theme.BORDER}`,
               background: theme.SELECT_BG,
               color: theme.ACTIVE_TEXT,
-              fontFamily: "monospace",
+              fontFamily: FONT.ui,
               fontSize: 11,
               outline: "none",
             }}
@@ -1283,7 +1284,7 @@ function SetsPanel({
           >
             <span style={{ width: 9 }}>{scenesOpen ? "▼" : "▶"}</span>
             <span style={{ flex: 1, letterSpacing: 1.1 }}>場景預設</span>
-            <span style={{ fontFamily: "monospace" }}>{filteredScenes.length}</span>
+            <span style={{ fontFamily: FONT.ui }}>{filteredScenes.length}</span>
           </button>
           {scenesOpen && filteredScenes.map((scene) => (
             <button
@@ -1300,7 +1301,7 @@ function SetsPanel({
               <span style={{ width: 3, height: 24, borderRadius: 2, background: theme.SCENE_BAR, flexShrink: 0 }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 12, color: theme.ACCENT }}>{scene.name}</div>
-                <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>{scene.desc}</div>
+                <div style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>{scene.desc}</div>
               </div>
             </button>
           ))}
@@ -1333,7 +1334,7 @@ function SetsPanel({
               <div style={{ fontSize: 12, color: isActive ? theme.ACTIVE_TEXT : theme.ACCENT, lineHeight: 1.3 }}>
                 {s.name}
               </div>
-              <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+              <div style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>
                 {s.icaos.length} 座 · {s.icaos.slice(0, 4).join(" · ")}{s.icaos.length > 4 ? " …" : ""}
               </div>
             </div>
@@ -1346,7 +1347,7 @@ function SetsPanel({
       {/* Complete airport directory: Taiwan / Japan / continent → country → airport */}
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "2px 8px 4px" }}>
         <span style={{ fontSize: 10, color: theme.DIM, letterSpacing: 1.2 }}>全部機場</span>
-        <span style={{ fontSize: 9, color: theme.DIM, fontFamily: "monospace" }}>
+        <span style={{ fontSize: 9, color: theme.DIM, fontFamily: FONT.ui }}>
           {catalogIcaos.length.toLocaleString()} 座 · {airports.length.toLocaleString()} 座可加入
         </span>
       </div>
@@ -1373,7 +1374,7 @@ function SetsPanel({
               <span style={{ fontSize: 11, color: theme.ACCENT, flex: 1 }}>
                 {continent.label}
               </span>
-              <span style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+              <span style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>
                 {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{continentIcaos.length}
               </span>
             </button>
@@ -1410,7 +1411,7 @@ function SetsPanel({
                   >
                     <span style={{ fontSize: 8, color: theme.DIM, width: 8 }}>{countryOpen ? "▼" : "▶"}</span>
                     <span style={{ fontSize: 10, color: theme.ACCENT, flex: 1 }}>{country.label}</span>
-                    <span style={{ fontSize: 9, color: theme.DIM, fontFamily: "monospace" }}>
+                    <span style={{ fontSize: 9, color: theme.DIM, fontFamily: FONT.ui }}>
                       {selectedInCountry > 0 ? `${selectedInCountry}/` : ""}{country.icaos.length}
                     </span>
                   </button>
@@ -1491,7 +1492,7 @@ function CalendarPanel({
     alignItems: "center",
     justifyContent: "center",
     fontSize: 11,
-    fontFamily: "monospace",
+    fontFamily: FONT.ui,
     border: "none",
     borderRadius: 6,
     cursor: "pointer",
@@ -1510,7 +1511,7 @@ function CalendarPanel({
           padding: "6px 0",
           marginBottom: 8,
           fontSize: 11,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           border: `1px solid ${selectedDate === null ? theme.ACTIVE_BORDER : theme.BORDER}`,
           borderRadius: 4,
           background: selectedDate === null ? theme.ACTIVE_BG : "transparent",
@@ -1557,7 +1558,7 @@ function CalendarPanel({
               textAlign: "center",
               fontSize: 10,
               color: theme.DIM,
-              fontFamily: "monospace",
+              fontFamily: FONT.ui,
             }}
           >
             {d}
@@ -1654,7 +1655,7 @@ function ColorThemePanel(props: ColorThemePanelProps) {
     borderRadius: 4, cursor: "pointer", background: "transparent",
   };
   const labelStyle: React.CSSProperties = {
-    fontSize: 10, color: theme.DIM, fontFamily: "monospace", minWidth: 55,
+    fontSize: 10, color: theme.DIM, fontFamily: FONT.ui, minWidth: 55,
   };
 
   return (
@@ -1674,7 +1675,7 @@ function ColorThemePanel(props: ColorThemePanelProps) {
                 background: active ? "rgba(100,160,255,0.15)" : "rgba(255,255,255,0.05)",
                 color: active ? theme.ACCENT_BLUE : theme.DIM,
                 fontSize: 11,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
               }}
             >
@@ -1771,7 +1772,7 @@ function ColorThemePanel(props: ColorThemePanelProps) {
           transition: "all 0.15s",
         }}
       >
-        <span style={{ fontSize: 12, fontFamily: "monospace", color: theme.ACCENT }}>
+        <span style={{ fontSize: 12, fontFamily: FONT.ui, color: theme.ACCENT }}>
           {colorBy === "theme" ? "Off" : "On"}
         </span>
         <span
@@ -1812,7 +1813,7 @@ function ColorThemePanel(props: ColorThemePanelProps) {
                   flex: 1,
                   padding: "4px 0",
                   fontSize: 10,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   border: `1px solid ${active ? theme.ACTIVE_BORDER : theme.BORDER}`,
                   borderRadius: 4,
                   background: active ? theme.ACTIVE_BG : "transparent",
@@ -1847,7 +1848,7 @@ function ColorThemePanel(props: ColorThemePanelProps) {
                 style={{
                   fontSize: 10, color: theme.ACCENT_BLUE, background: "none",
                   border: "none", cursor: "pointer", padding: 0,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                 }}
               >
                 reset
@@ -1890,11 +1891,11 @@ function ColorThemePanel(props: ColorThemePanelProps) {
                     }}
                   />
                 </label>
-                <span style={{ fontSize: 11, fontFamily: "monospace", color: theme.ACCENT, minWidth: 42 }}>
+                <span style={{ fontSize: 11, fontFamily: FONT.ui, color: theme.ACCENT, minWidth: 42 }}>
                   {ap.icao}
                 </span>
                 <span style={{ flex: 1 }} />
-                <span style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+                <span style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>
                   {ap.count}
                 </span>
                 {ap.isCustom && (
@@ -1928,8 +1929,8 @@ function ColorThemePanel(props: ColorThemePanelProps) {
 function StatRow({ label, value, sub, theme }: { label: string; value: string | number; sub?: string; theme: ThemeColors }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "3px 0" }}>
-      <span style={{ fontSize: 11, color: theme.DIM, fontFamily: "monospace" }}>{label}</span>
-      <span style={{ fontSize: 13, fontWeight: 600, color: theme.ACCENT, fontFamily: "monospace" }}>
+      <span style={{ fontSize: 11, color: theme.DIM, fontFamily: FONT.ui }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 600, color: theme.ACCENT, fontFamily: FONT.ui }}>
         {value}
         {sub && <span style={{ fontSize: 10, color: theme.DIM, marginLeft: 4, fontWeight: 400 }}>{sub}</span>}
       </span>
@@ -1943,7 +1944,7 @@ function MiniBar({ items, theme }: { items: { label: string; value: number; colo
     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {items.map((item) => (
         <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace", width: 32, textAlign: "right", flexShrink: 0 }}>
+          <span style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui, width: 32, textAlign: "right", flexShrink: 0 }}>
             {item.label}
           </span>
           <div style={{ flex: 1, height: 10, background: theme.SLIDER_TRACK, borderRadius: 3, overflow: "hidden" }}>
@@ -1955,7 +1956,7 @@ function MiniBar({ items, theme }: { items: { label: string; value: number; colo
               transition: "width 0.3s ease",
             }} />
           </div>
-          <span style={{ fontSize: 10, color: theme.ACCENT, fontFamily: "monospace", width: 28, textAlign: "right", flexShrink: 0 }}>
+          <span style={{ fontSize: 10, color: theme.ACCENT, fontFamily: FONT.ui, width: 28, textAlign: "right", flexShrink: 0 }}>
             {item.value}
           </span>
         </div>
@@ -1989,7 +1990,7 @@ function HourlyHeatmap({ hourly, theme }: { hourly: { hour: number; count: numbe
           );
         })}
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: theme.DIM, fontFamily: "monospace", marginTop: 2 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: theme.DIM, fontFamily: FONT.ui, marginTop: 2 }}>
         <span>00</span><span>06</span><span>12</span><span>18</span><span>23</span>
       </div>
     </div>
@@ -2017,7 +2018,7 @@ function DailyTrendChart({ daily, theme }: { daily: { date: string; departures: 
         <polyline points={depPoints} fill="none" stroke={theme.ACCENT_BLUE} strokeWidth="1.5" strokeLinejoin="round" />
         <polyline points={arrPoints} fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3,2" />
       </svg>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: theme.DIM, fontFamily: "monospace", marginTop: 1 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: theme.DIM, fontFamily: FONT.ui, marginTop: 1 }}>
         <span>{daily[0]!.date.slice(5)}</span>
         <span style={{ display: "flex", gap: 8 }}>
           <span style={{ color: theme.ACCENT_BLUE }}>— Dep</span>
@@ -2073,7 +2074,7 @@ function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays, them
     return (
       <>
         <SectionHeader theme={theme}>Summary</SectionHeader>
-        <div style={{ fontSize: 11, color: theme.NO_DATA_TEXT, fontFamily: "monospace", textAlign: "center", padding: "20px 0" }}>
+        <div style={{ fontSize: 11, color: theme.NO_DATA_TEXT, fontFamily: FONT.ui, textAlign: "center", padding: "20px 0" }}>
           No flight data loaded
         </div>
       </>
@@ -2115,7 +2116,7 @@ function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays, them
             <SectionHeader theme={theme}>Top Routes</SectionHeader>
             <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 10 }}>
               {topRoutes.map((r) => (
-                <div key={r.destIcao} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontFamily: "monospace", padding: "2px 0" }}>
+                <div key={r.destIcao} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontFamily: FONT.ui, padding: "2px 0" }}>
                   <span style={{ color: theme.ACCENT }}>
                     {r.originIata}→{r.destIata}
                     <span style={{ color: theme.DIM, marginLeft: 4, fontSize: 10 }}>{r.airlines.join("/")}</span>
@@ -2153,7 +2154,7 @@ function SummaryPanel({ flights, selectedAirport, scope, region, rangeDays, them
                   background: theme.HOVER_BG,
                   border: `1px solid ${theme.BORDER}`,
                 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: theme.ACCENT, fontFamily: "monospace" }}>{f.percentage}%</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: theme.ACCENT, fontFamily: FONT.ui }}>{f.percentage}%</div>
                   <div style={{ fontSize: 9, color: theme.DIM }}>{f.category}</div>
                 </div>
               ))}
@@ -2470,7 +2471,7 @@ function AirspacePanel({
           transition: "all 0.15s",
         }}
       >
-        <span style={{ fontSize: 12, fontFamily: "monospace", color: theme.ACCENT }}>
+        <span style={{ fontSize: 12, fontFamily: FONT.ui, color: theme.ACCENT }}>
           Show Airspace
         </span>
         <span
@@ -2535,7 +2536,7 @@ function AirspacePanel({
               style={{
                 flex: 1,
                 fontSize: 11,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 color: isOn ? theme.ACTIVE_TEXT : theme.DIM,
               }}
             >
@@ -2577,7 +2578,7 @@ function AirspacePanel({
           style={{
             flex: 1,
             fontSize: 11,
-            fontFamily: "monospace",
+            fontFamily: FONT.ui,
             color: settings.showMedianLine ? theme.ACTIVE_TEXT : theme.DIM,
           }}
         >
@@ -2798,14 +2799,14 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             ✕
           </button>
           <div style={{ paddingRight: 26, marginBottom: 12, flexShrink: 0 }}>
-            <div style={{ fontSize: 9, letterSpacing: 1.6, color: theme.ACCENT_BLUE, fontFamily: "monospace" }}>
+            <div style={{ fontSize: 9, letterSpacing: 1.6, color: theme.ACCENT_BLUE, fontFamily: FONT.ui }}>
               FLIGHT ARC / {activeWorkspace?.toUpperCase()}
             </div>
             <div style={{ marginTop: 4, fontSize: 16, fontWeight: 600, color: theme.ACTIVE_TEXT }}>
               {workspaceTitle}
             </div>
             {(activeWorkspace === "selection" || activeWorkspace === "explore") && (
-              <div style={{ marginTop: 5, fontSize: 10, color: theme.DIM, fontFamily: "monospace", lineHeight: 1.45 }}>
+              <div style={{ marginTop: 5, fontSize: 10, color: theme.DIM, fontFamily: FONT.ui, lineHeight: 1.45 }}>
                 {activeSelection.length} 座機場
                 {selectedDate ? ` · ${selectedDate}` : ""}
                 {selectedDate && selectedAvailable < activeSelection.length
@@ -2831,7 +2832,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                       color: active ? theme.ACTIVE_TEXT : theme.DIM,
                       cursor: "pointer",
                       fontSize: 10,
-                      fontFamily: "monospace",
+                      fontFamily: FONT.ui,
                     }}
                   >
                     {tab.label}

@@ -23,6 +23,7 @@ import {
   computeTimelineDepArr,
 } from "../data/flightStats";
 import type { TimelineSlot } from "../data/flightStats";
+import { FONT } from "../styles/tokens";
 
 interface Props {
   /** 全部航班（給 ALL REGION tab — 客觀統計，不受 sidebar filter 影響） */
@@ -76,7 +77,7 @@ const CL = {
 
 function t(dark: boolean) { return dark ? C : CL; }
 
-const font = "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace";
+const font = FONT.ui;
 
 /* ── Reusable: Divider ── */
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FONT } from "../styles/tokens";
 
 interface RecordingGuideProps {
   visible: boolean;
@@ -189,7 +190,7 @@ export function RecordingGuide({ visible, showGrid }: RecordingGuideProps) {
           top: 6,
           right: 8,
           fontSize: 10,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           color: "rgba(255,80,80,0.5)",
           letterSpacing: 1,
         }}>

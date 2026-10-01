@@ -1,6 +1,7 @@
 import type React from "react";
 import type { AirspaceFeature } from "../data/airspaceLoader";
 import { AIRSPACE_CATEGORIES } from "../types/airspace";
+import { FONT } from "../styles/tokens";
 
 interface AirspaceInfoCardProps {
   selected: AirspaceFeature;
@@ -120,7 +121,7 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
           />
           <span
             style={{
-              fontSize: 10, fontFamily: "monospace",
+              fontSize: 10, fontFamily: FONT.ui,
               fontWeight: 600, letterSpacing: "0.08em",
               color: badge.color, textTransform: "uppercase",
             }}
@@ -133,7 +134,7 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
           {selected.nameZh}
         </div>
         {selected.nameEn && (
-          <div style={{ fontSize: 12, color: dimColor, marginTop: 2, fontFamily: "monospace" }}>
+          <div style={{ fontSize: 12, color: dimColor, marginTop: 2, fontFamily: FONT.ui }}>
             {selected.nameEn}
           </div>
         )}
@@ -244,11 +245,11 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
                         flexShrink: 0,
                       }}
                     />
-                    <span style={{ fontFamily: "monospace", color: dimColor, minWidth: 42 }}>{b.label}</span>
+                    <span style={{ fontFamily: FONT.ui, color: dimColor, minWidth: 42 }}>{b.label}</span>
                     <span style={{ flex: 1, color: textColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {f.nameZh}
                     </span>
-                    <span style={{ color: dimColor, fontFamily: "monospace" }}>
+                    <span style={{ color: dimColor, fontFamily: FONT.ui }}>
                       {f.floorRaw}→{f.ceilingRaw}
                     </span>
                   </div>
@@ -273,7 +274,7 @@ function MetricBlock({ label, value, dim, bg }: { label: string; value: string; 
       }}
     >
       <div style={{ fontSize: 9, letterSpacing: "0.1em", color: dim, marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 13, fontFamily: "monospace", fontWeight: 500 }}>{value}</div>
+      <div style={{ fontSize: 13, fontFamily: FONT.ui, fontWeight: 500 }}>{value}</div>
     </div>
   );
 }

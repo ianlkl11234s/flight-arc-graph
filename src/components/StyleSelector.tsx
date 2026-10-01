@@ -1,4 +1,5 @@
 import type { MapStyle } from "../types";
+import { FONT } from "../styles/tokens";
 
 export const MAP_STYLES: MapStyle[] = [
   { id: "dark", name: "Dark", url: "mapbox://styles/mapbox/dark-v11" },
@@ -24,7 +25,7 @@ const getStyle = (dark: boolean): React.CSSProperties => ({
   borderRadius: 4,
   padding: "4px 8px",
   fontSize: 12,
-  fontFamily: "monospace",
+  fontFamily: FONT.ui,
   backdropFilter: "blur(8px)",
 });
 

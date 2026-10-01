@@ -22,6 +22,7 @@ import {
 } from "../data/classify";
 import { AIRLINE_DB, getAirlineDisplayName } from "../data/airlineDatabase";
 import { getAircraftInfo } from "../data/aircraftDatabase";
+import { FONT } from "../styles/tokens";
 
 interface ThemeColors {
   ACCENT: string;
@@ -91,7 +92,7 @@ function Section({
           borderRadius: 4,
           cursor: "pointer",
           fontSize: 11,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           fontWeight: 600,
           letterSpacing: "0.04em",
           textTransform: "uppercase",
@@ -163,7 +164,7 @@ function MultiCheckList({
               gap: 6,
               padding: "3px 4px",
               fontSize: 11,
-              fontFamily: "monospace",
+              fontFamily: FONT.ui,
               cursor: "pointer",
               color: on ? theme.ACTIVE_TEXT : theme.ACCENT,
               background: on ? theme.ACTIVE_BG : "transparent",
@@ -219,7 +220,7 @@ function ChipGroup<T extends string>({
             style={{
               padding: "3px 8px",
               fontSize: 10,
-              fontFamily: "monospace",
+              fontFamily: FONT.ui,
               borderRadius: 12,
               border: `1px solid ${on ? theme.ACTIVE_BORDER : theme.BORDER}`,
               background: on ? theme.ACTIVE_BG : "transparent",
@@ -254,7 +255,7 @@ function DurationRange({
           justifyContent: "space-between",
           fontSize: 10,
           color: theme.DIM,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           marginBottom: 2,
         }}
       >
@@ -309,7 +310,7 @@ function ToggleRow({
         gap: 6,
         padding: "3px 4px",
         fontSize: 11,
-        fontFamily: "monospace",
+        fontFamily: FONT.ui,
         cursor: "pointer",
         color: checked ? theme.ACTIVE_TEXT : theme.ACCENT,
       }}
@@ -436,7 +437,7 @@ export function DeepAnalysisPanel({
           width: "100%",
           padding: "5px 8px",
           fontSize: 11,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           background: theme.SELECT_BG,
           color: theme.ACCENT,
           border: `1px solid ${theme.BORDER}`,
@@ -460,7 +461,7 @@ export function DeepAnalysisPanel({
 
       {colorBy !== "none" && legend.length > 0 && (
         <>
-          <div style={{ fontSize: 10, color: theme.DIM, fontFamily: "monospace" }}>
+          <div style={{ fontSize: 10, color: theme.DIM, fontFamily: FONT.ui }}>
             {totalInLegend.toLocaleString()} flights · {legend.length} groups
           </div>
           <div
@@ -485,7 +486,7 @@ export function DeepAnalysisPanel({
                     borderRadius: 2,
                     background: theme.HOVER_BG,
                     fontSize: 10,
-                    fontFamily: "monospace",
+                    fontFamily: FONT.ui,
                   }}
                 >
                   <span
@@ -548,7 +549,7 @@ export function DeepAnalysisPanel({
               borderRadius: 3,
               padding: "1px 6px",
               cursor: "pointer",
-              fontFamily: "monospace",
+              fontFamily: FONT.ui,
               textTransform: "none",
               letterSpacing: 0,
             }}
@@ -676,7 +677,7 @@ export function DeepAnalysisPanel({
           paddingTop: 6,
           borderTop: `1px solid ${theme.BORDER}`,
           fontSize: 10,
-          fontFamily: "monospace",
+          fontFamily: FONT.ui,
           color: theme.DIM,
           textAlign: "center",
         }}

@@ -48,6 +48,7 @@ import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
 import { setFrozenAnimTime } from "./three/animClock";
 import { ThemeProvider } from "./styles/ThemeContext";
+import { FONT } from "./styles/tokens";
 
 // ── Atlas 機場點：點擊 popup ──
 interface AtlasProps {
@@ -148,7 +149,7 @@ function LoadingIndicator({ loadingProgress, isDarkTheme }: {
       />
       <span style={{
         fontSize: 15,
-        fontFamily: "monospace",
+        fontFamily: FONT.ui,
         fontWeight: 500,
         color: isDarkTheme ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
       }}>
@@ -226,8 +227,8 @@ function OrientationOrb({
         <line x1={northX} y1={northY} x2={southX} y2={southY} stroke="rgba(100,170,255,0.72)" strokeWidth="1" />
         <circle cx={northX} cy={northY} r="2.5" fill="#64aaff" />
         <circle cx={southX} cy={southY} r="2" fill={isDarkTheme ? "rgba(255,255,255,0.58)" : "rgba(20,30,45,0.52)"} />
-        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill="#9acbff" fontSize="6" fontFamily="monospace" fontWeight="700">N</text>
-        <text x={southLabelX} y={southLabelY} textAnchor="middle" fill={text} fontSize="5.5" fontFamily="monospace">S</text>
+        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill="#9acbff" fontSize="6" fontFamily={FONT.ui} fontWeight="700">N</text>
+        <text x={southLabelX} y={southLabelY} textAnchor="middle" fill={text} fontSize="5.5" fontFamily={FONT.ui}>S</text>
         <circle cx="22" cy="22" r="1.5" fill={isUpright ? "#64aaff" : text} />
       </svg>
     </button>
@@ -1641,7 +1642,7 @@ export default function App() {
               <div
                 style={{
                   fontSize: isMobile ? 20 : 28,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   fontWeight: 700,
                   color: "#fff",
                   letterSpacing: isMobile ? 2 : 4,
@@ -1653,7 +1654,7 @@ export default function App() {
               <div
                 style={{
                   fontSize: 18,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   fontWeight: 600,
                   color: "rgba(255,255,255,0.7)",
                   letterSpacing: 2,
@@ -1666,7 +1667,7 @@ export default function App() {
               <div
                 style={{
                   fontSize: 14,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   color: "rgba(255,255,255,0.4)",
                   letterSpacing: 1,
                   marginTop: 4,
@@ -1686,7 +1687,7 @@ export default function App() {
               <div
                 style={{
                   fontSize: 14,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   color: "rgba(255,255,255,0.3)",
                   letterSpacing: 1,
                   marginTop: 4,
@@ -1712,7 +1713,7 @@ export default function App() {
                 background: trailDisplay === "progressive" ? "rgba(255,255,255,0.15)" : "rgba(60,60,60,0.4)",
                 color: trailDisplay === "progressive" ? "#fff" : "rgba(255,255,255,0.6)",
                 fontSize: 13,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
                 backdropFilter: "blur(8px)",
               }}
@@ -1792,7 +1793,7 @@ export default function App() {
                 borderRadius: 4,
                 color: "rgba(255,255,255,0.4)",
                 fontSize: 11,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
               }}
             >
@@ -1820,7 +1821,7 @@ export default function App() {
                   background: showGuide ? "rgba(255,80,80,0.15)" : "rgba(255,255,255,0.08)",
                   color: showGuide ? "rgba(255,80,80,0.8)" : "rgba(255,255,255,0.4)",
                   fontSize: 11,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   cursor: "pointer",
                   backdropFilter: "blur(8px)",
                 }}
@@ -1837,7 +1838,7 @@ export default function App() {
                     background: showGuideGrid ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.08)",
                     color: showGuideGrid ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)",
                     fontSize: 11,
-                    fontFamily: "monospace",
+                    fontFamily: FONT.ui,
                     cursor: "pointer",
                     backdropFilter: "blur(8px)",
                   }}
@@ -2033,7 +2034,7 @@ export default function App() {
           >
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <div style={{ minWidth: 210 }}>
-                <div style={{ fontSize: 9, color: "#64aaff", fontFamily: "monospace", letterSpacing: 1.8 }}>
+                <div style={{ fontSize: 9, color: "#64aaff", fontFamily: FONT.ui, letterSpacing: 1.8 }}>
                   {selectionEyebrow}
                 </div>
                 <h1
@@ -2041,7 +2042,7 @@ export default function App() {
                     margin: "2px 0 0",
                     fontSize: 26,
                     color: isDarkTheme ? "#fff" : "#333",
-                    fontFamily: "monospace",
+                    fontFamily: FONT.ui,
                     letterSpacing: 0.5,
                   }}
                 >
@@ -2055,7 +2056,7 @@ export default function App() {
                   border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.36)" : "#3B82F6"}`,
                   borderRadius: 14,
                   fontSize: 10,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   color: isDarkTheme ? "rgba(255,255,255,0.78)" : "#1a1a1a",
                   display: "flex",
                   alignItems: "center",
@@ -2113,7 +2114,7 @@ export default function App() {
                     style={{
                       padding: "3px 10px",
                       fontSize: 11,
-                      fontFamily: "monospace",
+                      fontFamily: FONT.ui,
                       fontWeight: isActive ? 600 : 400,
                       letterSpacing: 1,
                       border: `1px solid ${isActive ? "#64aaff" : isDarkTheme ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"}`,
@@ -2194,7 +2195,7 @@ export default function App() {
                   borderRadius: 6,
                   color: isDarkTheme ? "#fff" : "#333",
                   fontSize: 12,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   cursor: "pointer",
                   backdropFilter: "blur(8px)",
                   letterSpacing: 1,
@@ -2215,7 +2216,7 @@ export default function App() {
                   borderRadius: 6,
                   color: isDarkTheme ? "#fff" : "#333",
                   fontSize: 12,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   cursor: "pointer",
                   backdropFilter: "blur(8px)",
                   letterSpacing: 1,
@@ -2233,7 +2234,7 @@ export default function App() {
                 borderRadius: 6,
                 color: isDarkTheme ? "#fff" : "#333",
                 fontSize: 12,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
                 backdropFilter: "blur(8px)",
                 letterSpacing: 1,
@@ -2244,7 +2245,7 @@ export default function App() {
             <div
               style={{
                 fontSize: 10,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 color: isDarkTheme ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)",
                 letterSpacing: 0.5,
               }}
@@ -2271,7 +2272,7 @@ export default function App() {
               padding: "4px 10px",
             }}
           >
-            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: "monospace" }}>
+            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: FONT.ui }}>
               {finalFlights.length} flights
               {airportSet !== null
                 ? ` (${setName ?? `${airportSet.length} airports`})`
@@ -2280,11 +2281,11 @@ export default function App() {
               {` · ${timeline.selectedDate}`}
               {timeline.rangeDays > 1 && ` +${timeline.rangeDays - 1}d`}
             </div>
-            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)", fontSize: 11, fontFamily: "monospace" }}>
+            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)", fontSize: 11, fontFamily: FONT.ui }}>
               {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
             </div>
             {!loading && !loadingProgress && displayedFlights.length === 0 && (
-              <div style={{ color: isDarkTheme ? "rgba(255,180,80,0.55)" : "rgba(180,120,0,0.6)", fontSize: 10, fontFamily: "monospace", marginTop: 2 }}>
+              <div style={{ color: isDarkTheme ? "rgba(255,180,80,0.55)" : "rgba(180,120,0,0.6)", fontSize: 10, fontFamily: FONT.ui, marginTop: 2 }}>
                 此日期範圍無航班資料
               </div>
             )}
@@ -2324,7 +2325,7 @@ export default function App() {
             <div style={{ flex: 1 }} />
 
             {loading && (
-              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "monospace" }}>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: FONT.ui }}>
                 Loading...
               </span>
             )}
@@ -2339,7 +2340,7 @@ export default function App() {
                 border: "1px solid rgba(255,255,255,0.2)",
                 color: "#fff",
                 fontSize: 12,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -2359,7 +2360,7 @@ export default function App() {
                 border: "1px solid rgba(255,255,255,0.2)",
                 color: "#fff",
                 fontSize: 12,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
                 letterSpacing: 1,
               }}
@@ -2379,7 +2380,7 @@ export default function App() {
                 border: `1px solid ${renderMode === "3d" ? "rgba(80,140,255,0.5)" : "rgba(255,170,68,0.5)"}`,
                 color: "#fff",
                 fontSize: 12,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
                 letterSpacing: 1,
               }}
@@ -2451,7 +2452,7 @@ export default function App() {
                             padding: "8px 12px",
                             fontSize: 12,
                             cursor: "pointer",
-                            fontFamily: "monospace",
+                            fontFamily: FONT.ui,
                             whiteSpace: "nowrap",
                           }}
                         >
@@ -2487,7 +2488,7 @@ export default function App() {
                         marginTop: 8,
                         color: "rgba(255,255,255,0.4)",
                         fontSize: 11,
-                        fontFamily: "monospace",
+                        fontFamily: FONT.ui,
                       }}
                     >
                       {finalFlights.length} flights
@@ -2500,7 +2501,7 @@ export default function App() {
                 {level === "full" && (
                   <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "monospace" }}>Style</span>
+                      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: FONT.ui }}>Style</span>
                       <StyleSelector
                         selected={mapStyleId}
                         isDarkTheme={true}
@@ -2519,7 +2520,7 @@ export default function App() {
                         <label key={s.label} style={{
                           color: "rgba(255,255,255,0.6)",
                           fontSize: 11,
-                          fontFamily: "monospace",
+                          fontFamily: FONT.ui,
                           display: "flex",
                           alignItems: "center",
                           gap: 8,
@@ -2553,7 +2554,7 @@ export default function App() {
             borderRadius: 8,
             padding: "10px 14px",
             pointerEvents: "none",
-            fontFamily: "monospace",
+            fontFamily: FONT.ui,
             minWidth: 160,
             boxShadow: isDarkTheme ? "none" : "0 2px 12px rgba(0,0,0,0.1)",
           }}
