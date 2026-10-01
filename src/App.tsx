@@ -33,7 +33,7 @@ import { DataSourceToggle } from "./components/DataSourceToggle";
 import { DepArrToggle, type DepArrFilter } from "./components/DepArrToggle";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
-import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
+import { IconRailSidebar, type ScenePreset, type PanelId } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
 import { useCinemaCamera } from "./hooks/useCinemaCamera";
 import { useCanvasRecorder } from "./hooks/useCanvasRecorder";
@@ -48,7 +48,8 @@ import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
 import { setFrozenAnimTime } from "./three/animClock";
 import { ThemeProvider } from "./styles/ThemeContext";
-import { FONT } from "./styles/tokens";
+import { FONT, LAYOUT, Z } from "./styles/tokens";
+import { Button, Caption, type CaptionMetaItem } from "./ui";
 
 // ── Atlas 機場點：點擊 popup ──
 interface AtlasProps {
@@ -381,6 +382,8 @@ export default function App() {
   const [viewshedOpacity, setViewshedOpacity] = useState(0.5);
   const [viewshedSharpness, setViewshedSharpness] = useState(0.5);
   const [showInfo, setShowInfo] = useState(false);
+  // 左側 rail 面板（進站預設收起，Q6；圖說旁的引導入口也會開它）
+  const [railPanel, setRailPanel] = useState<PanelId | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [airspaceSelection, setAirspaceSelection] = useState<{ selected: AirspaceFeature; others: AirspaceFeature[] } | null>(null);
   const [airspaceSettings, setAirspaceSettings] = useState<AirspaceSettings>(() => {
@@ -931,6 +934,17 @@ export default function App() {
       depArrFilter === "dep" ? activeIcaoSet.has(f.origin_icao) : activeIcaoSet.has(f.dest_icao)
     );
   }, [setFilteredFlights, depArrFilter, activeIcaoSet]);
+
+  // 左下圖說：進場／離場數（定義同 Dep/Arr 篩選：dest／origin 在目前機場或組合內）
+  const captionCounts = useMemo(() => {
+    let arr = 0;
+    let dep = 0;
+    for (const f of finalFlights) {
+      if (activeIcaoSet.has(f.dest_icao)) arr++;
+      if (activeIcaoSet.has(f.origin_icao)) dep++;
+    }
+    return { arr, dep };
+  }, [finalFlights, activeIcaoSet]);
 
   // 用於 FlightPicker 的航班列表（airport filter；set 模式則 union 所有 set 機場）
   const pickableFlights = useMemo(() => {
@@ -1589,6 +1603,32 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, availableDates.length]);
 
+  // ── 左下圖說內容 ──
+  const captionCode = airportSet !== null
+    ? setName ?? "自訂組合"
+    : scope === "region" ? REGION_CONFIG[region].label : selectedAirport;
+  const captionName = airportSet !== null
+    ? `${airportSet.length} 座機場`
+    : scope === "region"
+      ? regionTitle
+      : airportMeta[selectedAirport]?.nameZh || airportMeta[selectedAirport]?.name || getAirportInfo(selectedAirport)?.name || "";
+  const captionMeta: CaptionMetaItem[] = [
+    {
+      label: `${timeline.selectedDate} 週${"日一二三四五六"[new Date(`${timeline.selectedDate}T00:00:00Z`).getUTCDay()] ?? ""}`
+        + (timeline.rangeDays > 1 ? ` +${timeline.rangeDays - 1}d` : "")
+        + (timeline.isMultiDateMode ? ` · Compare ${timeline.selectedDates.length} 日` : "")
+        + " · 台灣時間",
+    },
+    { value: finalFlights.length.toLocaleString(), unit: "班" },
+    ...(airportSet !== null || scope !== "region"
+      ? [
+          { label: "進場", value: captionCounts.arr.toLocaleString() },
+          { label: "離場", value: captionCounts.dep.toLocaleString() },
+        ]
+      : []),
+    ...(loadingProgress ? [{ label: "載入中", value: loadingProgress.loaded.toLocaleString() }] : []),
+  ];
+
   if (!hasCompletedInitialLoad && loading && allFlights.length === 0) {
     return <LoadingScreen />;
   }
@@ -1856,6 +1896,8 @@ export default function App() {
         <>
           {/* Icon Rail Sidebar */}
           <IconRailSidebar
+            activePanel={railPanel}
+            onActivePanelChange={setRailPanel}
             isDarkTheme={isDarkTheme}
             displayMode={displayMode}
             renderMode={renderMode}
@@ -2019,6 +2061,40 @@ export default function App() {
             onAtlasGlowSizeChange={setAtlasGlowSize}
             onExploreOpen={() => mapRef.current?.flyTo({ ...EXPLORE_OVERVIEW_CAMERA, duration: 2000 })}
           />
+
+          {/* 左下圖說：在看什麼（機場／組合、日期、班數、進離場）+ 進站引導（Q6） */}
+          <div
+            style={{
+              position: "absolute",
+              left: LAYOUT.panelLeft + 8,
+              bottom: 136,
+              zIndex: Z.mapOverlay,
+              maxWidth: 520,
+              pointerEvents: "none",
+            }}
+          >
+            <Caption
+              code={captionCode}
+              name={captionName}
+              meta={captionMeta}
+              notice={!loading && !loadingProgress && displayedFlights.length === 0 ? "此日期範圍無航班資料" : undefined}
+              onExit={airportSet ? exitSetMode : undefined}
+              exitLabel="退出組合模式"
+              actions={railPanel === null ? (
+                <>
+                  <Button onClick={() => setRailPanel("sets")}>選機場</Button>
+                  <Button
+                    onClick={() => {
+                      setRailPanel("atlas");
+                      mapRef.current?.flyTo({ ...EXPLORE_OVERVIEW_CAMERA, duration: 2000 });
+                    }}
+                  >
+                    全部機場
+                  </Button>
+                </>
+              ) : undefined}
+            />
+          </div>
 
           {/* 頂部控制列（sidebar 右邊） */}
           <div

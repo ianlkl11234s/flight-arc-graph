@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { DisplayMode, Region, RenderMode, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
 import type { ColorTheme } from "../types/colorTheme";
 import type { AirspaceSettings } from "../types/airspace";
@@ -25,7 +24,7 @@ export { SCENE_PRESETS, type ScenePreset } from "./sidebar/scenePresets";
 
 /* ── Types ───────────────────────────────────────────────── */
 
-type PanelId = "settings" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
+export type PanelId = "settings" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
 type WorkspaceId = "explore" | "selection" | "view" | "analyze";
 
 const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
@@ -44,6 +43,9 @@ function getWorkspace(panel: PanelId | null): WorkspaceId | null {
 }
 
 export interface IconRailSidebarProps {
+  /** 目前開著的面板（null = 全部收起；進站預設收起，Q6） */
+  activePanel: PanelId | null;
+  onActivePanelChange: (panel: PanelId | null) => void;
   // Theme
   isDarkTheme: boolean;
   // Settings panel controls
@@ -185,7 +187,7 @@ const ATLAS_BADGE_KEYFRAMES = `
 /* ── Main Component ──────────────────────────────────────── */
 
 export function IconRailSidebar(props: IconRailSidebarProps) {
-  const [activePanel, setActivePanel] = useState<PanelId | null>("sets");
+  const { activePanel, onActivePanelChange: setActivePanel } = props;
   const { tokens } = useTheme();
   const activeWorkspace = getWorkspace(activePanel);
   const activeSelection = props.airportSet ?? [props.selectedAirport];
@@ -209,9 +211,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         : "航班分析";
 
   const toggleWorkspace = (workspace: WorkspaceId) => {
-    setActivePanel((prev) => (
-      getWorkspace(prev) === workspace ? null : WORKSPACE_DEFAULT_PANEL[workspace]
-    ));
+    setActivePanel(getWorkspace(activePanel) === workspace ? null : WORKSPACE_DEFAULT_PANEL[workspace]);
   };
 
   const workspaceEyebrow = activeWorkspace === "explore"

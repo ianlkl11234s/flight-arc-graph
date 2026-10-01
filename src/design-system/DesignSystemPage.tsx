@@ -3,6 +3,7 @@ import { COLOR, FONT, SIZE, SPACE } from "../styles/tokens";
 import { useTheme } from "../styles/ThemeContext";
 import {
   Button,
+  Caption,
   Chip,
   ChipGroup,
   DockCard,
@@ -353,6 +354,37 @@ function DockDemo() {
   );
 }
 
+function CaptionDemo() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s24 }}>
+      <Caption
+        code="RCTP"
+        name="臺灣桃園國際機場"
+        meta={[
+          { label: "2026-02-18 週三 · 台灣時間" },
+          { value: "597", unit: "班" },
+          { label: "進場", value: "303" },
+          { label: "離場", value: "294" },
+        ]}
+        actions={
+          <>
+            <Button>選機場</Button>
+            <Button>全部機場</Button>
+          </>
+        }
+      />
+      <Caption
+        code="亞太樞紐"
+        name="6 座機場"
+        meta={[{ label: "2026-02-19 週四 · 台灣時間" }, { value: "0", unit: "班" }]}
+        notice="此日期範圍無航班資料"
+        onExit={() => undefined}
+        exitLabel="退出組合模式"
+      />
+    </div>
+  );
+}
+
 function StatusDemo() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s8, width: 300 }}>
@@ -422,6 +454,7 @@ const SECTIONS = [
   { id: "chip", name: "Chip / ChipGroup", note: "篩選與最近瀏覽。選中 = accent 邊框；移除鈕為 SVG。ChipGroup 為多選集合。", render: () => <ChipDemo /> },
   { id: "stat", name: "StatCard", note: "card / row 兩種版型；數字一律 mono tabular；缺值顯示「—」（R9）。", render: () => <StatDemo /> },
   { id: "dock", name: "DockCard", note: "右下 dock 資訊卡外殼：眉標、標題、kv 列、動作列、關閉。", render: () => <DockDemo /> },
+  { id: "caption", name: "Caption", note: "左下圖說：機場碼 30px mono + 中文名、日期／班數／進離場；左側 2px 琥珀線。組合模式含退出鈕；面板收起時旁邊放引導入口（Q6）。", render: () => <CaptionDemo /> },
   { id: "status", name: "StatusBar", note: "單行載入狀態（外觀）。失敗與「這天沒資料」分開；顯示節奏（150ms / 600ms / 2s / 4s）P4 接。", render: () => <StatusDemo /> },
   { id: "modal", name: "Modal", note: "置中外殼、z modal、Esc 關閉（capture 階段攔截，R7 最上層）。上方為 inline 展示。", render: () => <ModalDemo /> },
 ];
