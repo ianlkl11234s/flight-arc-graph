@@ -37,8 +37,8 @@
       "rgba": 6
     },
     "src/components/IconRailSidebar.tsx": {
-      "hex": 11,
-      "rgba": 11
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/InfoModal.tsx": {
       "hex": 12,
@@ -67,6 +67,34 @@
     "src/components/sidebar/charts.tsx": {
       "hex": 2,
       "rgba": 1
+    },
+    "src/components/sidebar/panels/AirspacePanel.tsx": {
+      "hex": 2,
+      "rgba": 3
+    },
+    "src/components/sidebar/panels/AtlasPanel.tsx": {
+      "hex": 8,
+      "rgba": 1
+    },
+    "src/components/sidebar/panels/CalendarPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/panels/ColorThemePanel.tsx": {
+      "hex": 1,
+      "rgba": 7
+    },
+    "src/components/sidebar/panels/SetsPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/panels/SettingsPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/panels/SummaryPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/sidebar/primitives.tsx": {
       "hex": 1,
