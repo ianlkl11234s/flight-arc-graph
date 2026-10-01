@@ -426,7 +426,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               dateCounts={props.dateCounts}
               selectedDate={props.selectedDate}
               onDateSelect={props.onDateSelect}
-              theme={theme}
             />
           )}
           {activePanel === "colors" && (

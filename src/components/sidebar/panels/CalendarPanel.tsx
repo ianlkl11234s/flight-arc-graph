@@ -1,6 +1,9 @@
 import { useState, useEffect, type CSSProperties } from "react";
-import { FONT } from "../../../styles/tokens";
-import type { ThemeColors } from "../theme";
+import { useTheme } from "../../../styles/ThemeContext";
+import { FONT, RADIUS, SIZE, SPACE } from "../../../styles/tokens";
+import { Button } from "../../../ui";
+import { IconChevron } from "../../../ui/icons";
+import { mix } from "../../../ui/vars";
 import type { IconRailSidebarProps } from "../../IconRailSidebar";
 
 export const MONTHS = [
@@ -28,8 +31,8 @@ export function CalendarPanel({
   dateCounts,
   selectedDate,
   onDateSelect,
-  theme,
-}: Pick<IconRailSidebarProps, "availableDates" | "fullDates" | "dateCounts" | "selectedDate" | "onDateSelect"> & { theme: ThemeColors }) {
+}: Pick<IconRailSidebarProps, "availableDates" | "fullDates" | "dateCounts" | "selectedDate" | "onDateSelect">) {
+  const { tokens } = useTheme();
   const availableSet = new Set(availableDates);
   const fullSet = new Set(fullDates);
 
@@ -71,74 +74,48 @@ export function CalendarPanel({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 11,
-    fontFamily: FONT.ui,
+    fontSize: SIZE.s11,
+    fontFamily: FONT.data,
     border: "none",
-    borderRadius: 6,
+    borderRadius: RADIUS.base,
     cursor: "pointer",
     background: "transparent",
-    color: theme.ACCENT,
+    color: tokens.fg2,
     position: "relative",
   };
 
   return (
     <>
       {/* All Dates button */}
-      <button
-        onClick={() => onDateSelect(null)}
-        style={{
-          width: "100%",
-          padding: "6px 0",
-          marginBottom: 8,
-          fontSize: 11,
-          fontFamily: FONT.ui,
-          border: `1px solid ${selectedDate === null ? theme.ACTIVE_BORDER : theme.BORDER}`,
-          borderRadius: 4,
-          background: selectedDate === null ? theme.ACTIVE_BG : "transparent",
-          color: selectedDate === null ? theme.ACTIVE_TEXT : theme.ACCENT,
-          cursor: "pointer",
-        }}
-      >
+      <Button fullWidth pressed={selectedDate === null} onClick={() => onDateSelect(null)}>
         All Dates
-      </button>
+      </Button>
 
       {/* Month navigation */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 8,
-        }}
-      >
-        <button
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Button
+          variant="ghost"
+          ariaLabel="上個月"
           onClick={prevMonth}
-          style={{ background: "none", border: "none", color: theme.ACCENT, cursor: "pointer", fontSize: 14, padding: "2px 6px" }}
-        >
-          &lt;
-        </button>
-        <span style={{ fontSize: 12, color: theme.ACTIVE_TEXT, fontWeight: 500 }}>
+          icon={<span style={{ display: "flex", transform: "scaleX(-1)" }}><IconChevron direction="right" /></span>}
+        />
+        <span style={{ fontSize: SIZE.s12, color: tokens.fg1, fontWeight: 500, fontFamily: FONT.ui }}>
           {MONTHS[viewMonth]} {viewYear}
         </span>
-        <button
-          onClick={nextMonth}
-          style={{ background: "none", border: "none", color: theme.ACCENT, cursor: "pointer", fontSize: 14, padding: "2px 6px" }}
-        >
-          &gt;
-        </button>
+        <Button variant="ghost" ariaLabel="下個月" onClick={nextMonth} icon={<IconChevron direction="right" />} />
       </div>
 
       {/* Day headers */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 30px)", gap: 1, justifyContent: "center", marginBottom: 2 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 30px)", gap: 1, justifyContent: "center", marginBottom: SPACE.s2 }}>
         {DAY_HEADERS.map((d) => (
           <div
             key={d}
             style={{
               width: 30,
               textAlign: "center",
-              fontSize: 10,
-              color: theme.DIM,
-              fontFamily: FONT.ui,
+              fontSize: SIZE.s10,
+              color: tokens.fg3,
+              fontFamily: FONT.data,
             }}
           >
             {d}
@@ -176,8 +153,8 @@ export function CalendarPanel({
               }}
               style={{
                 ...cellBase,
-                background: isSelected ? theme.ACTIVE_BG : "transparent",
-                color: hasData ? (isPartial ? theme.ACCENT : theme.ACTIVE_TEXT) : theme.NO_DATA_TEXT,
+                background: isSelected ? tokens.accentSoft : "transparent",
+                color: hasData ? (isPartial ? tokens.fg2 : tokens.fg1) : mix(tokens.fg3, 50),
                 cursor: hasData ? "pointer" : "default",
                 fontWeight: isSelected ? 700 : 400,
               }}
@@ -191,8 +168,8 @@ export function CalendarPanel({
                     width: isFull ? 4 : 4,
                     height: isFull ? 4 : 4,
                     borderRadius: "50%",
-                    background: isFull ? theme.ACCENT_BLUE : "transparent",
-                    border: isFull ? "none" : `1px solid ${theme.ACCENT_BLUE}80`,
+                    background: isFull ? tokens.accent : "transparent",
+                    border: isFull ? "none" : `1px solid ${mix(tokens.accent, 50)}`,
                   }}
                 />
               )}
