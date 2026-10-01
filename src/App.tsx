@@ -2105,8 +2105,7 @@ export default function App() {
                       setScope("airport");
                       const cfg = REGION_CONFIG[r];
                       if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
-                      // 跳到有資料的日期
-                      if (cfg.defaultDate) timeline.setSelectedDate(cfg.defaultDate);
+                      // 日期：切機場後由「機場改變」effect 處理（目前日期不可用才跳 preferredDate）
                       // 飛到預設機場視角
                       mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
                     }}
