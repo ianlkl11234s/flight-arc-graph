@@ -50,6 +50,9 @@
   --accent-ink: #1a1206;
   --rail: rgba(7,9,11,.8);
   --map-bg: #05070a;
+  --danger: #ff6b6b;
+  --rec: #e5484d;
+  --accent-soft: rgba(242,169,59,.14);
 }
 
 [data-theme="light"] {
@@ -63,4 +66,7 @@
   --accent-ink: #fff8ee;
   --rail: rgba(240,242,244,.85);
   --map-bg: #e8eaec;
+  --danger: #c62828;
+  --rec: #e5484d;
+  --accent-soft: rgba(168,98,0,.12);
 }

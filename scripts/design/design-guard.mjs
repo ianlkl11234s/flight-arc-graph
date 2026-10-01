@@ -2,7 +2,7 @@
 // Design guard ratchet：寫死色碼（hex / rgb(a)）數量只准降、不准升。
 //   node scripts/design/design-guard.mjs           # 與 baseline 比對，任一檔增加 → exit 1
 //   node scripts/design/design-guard.mjs --update  # 數字全部不升時寫回；有任何上升 → 拒絕
-// 掃描：src/components/**/*.{ts,tsx} 與 src/App.tsx；排除 colorTheme.ts、src/three/**、src/map/**
+// 掃描：src/components/**/*.{ts,tsx}、src/ui/**（baseline 0）與 src/App.tsx；排除 colorTheme.ts、src/three/**、src/map/**
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, resolve, relative, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,7 +27,12 @@ function walk(dir) {
   return out;
 }
 
-const files = [resolve(root, "src/App.tsx"), ...walk(resolve(root, "src/components"))]
+const uiDir = resolve(root, "src/ui");
+const files = [
+  resolve(root, "src/App.tsx"),
+  ...walk(resolve(root, "src/components")),
+  ...(existsSync(uiDir) ? walk(uiDir) : []),
+]
   .map((p) => relative(root, p).split(sep).join("/"))
   .filter((f) => !EXCLUDE.some((x) => f === x || f.startsWith(x)))
   .sort();

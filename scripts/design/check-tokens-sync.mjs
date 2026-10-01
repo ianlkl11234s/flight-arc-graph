@@ -65,7 +65,7 @@ for (const [theme, cssSet] of [["dark", dark], ["light", light]]) {
   const m = new RegExp(`${theme}\\s*:\\s*\\{`).exec(colorBlock);
   const b = block(colorBlock.slice(m.index), new RegExp(`${theme}\\s*:\\s*\\{`));
   const p = pairs(b);
-  if (Object.keys(p).length !== 10) { console.error(`${theme}: 預期 10 個色票，實得 ${Object.keys(p).length}`); errors++; }
+  if (Object.keys(p).length !== 13) { console.error(`${theme}: 預期 13 個色票，實得 ${Object.keys(p).length}`); errors++; }
   for (const [k, v] of Object.entries(p)) check(`COLOR.${theme}.${k}`, v, cssSet[kebab(k)]);
 }
 

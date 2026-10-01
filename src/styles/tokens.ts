@@ -16,6 +16,12 @@ export interface ColorTokens {
   accentInk: string;
   rail: string;
   mapBg: string;
+  /** 語意色：錯誤／刪除 */
+  danger: string;
+  /** 語意色：錄影紅（兩色同） */
+  rec: string;
+  /** accent 12–16% 透明，選中底 */
+  accentSoft: string;
 }
 
 export const COLOR: { dark: ColorTokens; light: ColorTokens } = {
@@ -30,6 +36,9 @@ export const COLOR: { dark: ColorTokens; light: ColorTokens } = {
     accentInk: "#1a1206",
     rail: "rgba(7,9,11,.8)",
     mapBg: "#05070a",
+    danger: "#ff6b6b",
+    rec: "#e5484d",
+    accentSoft: "rgba(242,169,59,.14)",
   },
   light: {
     panel: "rgba(248,249,250,.78)",
@@ -42,6 +51,9 @@ export const COLOR: { dark: ColorTokens; light: ColorTokens } = {
     accentInk: "#fff8ee",
     rail: "rgba(240,242,244,.85)",
     mapBg: "#e8eaec",
+    danger: "#c62828",
+    rec: "#e5484d",
+    accentSoft: "rgba(168,98,0,.12)",
   },
 };
 
