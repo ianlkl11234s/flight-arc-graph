@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl, { type Map as MapboxMap } from "mapbox-gl";
-import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay, SavedAirportSet } from "./types";
+import type { DepArrFilter, Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay, SavedAirportSet } from "./types";
 import { computeFitBoundsForSet } from "./map/fitBoundsForSet";
 import { BUILTIN_SETS } from "./map/savedSets";
 import type { FlightScene } from "./three/FlightScene";
@@ -29,7 +29,7 @@ import { TimelineControls } from "./components/TimelineControls";
 import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
-import { DepArrToggle, type DepArrFilter } from "./components/DepArrToggle";
+import { Toolbar } from "./components/Toolbar";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
 import { IconRailSidebar, type ScenePreset, type PanelId } from "./components/IconRailSidebar";
@@ -2174,11 +2174,6 @@ export default function App() {
                   </button>
                 )}
               </div>
-              <DepArrToggle
-                filter={depArrFilter}
-                isDarkTheme={isDarkTheme}
-                onChange={setDepArrFilter}
-              />
             </div>
           </div>
 
@@ -2222,76 +2217,25 @@ export default function App() {
             }}
           />
 
-          {/* 右上角按鈕群 */}
+          {/* 右上唯一工具列（R3） */}
+          <Toolbar
+            depArrFilter={depArrFilter}
+            onDepArrChange={setDepArrFilter}
+            renderMode={renderMode}
+            onRenderModeChange={setRenderMode}
+            mapStyleId={mapStyleId}
+            onMapStyleChange={setMapStyleId}
+            onCapture={() => setCaptureMode(true)}
+            onInfo={() => setShowInfo(true)}
+          />
           <div
             style={{
               position: "absolute",
-              top: 16,
+              top: 60,
               right: 16,
-              zIndex: 10,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
-              gap: 8,
+              zIndex: Z.mapOverlay,
             }}
           >
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => setCaptureMode(true)}
-                style={{
-                  padding: "6px 14px",
-                  background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-                  border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-                  borderRadius: 6,
-                  color: isDarkTheme ? "#fff" : "#333",
-                  fontSize: 12,
-                  fontFamily: FONT.ui,
-                  cursor: "pointer",
-                  backdropFilter: "blur(8px)",
-                  letterSpacing: 1,
-                }}
-              >
-                Capture
-              </button>
-              <button
-                onClick={() => setRenderMode((m) => (m === "3d" ? "2d" : "3d"))}
-                style={{
-                  padding: "6px 14px",
-                  background: renderMode === "3d"
-                    ? (isDarkTheme ? "rgba(80,140,255,0.2)" : "rgba(80,140,255,0.1)")
-                    : (isDarkTheme ? "rgba(255,170,68,0.2)" : "rgba(255,170,68,0.1)"),
-                  border: `1px solid ${renderMode === "3d"
-                    ? (isDarkTheme ? "rgba(80,140,255,0.5)" : "rgba(80,140,255,0.4)")
-                    : (isDarkTheme ? "rgba(255,170,68,0.5)" : "rgba(255,170,68,0.4)")}`,
-                  borderRadius: 6,
-                  color: isDarkTheme ? "#fff" : "#333",
-                  fontSize: 12,
-                  fontFamily: FONT.ui,
-                  cursor: "pointer",
-                  backdropFilter: "blur(8px)",
-                  letterSpacing: 1,
-                }}
-              >
-                {renderMode === "3d" ? "3D Altitude" : "2D Flat"}
-              </button>
-            </div>
-            <button
-              onClick={() => setShowInfo(true)}
-              style={{
-                padding: "6px 14px",
-                background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-                border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-                borderRadius: 6,
-                color: isDarkTheme ? "#fff" : "#333",
-                fontSize: 12,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-                letterSpacing: 1,
-              }}
-            >
-              Info
-            </button>
             <div
               style={{
                 fontSize: 10,
@@ -2519,9 +2463,14 @@ export default function App() {
                         value={dataSource}
                         onChange={setDataSource}
                       />
-                      <DepArrToggle
-                        filter={depArrFilter}
-                        isDarkTheme={true}
+                      <Segmented<DepArrFilter>
+                        ariaLabel="起降"
+                        options={[
+                          { value: "all", label: "全部" },
+                          { value: "arr", label: "進場" },
+                          { value: "dep", label: "離場" },
+                        ]}
+                        value={depArrFilter}
                         onChange={setDepArrFilter}
                       />
                     </div>

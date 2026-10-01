@@ -1,5 +1,5 @@
 import type { MapStyle } from "../types";
-import { FONT } from "../styles/tokens";
+import { Select } from "../ui";
 
 export const MAP_STYLES: MapStyle[] = [
   { id: "dark", name: "Dark", url: "mapbox://styles/mapbox/dark-v11" },
@@ -14,34 +14,23 @@ export const MAP_STYLES: MapStyle[] = [
 
 interface Props {
   selected: string;
+  /** 舊介面相容；取色已改走 useTheme().tokens */
   isDarkTheme?: boolean;
   onChange: (styleId: string) => void;
+  width?: number | string;
 }
 
-const getStyle = (dark: boolean): React.CSSProperties => ({
-  background: dark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.85)",
-  color: dark ? "#fff" : "#333",
-  border: `1px solid ${dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-  borderRadius: 4,
-  padding: "4px 8px",
-  fontSize: 12,
-  fontFamily: FONT.ui,
-  backdropFilter: "blur(8px)",
-});
-
-export function StyleSelector({ selected, isDarkTheme = true, onChange }: Props) {
+/** 底圖下拉（選項 >3 → ui/Select）。 */
+export function StyleSelector({ selected, onChange, width }: Props) {
   return (
-    <select
+    <Select<string>
+      ariaLabel="底圖"
+      title="底圖"
+      width={width}
+      options={MAP_STYLES.map((s) => ({ value: s.id, label: s.name }))}
       value={selected}
-      onChange={(e) => onChange(e.target.value)}
-      style={getStyle(isDarkTheme)}
-    >
-      {MAP_STYLES.map((s) => (
-        <option key={s.id} value={s.id}>
-          {s.name}
-        </option>
-      ))}
-    </select>
+      onChange={onChange}
+    />
   );
 }
 

@@ -1,8 +1,8 @@
 {
   "files": {
     "src/App.tsx": {
-      "hex": 40,
-      "rgba": 117
+      "hex": 34,
+      "rgba": 101
     },
     "src/components/AirportSelector.tsx": {
       "hex": 2,
@@ -19,10 +19,6 @@
     "src/components/DeepAnalysisPanel.tsx": {
       "hex": 0,
       "rgba": 0
-    },
-    "src/components/DepArrToggle.tsx": {
-      "hex": 2,
-      "rgba": 8
     },
     "src/components/FlightPicker.tsx": {
       "hex": 4,
@@ -53,12 +49,16 @@
       "rgba": 0
     },
     "src/components/StyleSelector.tsx": {
-      "hex": 2,
-      "rgba": 4
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/TimelineControls.tsx": {
       "hex": 4,
       "rgba": 43
+    },
+    "src/components/Toolbar.tsx": {
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/sidebar/charts.tsx": {
       "hex": 0,
