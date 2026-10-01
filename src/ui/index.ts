@@ -5,3 +5,6 @@ export { Button, type ButtonProps, type ButtonVariant } from "./Button";
 export { Segmented, type SegmentedProps, type SegmentedOption } from "./Segmented";
 export { Select, type SelectProps, type SelectOption } from "./Select";
 export { Toggle, type ToggleProps } from "./Toggle";
+export { Slider, type SliderProps, type SliderSingleProps, type SliderRangeProps } from "./Slider";
+export { Chip, ChipGroup, type ChipProps, type ChipGroupProps } from "./Chip";
+export { StatCard, StatGrid, type StatCardProps } from "./StatCard";
