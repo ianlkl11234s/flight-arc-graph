@@ -47,6 +47,7 @@ import { getAircraftInfo, type AircraftCategory as AcCat } from "./data/aircraft
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
 import { setFrozenAnimTime } from "./three/animClock";
+import { ThemeProvider } from "./styles/ThemeContext";
 
 // ── Atlas 機場點：點擊 popup ──
 interface AtlasProps {
@@ -1592,6 +1593,7 @@ export default function App() {
   }
 
   return (
+    <ThemeProvider isDark={isDarkTheme}>
     <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
       <MapView
         preset={preset}
@@ -2611,5 +2613,6 @@ export default function App() {
         />
       )}
     </div>
+    </ThemeProvider>
   );
 }
