@@ -650,7 +650,7 @@ export default function App() {
   }, []);
   const timeline = useTimeline({ availableDates, preferredDate, onTick: handleTimelineTick });
 
-  // 切換機場時：若目前日期不是新機場的完整資料日，跳到該機場的 preferredDate。
+  // 切換機場時：若目前日期不在新機場的可用日期（availableDates）內，跳到該機場的 preferredDate。
   // 只在「機場改變」時觸發 —— 使用者手動點部分資料日期不會被蓋掉。
   const prevAirportRef = useRef(selectedAirport);
   const prevSelectionRef = useRef<string | null>(null);
@@ -758,7 +758,7 @@ export default function App() {
     });
   }, [availableDates, timeline.selectedDate, timeline.rangeDays, timeline.selectedDates]);
 
-  // Airspace Scan 預設：切換時自動設定 All Taiwan、7d、拉遠視角、低 opacity
+  // Airspace Scan 預設：切換時自動設定 region 範圍、1d、拉遠視角、低 opacity（切回 Route Tracks 亦為 1d）
   const prevDataSourceRef = useRef(dataSource);
   useEffect(() => {
     const prev = prevDataSourceRef.current;
