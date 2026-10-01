@@ -69,12 +69,12 @@
       "rgba": 1
     },
     "src/components/sidebar/panels/AirspacePanel.tsx": {
-      "hex": 2,
-      "rgba": 3
+      "hex": 1,
+      "rgba": 1
     },
     "src/components/sidebar/panels/AtlasPanel.tsx": {
-      "hex": 8,
-      "rgba": 1
+      "hex": 7,
+      "rgba": 0
     },
     "src/components/sidebar/panels/CalendarPanel.tsx": {
       "hex": 0,

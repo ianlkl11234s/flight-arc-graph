@@ -400,7 +400,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             </div>
           </div>
           <div style={{ minHeight: 0, overflowY: "auto", flex: "1 1 auto" }}>
-          {activePanel === "settings" && <SettingsPanel {...props} theme={theme} />}
+          {activePanel === "settings" && <SettingsPanel {...props} />}
           {activePanel === "sets" && (
             <SetsPanel
               airports={props.airports}
@@ -449,7 +449,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
             <AirspacePanel
               settings={props.airspaceSettings}
               onChange={props.onAirspaceSettingsChange}
-              theme={theme}
             />
           )}
           {activePanel === "summary" && (
@@ -488,7 +487,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               atlasGlowSize={props.atlasGlowSize}
               onAtlasGlowSizeChange={props.onAtlasGlowSizeChange}
               airportCatalog={props.airportCatalog}
-              theme={theme}
             />
           )}
           </div>

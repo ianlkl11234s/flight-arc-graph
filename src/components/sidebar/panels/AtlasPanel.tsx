@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 import type { AirportManifestEntry } from "../../../data/flightLoader";
 import type { AtlasColorMode } from "../../../map/atlasGlowLayer";
-import type { ThemeColors } from "../theme";
-import { SectionHeader, SliderRow } from "../primitives";
+import { useTheme } from "../../../styles/ThemeContext";
+import { FONT, RADIUS, SIZE, SPACE } from "../../../styles/tokens";
+import { Button, Section, Segmented, Slider } from "../../../ui";
+import { mix } from "../../../ui/vars";
 
-/* ── Airspace Panel ─────────────────────────────────────── */
+/* ── Atlas Panel ─────────────────────────────────────── */
 
 export function AtlasPanel({
   atlasVisible,
@@ -17,7 +19,6 @@ export function AtlasPanel({
   atlasGlowSize,
   onAtlasGlowSizeChange,
   airportCatalog,
-  theme,
 }: {
   atlasVisible: boolean;
   onAtlasVisibleChange: (v: boolean) => void;
@@ -29,7 +30,6 @@ export function AtlasPanel({
   atlasGlowSize: number;
   onAtlasGlowSizeChange: (v: number) => void;
   airportCatalog: Record<string, AirportManifestEntry>;
-  theme: ThemeColors;
 }) {
   const stats = useMemo(() => {
     let complete = 0;
@@ -50,141 +50,96 @@ export function AtlasPanel({
     { color: "#3E434A", opacity: 0.3, label: "僅規劃（未抓）", desc: "前 1000 目標、尚未抓" },
   ];
 
+  const { tokens } = useTheme();
+  const note = { fontSize: SIZE.s11, color: tokens.fg2, lineHeight: 1.6, fontFamily: FONT.ui } as const;
+  const legendRows = legend.map((l) => (
+    <div key={l.label} style={{ display: "flex", alignItems: "flex-start", gap: SPACE.s8 }}>
+      <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, opacity: l.opacity, marginTop: 2, flexShrink: 0, border: `1px solid ${tokens.border}` }} />
+      <div>
+        <div style={{ fontSize: SIZE.s11, color: tokens.fg1, fontWeight: 500 }}>{l.label}</div>
+        <div style={{ fontSize: SIZE.s10, color: tokens.fg3 }}>{l.desc}</div>
+      </div>
+    </div>
+  ));
+
   return (
-    <div>
-      <SectionHeader theme={theme}>機場總覽 Atlas</SectionHeader>
-      <div style={{ fontSize: 11, color: theme.DIM, lineHeight: 1.6, marginBottom: 10 }}>
-        全球機場點位：圓圈大小＝單日流量、顏色＝資料完整度。點圓圈看該機場基本資料。
-      </div>
-
-      <button
-        onClick={() => onAtlasVisibleChange(!atlasVisible)}
-        style={{
-          position: "relative",
-          width: "100%",
-          padding: "8px 12px",
-          marginBottom: 14,
-          borderRadius: 8,
-          cursor: "pointer",
-          border: `1px solid ${atlasVisible ? theme.ACTIVE_BORDER : theme.BORDER}`,
-          background: atlasVisible ? theme.ACTIVE_BTN_BG : theme.HOVER_BG,
-          color: atlasVisible ? theme.ACTIVE_TEXT : theme.DIM,
-          fontSize: 13,
-          fontWeight: 600,
-        }}
-      >
-        {atlasVisible ? "● 已顯示在地圖上" : "○ 在地圖上顯示機場點"}
-        {!atlasEverEnabled && (
-          <span
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              top: -3,
-              right: -3,
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "#ff4444",
-              border: `2px solid ${theme.BG_PANEL}`,
-              boxShadow: "0 0 6px rgba(255,68,68,0.8)",
-              animation: "atlasBadgePulse 1.6s ease-in-out infinite",
-              pointerEvents: "none",
-            }}
-          />
-        )}
-      </button>
-
-      <div style={{ fontSize: 11, color: theme.DIM, marginBottom: 8, fontWeight: 600 }}>顏色 = 資料完整度</div>
-      {legend.map((l) => (
-        <div key={l.label} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
-          <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, opacity: l.opacity, marginTop: 2, flexShrink: 0, border: `1px solid ${theme.BORDER}` }} />
-          <div>
-            <div style={{ fontSize: 12, color: theme.ACTIVE_TEXT, fontWeight: 600 }}>{l.label}</div>
-            <div style={{ fontSize: 10.5, color: theme.DIM }}>{l.desc}</div>
-          </div>
+    <>
+      <Section title="ATLAS · 機場總覽">
+        <div style={note}>
+          全球機場點位：圓圈大小＝單日流量、顏色＝資料完整度。點圓圈看該機場基本資料。
         </div>
-      ))}
+        <Button
+          fullWidth
+          pressed={atlasVisible}
+          onClick={() => onAtlasVisibleChange(!atlasVisible)}
+          style={{ position: "relative" }}
+        >
+          {atlasVisible ? "已顯示在地圖上" : "在地圖上顯示機場點"}
+          {!atlasEverEnabled && (
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                top: -3,
+                right: -3,
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: tokens.rec,
+                border: `2px solid ${tokens.mapBg}`,
+                boxShadow: `0 0 6px ${mix(tokens.rec, 80)}`,
+                animation: "atlasBadgePulse 1.6s ease-in-out infinite",
+                pointerEvents: "none",
+              }}
+            />
+          )}
+        </Button>
+      </Section>
 
-      <div style={{ fontSize: 11, color: theme.DIM, marginTop: 12, marginBottom: 6, fontWeight: 600 }}>大小 = 單日流量</div>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 14, paddingLeft: 2 }}>
-        {[3, 8, 16].map((r, i) => (
-          <div key={r} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <span style={{ width: r * 2, height: r * 2, borderRadius: "50%", background: theme.DIM, opacity: 0.5 }} />
-            <span style={{ fontSize: 9, color: theme.DIM }}>{["少", "中", "多"][i]}</span>
-          </div>
-        ))}
-      </div>
+      <Section title="COLOR · 顏色 = 資料完整度">{legendRows}</Section>
+
+      <Section title="SIZE · 大小 = 單日流量">
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 14, paddingLeft: 2 }}>
+          {[3, 8, 16].map((r, i) => (
+            <div key={r} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SPACE.s4 }}>
+              <span style={{ width: r * 2, height: r * 2, borderRadius: "50%", background: tokens.fg3, opacity: 0.5 }} />
+              <span style={{ fontSize: SIZE.s9, color: tokens.fg3 }}>{["少", "中", "多"][i]}</span>
+            </div>
+          ))}
+        </div>
+      </Section>
 
       {/* ── 夜空 Bloom 星圖（與上方 circle 點並存的獨立開關）── */}
-      <div style={{ borderTop: `1px solid ${theme.BORDER}`, marginTop: 18, paddingTop: 14 }}>
-        <div style={{ fontSize: 12.5, color: theme.ACTIVE_TEXT, fontWeight: 700, marginBottom: 4 }}>
-          ✦ 夜空 Bloom 星圖
-        </div>
-        <div style={{ fontSize: 11, color: theme.DIM, lineHeight: 1.6, marginBottom: 10 }}>
+      <Section title="BLOOM · 夜空星圖">
+        <div style={note}>
           把機場畫成夜空中發光的星點：越大＝流量越高。可與上方圓點並存。
         </div>
-
-        <button
-          onClick={() => onAtlasGlowVisibleChange(!atlasGlowVisible)}
-          style={{
-            width: "100%",
-            padding: "8px 12px",
-            marginBottom: 12,
-            borderRadius: 8,
-            cursor: "pointer",
-            border: `1px solid ${atlasGlowVisible ? theme.ACTIVE_BORDER : theme.BORDER}`,
-            background: atlasGlowVisible ? theme.ACTIVE_BTN_BG : theme.HOVER_BG,
-            color: atlasGlowVisible ? theme.ACTIVE_TEXT : theme.DIM,
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          {atlasGlowVisible ? "✦ Bloom 已開啟" : "✧ 開啟 Bloom 星圖"}
-        </button>
+        <Button fullWidth pressed={atlasGlowVisible} onClick={() => onAtlasGlowVisibleChange(!atlasGlowVisible)}>
+          {atlasGlowVisible ? "Bloom 已開啟" : "開啟 Bloom 星圖"}
+        </Button>
 
         {/* 星點大小滑桿 */}
-        <div style={{ marginBottom: 12 }}>
-          <SliderRow
-            label="星點大小"
-            value={atlasGlowSize}
-            min={0.3}
-            max={4}
-            step={0.1}
-            format={(v) => `${v.toFixed(1)}×`}
-            onChange={onAtlasGlowSizeChange}
-            theme={theme}
-          />
-        </div>
+        <Slider
+          label="星點大小"
+          value={atlasGlowSize}
+          min={0.3}
+          max={4}
+          step={0.1}
+          format={(v) => `${v.toFixed(1)}×`}
+          onChange={onAtlasGlowSizeChange}
+        />
 
         {/* 顏色維度切換 */}
-        <div style={{ fontSize: 11, color: theme.DIM, marginBottom: 6, fontWeight: 600 }}>顏色維度</div>
-        <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-          {([
-            { key: "flow", label: "流量 白→橘→紅" },
-            { key: "completeness", label: "資料完整度" },
-          ] as const).map((opt) => {
-            const active = atlasColorMode === opt.key;
-            return (
-              <button
-                key={opt.key}
-                onClick={() => onAtlasColorModeChange(opt.key)}
-                style={{
-                  flex: 1,
-                  padding: "6px 8px",
-                  borderRadius: 7,
-                  cursor: "pointer",
-                  border: `1px solid ${active ? theme.ACTIVE_BORDER : theme.BORDER}`,
-                  background: active ? theme.ACTIVE_BTN_BG : theme.HOVER_BG,
-                  color: active ? theme.ACTIVE_TEXT : theme.DIM,
-                  fontSize: 11,
-                  fontWeight: 600,
-                }}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
-        </div>
+        <div style={{ fontSize: SIZE.s11, color: tokens.fg2 }}>顏色維度</div>
+        <Segmented<AtlasColorMode>
+          fullWidth
+          options={[
+            { value: "flow", label: "流量 白→橘→紅" },
+            { value: "completeness", label: "資料完整度" },
+          ]}
+          value={atlasColorMode}
+          onChange={onAtlasColorModeChange}
+        />
 
         {/* 動態圖例 */}
         {atlasColorMode === "flow" ? (
@@ -192,29 +147,21 @@ export function AtlasPanel({
             <div
               style={{
                 height: 12,
-                borderRadius: 6,
+                borderRadius: RADIUS.base,
                 marginBottom: 5,
                 background: "linear-gradient(90deg, #ffffff 0%, #ff8c1a 50%, #ff1e1e 100%)",
               }}
             />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: theme.DIM }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.s10, color: tokens.fg3 }}>
               <span>流量低 · 白</span>
               <span>中 · 橘</span>
               <span>樞紐 · 紅</span>
             </div>
           </div>
         ) : (
-          legend.map((l) => (
-            <div key={l.label} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
-              <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, opacity: l.opacity, marginTop: 2, flexShrink: 0, border: `1px solid ${theme.BORDER}` }} />
-              <div>
-                <div style={{ fontSize: 12, color: theme.ACTIVE_TEXT, fontWeight: 600 }}>{l.label}</div>
-                <div style={{ fontSize: 10.5, color: theme.DIM }}>{l.desc}</div>
-              </div>
-            </div>
-          ))
+          legendRows
         )}
-      </div>
-    </div>
+      </Section>
+    </>
   );
 }
