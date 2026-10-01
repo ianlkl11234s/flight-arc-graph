@@ -159,7 +159,12 @@ export function Timeline(p: Props) {
       const root = rootRef.current;
       if (root && e.target instanceof Node && !root.contains(e.target)) setCalendarOpen(false);
     };
-    const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") setCalendarOpen(false); };
+    // Esc 分層（R7）：月曆排在說明視窗之後、dock 卡之前；preventDefault 讓 App 的 Esc handler 略過這一次
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      e.preventDefault();
+      setCalendarOpen(false);
+    };
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("keydown", onKeyDown);
     return () => {

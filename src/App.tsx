@@ -51,6 +51,7 @@ import { setFrozenAnimTime } from "./three/animClock";
 import { ThemeProvider, useTheme } from "./styles/ThemeContext";
 import { FONT, LAYOUT, SIZE, SPACE, Z } from "./styles/tokens";
 import { Button, Caption, Segmented, type CaptionMetaItem } from "./ui";
+import { escLayerToClose, isEditableTarget } from "./ui/escStack";
 import { ALL_OVERLAYS_CLOSED, overlaysOpen, overlaysToClose, type OverlayKey, type OverlayState } from "./ui/overlayMutex";
 
 // ── Atlas 機場點：點擊 popup ──
@@ -1672,15 +1673,40 @@ export default function App() {
     toClose.forEach(closeOverlay);
   }, [overlayState, captureMode, closeOverlay]);
 
-  // ESC 退出拍攝模式
+  // ── Esc 分層（R7）：單一 handler，掛 window bubble 階段（Modal capture 階段、月曆 document 階段先攔）──
+  const escStateRef = useRef({ captureMode, isExporting, showInfo, airspaceSelection, trackMode, railPanel, showStats });
+  escStateRef.current = { captureMode, isExporting, showInfo, airspaceSelection, trackMode, railPanel, showStats };
   useEffect(() => {
-    if (!captureMode) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setCaptureMode(false);
+      if (e.key !== "Escape") return;
+      const cur = escStateRef.current;
+      const layer = escLayerToClose({
+        defaultPrevented: e.defaultPrevented,
+        editableTarget: isEditableTarget(e.target),
+        captureMode: cur.captureMode,
+        exporting: cur.isExporting,
+        infoOpen: cur.showInfo,
+        dockCardOpen: cur.airspaceSelection !== null,
+        singleFlight: cur.trackMode === "single",
+        panelOpen: cur.railPanel !== null || cur.showStats,
+      });
+      if (!layer) return;
+      e.preventDefault();
+      if (layer === "capture") setCaptureMode(false);
+      else if (layer === "info") setShowInfo(false);
+      else if (layer === "dock") setAirspaceSelection(null);
+      else if (layer === "single") {
+        // 同 SettingsPanel 的 Track 切換：回 Stack All 並清掉選取
+        setTrackMode("stack");
+        setSelectedFlightId(null);
+      } else {
+        setRailPanel(null);
+        setShowStats(false);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [captureMode]);
+  }, []);
 
   // 資料載入完成後自動播放
   useEffect(() => {
