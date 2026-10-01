@@ -1,0 +1,272 @@
+<title>Flight Arc UX 決策</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Layout: one reading column of 8 decision cards; each option = text + a mini mock in the chosen A 塔台儀表·琥珀 skin; sticky answer bar at bottom. */
+:root{
+  --bg:#f2f3f4; --fg:#121519; --muted:#59626b; --line:#d6dade; --card:#ffffff; --soft:#f7f8f9;
+  --accent:#a86200; --accent-soft:rgba(168,98,0,.1); --accent-ink:#fff8ee;
+  --good:#1d7a4a; --bad:#b3261a;
+  /* mock (A skin) */
+  --m-bg:#e8eaec; --m-panel:rgba(248,249,250,.86); --m-border:rgba(18,24,30,.18); --m-fg1:#10151a; --m-fg2:#4c555d; --m-fg3:#7d868e; --m-ctl:rgba(0,0,0,.04); --m-acc:#a86200; --m-ink:#fff8ee; --m-trail:rgba(31,111,191,.35); --m-trail2:rgba(196,86,27,.3);
+  --sans:"IBM Plex Sans",-apple-system,"PingFang TC","Noto Sans TC",sans-serif;
+  --mono:"JetBrains Mono","PingFang TC","Noto Sans TC",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b0d10; --fg:#e7ebee; --muted:#959ea7; --line:#262b31; --card:#12161a; --soft:#161b20;
+  --accent:#f2a93b; --accent-soft:rgba(242,169,59,.12); --accent-ink:#1a1206; --good:#7be3a0; --bad:#ff8a7a;
+  --m-bg:#05070a; --m-panel:rgba(11,13,15,.72); --m-border:rgba(214,222,230,.16); --m-fg1:#e7ebee; --m-fg2:#a2abb3; --m-fg3:#69727a; --m-ctl:rgba(255,255,255,.05); --m-acc:#f2a93b; --m-ink:#1a1206; --m-trail:rgba(128,191,255,.45); --m-trail2:rgba(255,200,128,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b0d10; --fg:#e7ebee; --muted:#959ea7; --line:#262b31; --card:#12161a; --soft:#161b20;
+  --accent:#f2a93b; --accent-soft:rgba(242,169,59,.12); --accent-ink:#1a1206; --good:#7be3a0; --bad:#ff8a7a;
+  --m-bg:#05070a; --m-panel:rgba(11,13,15,.72); --m-border:rgba(214,222,230,.16); --m-fg1:#e7ebee; --m-fg2:#a2abb3; --m-fg3:#69727a; --m-ctl:rgba(255,255,255,.05); --m-acc:#f2a93b; --m-ink:#1a1206; --m-trail:rgba(128,191,255,.45); --m-trail2:rgba(255,200,128,.4); color-scheme:dark}
+
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--sans);font-size:15px;line-height:1.65}
+.wrap{max-width:980px;margin:0 auto;padding-inline:20px;padding-block:32px 140px;display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:28px;line-height:1.25;margin:0;font-weight:600;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:68ch}
+.how{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;color:var(--muted)}
+.how b{color:var(--fg);font-weight:500}
+.toc{display:flex;flex-wrap:wrap;gap:6px}
+.toc a{font-family:var(--mono);font-size:12px;color:var(--fg);text-decoration:none;border:1px solid var(--line);padding:3px 9px;border-radius:2px;background:var(--card)}
+.toc a.done{border-color:var(--accent);color:var(--accent)}
+.toc a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.q{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:22px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:16px}
+.q-h{display:flex;gap:14px;align-items:baseline}
+.qn{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:700;flex:none;border-left:2px solid var(--accent);padding-left:8px}
+.q h2{font-size:19px;margin:0;font-weight:600;line-height:1.35;text-wrap:balance}
+.ctx{font-size:14px;color:var(--muted);margin:0;max-width:75ch}
+.ctx code{font-family:var(--mono);font-size:12.5px;background:var(--soft);padding:1px 5px;border-radius:2px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.opt{position:relative;display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:4px;background:var(--soft);cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0}
+.opt:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.letter{font-family:var(--mono);font-weight:700;font-size:13px;width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--line);border-radius:2px;flex:none}
+.opt[aria-pressed="true"] .letter{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.opt-t{font-weight:600;font-size:15px}
+.rec{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--accent);border:1px solid currentColor;padding:0 6px;border-radius:2px}
+.opt p{margin:0;font-size:13.5px;color:var(--muted)}
+.pc{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:13px;margin:0}
+.pc dt{font-family:var(--mono);font-size:11px;padding-top:2px}
+.pc dt.g{color:var(--good)} .pc dt.b{color:var(--bad)}
+.pc dd{margin:0}
+.note{display:flex;flex-direction:column;gap:4px}
+.note label{font-size:12px;color:var(--muted)}
+.note textarea{font:inherit;font-size:14px;min-height:38px;resize:vertical;padding:7px 10px;border:1px solid var(--line);border-radius:2px;background:var(--soft);color:var(--fg)}
+.note textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* mini mock in A skin */
+.mock{position:relative;height:172px;border-radius:2px;overflow:hidden;background:radial-gradient(ellipse at 70% 60%,color-mix(in srgb,var(--m-trail) 30%,transparent),transparent 65%),var(--m-bg);border:1px solid var(--m-border);font-family:var(--mono);font-size:9.5px;color:var(--m-fg1)}
+.mock svg.trails{position:absolute;inset:0;width:100%;height:100%}
+.mp{position:absolute;background:var(--m-panel);border:1px solid var(--m-border);border-radius:2px;backdrop-filter:blur(6px);padding:6px 8px;display:flex;flex-direction:column;gap:4px}
+.mp::before{content:"";position:absolute;left:-1px;top:-1px;width:6px;height:6px;border-left:1px solid var(--m-acc);border-top:1px solid var(--m-acc)}
+.mp .e{font-size:7.5px;letter-spacing:.16em;color:var(--m-fg3);text-transform:uppercase}
+.mp .t{font-size:10.5px;font-weight:500}
+.mrow{display:flex;justify-content:space-between;gap:8px;align-items:center;color:var(--m-fg2)}
+.mrow.on{color:var(--m-fg1);box-shadow:inset 2px 0 0 var(--m-acc);padding-left:5px}
+.mchip{display:inline-block;border:1px solid var(--m-border);padding:1px 5px;border-radius:2px;color:var(--m-fg2);background:var(--m-ctl)}
+.mchip.on{border-color:var(--m-acc);color:var(--m-acc)}
+.mbtn{display:inline-block;padding:2px 7px;border-radius:2px;background:var(--m-acc);color:var(--m-ink);font-weight:700}
+.mbtn.o{background:transparent;color:var(--m-fg2);border:1px solid var(--m-border);font-weight:400}
+.mseg{display:inline-flex;border:1px solid var(--m-border);border-radius:2px;overflow:hidden}
+.mseg span{padding:1px 6px;color:var(--m-fg2)}
+.mseg span+span{border-left:1px solid var(--m-border)}
+.mseg span.on{color:var(--m-acc);background:color-mix(in srgb,var(--m-acc) 14%,transparent)}
+.mcap{position:absolute;right:10px;bottom:30px;text-align:right;border-left:0;border-right:2px solid var(--m-acc);padding-right:6px}
+.mcap b{font-size:14px;font-weight:500;letter-spacing:.04em}
+.mcap span{display:block;color:var(--m-fg2);font-size:8px}
+.mtl{position:absolute;left:10px;bottom:8px;height:16px;display:flex;align-items:center;gap:5px;padding:0 5px;background:var(--m-panel);border:1px solid var(--m-border);border-radius:2px}
+.mtl i{width:9px;height:9px;background:var(--m-acc);display:inline-block}
+.mrail{position:absolute;left:0;top:0;bottom:0;width:18px;background:var(--m-panel);border-right:1px solid var(--m-border);display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:8px}
+.mrail i{width:8px;height:8px;border:1px solid var(--m-fg3);border-radius:1px}
+.mrail i.on{border-color:var(--m-acc);background:color-mix(in srgb,var(--m-acc) 30%,transparent)}
+.mtb{position:absolute;right:6px;top:6px;display:flex;gap:3px}
+.arrow{position:absolute;font-size:9px;color:var(--m-acc);background:var(--m-panel);border:1px dashed var(--m-acc);padding:2px 5px;border-radius:2px}
+.cursor{position:absolute;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--m-fg1);transform:rotate(-30deg)}
+.url{font-family:var(--mono);font-size:11px;line-height:1.5;word-break:break-all;background:var(--m-bg);color:var(--m-fg1);border:0;padding:10px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.url .k{color:var(--m-acc)}
+.url small{color:var(--m-fg3);font-size:10px}
+.phone{position:relative;width:92px;height:150px;border:3px solid var(--m-border);border-radius:14px;overflow:hidden;background:var(--m-bg);margin:0 auto}
+.phone .bs{position:absolute;left:0;right:0;bottom:0;background:var(--m-panel);border-top:1px solid var(--m-border);padding:4px 6px;display:flex;flex-direction:column;gap:3px;font-size:7.5px}
+.phones{display:flex;gap:10px;justify-content:center;align-items:center;height:100%}
+.phone .tag{position:absolute;top:6px;left:6px;right:6px;display:flex;flex-wrap:wrap;gap:2px}
+.phone .tag span{font-size:6.5px;border:1px solid var(--m-acc);color:var(--m-acc);padding:0 2px;border-radius:1px}
+
+/* answer bar */
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:5}
+.bar-in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.picks{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+.picks span{font-family:var(--mono);font-size:12px;padding:3px 7px;border:1px solid var(--line);border-radius:2px;color:var(--muted)}
+.picks span.on{border-color:var(--accent);color:var(--fg)}
+.picks span b{color:var(--accent)}
+.copy{font:inherit;font-weight:600;font-size:14px;padding:8px 16px;border-radius:2px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer;white-space:nowrap}
+.copy:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.reset{font:inherit;font-size:13px;background:transparent;border:0;color:var(--muted);cursor:pointer;text-decoration:underline}
+.out{width:100%;font-family:var(--mono);font-size:12px;min-height:120px;padding:8px;border:1px solid var(--line);border-radius:2px;background:var(--soft);color:var(--fg)}
+.status{font-size:13px;color:var(--good);min-width:5em}
+@media (prefers-reduced-motion: no-preference){.opt{transition:border-color .15s,background .15s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Flight Arc · Studio UX</span>
+    <h1>8 個 UX 決策</h1>
+    <p>每題選一個選項，有想法可以寫在備註。選完按最下方的「複製答案」，把文字貼回對話就好。標了「建議」的是我的推薦，沒有一定要照選。示意圖使用已選定的 A 塔台儀表 · 琥珀風格，軌跡只是示意。</p>
+    <div class="how"><span><b>不影響</b>目前正在做的 P1–P4</span><span>Q3、Q4、Q6 會影響 P3 版面，越早決定越好</span></div>
+    <nav class="toc" id="toc" aria-label="題目"></nav>
+  </header>
+  <div id="qs"></div>
+  <section class="q" id="result" hidden>
+    <div class="q-h"><span class="qn">答案</span><h2>複製這段文字貼回對話</h2></div>
+    <textarea class="out" id="out" readonly aria-label="答案文字"></textarea>
+  </section>
+</div>
+
+<div class="bar"><div class="bar-in">
+  <div class="picks" id="picks"></div>
+  <span class="status" id="status" aria-live="polite"></span>
+  <button class="reset" id="reset">清除</button>
+  <button class="copy" id="copy">複製答案</button>
+</div></div>
+
+<script>
+const trails = (n=14,seed=3)=>{let s=seed;const r=()=>((s=(s*16807)%2147483647)/2147483647);let d='';
+  for(let i=0;i<n;i++){const a=r()*Math.PI*2, R=70+r()*90; const x=60+Math.cos(a)*R*1.6, y=75+Math.sin(a)*R*.6;
+    d+=`<path d="M${x.toFixed(0)} ${y.toFixed(0)} Q ${(200+r()*40).toFixed(0)} ${(60+r()*30).toFixed(0)} 205 82" stroke="var(--m-trail${i%3?'':'2'})" fill="none" stroke-width="1"/>`;}
+  return `<svg class="trails" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${d}</svg>`;};
+const rail = on=>`<div class="mrail">${[0,1,2,3].map(i=>`<i class="${i===on?'on':''}"></i>`).join('')}</div>`;
+const cap = (a='RCTP',s='2026-02-18 · 597 班')=>`<div class="mcap"><b>${a}</b><span>${s}</span></div>`;
+const tl = (t='11:41')=>`<div class="mtl"><i></i><span>${t}</span></div>`;
+
+const Q = [
+ {id:'q1',t:'選機場：點擊或搜尋時，要直接「單選並飛過去」嗎？',
+  ctx:'現在在機場面板勾任何一座都會直接進入「多機場組合」模式，桌機版沒有單選一座機場的入口。選機場的入口有 7 個，行為各不相同。',
+  opts:[
+   {k:'A',t:'單選優先，組合是第二步',rec:1,d:'點擊或搜尋一座機場就切換過去並飛鏡頭。要組合時，按列尾的「＋」或 Shift + 點擊。',pro:'第一次使用不會掉進組合模式；7 個入口可以統一成同一種行為',con:'組合多一個動作',
+    mock:()=>`${trails()}${rail(1)}<div class="mp" style="left:24px;top:8px;width:120px"><span class="e">Selection · 機場</span><div class="mrow on"><span>RCTP 桃園</span><span>＋</span></div><div class="mrow"><span>RCSS 松山</span><span>＋</span></div><div class="mrow"><span>RJAA 成田</span><span>＋</span></div></div><div class="arrow" style="right:10px;top:40px">點一下 → 單選並飛過去</div>${cap()}`},
+   {k:'B',t:'維持現狀',d:'勾選就加入組合，單選只能從其他入口進。',pro:'組合最快；不用改',con:'沒有單選入口，新手容易迷路',
+    mock:()=>`${trails()}${rail(1)}<div class="mp" style="left:24px;top:8px;width:120px"><span class="e">Selection · 機場</span><div class="mrow on"><span>☑ RCTP</span></div><div class="mrow on"><span>☑ RCSS</span></div><div class="mrow"><span>☐ RJAA</span></div></div><div class="arrow" style="right:10px;top:40px">勾一下 → 變成 2 座組合</div>${cap('RCTP + RCSS','組合 · 2 座')}`},
+   {k:'C',t:'機場、組合分成兩個分頁',d:'「機場」分頁只能單選；「組合」分頁專門做多選與預設組合。',pro:'兩種模式分得最清楚',con:'多一個分頁；要在兩個分頁之間切換',
+    mock:()=>`${trails()}${rail(1)}<div class="mp" style="left:24px;top:8px;width:130px"><div class="mseg"><span class="on">機場</span><span>組合</span></div><div class="mrow on"><span>RCTP 桃園</span></div><div class="mrow"><span>RCSS 松山</span></div></div>${cap()}`},
+  ]},
+ {id:'q2',t:'日期：兩套月曆只留一套？',
+  ctx:'側欄有 CalendarPanel，時間軸上又有一個彈出月曆。兩邊標示「完整／部分資料」的方式不同；點到沒資料的日期毫無反應。',
+  opts:[
+   {k:'A',t:'只留時間軸那套',rec:1,d:'日期跟時間放在一起，月曆從時間軸展開區彈出。沒資料的日期顯示灰色，點了會提示「這天沒有 RCTP 的資料」。',pro:'日期和時間在同一處；側欄少一個分頁',con:'要先展開時間軸才看得到月曆',
+    mock:()=>`${trails()}<div class="mp" style="left:10px;bottom:8px;width:200px"><div class="mrow"><span class="mbtn">▶</span><span>11:41 TPE</span><span class="mchip on">02-18 ▾</span></div></div><div class="mp" style="left:120px;bottom:42px;width:110px"><span class="e">2026 · 02</span><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">${Array.from({length:21},(_,i)=>`<span style="text-align:center;color:${i===17?'var(--m-acc)':i%5===2?'var(--m-fg3)':'var(--m-fg1)'}">${i+1}</span>`).join('')}</div></div>`},
+   {k:'B',t:'只留側欄月曆面板',d:'選日期一律開「日期」面板，空間大，可以一次看清每天的資料完整度。',pro:'月曆可以畫大，完整度看得清楚',con:'選日期要開面板，離時間軸遠',
+    mock:()=>`${trails()}${rail(1)}<div class="mp" style="left:24px;top:8px;width:130px"><span class="e">Date · 日期</span><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${Array.from({length:28},(_,i)=>`<span style="text-align:center;color:${i===17?'var(--m-acc)':i%5===2?'var(--m-fg3)':'var(--m-fg1)'}">${i+1}</span>`).join('')}</div></div>${tl()}`},
+   {k:'C',t:'兩處都留，共用同一個元件',d:'兩個入口保留，但月曆元件只寫一份，樣式與行為一致。',pro:'改動最小；兩種習慣都照顧到',con:'還是兩個入口',
+    mock:()=>`${trails()}${rail(1)}<div class="mp" style="left:24px;top:8px;width:90px"><span class="e">日期</span><span>月曆 ①</span></div><div class="mp" style="left:150px;bottom:8px;width:100px"><span>月曆 ② · 同元件</span></div>`},
+  ]},
+ {id:'q3',t:'Region 按鈕列要怎麼處理？',
+  ctx:'頂部的 Region 按鈕列（TW／JP／KR…）只在 region 範圍出現，點一次整列就消失，而且日期寫死成 02-18（暖身修正會先修掉日期）。',
+  opts:[
+   {k:'A',t:'併進「探索」面板',rec:1,d:'區域變成探索面板最上面的一排 chip，點了飛到該區的總覽視角。',pro:'頂部只剩一條工具列；區域和星圖放在一起，探索的邏輯一致',con:'要多開一次面板',
+    mock:()=>`${trails()}${rail(0)}<div class="mp" style="left:24px;top:8px;width:150px"><span class="e">Explore · 探索</span><div style="display:flex;flex-wrap:wrap;gap:3px"><span class="mchip on">TW</span><span class="mchip">JP</span><span class="mchip">KR</span><span class="mchip">TH</span><span class="mchip">UK</span><span class="mchip">US</span></div><span style="color:var(--m-fg3)">機場星圖 · 2,941 座</span></div>`},
+   {k:'B',t:'刪掉',d:'改靠機場星圖、搜尋和預設組合來跨區移動。',pro:'介面最少',con:'少了一鍵切換區域的捷徑',
+    mock:()=>`${trails()}${rail(0)}<div class="mp" style="left:24px;top:8px;width:140px"><span class="e">Explore · 探索</span><span>機場星圖</span><span style="color:var(--m-fg3)">搜尋 ICAO / 城市</span></div>`},
+   {k:'C',t:'留在頂部，修好就好',d:'保留在畫面上方，但不再點一次就消失。',pro:'切換區域最快',con:'違反「右上只有一條工具列」，畫面上方又多一排',
+    mock:()=>`${trails()}<div class="mtb" style="left:10px;right:auto"><span class="mchip on">TW</span><span class="mchip">JP</span><span class="mchip">KR</span><span class="mchip">TH</span></div><div class="mtb"><span class="mseg"><span class="on">全部</span><span>進場</span></span></div>`},
+  ]},
+ {id:'q4',t:'「航線軌跡／空域快照」切換放哪裡？',
+  ctx:'這個切換現在在頂部最顯眼的位置。切到空域快照時會連帶改成 region 範圍、天數 1d、透明度 0.04，並把鏡頭拉遠，副作用很大。',
+  opts:[
+   {k:'A',t:'收進「呈現」面板',rec:1,d:'放在呈現面板最上面，旁邊用一行字說明切換後會發生什麼。',pro:'不會被誤按；副作用寫得清楚',con:'藏深一層，不常用的人可能不知道有空域快照',
+    mock:()=>`${trails()}${rail(2)}<div class="mp" style="left:24px;top:8px;width:160px"><span class="e">View · 呈現</span><div class="mseg"><span class="on">航線軌跡</span><span>空域快照</span></div><span style="color:var(--m-fg3)">切到空域快照會改成區域範圍、單日，並拉遠鏡頭</span></div>`},
+   {k:'B',t:'放右上工具列',d:'工具列裡多一組分段切換。',pro:'一眼看得到，切換最快',con:'工具列變長；容易誤按觸發大改動',
+    mock:()=>`${trails()}<div class="mtb"><span class="mseg"><span class="on">全部</span><span>進</span><span>離</span></span><span class="mseg"><span class="on">航線</span><span>空域</span></span><span class="mbtn o">錄影</span></div>`},
+   {k:'C',t:'變成 rail 上獨立的一個模式',d:'空域快照當成另一個 workspace，有自己的面板和說明。',pro:'語意最清楚：本來就是另一種看法',con:'rail 多一個圖示；要整理空域快照自己的設定',
+    mock:()=>`${trails()}<div class="mrail"><i></i><i></i><i></i><i></i><i class="on"></i></div><div class="mp" style="left:24px;top:8px;width:130px"><span class="e">Airspace · 空域快照</span><span>單日 · 區域範圍</span></div>`},
+  ]},
+ {id:'q5',t:'點地圖上的航班會發生什麼？',
+  ctx:'現在單擊會在游標旁出現 tooltip，地圖一動就消失；雙擊進入單航班模式，但只能到「顯示」面板切回去才能退出，換機場也不會重置。',
+  opts:[
+   {k:'A',t:'單擊出航班卡，按「追蹤」才鎖定',rec:1,d:'單擊後航班卡停在右下，點擊處畫選取圈。卡片上有「追蹤這班」和「×」，Esc 可以退出。',pro:'資訊不會一動就消失；進出單航班模式都有明確按鈕',con:'少了雙擊直接追蹤的捷徑',
+    mock:()=>`${trails()}<span style="position:absolute;left:150px;top:62px;width:12px;height:12px;border:1px solid var(--m-acc);border-radius:50%"></span><div class="mp" style="right:8px;bottom:8px;width:110px"><span class="e">選取航班</span><span class="t">CAL602</span><span style="color:var(--m-fg2)">VHHH → RCTP · B738</span><div style="display:flex;gap:4px"><span class="mbtn">追蹤</span><span class="mbtn o">×</span></div></div>`},
+   {k:'B',t:'同 A，但保留雙擊直接追蹤',d:'單擊出航班卡；雙擊等於直接按「追蹤」。',pro:'熟悉的人保有捷徑',con:'雙擊在地圖上也是縮放，容易衝突',
+    mock:()=>`${trails()}<span style="position:absolute;left:150px;top:62px;width:12px;height:12px;border:1px solid var(--m-acc);border-radius:50%"></span><div class="arrow" style="left:100px;top:20px">雙擊 = 追蹤</div><div class="mp" style="right:8px;bottom:8px;width:110px"><span class="e">選取航班</span><span class="t">CAL602</span><div style="display:flex;gap:4px"><span class="mbtn">追蹤</span><span class="mbtn o">×</span></div></div>`},
+   {k:'C',t:'維持 tooltip + 雙擊',d:'只修「換機場時重置」和「Esc 退出」。',pro:'改動最小',con:'資訊位置仍然跟著游標跑，和其他卡片不一致',
+    mock:()=>`${trails()}<div class="mp" style="left:150px;top:40px;width:96px"><span class="t">CAL602</span><span style="color:var(--m-fg2)">VHHH→RCTP · 1,240 m</span></div><span class="cursor" style="left:146px;top:60px"></span>`},
+  ]},
+ {id:'q6',t:'第一次進站時看到什麼？',
+  ctx:'現在一進站就展開「選擇／機場」面板，地圖被遮掉一塊；資料載完會自動播放。',
+  opts:[
+   {k:'A',t:'面板收起，只有軌跡、圖說和時間軸',rec:1,d:'第一眼就是整片夜空光軌，左下圖說告訴你在看哪座機場、哪一天。',pro:'作品感最強；地圖不被遮',con:'第一次來的人要自己找到左側 rail',
+    mock:()=>`${trails(22)}${rail(-1)}${cap()}${tl()}`},
+   {k:'B',t:'維持展開「機場」面板',d:'一進來就能選機場。',pro:'入口最明顯',con:'地圖一開始就被遮住',
+    mock:()=>`${trails(22)}${rail(1)}<div class="mp" style="left:24px;top:8px;width:110px;bottom:8px"><span class="e">Selection · 機場</span><span>RCTP 桃園</span><span>RCSS 松山</span></div>${tl()}`},
+   {k:'C',t:'第一次造訪顯示一張導覽卡',d:'只在第一次出現，簡單說明左側 rail、時間軸、右下卡片，看過就記住不再出現。',pro:'兼顧作品感和新手引導',con:'多一個元件要維護；回訪者不受影響',
+    mock:()=>`${trails(22)}${rail(-1)}<div class="mp" style="left:70px;top:30px;width:160px"><span class="e">歡迎</span><span class="t">選一座機場，看一天的起降</span><span style="color:var(--m-fg2)">左側選機場 · 下方播放時間</span><span class="mbtn" style="align-self:flex-start">開始</span></div>${tl()}`},
+  ]},
+ {id:'q7',t:'網址要記住哪些狀態？',
+  ctx:'現在網址不記任何東西，重新整理就回到預設的 RCTP 2/18，也沒辦法把看到的畫面分享給別人。規則照 Pulse：只寫和預設不同的值，看不懂的參數直接忽略。',
+  opts:[
+   {k:'A',t:'最少：機場或組合、日期',d:'重新整理後回到同一座機場、同一天。',pro:'網址最短',con:'鏡頭角度和起降篩選會跑掉',
+    mock:()=>`<div class="url"><span>flight-arc/?<span class="k">a</span>=RCTP&amp;<span class="k">d</span>=2026-02-18</span><small>重新整理：同一座機場、同一天</small></div>`},
+   {k:'B',t:'加上起降篩選和鏡頭',rec:1,d:'分享出去的人會看到同一個角度、同樣的進場或離場。',pro:'分享時對方看到的畫面一樣',con:'網址比較長',
+    mock:()=>`<div class="url"><span>flight-arc/?<span class="k">a</span>=RCTP&amp;<span class="k">d</span>=2026-02-18&amp;<span class="k">f</span>=arr&amp;<span class="k">cam</span>=25.08,121.23,9.2,52,-20</span><small>對方看到同一個角度的進場軌跡</small></div>`},
+   {k:'C',t:'全部：再加配色、染色方式、播放時刻',d:'連「11:41 的 Sunset 配色」這種瞬間都能分享。',pro:'分享最完整，適合轉發特定畫面',con:'網址最長；參數多，之後改功能時要顧相容',
+    mock:()=>`<div class="url"><span>flight-arc/?<span class="k">a</span>=RCTP&amp;<span class="k">d</span>=2026-02-18&amp;<span class="k">f</span>=arr&amp;<span class="k">cam</span>=25.08,121.23,9.2,52,-20&amp;<span class="k">th</span>=sunset&amp;<span class="k">cb</span>=alt&amp;<span class="k">t</span>=11:41</span><small>連時刻和配色都一樣</small></div>`},
+  ]},
+ {id:'q8',t:'手機版這一輪做到哪？',
+  ctx:'手機版現在拿不到空域卡、統計、多機場組合和機場星圖。這輪的 P1–P4 會先統一桌機。',
+  opts:[
+   {k:'A',t:'只統一外觀',rec:1,d:'套上新的 token 和元件，功能維持現狀。',pro:'工作量小，不會拖慢桌機版',con:'手機功能缺口還在',
+    mock:()=>`<div class="phones"><div class="phone">${trails(10)}<div class="tag"><span>新外觀</span></div><div class="bs"><b>RCTP</b><span class="mseg"><span class="on">全部</span><span>進</span></span></div></div></div>`},
+   {k:'B',t:'外觀 + 補空域卡與統計',d:'從底部抽屜可以打開航班卡、空域卡和統計。',pro:'補上最常用的兩個缺口',con:'多出一階段的工作',
+    mock:()=>`<div class="phones"><div class="phone">${trails(10)}<div class="tag"><span>新外觀</span><span>空域卡</span><span>統計</span></div><div class="bs"><b>RCTP</b><span>統計 · 空域</span></div></div></div>`},
+   {k:'C',t:'全部補齊',d:'加上多機場組合和機場星圖，手機和桌機功能一致。',pro:'兩邊體驗一致',con:'工作量最大；手機小螢幕放組合和星圖不一定好用',
+    mock:()=>`<div class="phones"><div class="phone">${trails(10)}<div class="tag"><span>新外觀</span><span>空域卡</span><span>統計</span><span>組合</span><span>星圖</span></div><div class="bs"><b>RCTP</b><span>全部功能</span></div></div></div>`},
+  ]},
+];
+
+const KEY='fa-ux-decisions-v1';
+let state={}; try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){state={};}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}};
+
+function render(){
+  document.getElementById('qs').innerHTML=Q.map((q,i)=>`
+  <section class="q" id="${q.id}" style="margin-bottom:28px">
+    <div class="q-h"><span class="qn">Q${i+1}</span><h2>${q.t}</h2></div>
+    <p class="ctx">${q.ctx}</p>
+    <div class="opts">${q.opts.map(o=>`
+      <button class="opt" data-q="${q.id}" data-k="${o.k}" aria-pressed="${state[q.id]?.pick===o.k}">
+        <div class="opt-h"><span class="letter">${o.k}</span><span class="opt-t">${o.t}</span>${o.rec?'<span class="rec">建議</span>':''}</div>
+        <div class="mock">${o.mock()}</div>
+        <p>${o.d}</p>
+        <dl class="pc"><dt class="g">優</dt><dd>${o.pro}</dd><dt class="b">劣</dt><dd>${o.con}</dd></dl>
+      </button>`).join('')}</div>
+    <div class="note"><label for="n-${q.id}">備註（可不填）</label><textarea id="n-${q.id}" data-n="${q.id}" rows="1" placeholder="例如：選 A，但 Shift 改成長按">${state[q.id]?.note||''}</textarea></div>
+  </section>`).join('');
+  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const q=b.dataset.q; state[q]={...(state[q]||{}),pick:b.dataset.k}; save();
+    document.querySelectorAll(`.opt[data-q="${q}"]`).forEach(x=>x.setAttribute('aria-pressed',x===b)); summary();});
+  document.querySelectorAll('[data-n]').forEach(t=>t.oninput=()=>{const q=t.dataset.n; state[q]={...(state[q]||{}),note:t.value}; save(); summary();});
+  summary();
+}
+function summary(){
+  document.getElementById('toc').innerHTML=Q.map((q,i)=>`<a href="#${q.id}" class="${state[q.id]?.pick?'done':''}">Q${i+1}${state[q.id]?.pick?' · '+state[q.id].pick:''}</a>`).join('');
+  document.getElementById('picks').innerHTML=Q.map((q,i)=>`<span class="${state[q.id]?.pick?'on':''}">Q${i+1} <b>${state[q.id]?.pick||'—'}</b></span>`).join('');
+}
+function answerText(){
+  const lines=['Flight Arc UX 決策回覆'];
+  Q.forEach((q,i)=>{const s=state[q.id]||{}; const o=q.opts.find(x=>x.k===s.pick);
+    lines.push(`Q${i+1} ${q.t.split('：')[0].replace(/？$/,'')}：${o?`${o.k} ${o.t}`:'（未選）'}${s.note?`｜備註：${s.note}`:''}`);});
+  return lines.join('\n');
+}
+document.getElementById('copy').onclick=()=>{
+  const txt=answerText(), st=document.getElementById('status'), res=document.getElementById('result'), out=document.getElementById('out');
+  out.value=txt; res.hidden=false;
+  const fallback=()=>{out.focus(); out.select(); st.textContent='已選取，請按複製'; res.scrollIntoView({block:'center'});};
+  try{ navigator.clipboard.writeText(txt).then(()=>{st.textContent='已複製';},fallback); }catch(e){fallback();}
+};
+document.getElementById('reset').onclick=()=>{state={}; save(); render(); document.getElementById('result').hidden=true; document.getElementById('status').textContent='';};
+render();
+</script>
