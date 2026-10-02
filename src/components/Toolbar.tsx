@@ -23,7 +23,7 @@ interface ToolbarProps {
   onCopyLink: () => Promise<boolean>;
 }
 
-function IconLink() {
+export function IconLink() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
       <path d="M6 8a2.6 2.6 0 0 0 3.7 0l2-2a2.6 2.6 0 0 0-3.7-3.7l-.8.8" strokeLinecap="round" />
@@ -57,7 +57,7 @@ function CopyLinkButton({ onCopy }: { onCopy: () => Promise<boolean> }) {
   );
 }
 
-function IconInfo() {
+export function IconInfo() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
       <circle cx="7" cy="7" r="5.8" />

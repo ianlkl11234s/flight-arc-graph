@@ -2577,6 +2577,7 @@ export default function App() {
             onRenderModeChange={setRenderMode}
             onCapture={() => setCaptureMode(true)}
             onInfo={() => setShowInfo(true)}
+            onCopyLink={handleCopyLink}
           />
 
           {/* Timeline 固定在 header 下方 */}
