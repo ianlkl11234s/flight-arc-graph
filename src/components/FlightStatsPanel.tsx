@@ -56,9 +56,11 @@ function useColors() {
     bar80: mix(tokens.fg2, 80),
     bar60: mix(tokens.fg2, 60),
     bar40: mix(tokens.fg2, 40),
-    depLine: tokens.fg1,
+    depLine: tokens.fg2,
     arrLine: tokens.fg3,
     ink: tokens.mapBg,
+    /** 目前／hover（圖表配色規則：選中用 accent，其餘中性灰階） */
+    current: tokens.accent,
   };
 }
 
@@ -178,9 +180,9 @@ function DepArrLineChart({
         {hover !== null && hd && (
           <>
             <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + cH}
-              stroke={colors.textMuted} strokeWidth={0.5} strokeDasharray="2,2" />
-            <circle cx={x(hover)} cy={y(hd.departures)} r={multiDay ? 2.5 : 3} fill={colors.depLine} />
-            <circle cx={x(hover)} cy={y(hd.arrivals)} r={multiDay ? 2.5 : 3} fill={colors.arrLine} />
+              stroke={colors.current} strokeWidth={0.5} strokeDasharray="2,2" />
+            <circle cx={x(hover)} cy={y(hd.departures)} r={multiDay ? 2.5 : 3} fill={colors.current} />
+            <circle cx={x(hover)} cy={y(hd.arrivals)} r={multiDay ? 2.5 : 3} fill={colors.current} />
           </>
         )}
       </svg>

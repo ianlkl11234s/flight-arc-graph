@@ -2,6 +2,8 @@ import { useTheme } from "../../styles/ThemeContext";
 import { FONT, RADIUS, SIZE, SPACE } from "../../styles/tokens";
 import { mix } from "../../ui/vars";
 
+// 圖表配色規則（全站統一）：「目前／選中／hover」用 accent，其餘用中性灰階（fg2 透明度階層、次序列 fg3）
+
 export function HourlyHeatmap({ hourly }: { hourly: { hour: number; count: number }[] }) {
   const { tokens } = useTheme();
   const max = Math.max(...hourly.map((h) => h.count), 1);
@@ -17,7 +19,7 @@ export function HourlyHeatmap({ hourly }: { hourly: { hour: number; count: numbe
               style={{
                 flex: 1,
                 borderRadius: RADIUS.base,
-                background: h.count > 0 ? mix(tokens.accent, 20 + intensity * 80) : mix(tokens.fg1, 12),
+                background: h.count > 0 ? mix(tokens.fg2, 20 + intensity * 80) : mix(tokens.fg1, 12),
                 transition: "background 0.3s",
               }}
             />
@@ -50,14 +52,14 @@ export function DailyTrendChart({ daily }: { daily: { date: string; departures: 
   return (
     <div>
       <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
-        <polyline points={depPoints} fill="none" stroke={tokens.accent} strokeWidth="1.5" strokeLinejoin="round" />
-        <polyline points={arrPoints} fill="none" stroke={tokens.fg2} strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3,2" />
+        <polyline points={depPoints} fill="none" stroke={tokens.fg2} strokeWidth="1.5" strokeLinejoin="round" />
+        <polyline points={arrPoints} fill="none" stroke={tokens.fg3} strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3,2" />
       </svg>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data, marginTop: 1 }}>
         <span>{daily[0]!.date.slice(5)}</span>
         <span style={{ display: "flex", gap: SPACE.s8 }}>
-          <span style={{ color: tokens.accent }}>— Dep</span>
-          <span style={{ color: tokens.fg2 }}>┈ Arr</span>
+          <span style={{ color: tokens.fg2 }}>— Dep</span>
+          <span style={{ color: tokens.fg3 }}>┈ Arr</span>
         </span>
         <span>{daily[daily.length - 1]!.date.slice(5)}</span>
       </div>
@@ -80,7 +82,7 @@ export function MiniBar({ items }: { items: { label: string; value: number; colo
             <div style={{
               width: `${(item.value / max) * 100}%`,
               height: "100%",
-              background: item.color ?? tokens.accent,
+              background: item.color ?? tokens.fg2,
               transition: "width 0.3s ease",
             }} />
           </div>

@@ -96,7 +96,7 @@ export function SummaryPanel({ flights, selectedAirport, scope, region, rangeDay
                     {r.originIata}→{r.destIata}
                     <span style={{ color: tokens.fg3, marginLeft: SPACE.s4, fontSize: SIZE.minor }}>{r.airlines.join("/")}</span>
                   </span>
-                  <span style={{ color: tokens.accent, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums" }}>{r.count}</span>
+                  <span style={{ color: tokens.fg1, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums" }}>{r.count}</span>
                 </div>
               ))}
             </div>

@@ -491,7 +491,7 @@ export function Timeline(p: Props) {
             >
               {p.hourBins.map((b, i) => {
                 const cur = i === curIdx;
-                const color = cur ? tokens.accent : mix(tokens.fg1, isDark ? 28 : 35);
+                const color = cur ? tokens.accent : mix(tokens.fg2, isDark ? 45 : 50); // 圖表配色規則：目前用 accent，其餘中性灰階
                 const tw = new Date(b.start * 1000 + 8 * 3600_000);
                 const label = `${String(tw.getUTCMonth() + 1).padStart(2, "0")}/${String(tw.getUTCDate()).padStart(2, "0")} ${String(tw.getUTCHours()).padStart(2, "0")}:00 · 進場 ${b.arr} · 離場 ${b.dep}`;
                 return (
