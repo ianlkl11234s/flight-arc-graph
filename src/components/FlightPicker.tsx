@@ -1,4 +1,5 @@
 import type { Flight, Scope, TrackMode } from "../types";
+import { FONT } from "../styles/tokens";
 
 interface Props {
   flights: Flight[];
@@ -22,7 +23,7 @@ const btnStyle = (active: boolean, dark: boolean): React.CSSProperties => ({
   padding: "4px 10px",
   fontSize: 11,
   cursor: "pointer",
-  fontFamily: "monospace",
+  fontFamily: FONT.ui,
   backdropFilter: "blur(8px)",
   whiteSpace: "nowrap",
 });
@@ -34,7 +35,7 @@ const getSelectStyle = (dark: boolean): React.CSSProperties => ({
   borderRadius: 4,
   padding: "4px 8px",
   fontSize: 11,
-  fontFamily: "monospace",
+  fontFamily: FONT.ui,
   maxWidth: 220,
   backdropFilter: "blur(8px)",
 });

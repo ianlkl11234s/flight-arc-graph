@@ -196,6 +196,25 @@ function throwIfAborted(signal?: AbortSignal): void {
   }
 }
 
+/**
+ * 載入失敗（spec R6）：候選路徑全部是網路錯誤或 5xx。
+ * 404／403／Vite SPA 回 HTML 仍視為「沒有這個檔」→ 空陣列（和「這天沒資料」同義，行為不變）。
+ */
+export class FlightLoadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FlightLoadError";
+  }
+}
+
+/** streamLoadJsonl 在 strict 模式下遇到 5xx 丟出（給 streamFirstAvailable 判斷「候選全掛」用） */
+class HttpServerError extends Error {
+  constructor(readonly status: number, url: string) {
+    super(`HTTP ${status} ${url}`);
+    this.name = "HttpServerError";
+  }
+}
+
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
@@ -316,9 +335,12 @@ async function streamLoadJsonl(
   url: string,
   onProgress?: (total: number) => void,
   options?: FlightLoadOptions,
+  /** true：5xx 丟 HttpServerError（其餘非 ok 仍回 []）。只有 streamFirstAvailable 開啟 */
+  strict = false,
 ): Promise<Flight[]> {
   throwIfAborted(options?.signal);
   const res = await fetch(url, { signal: options?.signal });
+  if (strict && res.status >= 500) throw new HttpServerError(res.status, url);
   if (!res.ok || !res.body) return [];
 
   const reader = res.body.getReader();
@@ -401,15 +423,21 @@ async function streamFirstAvailable(
   onProgress?: (total: number) => void,
   options?: FlightLoadOptions,
 ): Promise<Flight[]> {
+  let answered = 0;
+  let failed = 0;
   for (const url of urls) {
     throwIfAborted(options?.signal);
     try {
-      const flights = await streamLoadJsonl(url, onProgress, options);
+      const flights = await streamLoadJsonl(url, onProgress, options, true);
+      answered++;
       if (flights.length > 0) return flights;
     } catch (error) {
       if (isAbortError(error)) throw error;
+      failed++;
     }
   }
+  // 每個候選都是網路錯誤／5xx → 明講失敗，不要變成「沒資料」（R6）
+  if (answered === 0 && failed > 0) throw new FlightLoadError(`all ${failed} candidates failed`);
   return [];
 }
 
@@ -455,11 +483,17 @@ export async function loadAirportFlights(
               ...assetCandidates(lodShardPath(entry.path, lod), "tracks"),
               ...assetCandidates(entry.path, "tracks"),
             ];
-        const shard = await streamFirstAvailable(
-          candidates,
-          (total) => onProgress?.(completedFlights + total),
-          options,
-        );
+        let shard: Flight[] = [];
+        try {
+          shard = await streamFirstAvailable(
+            candidates,
+            (total) => onProgress?.(completedFlights + total),
+            options,
+          );
+        } catch (error) {
+          // shard 全掛 → 照舊落到 flat fallback；flat 也掛才往外丟
+          if (!(error instanceof FlightLoadError)) throw error;
+        }
         if (shard.length === 0) {
           shardResults.length = 0;
           break;
@@ -507,6 +541,8 @@ export async function loadAirportSelectionFlights(
   )];
   const accumulated: Flight[] = [];
   const seen = new Set<string>();
+  // 任一機場載入失敗 → 整個組合算失敗（已成功的機場在 LRU，重試只會重抓失敗的）
+  let failure: unknown = null;
 
   if (selection.length === 0) {
     onProgress?.(0);
@@ -520,11 +556,19 @@ export async function loadAirportSelectionFlights(
   let nextIndex = 0;
 
   const loadNext = async (): Promise<void> => {
-    while (!options?.signal?.aborted) {
+    while (!options?.signal?.aborted && failure === null) {
       const index = nextIndex++;
       if (index >= selection.length) return;
 
-      const flights = await loadAirportFlights(selection[index]!, undefined, options);
+      let flights: Flight[];
+      try {
+        flights = await loadAirportFlights(selection[index]!, undefined, options);
+      } catch (error) {
+        if (isAbortError(error)) throw error;
+        failure ??= error;
+        return;
+      }
+      if (failure !== null) return;
       throwIfAborted(options?.signal);
       for (const flight of flights) {
         if (seen.has(flight.fr24_id)) continue;
@@ -538,6 +582,7 @@ export async function loadAirportSelectionFlights(
   await Promise.all(
     Array.from({ length: concurrency }, () => loadNext()),
   );
+  if (failure !== null) throw failure;
   return accumulated;
 }
 
@@ -610,7 +655,13 @@ export async function loadRegionFullFlights(
 ): Promise<Flight[]> {
   // ── LOD 前置路徑 ──
   const lodName = region === "all" || region === "world" ? "all" : region;
-  const lod = await loadRegionFlights(lodName, onProgress, options);
+  let lod: Flight[] = [];
+  try {
+    lod = await loadRegionFlights(lodName, onProgress, options);
+  } catch (error) {
+    // LOD 檔全掛 → 照舊落到逐機場合併；逐機場也掛才往外丟
+    if (!(error instanceof FlightLoadError)) throw error;
+  }
   if (lod.length > 0) return lod;
 
   // ── Fallback：逐機場合併全解析度（LOD 檔還沒上 S3 的過渡期）──

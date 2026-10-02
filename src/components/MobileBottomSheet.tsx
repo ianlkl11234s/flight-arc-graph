@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { Z } from "../styles/tokens";
 
 type SheetLevel = "collapsed" | "half" | "full";
 
@@ -44,7 +45,7 @@ export function MobileBottomSheet({ isLandscape, children }: Props) {
         left: 0,
         right: 0,
         height,
-        zIndex: 30,
+        zIndex: Z.popover,
         background: "rgba(0,0,0,0.7)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",

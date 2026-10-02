@@ -1,4 +1,5 @@
 import { getAirportInfo } from "../map/cameraPresets";
+import { FONT } from "../styles/tokens";
 
 interface Props {
   airports: string[];
@@ -14,7 +15,7 @@ const getStyle = (dark: boolean): React.CSSProperties => ({
   borderRadius: 4,
   padding: "4px 8px",
   fontSize: 14,
-  fontFamily: "monospace",
+  fontFamily: FONT.ui,
   backdropFilter: "blur(8px)",
 });
 

@@ -1,0 +1,76 @@
+/* src/ui 元件用的 class：只放 inline style 做不到的部分（偽元素、:focus-visible、range thumb）。
+   色值一律走元件 root 以 inline style 設定的 --fa-* 變數（見 src/ui/vars.ts），
+   退回 tokens.css 的主題變數。所有 selector 必須以 .fa- 開頭，不寫任何全域規則。 */
+
+/* ── 焦點外框 ── */
+.fa-focus:focus { outline: none; }
+.fa-focus:focus-visible {
+  outline: 1px solid var(--fa-accent, var(--accent));
+  outline-offset: 1px;
+}
+
+/* ── Panel：左上 / 右下 8px 琥珀直角刻度 ── */
+.fa-panel::before,
+.fa-panel::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: var(--fa-accent, var(--accent));
+  border-style: solid;
+  opacity: .8;
+  pointer-events: none;
+}
+.fa-panel::before { left: -1px; top: -1px; border-width: 1px 0 0 1px; }
+.fa-panel::after { right: -1px; bottom: -1px; border-width: 0 1px 1px 0; }
+
+/* ── Slider：2px 軌 + 6×14 方形 thumb ── */
+.fa-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.fa-slider::-webkit-slider-runnable-track { height: 14px; background: transparent; }
+.fa-slider::-moz-range-track { height: 14px; background: transparent; }
+.fa-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 6px;
+  height: 14px;
+  border-radius: 0;
+  border: 0;
+  background: var(--fa-accent, var(--accent));
+  cursor: pointer;
+}
+.fa-slider::-moz-range-thumb {
+  width: 6px;
+  height: 14px;
+  border-radius: 0;
+  border: 0;
+  background: var(--fa-accent, var(--accent));
+  cursor: pointer;
+}
+.fa-slider:focus { outline: none; }
+.fa-slider:focus-visible::-webkit-slider-thumb {
+  outline: 1px solid var(--fa-fg1, var(--fg1));
+  outline-offset: 1px;
+}
+.fa-slider:focus-visible::-moz-range-thumb {
+  outline: 1px solid var(--fa-fg1, var(--fg1));
+  outline-offset: 1px;
+}
+.fa-slider:disabled { cursor: not-allowed; }
+.fa-slider:disabled::-webkit-slider-thumb { background: var(--fa-fg3, var(--fg3)); cursor: not-allowed; }
+.fa-slider:disabled::-moz-range-thumb { background: var(--fa-fg3, var(--fg3)); cursor: not-allowed; }
+
+/* 雙把手：兩個 input 疊放，只有 thumb 吃滑鼠 */
+.fa-slider--range { pointer-events: none; }
+.fa-slider--range::-webkit-slider-thumb { pointer-events: auto; }
+.fa-slider--range::-moz-range-thumb { pointer-events: auto; }
+
+/* ── hover 微調（inline 做不到 :hover） ── */
+.fa-hover:hover:not(:disabled) { filter: brightness(1.15); }
+.fa-hover-fg:hover:not(:disabled) { color: var(--fa-fg1, var(--fg1)) !important; }

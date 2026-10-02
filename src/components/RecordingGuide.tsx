@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { useTheme } from "../styles/ThemeContext";
+import { FONT, SIZE, Z } from "../styles/tokens";
+import { mix } from "../ui/vars";
 
 interface RecordingGuideProps {
   visible: boolean;
@@ -12,6 +15,7 @@ interface RecordingGuideProps {
  * - 三分法格線（可切換）
  */
 export function RecordingGuide({ visible, showGrid }: RecordingGuideProps) {
+  const { tokens } = useTheme();
   const [rect, setRect] = useState({ top: 0, left: 0, width: 0, height: 0 });
 
   useEffect(() => {
@@ -48,12 +52,12 @@ export function RecordingGuide({ visible, showGrid }: RecordingGuideProps) {
   if (!visible) return null;
 
   const { top, left, width, height } = rect;
-  const borderColor = "rgba(255,80,80,0.6)";
-  const guideColor = "rgba(255,255,255,0.15)";
-  const maskColor = "rgba(0,0,0,0.45)";
+  const borderColor = mix(tokens.rec, 60);
+  const guideColor = mix(tokens.fg1, 15);
+  const maskColor = mix(tokens.mapBg, 45);
 
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 50, pointerEvents: "none" }}>
+    <div style={{ position: "absolute", inset: 0, zIndex: Z.toast, pointerEvents: "none" }}>
       {/* 四邊遮罩（超出 16:9 的區域） */}
       {/* top */}
       {top > 0 && (
@@ -188,9 +192,9 @@ export function RecordingGuide({ visible, showGrid }: RecordingGuideProps) {
           position: "absolute",
           top: 6,
           right: 8,
-          fontSize: 10,
-          fontFamily: "monospace",
-          color: "rgba(255,80,80,0.5)",
+          fontSize: SIZE.s10,
+          fontFamily: FONT.ui,
+          color: mix(tokens.rec, 50),
           letterSpacing: 1,
         }}>
           16:9

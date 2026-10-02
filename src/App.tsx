@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl, { type Map as MapboxMap } from "mapbox-gl";
-import type { Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay, SavedAirportSet } from "./types";
+import type { DepArrFilter, Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay, SavedAirportSet } from "./types";
 import { computeFitBoundsForSet } from "./map/fitBoundsForSet";
 import { BUILTIN_SETS } from "./map/savedSets";
 import type { FlightScene } from "./three/FlightScene";
@@ -26,14 +26,16 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { AirportSelector } from "./components/AirportSelector";
 import { FlightPicker } from "./components/FlightPicker";
 import { TimelineControls } from "./components/TimelineControls";
+import { Timeline, type HourBin } from "./components/Timeline";
 import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
 import { FlightStatsPanel } from "./components/FlightStatsPanel";
-import { DataSourceToggle } from "./components/DataSourceToggle";
-import { DepArrToggle, type DepArrFilter } from "./components/DepArrToggle";
+import { Toolbar } from "./components/Toolbar";
+import { Dock, DockItem } from "./components/Dock";
+import { LoadingStatus } from "./components/LoadingStatus";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
-import { IconRailSidebar, type ScenePreset } from "./components/IconRailSidebar";
+import { IconRailSidebar, type ScenePreset, type PanelId } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
 import { useCinemaCamera } from "./hooks/useCinemaCamera";
 import { useCanvasRecorder } from "./hooks/useCanvasRecorder";
@@ -47,6 +49,11 @@ import { getAircraftInfo, type AircraftCategory as AcCat } from "./data/aircraft
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
 import { setFrozenAnimTime } from "./three/animClock";
+import { ThemeProvider, useTheme } from "./styles/ThemeContext";
+import { FONT, LAYOUT, SIZE, SPACE, Z } from "./styles/tokens";
+import { Button, Caption, Segmented, type CaptionMetaItem } from "./ui";
+import { escLayerToClose, isEditableTarget } from "./ui/escStack";
+import { ALL_OVERLAYS_CLOSED, overlaysOpen, overlaysToClose, type OverlayKey, type OverlayState } from "./ui/overlayMutex";
 
 // ── Atlas 機場點：點擊 popup ──
 interface AtlasProps {
@@ -91,69 +98,41 @@ function buildAtlasPopupHtml(p: AtlasProps): string {
   </div>`;
 }
 
-function LoadingIndicator({ loadingProgress, isDarkTheme }: {
-  loadingProgress: { loaded: number; label: string } | null;
-  isDarkTheme: boolean;
-}) {
-  const [fadeOut, setFadeOut] = useState(false);
-  const [visible, setVisible] = useState(false);
-  const [lastCount, setLastCount] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  useEffect(() => {
-    if (loadingProgress) {
-      setVisible(true);
-      setFadeOut(false);
-      setLastCount(loadingProgress.loaded);
-    } else if (visible) {
-      setFadeOut(true);
-      timerRef.current = setTimeout(() => setVisible(false), 1200);
-    }
-    return () => clearTimeout(timerRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [!!loadingProgress, loadingProgress?.loaded]);
-
-  if (!visible) return null;
-
+/** 左上字標 FLIGHT ARC + 相機 HUD（座標、zoom、俯角、方位）。 */
+function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: number; pitch: number; bearing: number } }) {
+  const { tokens } = useTheme();
+  const lat = `${Math.abs(cameraInfo.lat).toFixed(4)}°${cameraInfo.lat >= 0 ? "N" : "S"}`;
+  const lng = `${Math.abs(cameraInfo.lng).toFixed(4)}°${cameraInfo.lng >= 0 ? "E" : "W"}`;
   return (
     <div
       style={{
         position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        zIndex: 15,
+        left: LAYOUT.panelLeft + SPACE.s8,
+        top: SPACE.s16,
+        zIndex: Z.mapOverlay,
         display: "flex",
-        alignItems: "center",
-        gap: 14,
-        padding: "16px 28px",
-        background: isDarkTheme ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.8)",
-        backdropFilter: "blur(12px)",
-        borderRadius: 10,
-        border: `1px solid ${isDarkTheme ? "rgba(180,60,60,0.6)" : "rgba(180,60,60,0.5)"}`,
-        opacity: fadeOut ? 0 : 1,
-        transition: "opacity 1s ease-out",
+        alignItems: "baseline",
+        gap: SPACE.s12 + SPACE.s2,
         pointerEvents: "none",
+        whiteSpace: "nowrap",
       }}
     >
-      <div
-        style={{
-          width: 12,
-          height: 12,
-          borderRadius: "50%",
-          background: fadeOut ? "#4a4" : "#c44",
-          animation: fadeOut ? "none" : "pulse 1s ease-in-out infinite",
-        }}
-      />
-      <span style={{
-        fontSize: 15,
-        fontFamily: "monospace",
-        fontWeight: 500,
-        color: isDarkTheme ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
-      }}>
-        {fadeOut ? `${lastCount} flights loaded` : `Loading ${loadingProgress?.label ?? "..."}` }
+      <span style={{ fontFamily: FONT.data, fontSize: SIZE.s12, fontWeight: 600, letterSpacing: ".18em", color: tokens.fg1 }}>
+        FLIGHT ARC
       </span>
-      <style>{`@keyframes pulse { 0%,100% { opacity:0.3 } 50% { opacity:1 } }`}</style>
+      <span
+        title={cameraInfo.zoom < 3 ? "Drag globe · Scroll to zoom" : "Right-drag to rotate · Scroll to zoom"}
+        style={{
+          fontFamily: FONT.data,
+          fontSize: SIZE.s10,
+          letterSpacing: ".04em",
+          color: tokens.fg3,
+          fontVariantNumeric: "tabular-nums",
+          pointerEvents: "auto",
+        }}
+      >
+        {lat} {lng} · z{cameraInfo.zoom.toFixed(1)} · 俯角 {cameraInfo.pitch}° · 方位 {cameraInfo.bearing}°
+      </span>
     </div>
   );
 }
@@ -162,13 +141,11 @@ function OrientationOrb({
   bearing,
   pitch,
   isDarkTheme,
-  avoidAirspaceCard,
   onReset,
 }: {
   bearing: number;
   pitch: number;
   isDarkTheme: boolean;
-  avoidAirspaceCard: boolean;
   onReset: () => void;
 }) {
   const axisScale = Math.max(0.38, Math.cos((pitch * Math.PI) / 180));
@@ -195,10 +172,7 @@ function OrientationOrb({
       aria-label="恢復北上南下、無傾斜的地球方向"
       title="Reset orientation · North up"
       style={{
-        position: "absolute",
-        right: avoidAirspaceCard ? 398 : 18,
-        bottom: 92,
-        zIndex: 12,
+        display: "block",
         width: 52,
         height: 52,
         padding: 3,
@@ -213,7 +187,7 @@ function OrientationOrb({
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         cursor: "pointer",
-        transition: "right 220ms ease, border-color 180ms ease, transform 180ms ease, background 180ms ease",
+        transition: "border-color 180ms ease, transform 180ms ease, background 180ms ease",
       }}
       onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
@@ -225,8 +199,8 @@ function OrientationOrb({
         <line x1={northX} y1={northY} x2={southX} y2={southY} stroke="rgba(100,170,255,0.72)" strokeWidth="1" />
         <circle cx={northX} cy={northY} r="2.5" fill="#64aaff" />
         <circle cx={southX} cy={southY} r="2" fill={isDarkTheme ? "rgba(255,255,255,0.58)" : "rgba(20,30,45,0.52)"} />
-        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill="#9acbff" fontSize="6" fontFamily="monospace" fontWeight="700">N</text>
-        <text x={southLabelX} y={southLabelY} textAnchor="middle" fill={text} fontSize="5.5" fontFamily="monospace">S</text>
+        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill="#9acbff" fontSize="6" fontFamily={FONT.ui} fontWeight="700">N</text>
+        <text x={southLabelX} y={southLabelY} textAnchor="middle" fill={text} fontSize="5.5" fontFamily={FONT.ui}>S</text>
         <circle cx="22" cy="22" r="1.5" fill={isUpright ? "#64aaff" : text} />
       </svg>
     </button>
@@ -264,6 +238,9 @@ function computeLodBand(zoom: number, current: LodLevel): LodLevel {
 }
 
 // 「探索地圖總覽」地球 icon 展開時飛去的固定俯瞰視角
+/** 探索面板區域 chip 的順序（原頂部 Region 按鈕列） */
+const REGION_ORDER: Region[] = ["TW", "JP", "HK", "KR", "TH", "US", "UK", "CN", "world", "all"];
+
 const EXPLORE_OVERVIEW_CAMERA = {
   center: [119.0049, 22.5292] as [number, number],
   zoom: 2.5,
@@ -303,6 +280,8 @@ export default function App() {
     airspaceDates,
     regionDatesMap,
     regionFullDatesMap,
+    loadError,
+    retryLoad,
   } = useFlightData(
     dataSource,
     scope,
@@ -379,6 +358,8 @@ export default function App() {
   const [viewshedOpacity, setViewshedOpacity] = useState(0.5);
   const [viewshedSharpness, setViewshedSharpness] = useState(0.5);
   const [showInfo, setShowInfo] = useState(false);
+  // 左側 rail 面板（進站預設收起，Q6；圖說旁的引導入口也會開它）
+  const [railPanel, setRailPanel] = useState<PanelId | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [airspaceSelection, setAirspaceSelection] = useState<{ selected: AirspaceFeature; others: AirspaceFeature[] } | null>(null);
   const [airspaceSettings, setAirspaceSettings] = useState<AirspaceSettings>(() => {
@@ -545,9 +526,6 @@ export default function App() {
       ? `Flight Network · ${airportSet.length} Airport${airportSet.length === 1 ? "" : "s"}`
       : "Build a Flight Network")
     : airportMeta[selectedAirport]?.name ?? getAirportInfo(selectedAirport)?.name ?? selectedAirport;
-  const selectionEyebrow = airportSet
-    ? "FLIGHT ARC / NETWORK STUDY"
-    : "FLIGHT ARC / AIRPORT VIEW";
   const selectionCodeLabel = airportSet
     ? airportSet.join(" · ")
     : (() => {
@@ -650,7 +628,7 @@ export default function App() {
   }, []);
   const timeline = useTimeline({ availableDates, preferredDate, onTick: handleTimelineTick });
 
-  // 切換機場時：若目前日期不是新機場的完整資料日，跳到該機場的 preferredDate。
+  // 切換機場時：若目前日期不在新機場的可用日期（availableDates）內，跳到該機場的 preferredDate。
   // 只在「機場改變」時觸發 —— 使用者手動點部分資料日期不會被蓋掉。
   const prevAirportRef = useRef(selectedAirport);
   const prevSelectionRef = useRef<string | null>(null);
@@ -758,7 +736,7 @@ export default function App() {
     });
   }, [availableDates, timeline.selectedDate, timeline.rangeDays, timeline.selectedDates]);
 
-  // Airspace Scan 預設：切換時自動設定 All Taiwan、7d、拉遠視角、低 opacity
+  // Airspace Scan 預設：切換時自動設定 region 範圍、1d、拉遠視角、低 opacity（切回 Route Tracks 亦為 1d）
   const prevDataSourceRef = useRef(dataSource);
   useEffect(() => {
     const prev = prevDataSourceRef.current;
@@ -929,6 +907,50 @@ export default function App() {
       depArrFilter === "dep" ? activeIcaoSet.has(f.origin_icao) : activeIcaoSet.has(f.dest_icao)
     );
   }, [setFilteredFlights, depArrFilter, activeIcaoSet]);
+
+  // 左下圖說：進場／離場數（定義同 Dep/Arr 篩選：dest／origin 在目前機場或組合內）
+  const captionCounts = useMemo(() => {
+    let arr = 0;
+    let dep = 0;
+    for (const f of finalFlights) {
+      if (activeIcaoSet.has(f.dest_icao)) arr++;
+      if (activeIcaoSet.has(f.origin_icao)) dep++;
+    }
+    return { arr, dep };
+  }, [finalFlights, activeIcaoSet]);
+
+  // 時間軸直方圖：每小時進場（arr_time）／離場（dep_time）數。多日 Compare 依各日窗口分段，
+  // 避免跨月窗口產生上千格。
+  const hourBins = useMemo<HourBin[]>(() => {
+    const segs: Array<[number, number]> = timeline.isMultiDateMode && timeline.dateWindowStarts.length > 0
+      ? timeline.dateWindowStarts.map((st, i) => [st, timeline.dateWindowEnds[i]!] as [number, number]).sort((a, b) => a[0] - b[0])
+      : [[timeline.windowStart, timeline.windowEnd]];
+    const bins: HourBin[] = [];
+    const segIndex: Array<{ start: number; end: number; offset: number }> = [];
+    for (const [st, en] of segs) {
+      if (!(en > st)) continue;
+      const offset = bins.length;
+      for (let t = st; t <= en; t += 3600) bins.push({ start: t, arr: 0, dep: 0 });
+      segIndex.push({ start: st, end: en, offset });
+    }
+    const add = (t: number, key: "arr" | "dep") => {
+      if (!t) return;
+      for (const sg of segIndex) {
+        if (t >= sg.start && t <= sg.end) {
+          const b = bins[sg.offset + Math.floor((t - sg.start) / 3600)];
+          if (b) b[key]++;
+          return;
+        }
+      }
+    };
+    // 區域範圍（非組合）沒有「本地機場」：每班的降落／起飛時刻都算
+    const regionWide = scope === "region" && airportSet === null;
+    for (const f of finalFlights) {
+      if (regionWide || activeIcaoSet.has(f.dest_icao)) add(f.arr_time, "arr");
+      if (regionWide || activeIcaoSet.has(f.origin_icao)) add(f.dep_time, "dep");
+    }
+    return bins;
+  }, [finalFlights, activeIcaoSet, scope, airportSet, timeline.isMultiDateMode, timeline.dateWindowStarts, timeline.dateWindowEnds, timeline.windowStart, timeline.windowEnd]);
 
   // 用於 FlightPicker 的航班列表（airport filter；set 模式則 union 所有 set 機場）
   const pickableFlights = useMemo(() => {
@@ -1569,15 +1591,58 @@ export default function App() {
     };
   }, [trackMode, selectedFlightId]);
 
-  // ESC 退出拍攝模式
+  // ── 浮層互斥（R2）：只看「剛由關變開」的那個，關掉其他；Capture 進入時全關 ──
+  const overlayState: OverlayState = useMemo(
+    () => ({ rail: railPanel !== null, stats: showStats, info: showInfo }),
+    [railPanel, showStats, showInfo],
+  );
+  const prevOverlayRef = useRef<OverlayState>(ALL_OVERLAYS_CLOSED);
+  const closeOverlay = useCallback((key: OverlayKey) => {
+    if (key === "rail") setRailPanel(null);
+    else if (key === "stats") setShowStats(false);
+    else setShowInfo(false);
+  }, []);
   useEffect(() => {
-    if (!captureMode) return;
+    const prev = prevOverlayRef.current;
+    prevOverlayRef.current = overlayState;
+    const toClose = captureMode ? overlaysOpen(overlayState) : overlaysToClose(prev, overlayState);
+    toClose.forEach(closeOverlay);
+  }, [overlayState, captureMode, closeOverlay]);
+
+  // ── Esc 分層（R7）：單一 handler，掛 window bubble 階段（Modal capture 階段、月曆 document 階段先攔）──
+  const escStateRef = useRef({ captureMode, isExporting, showInfo, airspaceSelection, trackMode, railPanel, showStats });
+  escStateRef.current = { captureMode, isExporting, showInfo, airspaceSelection, trackMode, railPanel, showStats };
+  useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setCaptureMode(false);
+      if (e.key !== "Escape") return;
+      const cur = escStateRef.current;
+      const layer = escLayerToClose({
+        defaultPrevented: e.defaultPrevented,
+        editableTarget: isEditableTarget(e.target),
+        captureMode: cur.captureMode,
+        exporting: cur.isExporting,
+        infoOpen: cur.showInfo,
+        dockCardOpen: cur.airspaceSelection !== null,
+        singleFlight: cur.trackMode === "single",
+        panelOpen: cur.railPanel !== null || cur.showStats,
+      });
+      if (!layer) return;
+      e.preventDefault();
+      if (layer === "capture") setCaptureMode(false);
+      else if (layer === "info") setShowInfo(false);
+      else if (layer === "dock") setAirspaceSelection(null);
+      else if (layer === "single") {
+        // 同 SettingsPanel 的 Track 切換：回 Stack All 並清掉選取
+        setTrackMode("stack");
+        setSelectedFlightId(null);
+      } else {
+        setRailPanel(null);
+        setShowStats(false);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [captureMode]);
+  }, []);
 
   // 資料載入完成後自動播放
   useEffect(() => {
@@ -1587,11 +1652,44 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, availableDates.length]);
 
+  // ── 左下圖說內容 ──
+  const captionCode = airportSet !== null
+    ? setName ?? "自訂組合"
+    : scope === "region" ? REGION_CONFIG[region].label : selectedAirport;
+  const captionName = airportSet !== null
+    ? `${airportSet.length} 座機場`
+    : scope === "region"
+      ? regionTitle
+      : airportMeta[selectedAirport]?.nameZh || airportMeta[selectedAirport]?.name || getAirportInfo(selectedAirport)?.name || "";
+  const captionMeta: CaptionMetaItem[] = [
+    {
+      label: `${timeline.selectedDate} 週${"日一二三四五六"[new Date(`${timeline.selectedDate}T00:00:00Z`).getUTCDay()] ?? ""}`
+        + (timeline.rangeDays > 1 ? ` +${timeline.rangeDays - 1}d` : "")
+        + (timeline.isMultiDateMode ? ` · Compare ${timeline.selectedDates.length} 日` : "")
+        + " · 台灣時間",
+    },
+    { value: finalFlights.length.toLocaleString(), unit: "班" },
+    ...(airportSet !== null || scope !== "region"
+      ? [
+          { label: "進場", value: captionCounts.arr.toLocaleString() },
+          { label: "離場", value: captionCounts.dep.toLocaleString() },
+        ]
+      : []),
+    ...(loadingProgress ? [{ label: "載入中", value: loadingProgress.loaded.toLocaleString() }] : []),
+  ];
+
+  // 狀態條的載入對象：機場／組合／區域 · 日期（R9：不露 region key 等內部代號）
+  const statusLabel = `${captionCode} · `
+    + (timeline.isMultiDateMode
+      ? `${timeline.selectedDates.length} 日`
+      : `${timeline.selectedDate}${timeline.rangeDays > 1 ? ` +${timeline.rangeDays - 1}d` : ""}`);
+
   if (!hasCompletedInitialLoad && loading && allFlights.length === 0) {
     return <LoadingScreen />;
   }
 
   return (
+    <ThemeProvider isDark={isDarkTheme}>
     <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
       <MapView
         preset={preset}
@@ -1618,7 +1716,7 @@ export default function App() {
               style={{
                 position: "absolute",
                 inset: 0,
-                zIndex: 20,
+                zIndex: Z.panel,
                 pointerEvents: "none",
                 background:
                   "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 80%, rgba(0,0,0,0.6) 100%)",
@@ -1632,14 +1730,14 @@ export default function App() {
                 position: "absolute",
                 top: isMobile ? 16 : 32,
                 left: isMobile ? 16 : 32,
-                zIndex: 21,
+                zIndex: Z.toolbar,
                 pointerEvents: "none",
               }}
             >
               <div
                 style={{
                   fontSize: isMobile ? 20 : 28,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   fontWeight: 700,
                   color: "#fff",
                   letterSpacing: isMobile ? 2 : 4,
@@ -1651,7 +1749,7 @@ export default function App() {
               <div
                 style={{
                   fontSize: 18,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   fontWeight: 600,
                   color: "rgba(255,255,255,0.7)",
                   letterSpacing: 2,
@@ -1664,7 +1762,7 @@ export default function App() {
               <div
                 style={{
                   fontSize: 14,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   color: "rgba(255,255,255,0.4)",
                   letterSpacing: 1,
                   marginTop: 4,
@@ -1684,7 +1782,7 @@ export default function App() {
               <div
                 style={{
                   fontSize: 14,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   color: "rgba(255,255,255,0.3)",
                   letterSpacing: 1,
                   marginTop: 4,
@@ -1703,14 +1801,14 @@ export default function App() {
                 position: "absolute",
                 top: isMobile ? 120 : 140,
                 left: isMobile ? 16 : 32,
-                zIndex: 21,
+                zIndex: Z.toolbar,
                 padding: "5px 14px",
                 borderRadius: 16,
                 border: "1px solid rgba(255,255,255,0.2)",
                 background: trailDisplay === "progressive" ? "rgba(255,255,255,0.15)" : "rgba(60,60,60,0.4)",
                 color: trailDisplay === "progressive" ? "#fff" : "rgba(255,255,255,0.6)",
                 fontSize: 13,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
                 backdropFilter: "blur(8px)",
               }}
@@ -1766,7 +1864,7 @@ export default function App() {
                 position: "absolute",
                 top: 16,
                 right: 16,
-                zIndex: 21,
+                zIndex: Z.toolbar,
                 width: 48,
                 height: 48,
                 borderRadius: 24,
@@ -1783,14 +1881,14 @@ export default function App() {
                 position: "absolute",
                 bottom: 32,
                 right: 32,
-                zIndex: 21,
+                zIndex: Z.toolbar,
                 padding: "4px 12px",
                 background: "rgba(255,255,255,0.08)",
                 border: "1px solid rgba(255,255,255,0.15)",
                 borderRadius: 4,
                 color: "rgba(255,255,255,0.4)",
                 fontSize: 11,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
               }}
             >
@@ -1805,7 +1903,7 @@ export default function App() {
               position: "absolute",
               top: isMobile ? 16 : 32,
               right: isMobile ? 16 : 32,
-              zIndex: 51,
+              zIndex: Z.toast,
               display: "flex",
               gap: 6,
             }}>
@@ -1818,7 +1916,7 @@ export default function App() {
                   background: showGuide ? "rgba(255,80,80,0.15)" : "rgba(255,255,255,0.08)",
                   color: showGuide ? "rgba(255,80,80,0.8)" : "rgba(255,255,255,0.4)",
                   fontSize: 11,
-                  fontFamily: "monospace",
+                  fontFamily: FONT.ui,
                   cursor: "pointer",
                   backdropFilter: "blur(8px)",
                 }}
@@ -1835,7 +1933,7 @@ export default function App() {
                     background: showGuideGrid ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.08)",
                     color: showGuideGrid ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)",
                     fontSize: 11,
-                    fontFamily: "monospace",
+                    fontFamily: FONT.ui,
                     cursor: "pointer",
                     backdropFilter: "blur(8px)",
                   }}
@@ -1853,6 +1951,8 @@ export default function App() {
         <>
           {/* Icon Rail Sidebar */}
           <IconRailSidebar
+            activePanel={railPanel}
+            onActivePanelChange={setRailPanel}
             isDarkTheme={isDarkTheme}
             displayMode={displayMode}
             renderMode={renderMode}
@@ -1968,7 +2068,6 @@ export default function App() {
             rangeDays={timeline.rangeDays}
             onStatsClick={() => setShowStats(true)}
             onCaptureClick={() => setCaptureMode(true)}
-            onInfoClick={() => setShowInfo(true)}
             showTerminator={showTerminator}
             onTerminatorChange={setShowTerminator}
             colorThemeKey={colorThemeKey}
@@ -2016,279 +2115,145 @@ export default function App() {
             atlasGlowSize={atlasGlowSize}
             onAtlasGlowSizeChange={setAtlasGlowSize}
             onExploreOpen={() => mapRef.current?.flyTo({ ...EXPLORE_OVERVIEW_CAMERA, duration: 2000 })}
+            dataSource={dataSource}
+            hasFused={hasFused}
+            onDataSourceChange={setDataSource}
+            regions={REGION_ORDER.map((r) => ({ id: r, label: REGION_CONFIG[r].label }))}
+            onRegionSelect={(r) => {
+              setRegion(r);
+              setScope("airport");
+              const cfg = REGION_CONFIG[r];
+              if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
+              // 日期：切機場後由「機場改變」effect 處理（目前日期不可用才跳 preferredDate）
+              // 飛到預設機場視角
+              mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
+            }}
           />
 
-          {/* 頂部控制列（sidebar 右邊） */}
+          {/* 左下圖說：在看什麼（機場／組合、日期、班數、進離場）+ 進站引導（Q6） */}
           <div
             style={{
               position: "absolute",
-              top: 16,
-              left: 72,
-              zIndex: 10,
+              left: LAYOUT.panelLeft + SPACE.s8,
+              bottom: LAYOUT.mapBottomInset,
+              zIndex: Z.mapOverlay,
               display: "flex",
               flexDirection: "column",
-              gap: 6,
+              alignItems: "flex-start",
+              gap: SPACE.s12,
+              pointerEvents: "none",
             }}
           >
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <div style={{ minWidth: 210 }}>
-                <div style={{ fontSize: 9, color: "#64aaff", fontFamily: "monospace", letterSpacing: 1.8 }}>
-                  {selectionEyebrow}
-                </div>
-                <h1
-                  style={{
-                    margin: "2px 0 0",
-                    fontSize: 26,
-                    color: isDarkTheme ? "#fff" : "#333",
-                    fontFamily: "monospace",
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  {selectionTitle}
-                </h1>
-              </div>
-              <div
-                style={{
-                  padding: "4px 8px 4px 10px",
-                  background: isDarkTheme ? "rgba(100,170,255,0.14)" : "rgba(59,130,246,0.1)",
-                  border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.36)" : "#3B82F6"}`,
-                  borderRadius: 14,
-                  fontSize: 10,
-                  fontFamily: "monospace",
-                  color: isDarkTheme ? "rgba(255,255,255,0.78)" : "#1a1a1a",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                }}
-                title={airportSet?.join(", ") ?? selectedAirport}
-              >
-                <span>{airportSet?.length ?? 1} airport{(airportSet?.length ?? 1) === 1 ? "" : "s"} · {finalFlights.length} flights · {timeline.selectedDate}</span>
-                {airportSet && (
-                  <button
-                    onClick={exitSetMode}
-                    style={{
-                      width: 16, height: 16, padding: 0, borderRadius: "50%",
-                      background: "transparent",
-                      border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"}`,
-                      color: "inherit",
-                      cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 10, lineHeight: 1,
-                    }}
-                    title="退出組合模式"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              <DataSourceToggle
-                dataSource={dataSource}
-                hasFused={hasFused}
-                isDarkTheme={isDarkTheme}
-                onChange={setDataSource}
-              />
-              <DepArrToggle
-                filter={depArrFilter}
-                isDarkTheme={isDarkTheme}
-                onChange={setDepArrFilter}
-              />
-            </div>
-            {/* Region shortcuts only appear while explicitly browsing a region. */}
-            {scope === "region" && airportSet === null && <div style={{ display: "flex", gap: 4 }}>
-              {(["TW", "JP", "HK", "KR", "TH", "US", "UK", "CN", "world", "all"] as Region[]).map((r) => {
-                const isActive = region === r;
-                return (
-                  <button
-                    key={r}
+            <Caption
+              code={captionCode}
+              name={captionName}
+              meta={captionMeta}
+              notice={!loading && !loadingProgress && !loadError && displayedFlights.length === 0 ? "此日期範圍無航班資料" : undefined}
+              onExit={airportSet ? exitSetMode : undefined}
+              exitLabel="退出組合模式"
+              actions={railPanel === null ? (
+                <>
+                  <Button onClick={() => setRailPanel("sets")}>選機場</Button>
+                  <Button
                     onClick={() => {
-                      setRegion(r);
-                      setScope("airport");
-                      const cfg = REGION_CONFIG[r];
-                      if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
-                      // 跳到有資料的日期
-                      if (cfg.defaultDate) timeline.setSelectedDate(cfg.defaultDate);
-                      // 飛到預設機場視角
-                      mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
-                    }}
-                    style={{
-                      padding: "3px 10px",
-                      fontSize: 11,
-                      fontFamily: "monospace",
-                      fontWeight: isActive ? 600 : 400,
-                      letterSpacing: 1,
-                      border: `1px solid ${isActive ? "#64aaff" : isDarkTheme ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"}`,
-                      borderRadius: 4,
-                      background: isActive ? "rgba(100,170,255,0.2)" : "transparent",
-                      color: isActive ? "#fff" : isDarkTheme ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)",
-                      cursor: "pointer",
-                      transition: "all 0.15s",
+                      setRailPanel("atlas");
+                      mapRef.current?.flyTo({ ...EXPLORE_OVERVIEW_CAMERA, duration: 2000 });
                     }}
                   >
-                    {REGION_CONFIG[r].label}
-                  </button>
-                );
-              })}
-            </div>}
+                    全部機場
+                  </Button>
+                </>
+              ) : undefined}
+              style={{ maxWidth: 520 }}
+            />
+            {/* 時間軸膠囊（R4；底邊 = mapBottomInset，與 dock 共用，R5） */}
+            <Timeline
+              playing={timeline.playing}
+              speed={timeline.speed}
+              progress={timeline.progress}
+              currentTime={timeline.currentTime}
+              windowStart={timeline.windowStart}
+              windowEnd={timeline.windowEnd}
+              selectedDate={timeline.selectedDate}
+              rangeDays={timeline.rangeDays}
+              availableDates={availableDates}
+              fullDates={fullDates}
+              dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
+              selectedDates={timeline.selectedDates}
+              isMultiDateMode={timeline.isMultiDateMode}
+              hourBins={hourBins}
+              onToggle={timeline.toggle}
+              onSpeedChange={timeline.setSpeed}
+              onSeekByProgress={timeline.seekByProgress}
+              onSeek={timeline.seek}
+              onDateShift={timeline.shiftDate}
+              onDateSelect={timeline.setSelectedDate}
+              onRangeDaysChange={timeline.setRangeDays}
+              onToggleMultiDate={timeline.toggleMultiDate}
+              onClearMultiDates={timeline.clearMultiDates}
+            />
           </div>
 
-          {/* 時間軸 */}
-          <TimelineControls
-            playing={timeline.playing}
-            speed={timeline.speed}
-            progress={timeline.progress}
-            currentTime={timeline.currentTime}
-            windowStart={timeline.windowStart}
-            windowEnd={timeline.windowEnd}
-            selectedDate={timeline.selectedDate}
-            rangeDays={timeline.rangeDays}
-            availableDates={availableDates}
-            fullDates={fullDates}
-            dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
-            selectedDates={timeline.selectedDates}
-            isMultiDateMode={timeline.isMultiDateMode}
-            isDarkTheme={isDarkTheme}
-            onToggle={timeline.toggle}
-            onSpeedChange={timeline.setSpeed}
-            onSeekByProgress={timeline.seekByProgress}
-            onDateShift={timeline.shiftDate}
-            onDateSelect={timeline.setSelectedDate}
-            onRangeDaysChange={timeline.setRangeDays}
-            onToggleMultiDate={timeline.toggleMultiDate}
-            onClearMultiDates={timeline.clearMultiDates}
-          />
+          {/* 左上：字標 + 相機 HUD */}
+          <Brand cameraInfo={cameraInfo} />
 
-          <OrientationOrb
-            bearing={cameraInfo.bearing}
-            pitch={cameraInfo.pitch}
-            isDarkTheme={isDarkTheme}
-            avoidAirspaceCard={airspaceSelection !== null}
-            onReset={() => {
-              mapRef.current?.easeTo({
-                bearing: 0,
-                pitch: 0,
-                duration: 800,
-              });
-            }}
-          />
-
-          {/* 右上角按鈕群 */}
-          <div
-            style={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              zIndex: 10,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
-              gap: 8,
-            }}
-          >
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => setCaptureMode(true)}
-                style={{
-                  padding: "6px 14px",
-                  background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-                  border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-                  borderRadius: 6,
-                  color: isDarkTheme ? "#fff" : "#333",
-                  fontSize: 12,
-                  fontFamily: "monospace",
-                  cursor: "pointer",
-                  backdropFilter: "blur(8px)",
-                  letterSpacing: 1,
+          {/* 右下 dock：方位球 + 點擊資訊卡（R1、R5） */}
+          <Dock>
+            <DockItem align="end">
+              <OrientationOrb
+                bearing={cameraInfo.bearing}
+                pitch={cameraInfo.pitch}
+                isDarkTheme={isDarkTheme}
+                onReset={() => {
+                  mapRef.current?.easeTo({
+                    bearing: 0,
+                    pitch: 0,
+                    duration: 800,
+                  });
                 }}
-              >
-                Capture
-              </button>
-              <button
-                onClick={() => setRenderMode((m) => (m === "3d" ? "2d" : "3d"))}
-                style={{
-                  padding: "6px 14px",
-                  background: renderMode === "3d"
-                    ? (isDarkTheme ? "rgba(80,140,255,0.2)" : "rgba(80,140,255,0.1)")
-                    : (isDarkTheme ? "rgba(255,170,68,0.2)" : "rgba(255,170,68,0.1)"),
-                  border: `1px solid ${renderMode === "3d"
-                    ? (isDarkTheme ? "rgba(80,140,255,0.5)" : "rgba(80,140,255,0.4)")
-                    : (isDarkTheme ? "rgba(255,170,68,0.5)" : "rgba(255,170,68,0.4)")}`,
-                  borderRadius: 6,
-                  color: isDarkTheme ? "#fff" : "#333",
-                  fontSize: 12,
-                  fontFamily: "monospace",
-                  cursor: "pointer",
-                  backdropFilter: "blur(8px)",
-                  letterSpacing: 1,
-                }}
-              >
-                {renderMode === "3d" ? "3D Altitude" : "2D Flat"}
-              </button>
-            </div>
-            <button
-              onClick={() => setShowInfo(true)}
-              style={{
-                padding: "6px 14px",
-                background: isDarkTheme ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-                border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-                borderRadius: 6,
-                color: isDarkTheme ? "#fff" : "#333",
-                fontSize: 12,
-                fontFamily: "monospace",
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-                letterSpacing: 1,
-              }}
-            >
-              Info
-            </button>
-            <div
-              style={{
-                fontSize: 10,
-                fontFamily: "monospace",
-                color: isDarkTheme ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)",
-                letterSpacing: 0.5,
-              }}
-            >
-              {cameraInfo.zoom < 3
-                ? "Drag globe · Scroll to zoom"
-                : "Right-drag to rotate · Scroll to zoom"}
-            </div>
-          </div>
-
-          {/* Loading indicator — 畫面中央，完成後淡出 */}
-          <LoadingIndicator loadingProgress={loadingProgress} isDarkTheme={isDarkTheme} />
-
-          {/* 航班數 + 相機資訊 */}
-          <div
-            style={{
-              position: "absolute",
-              top: 76,
-              left: 72,
-              zIndex: 10,
-              background: isDarkTheme ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)",
-              backdropFilter: "blur(8px)",
-              borderRadius: 6,
-              padding: "4px 10px",
-            }}
-          >
-            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", fontSize: 11, fontFamily: "monospace" }}>
-              {finalFlights.length} flights
-              {airportSet !== null
-                ? ` (${setName ?? `${airportSet.length} airports`})`
-                : scope === "region" && ` (${REGION_CONFIG[region].label})`}
-              {loadingProgress && ` · loading ${loadingProgress.loaded}...`}
-              {` · ${timeline.selectedDate}`}
-              {timeline.rangeDays > 1 && ` +${timeline.rangeDays - 1}d`}
-            </div>
-            <div style={{ color: isDarkTheme ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)", fontSize: 11, fontFamily: "monospace" }}>
-              {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
-            </div>
-            {!loading && !loadingProgress && displayedFlights.length === 0 && (
-              <div style={{ color: isDarkTheme ? "rgba(255,180,80,0.55)" : "rgba(180,120,0,0.6)", fontSize: 10, fontFamily: "monospace", marginTop: 2 }}>
-                此日期範圍無航班資料
-              </div>
+              />
+            </DockItem>
+            {airspaceSelection && (
+              <DockItem>
+                <AirspaceInfoCard
+                  selected={airspaceSelection.selected}
+                  others={airspaceSelection.others}
+                  onSelect={(f) => {
+                    setAirspaceSelection((prev) => {
+                      if (!prev) return { selected: f, others: [] };
+                      const others = [prev.selected, ...prev.others].filter((o) => o.id !== f.id);
+                      return { selected: f, others };
+                    });
+                  }}
+                  onClose={() => setAirspaceSelection(null)}
+                  isDarkTheme={isDarkTheme}
+                />
+              </DockItem>
             )}
-          </div>
+          </Dock>
+
+          {/* 右上唯一工具列（R3） */}
+          <Toolbar
+            depArrFilter={depArrFilter}
+            onDepArrChange={setDepArrFilter}
+            renderMode={renderMode}
+            onRenderModeChange={setRenderMode}
+            mapStyleId={mapStyleId}
+            onMapStyleChange={setMapStyleId}
+            onCapture={() => setCaptureMode(true)}
+            onInfo={() => setShowInfo(true)}
+          />
+          {/* 工具列下方載入狀態條（R6） */}
+          <LoadingStatus
+            loading={loading}
+            label={statusLabel}
+            count={allFlights.length}
+            loaded={loadingProgress?.loaded}
+            playing={timeline.playing}
+            failed={loadError !== null}
+            onRetry={retryLoad}
+          />
+
         </>
       )}
 
@@ -2303,7 +2268,7 @@ export default function App() {
               left: 0,
               right: 0,
               height: 44,
-              zIndex: 10,
+              zIndex: Z.mapOverlay,
               display: "flex",
               alignItems: "center",
               gap: 8,
@@ -2324,7 +2289,7 @@ export default function App() {
             <div style={{ flex: 1 }} />
 
             {loading && (
-              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "monospace" }}>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: FONT.ui }}>
                 Loading...
               </span>
             )}
@@ -2339,7 +2304,7 @@ export default function App() {
                 border: "1px solid rgba(255,255,255,0.2)",
                 color: "#fff",
                 fontSize: 12,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -2359,7 +2324,7 @@ export default function App() {
                 border: "1px solid rgba(255,255,255,0.2)",
                 color: "#fff",
                 fontSize: 12,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
                 letterSpacing: 1,
               }}
@@ -2379,7 +2344,7 @@ export default function App() {
                 border: `1px solid ${renderMode === "3d" ? "rgba(80,140,255,0.5)" : "rgba(255,170,68,0.5)"}`,
                 color: "#fff",
                 fontSize: 12,
-                fontFamily: "monospace",
+                fontFamily: FONT.ui,
                 cursor: "pointer",
                 letterSpacing: 1,
               }}
@@ -2395,7 +2360,7 @@ export default function App() {
               top: 44,
               left: 0,
               right: 0,
-              zIndex: 10,
+              zIndex: Z.mapOverlay,
               padding: "8px 12px",
               background: "rgba(0,0,0,0.4)",
               backdropFilter: "blur(12px)",
@@ -2451,7 +2416,7 @@ export default function App() {
                             padding: "8px 12px",
                             fontSize: 12,
                             cursor: "pointer",
-                            fontFamily: "monospace",
+                            fontFamily: FONT.ui,
                             whiteSpace: "nowrap",
                           }}
                         >
@@ -2459,15 +2424,23 @@ export default function App() {
                         </button>
                       ))}
                       <span style={{ color: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center" }}>|</span>
-                      <DataSourceToggle
-                        dataSource={dataSource}
-                        hasFused={hasFused}
-                        isDarkTheme={true}
+                      <Segmented<DataSource>
+                        ariaLabel="資料來源"
+                        options={[
+                          { value: "api", label: "航線軌跡" },
+                          { value: "fused", label: "空域快照", disabled: !hasFused },
+                        ]}
+                        value={dataSource}
                         onChange={setDataSource}
                       />
-                      <DepArrToggle
-                        filter={depArrFilter}
-                        isDarkTheme={true}
+                      <Segmented<DepArrFilter>
+                        ariaLabel="起降"
+                        options={[
+                          { value: "all", label: "全部" },
+                          { value: "arr", label: "進場" },
+                          { value: "dep", label: "離場" },
+                        ]}
+                        value={depArrFilter}
                         onChange={setDepArrFilter}
                       />
                     </div>
@@ -2487,7 +2460,7 @@ export default function App() {
                         marginTop: 8,
                         color: "rgba(255,255,255,0.4)",
                         fontSize: 11,
-                        fontFamily: "monospace",
+                        fontFamily: FONT.ui,
                       }}
                     >
                       {finalFlights.length} flights
@@ -2500,7 +2473,7 @@ export default function App() {
                 {level === "full" && (
                   <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "monospace" }}>Style</span>
+                      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: FONT.ui }}>Style</span>
                       <StyleSelector
                         selected={mapStyleId}
                         isDarkTheme={true}
@@ -2519,7 +2492,7 @@ export default function App() {
                         <label key={s.label} style={{
                           color: "rgba(255,255,255,0.6)",
                           fontSize: 11,
-                          fontFamily: "monospace",
+                          fontFamily: FONT.ui,
                           display: "flex",
                           alignItems: "center",
                           gap: 8,
@@ -2546,14 +2519,14 @@ export default function App() {
             position: "absolute",
             left: tooltipInfo.x + 12,
             top: tooltipInfo.y - 10,
-            zIndex: 30,
+            zIndex: Z.popover,
             background: isDarkTheme ? "rgba(10,10,20,0.9)" : "rgba(255,255,255,0.95)",
             backdropFilter: "blur(12px)",
             border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.4)" : "rgba(59,130,246,0.3)"}`,
             borderRadius: 8,
             padding: "10px 14px",
             pointerEvents: "none",
-            fontFamily: "monospace",
+            fontFamily: FONT.ui,
             minWidth: 160,
             boxShadow: isDarkTheme ? "none" : "0 2px 12px rgba(0,0,0,0.1)",
           }}
@@ -2596,22 +2569,7 @@ export default function App() {
       {/* ── Info Modal ── */}
       <InfoModal open={showInfo} onClose={() => setShowInfo(false)} isMobile={isMobile} />
 
-      {/* ── Airspace Info Card ── */}
-      {!captureMode && !isMobile && airspaceSelection && (
-        <AirspaceInfoCard
-          selected={airspaceSelection.selected}
-          others={airspaceSelection.others}
-          onSelect={(f) => {
-            setAirspaceSelection((prev) => {
-              if (!prev) return { selected: f, others: [] };
-              const others = [prev.selected, ...prev.others].filter((o) => o.id !== f.id);
-              return { selected: f, others };
-            });
-          }}
-          onClose={() => setAirspaceSelection(null)}
-          isDarkTheme={isDarkTheme}
-        />
-      )}
     </div>
+    </ThemeProvider>
   );
 }

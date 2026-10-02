@@ -29,6 +29,10 @@ interface UseFlightDataReturn {
   airspaceDates: string[];
   regionDatesMap: Record<string, string[]>;
   regionFullDatesMap: Record<string, string[]>;
+  /** 最近一次載入失敗（網路／伺服器錯誤）；成功載入但 0 班不算（R6：失敗和「這天沒資料」分開）。新的載入開始時清空 */
+  loadError: string | null;
+  /** 重跑目前這份選擇的載入（狀態條「重試」） */
+  retryLoad: () => void;
 }
 
 export function useFlightData(
@@ -52,12 +56,18 @@ export function useFlightData(
   const [selectedAirport, setSelectedAirport] = useState("RCTP");
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; label: string } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // 重試：nonce 進 effect deps 與 identity（否則會被當成 lod-only 換層而不清空／不切 loading）
+  const [retryNonce, setRetryNonce] = useState(0);
 
   const loadIdRef = useRef(0);
   const manifestRef = useRef<{ airports: Record<string, AirportManifestEntry> } | null>(null);
   // Phase 2-2：identity 不含 lod——同一份「機場/日期選擇」下換 zoom band 只是背景升
   // /降解析度，不該清空目前畫面（見下方主 effect）。
   const lastLoadIdentityRef = useRef<string | null>(null);
+  // 最近一次「成功」載入的 identity：lod-only 換層失敗時，只有畫面上真的有這份資料才算「畫面仍有效」
+  // （首次載入還沒完成就因飛行中 zoom 換層而被 lod-only 載入取代時，畫面其實是空的）。
+  const lastSuccessIdentityRef = useRef<string | null>(null);
   const currentLod: LodLevel = lod ?? "l0";
 
   const requestedDates = useMemo(() => {
@@ -105,7 +115,7 @@ export function useFlightData(
     // Phase 2-2：identity 不含 lod。同一份 identity 下只是換 LOD 層（zoom band 跨界）——
     // 背景載入新解析度，載完才整批換上；不先清空／不切 loading 徽章，避免換層閃爍與
     // 誤觸發「loading→false 自動播放」副作用（見 App.tsx 的 autoplay effect）。
-    const identity = JSON.stringify([dataSource, scope, region, airportSelection, selectedAirport, requestedDates]);
+    const identity = JSON.stringify([dataSource, scope, region, airportSelection, selectedAirport, requestedDates, retryNonce]);
     const isLodOnlyChange = lastLoadIdentityRef.current === identity;
     lastLoadIdentityRef.current = identity;
 
@@ -113,6 +123,7 @@ export function useFlightData(
       setLoading(true);
       setLoadingProgress({ loaded: 0, label: "Loading..." });
       setTrackFlights([]);
+      setLoadError(null);
     }
 
     // 從 manifest 取得預期總數
@@ -161,15 +172,21 @@ export function useFlightData(
     // true——只有「起點」的 setLoading(true)／清空畫面才依 isLodOnlyChange 略過）。
     const finishLoad = (flights: Flight[]) => {
       if (loadIdRef.current !== loadId) return;
+      lastSuccessIdentityRef.current = identity;
       setTrackFlights(flights);
+      setLoadError(null);
       setLoadingProgress(null);
       setLoading(false);
     };
     const failLoad = (error: unknown) => {
       if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
       if (loadIdRef.current !== loadId) return;
-      // lod-only 的背景升級失敗時保留目前畫面，不清空已顯示的資料。
-      if (!isLodOnlyChange) setTrackFlights([]);
+      // lod-only 的背景升級失敗、且畫面上已有這份資料時：保留畫面、不報錯（畫面仍有效）。
+      if (!isLodOnlyChange || lastSuccessIdentityRef.current !== identity) {
+        setTrackFlights([]);
+        setLoadError(error instanceof Error ? error.message : String(error));
+        console.warn("[useFlightData] load failed", error);
+      }
       setLoadingProgress(null);
       setLoading(false);
     };
@@ -196,7 +213,7 @@ export function useFlightData(
     }
 
     return () => controller.abort();
-  }, [dataSource, scope, region, selectedAirport, airportSelection, requestedDates, currentLod]);
+  }, [dataSource, scope, region, selectedAirport, airportSelection, requestedDates, currentLod, retryNonce]);
 
   // 載入 airspace：依 selectedDate + rangeDays 按天載入
   useEffect(() => {
@@ -208,6 +225,7 @@ export function useFlightData(
     setLoading(true);
     setLoadingProgress({ loaded: 0, label: "Loading airspace..." });
     setAirspaceFlights(null);
+    setLoadError(null);
 
     // 計算需要載入的日期
     const datesToLoad: string[] = [];
@@ -240,12 +258,14 @@ export function useFlightData(
       if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
       if (loadIdRef.current !== loadId) return;
       setAirspaceFlights([]);
+      setLoadError(error instanceof Error ? error.message : String(error));
+      console.warn("[useFlightData] airspace load failed", error);
       setLoadingProgress(null);
       setLoading(false);
     });
 
     return () => controller.abort();
-  }, [dataSource, selectedDate, rangeDays, selectedDates, airspaceDates]);
+  }, [dataSource, selectedDate, rangeDays, selectedDates, airspaceDates, retryNonce]);
 
   const hasFused = airspaceDates.length > 0;
 
@@ -267,6 +287,10 @@ export function useFlightData(
     setSelectedAirport(icao);
   }, []);
 
+  const retryLoad = useCallback(() => {
+    setRetryNonce((n) => n + 1);
+  }, []);
+
   return {
     allFlights: sourceFlights,
     airports,
@@ -280,5 +304,7 @@ export function useFlightData(
     airspaceDates,
     regionDatesMap,
     regionFullDatesMap,
+    loadError,
+    retryLoad,
   };
 }

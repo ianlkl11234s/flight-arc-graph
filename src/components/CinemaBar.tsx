@@ -1,33 +1,50 @@
 import React from "react";
 import type { CinemaMode, CameraKeyframe, CinemaPhase, EasingType, SavedSequence } from "../hooks/useCinemaCamera";
 import type { RecordingState, HQExportProgress } from "../hooks/useCanvasRecorder";
+import { useTheme } from "../styles/ThemeContext";
+import { FONT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
+import { Button, Panel, Segmented, Select, Slider, Toggle } from "../ui";
+import { IconChevron, IconClose } from "../ui/icons";
+import { mix, themeVars } from "../ui/vars";
+
+/* ── 小圖示（SVG，不用文字字元） ── */
+const svgProps = { width: 12, height: 12, viewBox: "0 0 12 12", fill: "none", stroke: "currentColor", strokeWidth: 1.4, strokeLinecap: "square", "aria-hidden": true } as const;
+const IconPlay = () => <svg {...svgProps} fill="currentColor" stroke="none"><path d="M3 2l7 4-7 4z" /></svg>;
+const IconStop = () => <svg {...svgProps} fill="currentColor" stroke="none"><rect x="3" y="3" width="6" height="6" /></svg>;
+const IconRecDot = () => <svg {...svgProps} fill="currentColor" stroke="none"><circle cx="6" cy="6" r="3.2" /></svg>;
+const IconLoop = () => <svg {...svgProps}><path d="M2 6a4 4 0 017-2.6M10 6a4 4 0 01-7 2.6M9 1.5v2.2H6.8M3 10.5V8.3h2.2" /></svg>;
+const IconPingpong = () => <svg {...svgProps}><path d="M1.5 4h8M7.5 2l2 2-2 2M10.5 8h-8M4.5 6l-2 2 2 2" /></svg>;
+const IconDownload = () => <svg {...svgProps}><path d="M6 1.5v6.5M3.5 5.5L6 8l2.5-2.5M2 10.5h8" /></svg>;
+const IconUpload = () => <svg {...svgProps}><path d="M6 8.5V2M3.5 4.5L6 2l2.5 2.5M2 10.5h8" /></svg>;
+const IconEye = () => <svg {...svgProps}><path d="M1 6s2-3.5 5-3.5S11 6 11 6s-2 3.5-5 3.5S1 6 1 6z" /><circle cx="6" cy="6" r="1.4" /></svg>;
 
 /* ── Duration Input (m:ss) ── */
 function DurationInput({ value, onChange, min = 0, max = 5999, compact = false }: {
   value: number; onChange: (sec: number) => void; min?: number; max?: number; compact?: boolean;
 }) {
+  const { tokens } = useTheme();
   const m = Math.floor(value / 60);
   const s = Math.round(value % 60);
   const inputStyle: React.CSSProperties = {
     width: compact ? 30 : 34,
-    background: "rgba(255,255,255,0.15)",
-    border: "1px solid rgba(255,255,255,0.25)",
-    borderRadius: 4,
-    color: "#fff",
-    fontSize: compact ? 11 : 12,
-    fontFamily: "monospace",
+    background: tokens.ctl,
+    border: `1px solid ${tokens.border}`,
+    borderRadius: RADIUS.base,
+    color: tokens.fg1,
+    fontSize: compact ? SIZE.s10 : SIZE.s11,
+    fontFamily: FONT.data,
     padding: compact ? "2px 3px" : "3px 4px",
     textAlign: "center",
   };
   const labelStyle: React.CSSProperties = {
-    color: "rgba(255,255,255,0.5)", fontSize: compact ? 9 : 10, fontFamily: "monospace",
+    color: tokens.fg3, fontSize: SIZE.s9, fontFamily: FONT.ui,
   };
   const clamp = (newM: number, newS: number) => {
     const total = Math.max(min, Math.min(max, newM * 60 + newS));
     onChange(total);
   };
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: SPACE.s2 }}>
       <input type="number" min={0} max={Math.floor(max / 60)} step={1} value={m}
         onChange={(e) => clamp(Number(e.target.value), s)} style={inputStyle} />
       <span style={labelStyle}>m</span>
@@ -39,7 +56,8 @@ function DurationInput({ value, onChange, min = 0, max = 5999, compact = false }
 }
 
 interface CinemaBarProps {
-  isDarkTheme: boolean;
+  /** 已不再用於取色（改走 useTheme）；保留欄位避免動 App.tsx，P3/P4 一併移除 */
+  isDarkTheme?: boolean;
   cinemaMode: CinemaMode;
   onCinemaModeChange: (mode: CinemaMode) => void;
   orbitSpeed: number;
@@ -83,7 +101,6 @@ interface CinemaBarProps {
 }
 
 export function CinemaBar({
-  isDarkTheme,
   cinemaMode,
   onCinemaModeChange,
   orbitSpeed,
@@ -121,7 +138,7 @@ export function CinemaBar({
   onStopHQExport,
   hqProgress,
 }: CinemaBarProps) {
-  const dark = isDarkTheme;
+  const { tokens } = useTheme();
   const [collapsed, setCollapsed] = React.useState(false);
   const [showSaveDialog, setShowSaveDialog] = React.useState(false);
   const [saveName, setSaveName] = React.useState("");
@@ -142,165 +159,99 @@ export function CinemaBar({
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
-  const panelBg = dark ? "rgba(20,20,20,0.7)" : "rgba(10,10,10,0.6)";
-  const panelBorder = `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.1)"}`;
-
-  const pillStyle = (active: boolean): React.CSSProperties => ({
-    padding: "5px 14px",
-    borderRadius: 16,
-    border: `1px solid ${active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.12)"}`,
-    background: active
-      ? (dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.25)")
-      : (dark ? "rgba(60,60,60,0.4)" : "rgba(40,40,40,0.5)"),
-    color: active ? "#fff" : "rgba(255,255,255,0.6)",
-    fontSize: 13,
-    fontFamily: "monospace",
-    cursor: "pointer",
-    fontWeight: active ? 600 : 400,
-    backdropFilter: "blur(8px)",
-    transition: "all 0.2s",
-  });
-
-  const labelStyle: React.CSSProperties = {
-    color: "rgba(255,255,255,0.45)",
-    fontSize: 11,
-    fontFamily: "monospace",
-    letterSpacing: 0.5,
+  const floatingStyle: React.CSSProperties = {
+    position: "absolute",
+    bottom: 24,
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: Z.toolbar,
   };
-
-  const sliderStyle: React.CSSProperties = {
-    width: 80,
-    accentColor: dark ? "#aaa" : "#3B82F6",
-    cursor: "pointer",
-  };
-
-  const smallBtnStyle = (active: boolean): React.CSSProperties => ({
-    padding: "3px 10px",
-    borderRadius: 10,
-    border: `1px solid ${active ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.12)"}`,
-    background: active ? "rgba(255,255,255,0.12)" : "transparent",
-    color: active ? "#fff" : "rgba(255,255,255,0.5)",
-    fontSize: 12,
-    fontFamily: "monospace",
-    cursor: "pointer",
-  });
-
-  const tinyBtnStyle: React.CSSProperties = {
-    background: "none",
-    border: "none",
-    color: "rgba(255,255,255,0.45)",
-    fontSize: 12,
-    cursor: "pointer",
-    padding: "2px 4px",
-    borderRadius: 4,
+  const labelStyle: React.CSSProperties = { color: tokens.fg3, fontSize: SIZE.s10, fontFamily: FONT.ui };
+  const rowBg = { background: tokens.ctl, borderRadius: RADIUS.base } as const;
+  const smallText: React.CSSProperties = { fontFamily: FONT.ui, fontSize: SIZE.s11, color: tokens.fg2 };
+  const ghostSmall = { width: 24, height: 24 } as const;
+  const textInput: React.CSSProperties = {
+    background: tokens.ctl,
+    border: `1px solid ${tokens.border}`,
+    borderRadius: RADIUS.base,
+    color: tokens.fg1,
+    fontFamily: FONT.ui,
   };
 
   // ── Collapsed: 只顯示一顆小按鈕 ──
   if (collapsed && cinemaPhase !== "play") {
     return (
-      <button
-        onClick={() => setCollapsed(false)}
-        style={{
-          position: "absolute",
-          bottom: 24,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 22,
-          padding: "8px 16px",
-          borderRadius: 20,
-          background: panelBg,
-          backdropFilter: "blur(16px)",
-          border: panelBorder,
-          color: "rgba(255,255,255,0.6)",
-          fontSize: 13,
-          fontFamily: "monospace",
-          cursor: "pointer",
-        }}
-      >
-        Cinema ▲
-      </button>
+      <div style={floatingStyle}>
+        <Button onClick={() => setCollapsed(false)} icon={<IconChevron size={9} direction="up" />}>
+          Cinema
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        bottom: 24,
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 22,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        padding: "10px 20px",
-        borderRadius: 20,
-        background: panelBg,
-        backdropFilter: "blur(16px)",
-        border: panelBorder,
-        minWidth: 300,
-        maxWidth: "90vw",
-      }}
+    <Panel
+      floating={false}
+      width="auto"
+      ticks={false}
+      ariaLabel="Cinema"
+      style={{ ...floatingStyle, minWidth: 300, maxWidth: "90vw" }}
     >
+    <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s8, padding: `${SPACE.s8}px ${SPACE.s12}px` }}>
       {cinemaPhase === "play" ? (
         /* ── Playing: 精簡 UI ── */
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ color: "#fff", fontSize: 13, fontFamily: "monospace" }}>
-            ▶ KF {currentKfIndex + 1}/{keyframes.length}{loop ? " ⟳" : ""}
+        <div style={{ display: "flex", alignItems: "center", gap: SPACE.s12 }}>
+          <span style={{ color: tokens.fg1, fontSize: SIZE.s11, fontFamily: FONT.data, display: "inline-flex", alignItems: "center", gap: SPACE.s6 }}>
+            <IconPlay /> KF {currentKfIndex + 1}/{keyframes.length}{loop ? " · loop" : ""}
           </span>
-          <div style={{ flex: 1, height: 3, background: "rgba(255,255,255,0.15)", borderRadius: 2, minWidth: 100 }}>
-            <div style={{ width: `${sequenceProgress * 100}%`, height: "100%", background: "#fff", borderRadius: 2, transition: "width 0.1s" }} />
+          <div style={{ flex: 1, height: 2, background: mix(tokens.fg1, 20), minWidth: 100 }}>
+            <div style={{ width: `${sequenceProgress * 100}%`, height: "100%", background: tokens.accent, transition: "width 0.1s" }} />
           </div>
           {isRecording && (
-            <span style={{ color: "#ff4444", fontSize: 12, fontFamily: "monospace", animation: "pulse 1s ease-in-out infinite" }}>
+            <span style={{ color: tokens.rec, fontSize: SIZE.s11, fontFamily: FONT.data, animation: "pulse 1s ease-in-out infinite" }}>
               REC {formatTime(recordingTime)}
             </span>
           )}
-          <button onClick={onStopSequence} style={pillStyle(true)}>■ Stop</button>
+          <Button onClick={onStopSequence} icon={<IconStop />}>Stop</Button>
         </div>
       ) : (
         <>
           {/* ── 第一列：模式 + 收合 ── */}
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <button onClick={() => onCinemaModeChange("off")} style={pillStyle(cinemaMode === "off")}>Static</button>
-            <button onClick={() => onCinemaModeChange("orbit")} style={pillStyle(cinemaMode === "orbit")}>Orbit</button>
-            <button onClick={() => onCinemaModeChange("sequence")} style={pillStyle(cinemaMode === "sequence")}>Sequence</button>
+          <div style={{ display: "flex", gap: SPACE.s6, alignItems: "center" }}>
+            <Segmented<CinemaMode>
+              ariaLabel="Cinema mode"
+              options={[
+                { value: "off", label: "Static" },
+                { value: "orbit", label: "Orbit" },
+                { value: "sequence", label: "Sequence" },
+              ]}
+              value={cinemaMode}
+              onChange={onCinemaModeChange}
+            />
             <div style={{ flex: 1 }} />
-            <button
-              onClick={() => setCollapsed(true)}
-              style={{
-                ...tinyBtnStyle,
-                color: "rgba(255,255,255,0.3)",
-                fontSize: 14,
-              }}
-              title="Hide panel"
-            >
-              ▼
-            </button>
+            <Button variant="ghost" ariaLabel="Hide panel" title="Hide panel" onClick={() => setCollapsed(true)} icon={<IconChevron size={10} />} />
           </div>
 
           {/* ── Orbit 控制 ── */}
           {cinemaMode === "orbit" && (
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={labelStyle}>Speed</span>
-                <input
-                  type="range"
+            <div style={{ display: "flex", alignItems: "flex-end", gap: SPACE.s16 }}>
+              <div style={{ width: 180 }}>
+                <Slider
+                  label="Speed"
                   min={0.2}
                   max={8}
                   step={0.2}
                   value={orbitSpeed}
-                  onChange={(e) => onOrbitSpeedChange(Number(e.target.value))}
-                  style={sliderStyle}
+                  onChange={onOrbitSpeedChange}
+                  format={(v) => `${v.toFixed(1)}\u00b0/s`}
                 />
-                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, fontFamily: "monospace", minWidth: 40 }}>
-                  {orbitSpeed.toFixed(1)}&deg;/s
-                </span>
               </div>
-              <div style={{ display: "flex", gap: 4 }}>
-                <button onClick={() => onOrbitDirectionChange(1)} style={smallBtnStyle(orbitDirection === 1)}>CW</button>
-                <button onClick={() => onOrbitDirectionChange(-1)} style={smallBtnStyle(orbitDirection === -1)}>CCW</button>
-              </div>
+              <Segmented<1 | -1>
+                ariaLabel="Orbit direction"
+                options={[{ value: 1, label: "CW" }, { value: -1, label: "CCW" }]}
+                value={orbitDirection}
+                onChange={onOrbitDirectionChange}
+              />
             </div>
           )}
 
@@ -308,58 +259,32 @@ export function CinemaBar({
           {cinemaMode === "sequence" && (
             <>
               {/* 操作按鈕列 */}
-              <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                <button onClick={onAddKeyframe} style={pillStyle(false)}>+ Add KF</button>
+              <div style={{ display: "flex", gap: SPACE.s6, alignItems: "center", flexWrap: "wrap" }}>
+                <Button onClick={onAddKeyframe}>+ Add KF</Button>
                 {keyframes.length >= 2 && (
                   <>
-                    <button onClick={onPlaySequence} style={pillStyle(false)}>▶ Play</button>
+                    <Button onClick={onPlaySequence} icon={<IconPlay />}>Play</Button>
                     {isRecording ? (
-                      <button
-                        onClick={onStopRecording}
-                        style={{ ...pillStyle(true), color: "#ff4444", borderColor: "rgba(255,68,68,0.5)" }}
-                      >
-                        ■ REC {formatTime(recordingTime)}
-                      </button>
+                      <Button variant="danger" onClick={onStopRecording} icon={<IconStop />}>
+                        REC {formatTime(recordingTime)}
+                      </Button>
                     ) : isHQ ? (
-                      <button
-                        onClick={onStopHQExport}
-                        style={{ ...pillStyle(true), color: "#44aaff", borderColor: "rgba(68,170,255,0.5)" }}
-                      >
-                        ■ HQ {hqProgress ? `${hqProgress.percent}%` : "..."}
-                      </button>
+                      <Button pressed onClick={onStopHQExport} icon={<IconStop />}>
+                        HQ {hqProgress ? `${hqProgress.percent}%` : "..."}
+                      </Button>
                     ) : (
                       <>
-                        <button
-                          onClick={onStartRecording}
-                          style={{ ...pillStyle(false), color: "#ff6666" }}
-                          title="Realtime recording"
-                        >
-                          ● REC
-                        </button>
-                        <button
-                          onClick={onStartHQExport}
-                          style={{ ...pillStyle(false), color: "#44aaff" }}
-                          title="Offline HQ export (slower, perfect framerate)"
-                        >
+                        <Button variant="danger" onClick={onStartRecording} title="Realtime recording" icon={<IconRecDot />}>
+                          REC
+                        </Button>
+                        <Button onClick={onStartHQExport} title="Offline HQ export (slower, perfect framerate)">
                           HQ
-                        </button>
+                        </Button>
                       </>
                     )}
-                    <button
-                      onClick={() => onLoopChange(!loop)}
-                      style={{ ...pillStyle(loop), padding: "5px 10px" }}
-                      title="Loop"
-                    >
-                      ⟳
-                    </button>
-                    <button
-                      onClick={() => onPingpongChange(!pingpong)}
-                      style={{ ...pillStyle(pingpong), padding: "5px 10px", fontSize: 11 }}
-                      title="Pingpong (forward + reverse)"
-                    >
-                      ⇄
-                    </button>
-                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "monospace" }}>
+                    <Button pressed={loop} ariaLabel="Loop" title="Loop" onClick={() => onLoopChange(!loop)} icon={<IconLoop />} />
+                    <Button pressed={pingpong} ariaLabel="Pingpong" title="Pingpong (forward + reverse)" onClick={() => onPingpongChange(!pingpong)} icon={<IconPingpong />} />
+                    <span style={{ ...labelStyle, fontFamily: FONT.data }}>
                       {formatDuration(totalDuration)}{pingpong ? " ×2" : ""}
                     </span>
                   </>
@@ -367,21 +292,22 @@ export function CinemaBar({
                 <div style={{ flex: 1 }} />
                 {/* 儲存/載入 */}
                 {keyframes.length >= 1 && (
-                  <button onClick={() => { setShowSaveDialog(v => !v); setShowLoadList(false); }} style={pillStyle(showSaveDialog)}>Save</button>
+                  <Button pressed={showSaveDialog} onClick={() => { setShowSaveDialog(v => !v); setShowLoadList(false); }}>Save</Button>
                 )}
                 {savedSequences.length > 0 && (
-                  <button onClick={() => { setShowLoadList(v => !v); setShowSaveDialog(false); }} style={pillStyle(showLoadList)}>Load</button>
+                  <Button pressed={showLoadList} onClick={() => { setShowLoadList(v => !v); setShowSaveDialog(false); }}>Load</Button>
                 )}
-                <button onClick={onExportJSON} style={{ ...pillStyle(false), padding: "5px 10px" }} title="Export JSON">↓</button>
-                <button onClick={onImportJSON} style={{ ...pillStyle(false), padding: "5px 10px" }} title="Import JSON">↑</button>
+                <Button ariaLabel="Export JSON" title="Export JSON" onClick={onExportJSON} icon={<IconDownload />} />
+                <Button ariaLabel="Import JSON" title="Import JSON" onClick={onImportJSON} icon={<IconUpload />} />
               </div>
 
               {/* Save 對話框 */}
               {showSaveDialog && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <div style={{ display: "flex", gap: SPACE.s6, alignItems: "center" }}>
                   <input
                     type="text"
                     placeholder="Sequence name..."
+                    aria-label="Sequence name"
                     value={saveName}
                     onChange={(e) => setSaveName(e.target.value)}
                     onKeyDown={(e) => {
@@ -391,20 +317,19 @@ export function CinemaBar({
                         setShowSaveDialog(false);
                       }
                     }}
+                    className="fa-focus"
                     style={{
+                      ...themeVars(tokens),
+                      ...textInput,
                       flex: 1,
-                      background: "rgba(255,255,255,0.1)",
-                      border: "1px solid rgba(255,255,255,0.2)",
-                      borderRadius: 8,
-                      color: "#fff",
-                      fontSize: 12,
-                      fontFamily: "monospace",
-                      padding: "4px 8px",
-                      outline: "none",
+                      height: 28,
+                      boxSizing: "border-box",
+                      fontSize: SIZE.s11,
+                      padding: "0 8px",
                     }}
                     autoFocus
                   />
-                  <button
+                  <Button
                     onClick={() => {
                       if (saveName.trim()) {
                         onSaveSequence(saveName.trim());
@@ -412,10 +337,9 @@ export function CinemaBar({
                         setShowSaveDialog(false);
                       }
                     }}
-                    style={pillStyle(false)}
                   >
                     OK
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -426,29 +350,20 @@ export function CinemaBar({
                     <div key={seq.id} style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 8,
+                      gap: SPACE.s8,
                       padding: "3px 8px",
-                      borderRadius: 6,
-                      background: "rgba(255,255,255,0.05)",
+                      ...rowBg,
                     }}>
-                      <span style={{ flex: 1, color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "monospace" }}>
+                      <span style={{ ...smallText, flex: 1, color: tokens.fg1 }}>
                         {seq.name}
                       </span>
-                      <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "monospace" }}>
+                      <span style={{ ...labelStyle, fontSize: SIZE.s10 }}>
                         {seq.keyframes.length} KF
                       </span>
-                      <button
-                        onClick={() => { onLoadSequence(seq.id); setShowLoadList(false); }}
-                        style={{ ...tinyBtnStyle, color: "rgba(150,200,255,0.8)" }}
-                      >
+                      <Button variant="ghost" onClick={() => { onLoadSequence(seq.id); setShowLoadList(false); }} style={{ height: 24 }}>
                         Load
-                      </button>
-                      <button
-                        onClick={() => onDeleteSequence(seq.id)}
-                        style={{ ...tinyBtnStyle, color: "rgba(255,100,100,0.7)" }}
-                      >
-                        ✕
-                      </button>
+                      </Button>
+                      <Button variant="ghost" ariaLabel="Delete sequence" onClick={() => onDeleteSequence(seq.id)} icon={<IconClose size={10} />} style={ghostSmall} />
                     </div>
                   ))}
                 </div>
@@ -456,97 +371,79 @@ export function CinemaBar({
 
               {/* Keyframe 列表 */}
               {keyframes.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 200, overflowY: "auto" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s4, maxHeight: 200, overflowY: "auto" }}>
                   {keyframes.map((kf, i) => (
                     <React.Fragment key={kf.id}>
                       {/* 主列 */}
                       <div style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 8,
+                        gap: SPACE.s8,
                         padding: "4px 8px",
-                        borderRadius: 8,
-                        background: "rgba(255,255,255,0.05)",
+                        ...rowBg,
                       }}>
-                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "monospace", minWidth: 20 }}>
+                        <span style={{ ...labelStyle, fontSize: SIZE.s11, minWidth: 20, fontFamily: FONT.data }}>
                           {i + 1}.
                         </span>
-                        <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "monospace", minWidth: 45 }}>
+                        <span style={{ ...smallText, fontFamily: FONT.data, minWidth: 45 }}>
                           z{kf.zoom.toFixed(1)}
                         </span>
                         <DurationInput value={kf.duration} onChange={(sec) => onUpdateKeyframe(kf.id, { duration: sec })} min={1} max={5999} />
-                        <select
+                        <Select<EasingType>
+                          ariaLabel="Easing"
+                          width={84}
                           value={kf.easing}
-                          onChange={(e) => onUpdateKeyframe(kf.id, { easing: e.target.value as EasingType })}
-                          style={{
-                            background: "rgba(255,255,255,0.1)",
-                            border: "1px solid rgba(255,255,255,0.15)",
-                            borderRadius: 4,
-                            color: "rgba(255,255,255,0.7)",
-                            fontSize: 10,
-                            fontFamily: "monospace",
-                            padding: "2px 4px",
-                          }}
-                        >
-                          <option value="ease-in-out" style={{ background: "#333" }}>ease</option>
-                          <option value="linear" style={{ background: "#333" }}>linear</option>
-                          <option value="ease-out" style={{ background: "#333" }}>ease-out</option>
-                        </select>
-                        <button onClick={() => onMoveKeyframe(kf.id, -1)} style={tinyBtnStyle} disabled={i === 0}>▲</button>
-                        <button onClick={() => onMoveKeyframe(kf.id, 1)} style={tinyBtnStyle} disabled={i === keyframes.length - 1}>▼</button>
-                        <button onClick={() => onRecaptureKeyframe(kf.id)} style={tinyBtnStyle} title="Recapture">⟳</button>
-                        <button onClick={() => onPreviewKeyframe(kf.id)} style={tinyBtnStyle}>👁</button>
-                        <button onClick={() => onRemoveKeyframe(kf.id)} style={{ ...tinyBtnStyle, color: "rgba(255,100,100,0.7)" }}>✕</button>
+                          onChange={(v) => onUpdateKeyframe(kf.id, { easing: v })}
+                          options={[
+                            { value: "ease-in-out", label: "ease" },
+                            { value: "linear", label: "linear" },
+                            { value: "ease-out", label: "ease-out" },
+                          ]}
+                        />
+                        <Button variant="ghost" ariaLabel="Move up" onClick={() => onMoveKeyframe(kf.id, -1)} disabled={i === 0} icon={<IconChevron size={10} direction="up" />} style={ghostSmall} />
+                        <Button variant="ghost" ariaLabel="Move down" onClick={() => onMoveKeyframe(kf.id, 1)} disabled={i === keyframes.length - 1} icon={<IconChevron size={10} />} style={ghostSmall} />
+                        <Button variant="ghost" ariaLabel="Recapture" title="Recapture" onClick={() => onRecaptureKeyframe(kf.id)} icon={<IconLoop />} style={ghostSmall} />
+                        <Button variant="ghost" ariaLabel="Preview" onClick={() => onPreviewKeyframe(kf.id)} icon={<IconEye />} style={ghostSmall} />
+                        <Button variant="ghost" ariaLabel="Remove keyframe" onClick={() => onRemoveKeyframe(kf.id)} icon={<IconClose size={10} />} style={{ ...ghostSmall, color: tokens.danger }} />
                       </div>
                       {/* Hold 設定列 */}
                       <div style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 6,
+                        gap: SPACE.s6,
                         paddingLeft: 28,
-                        paddingBottom: 2,
+                        paddingBottom: SPACE.s2,
                       }}>
-                        <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, fontFamily: "monospace" }}>hold</span>
-                        <button
-                          onClick={() => {
-                            if (kf.hold) {
+                        <span style={labelStyle}>hold</span>
+                        <Toggle
+                          ariaLabel="Hold"
+                          checked={!!kf.hold}
+                          onChange={(on) => {
+                            if (!on) {
                               onUpdateKeyframe(kf.id, { hold: undefined });
                             } else {
                               onUpdateKeyframe(kf.id, { hold: { type: "still", duration: 5 } });
                             }
                           }}
-                          style={{
-                            ...tinyBtnStyle,
-                            color: kf.hold ? "#fff" : "rgba(255,255,255,0.3)",
-                            fontSize: 10,
-                          }}
-                        >
-                          {kf.hold ? "ON" : "OFF"}
-                        </button>
+                        />
                         {kf.hold && (
                           <>
-                            <select
+                            <Select<"still" | "orbit">
+                              ariaLabel="Hold type"
+                              width={72}
                               value={kf.hold.type}
-                              onChange={(e) => onUpdateKeyframe(kf.id, {
+                              onChange={(v) => onUpdateKeyframe(kf.id, {
                                 hold: {
                                   ...kf.hold!,
-                                  type: e.target.value as "still" | "orbit",
-                                  ...(e.target.value === "orbit" ? { speed: kf.hold!.speed ?? 2, direction: kf.hold!.direction ?? 1 } : {}),
+                                  type: v,
+                                  ...(v === "orbit" ? { speed: kf.hold!.speed ?? 2, direction: kf.hold!.direction ?? 1 } : {}),
                                 },
                               })}
-                              style={{
-                                background: "rgba(255,255,255,0.1)",
-                                border: "1px solid rgba(255,255,255,0.15)",
-                                borderRadius: 4,
-                                color: "rgba(255,255,255,0.7)",
-                                fontSize: 10,
-                                fontFamily: "monospace",
-                                padding: "1px 4px",
-                              }}
-                            >
-                              <option value="still" style={{ background: "#333" }}>still</option>
-                              <option value="orbit" style={{ background: "#333" }}>orbit</option>
-                            </select>
+                              options={[
+                                { value: "still", label: "still" },
+                                { value: "orbit", label: "orbit" },
+                              ]}
+                            />
                             <DurationInput compact value={kf.hold.duration} onChange={(sec) => onUpdateKeyframe(kf.id, {
                                 hold: { ...kf.hold!, duration: sec },
                               })} min={1} max={5999} />
@@ -554,6 +451,7 @@ export function CinemaBar({
                               <>
                                 <input
                                   type="number"
+                                  aria-label="Hold orbit speed"
                                   min={0.5}
                                   max={10}
                                   step={0.5}
@@ -562,26 +460,24 @@ export function CinemaBar({
                                     hold: { ...kf.hold!, speed: Number(e.target.value) },
                                   })}
                                   style={{
-                                    width: 32,
-                                    background: "rgba(255,255,255,0.1)",
-                                    border: "1px solid rgba(255,255,255,0.15)",
-                                    borderRadius: 4,
-                                    color: "#fff",
-                                    fontSize: 10,
-                                    fontFamily: "monospace",
+                                    ...textInput,
+                                    width: 36,
+                                    fontSize: SIZE.s10,
+                                    fontFamily: FONT.data,
                                     padding: "1px 3px",
                                     textAlign: "center" as const,
                                   }}
                                 />
-                                <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 10 }}>°/s</span>
-                                <button
+                                <span style={labelStyle}>°/s</span>
+                                <Button
+                                  variant="ghost"
                                   onClick={() => onUpdateKeyframe(kf.id, {
                                     hold: { ...kf.hold!, direction: (kf.hold!.direction ?? 1) === 1 ? -1 : 1 },
                                   })}
-                                  style={{ ...tinyBtnStyle, fontSize: 10 }}
+                                  style={{ height: 24 }}
                                 >
                                   {(kf.hold.direction ?? 1) === 1 ? "CW" : "CCW"}
-                                </button>
+                                </Button>
                               </>
                             )}
                           </>
@@ -596,5 +492,6 @@ export function CinemaBar({
         </>
       )}
     </div>
+    </Panel>
   );
 }

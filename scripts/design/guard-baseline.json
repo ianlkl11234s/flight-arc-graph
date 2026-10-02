@@ -1,0 +1,200 @@
+{
+  "files": {
+    "src/App.tsx": {
+      "hex": 27,
+      "rgba": 79
+    },
+    "src/components/AirportSelector.tsx": {
+      "hex": 2,
+      "rgba": 4
+    },
+    "src/components/AirspaceInfoCard.tsx": {
+      "hex": 5,
+      "rgba": 8
+    },
+    "src/components/CinemaBar.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/DeepAnalysisPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/Dock.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/FlightPicker.tsx": {
+      "hex": 4,
+      "rgba": 12
+    },
+    "src/components/FlightStatsPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/IconRailSidebar.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/InfoModal.tsx": {
+      "hex": 10,
+      "rgba": 0
+    },
+    "src/components/LoadingScreen.tsx": {
+      "hex": 3,
+      "rgba": 15
+    },
+    "src/components/LoadingStatus.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/MobileBottomSheet.tsx": {
+      "hex": 0,
+      "rgba": 3
+    },
+    "src/components/RecordingGuide.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/StyleSelector.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/Timeline.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/TimelineControls.tsx": {
+      "hex": 4,
+      "rgba": 43
+    },
+    "src/components/Toolbar.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/charts.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/panels/AirspacePanel.tsx": {
+      "hex": 1,
+      "rgba": 1
+    },
+    "src/components/sidebar/panels/AtlasPanel.tsx": {
+      "hex": 7,
+      "rgba": 0
+    },
+    "src/components/sidebar/panels/CalendarPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/panels/ColorThemePanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/panels/SetsPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/panels/SettingsPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/panels/SummaryPanel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/primitives.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/sidebar/scenePresets.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Button.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Caption.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Chip.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/DockCard.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Modal.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Panel.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/PanelHeader.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Section.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Segmented.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Select.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Slider.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/StatCard.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/StatusBar.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/Toggle.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/escStack.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/icons.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/index.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/loadingStatusController.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/overlayMutex.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/timelineExpand.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/vars.ts": {
+      "hex": 0,
+      "rgba": 0
+    }
+  }
+}

@@ -62,6 +62,9 @@ export interface TimelineState {
   speed: number;
 }
 
+/** 起降篩選（全部／離場／進場） */
+export type DepArrFilter = "all" | "dep" | "arr";
+
 /** 資料來源 */
 export type DataSource = "api" | "fused";
 

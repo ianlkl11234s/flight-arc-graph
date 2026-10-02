@@ -1,0 +1,72 @@
+/* Studio design tokens — 與 tokens.ts 同值（scripts/design/check-tokens-sync.mjs 檢查） */
+:root {
+  --font-ui: "JetBrains Mono","PingFang TC","Noto Sans TC",monospace;
+  --font-data: "JetBrains Mono",ui-monospace,monospace;
+
+  --blur: 10px;
+
+  --size-9: 9px;
+  --size-10: 10px;
+  --size-11: 11px;
+  --size-12: 12px;
+  --size-14: 14px;
+  --size-18: 18px;
+  --size-30: 30px;
+
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+
+  --radius: 2px;
+  --radius-pill: 99px;
+
+  --z-map-overlay: 10;
+  --z-panel: 20;
+  --z-toolbar: 25;
+  --z-popover: 30;
+  --z-modal: 40;
+  --z-toast: 50;
+
+  --rail-width: 56px;
+  --panel-width: 288px;
+  --panel-left: 64px;
+  --panel-top: 52px;
+  --map-bottom-inset: 64px;
+  --dock-width: 260px;
+}
+
+[data-theme="dark"] {
+  --panel: rgba(11,13,15,.62);
+  --border: rgba(214,222,230,.16);
+  --fg1: #e7ebee;
+  --fg2: #a2abb3;
+  --fg3: #69727a;
+  --ctl: rgba(255,255,255,.05);
+  --accent: #f2a93b;
+  --accent-ink: #1a1206;
+  --rail: rgba(7,9,11,.8);
+  --map-bg: #05070a;
+  --danger: #ff6b6b;
+  --rec: #e5484d;
+  --accent-soft: rgba(242,169,59,.14);
+}
+
+[data-theme="light"] {
+  --panel: rgba(248,249,250,.78);
+  --border: rgba(18,24,30,.18);
+  --fg1: #10151a;
+  --fg2: #4c555d;
+  --fg3: #7d868e;
+  --ctl: rgba(0,0,0,.04);
+  --accent: #a86200;
+  --accent-ink: #fff8ee;
+  --rail: rgba(240,242,244,.85);
+  --map-bg: #e8eaec;
+  --danger: #c62828;
+  --rec: #e5484d;
+  --accent-soft: rgba(168,98,0,.12);
+}

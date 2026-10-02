@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FLAT_TIPS } from "../data/tips";
+import { FONT } from "../styles/tokens";
 
 const TOTAL_SECONDS = 70;
 const TIP_INTERVAL = 4000; // 4 秒切換
@@ -63,7 +64,7 @@ export function LoadingScreen() {
         alignItems: "center",
         justifyContent: "center",
         gap: 20,
-        fontFamily: "monospace",
+        fontFamily: FONT.ui,
         color: "#fff",
       }}
     >
