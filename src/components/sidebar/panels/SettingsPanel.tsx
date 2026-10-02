@@ -1,5 +1,4 @@
-import type { DisplayMode, RenderMode, Scope, TrackMode } from "../../../types";
-import { StyleSelector } from "../../StyleSelector";
+import type { DisplayMode, Scope, TrackMode } from "../../../types";
 import { useTheme } from "../../../styles/ThemeContext";
 import { FONT, RADIUS, SIZE, SPACE } from "../../../styles/tokens";
 import { Section, Segmented, Select, Slider, Toggle } from "../../../ui";
@@ -76,15 +75,6 @@ export function SettingsPanel(props: IconRailSidebarProps) {
         {props.displayMode === "trails" && (
           <Toggle label="±12h Window" checked={props.timeWindow} onChange={props.onTimeWindowChange} />
         )}
-        <Segmented<RenderMode>
-          fullWidth
-          options={[
-            { value: "3d", label: "3D Altitude" },
-            { value: "2d", label: "2D Flat" },
-          ]}
-          value={props.renderMode}
-          onChange={props.onRenderModeChange}
-        />
         {/* Far View：拉遠時光點按 zoom 補償放大 + 軌跡加亮 */}
         <Toggle label="Far View 遠景增強" checked={props.farView} onChange={props.onFarViewChange} />
         {props.farView && (
@@ -98,16 +88,12 @@ export function SettingsPanel(props: IconRailSidebarProps) {
         )}
       </Section>
 
-      <Section title="MAP · 地圖">
-        <StyleSelector
-          selected={props.mapStyleId}
-          isDarkTheme={props.isDarkTheme}
-          onChange={props.onMapStyleChange}
-        />
-        {props.mapStyleId === "satellite" && (
+      {/* 2D/3D 與底圖只在右上工具列切換（R3）；晨昏線只在衛星底圖有 */}
+      {props.mapStyleId === "satellite" && (
+        <Section title="MAP · 地圖">
           <Toggle label="Day/Night" checked={props.showTerminator} onChange={props.onTerminatorChange} />
-        )}
-      </Section>
+        </Section>
+      )}
 
       <Section title="VISUAL · 進階視覺" collapsible defaultOpen={false}>
         <Slider

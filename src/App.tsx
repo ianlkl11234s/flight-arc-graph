@@ -2009,9 +2009,7 @@ export default function App() {
           <IconRailSidebar
             activePanel={railPanel}
             onActivePanelChange={setRailPanel}
-            isDarkTheme={isDarkTheme}
             displayMode={displayMode}
-            renderMode={renderMode}
             mapStyleId={mapStyleId}
             altExaggeration={altExaggeration}
             altOffset={altOffset}
@@ -2025,8 +2023,6 @@ export default function App() {
             farViewBoost={farViewBoost}
             onFarViewBoostChange={setFarViewBoost}
             onDisplayModeChange={setDisplayMode}
-            onRenderModeChange={setRenderMode}
-            onMapStyleChange={setMapStyleId}
             onAltExaggerationChange={setAltExaggeration}
             onAltOffsetChange={setAltOffset}
             onStaticOpacityChange={setStaticOpacity}

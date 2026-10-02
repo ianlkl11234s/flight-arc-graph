@@ -1,4 +1,4 @@
-import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
+import type { DataSource, DisplayMode, Region, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
 import type { ColorTheme } from "../types/colorTheme";
 import type { AirspaceSettings } from "../types/airspace";
 import type { AirportColorMode, AirportAssignment } from "../types/airportColors";
@@ -49,10 +49,8 @@ export interface IconRailSidebarProps {
   activePanel: PanelId | null;
   onActivePanelChange: (panel: PanelId | null) => void;
   // Theme
-  isDarkTheme: boolean;
   // Settings panel controls
   displayMode: DisplayMode;
-  renderMode: RenderMode;
   farView: boolean;
   farViewBoost: number;
   mapStyleId: string;
@@ -66,10 +64,8 @@ export interface IconRailSidebarProps {
   trailLineWidth: number;
   // Callbacks
   onDisplayModeChange: (mode: DisplayMode) => void;
-  onRenderModeChange: (mode: RenderMode) => void;
   onFarViewChange: (v: boolean) => void;
   onFarViewBoostChange: (v: number) => void;
-  onMapStyleChange: (id: string) => void;
   onAltExaggerationChange: (v: number) => void;
   onAltOffsetChange: (v: number) => void;
   onStaticOpacityChange: (v: number) => void;
