@@ -6,8 +6,9 @@ import { OVERLAY_KEYS, ALL_OVERLAYS_CLOSED, overlaysToClose, overlaysOpen } from
 const s = (o = {}) => ({ ...ALL_OVERLAYS_CLOSED, ...o });
 
 describe("浮層互斥（R2）", () => {
-  it("登記清單順序：rail → stats → info；dock 卡不在內", () => {
-    assert.deepEqual([...OVERLAY_KEYS], ["rail", "stats", "info"]);
+  it("登記清單順序：rail → info；統計已併入 rail、dock 卡不在內", () => {
+    assert.deepEqual([...OVERLAY_KEYS], ["rail", "info"]);
+    assert.equal(OVERLAY_KEYS.includes("stats"), false);
     assert.equal(OVERLAY_KEYS.includes("dock"), false);
   });
 
@@ -15,15 +16,8 @@ describe("浮層互斥（R2）", () => {
     assert.deepEqual(overlaysToClose(s({ rail: true }), s({ rail: true, info: true })), ["rail"]);
   });
 
-  it("開統計浮層 → 關掉說明與 rail", () => {
-    assert.deepEqual(
-      overlaysToClose(s({ rail: true, info: true }), s({ rail: true, info: true, stats: true })),
-      ["rail", "info"],
-    );
-  });
-
-  it("開 rail → 關掉統計浮層", () => {
-    assert.deepEqual(overlaysToClose(s({ stats: true }), s({ stats: true, rail: true })), ["stats"]);
+  it("開 rail → 關掉說明", () => {
+    assert.deepEqual(overlaysToClose(s({ info: true }), s({ info: true, rail: true })), ["info"]);
   });
 
   it("只關不開 → 不動作", () => {
@@ -31,13 +25,12 @@ describe("浮層互斥（R2）", () => {
     assert.deepEqual(overlaysToClose(s({ info: true }), s()), []);
   });
 
-  it("沒有變化 → 不動作（rail 內切換 workspace 仍是開著，不算剛打開）", () => {
+  it("沒有變化 → 不動作（rail 內切換 workspace／分頁仍是開著，不算剛打開）", () => {
     assert.deepEqual(overlaysToClose(s({ rail: true }), s({ rail: true })), []);
   });
 
   it("同一輪多個同時打開 → 保留清單順序第一個", () => {
-    assert.deepEqual(overlaysToClose(s(), s({ info: true, stats: true })), ["info"]);
-    assert.deepEqual(overlaysToClose(s(), s({ rail: true, stats: true, info: true })), ["stats", "info"]);
+    assert.deepEqual(overlaysToClose(s(), s({ rail: true, info: true })), ["info"]);
   });
 
   it("關掉後再算一輪不會互相觸發（穩定）", () => {

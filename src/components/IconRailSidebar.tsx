@@ -1,8 +1,9 @@
-import type { DataSource, DisplayMode, Region, RenderMode, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
+import type { DataSource, DisplayMode, Region, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
 import type { ColorTheme } from "../types/colorTheme";
 import type { AirspaceSettings } from "../types/airspace";
 import type { AirportColorMode, AirportAssignment } from "../types/airportColors";
 import { DeepAnalysisPanel } from "./DeepAnalysisPanel";
+import { FlightStatsPanel } from "./FlightStatsPanel";
 import type { AnalysisColorBy } from "../data/analysisColors";
 import type { FlightFilters } from "../data/classify";
 import type { AirportManifestEntry } from "../data/flightLoader";
@@ -15,7 +16,6 @@ import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, Ico
 import type { ScenePreset } from "./sidebar/scenePresets";
 import { SettingsPanel } from "./sidebar/panels/SettingsPanel";
 import { SetsPanel } from "./sidebar/panels/SetsPanel";
-import { CalendarPanel } from "./sidebar/panels/CalendarPanel";
 import { ColorThemePanel } from "./sidebar/panels/ColorThemePanel";
 import { SummaryPanel } from "./sidebar/panels/SummaryPanel";
 import { AtlasPanel } from "./sidebar/panels/AtlasPanel";
@@ -24,7 +24,7 @@ export { SCENE_PRESETS, type ScenePreset } from "./sidebar/scenePresets";
 
 /* ── Types ───────────────────────────────────────────────── */
 
-export type PanelId = "settings" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
+export type PanelId = "settings" | "sets" | "colors" | "airspace" | "summary" | "analysis" | "stats" | "atlas";
 type WorkspaceId = "explore" | "selection" | "view" | "airspace" | "analyze";
 
 const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
@@ -37,10 +37,10 @@ const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
 
 function getWorkspace(panel: PanelId | null): WorkspaceId | null {
   if (panel === "atlas") return "explore";
-  if (panel === "sets" || panel === "calendar") return "selection";
+  if (panel === "sets") return "selection";
   if (panel === "settings" || panel === "colors") return "view";
   if (panel === "airspace") return "airspace";
-  if (panel === "summary" || panel === "analysis") return "analyze";
+  if (panel === "summary" || panel === "analysis" || panel === "stats") return "analyze";
   return null;
 }
 
@@ -49,10 +49,8 @@ export interface IconRailSidebarProps {
   activePanel: PanelId | null;
   onActivePanelChange: (panel: PanelId | null) => void;
   // Theme
-  isDarkTheme: boolean;
   // Settings panel controls
   displayMode: DisplayMode;
-  renderMode: RenderMode;
   farView: boolean;
   farViewBoost: number;
   mapStyleId: string;
@@ -66,10 +64,8 @@ export interface IconRailSidebarProps {
   trailLineWidth: number;
   // Callbacks
   onDisplayModeChange: (mode: DisplayMode) => void;
-  onRenderModeChange: (mode: RenderMode) => void;
   onFarViewChange: (v: boolean) => void;
   onFarViewBoostChange: (v: number) => void;
-  onMapStyleChange: (id: string) => void;
   onAltExaggerationChange: (v: number) => void;
   onAltOffsetChange: (v: number) => void;
   onStaticOpacityChange: (v: number) => void;
@@ -99,23 +95,21 @@ export interface IconRailSidebarProps {
   /** 機場 metadata（座標/名稱/國家），含無 preset 的長尾機場，key = ICAO */
   airportMeta: Record<string, AirportMeta>;
   selectedAirport: string;
+  /** 開啟機場：單選並飛過去（R11；機場面板點擊、搜尋結果） */
   onAirportChange: (icao: string) => void;
   onLocationJump: (icao: string) => void;
   onSceneSelect: (scene: ScenePreset) => void;
-  // Calendar
-  availableDates: string[];
-  /** 完整資料的日期（實心標記） */
-  fullDates: string[];
-  /** 各日期的軌跡筆數（單一機場模式才有，tooltip 顯示用） */
-  dateCounts?: Record<string, number>;
+  // 日期只在時間軸選（R12）；這裡只用來顯示「N 座無此日期」
   selectedDate: string | null;
-  onDateSelect: (date: string | null) => void;
   // Flights data (for summary panel — already filtered by time window)
   summaryFlights: Flight[];
   /** 時間範圍天數（1d / 3d / 7d）影響顯示內容 */
   rangeDays: number;
-  // Stats
-  onStatsClick: () => void;
+  // 統計（分析 › 統計分頁，R2：不再是右側浮層）
+  /** 全部航班（ALL REGION 統計，不受篩選影響） */
+  statsAllFlights: Flight[];
+  onStatsSelectAirport: (icao: string) => void;
+  onStatsSelectFlight: (id: string) => void;
   onCaptureClick: () => void;
   // Info
   // Day/Night
@@ -204,10 +198,10 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
   const selectedAvailable = selectedDate
     ? activeSelection.filter((icao) => Boolean(props.airportCatalog[icao]?.dates?.[selectedDate])).length
     : 0;
-  const workspaceTabs: Array<{ id: PanelId | "stats"; label: string }> = activeWorkspace === "explore"
+  const workspaceTabs: Array<{ id: PanelId; label: string }> = activeWorkspace === "explore"
     ? [{ id: "atlas", label: "地圖總覽" }]
     : activeWorkspace === "selection"
-      ? [{ id: "sets", label: "機場" }, { id: "calendar", label: "日期" }]
+      ? [{ id: "sets", label: "機場" }]
       : activeWorkspace === "view"
         ? [{ id: "settings", label: "顯示" }, { id: "colors", label: "色彩" }]
         : activeWorkspace === "airspace"
@@ -299,7 +293,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         <RailIcon
           active={activeWorkspace === "selection"}
           onClick={() => toggleWorkspace("selection")}
-          title="選擇機場與日期"
+          title="選擇機場"
         >
           <IconPinPlus />
         </RailIcon>
@@ -341,6 +335,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
       {activePanel !== null && (
         <Panel
           ariaLabel={workspaceTitle}
+          width={activePanel === "stats" ? LAYOUT.panelWidthWide : LAYOUT.panelWidth}
           maxHeight="70vh"
           style={{ animation: "iconRailFadeIn 0.25s ease-out" }}
         >
@@ -358,7 +353,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               </div>
             )}
             {(activeWorkspace === "selection" || activeWorkspace === "explore") && (
-              <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data, lineHeight: 1.45 }}>
+              <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data, lineHeight: 1.45 }}>
                 {activeSelection.length} 座機場
                 {selectedDate ? ` · ${selectedDate}` : ""}
                 {selectedDate && selectedAvailable < activeSelection.length
@@ -366,18 +361,15 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                   : ""}
               </div>
             )}
-            {workspaceTabs.length > 1 && <Segmented<PanelId | "stats">
+            {workspaceTabs.length > 1 && <Segmented<PanelId>
               fullWidth
               ariaLabel="面板分頁"
               options={workspaceTabs.map((tab) => ({ value: tab.id, label: tab.label }))}
               value={activePanel}
-              onChange={(id) => {
-                if (id === "stats") props.onStatsClick();
-                else setActivePanel(id);
-              }}
+              onChange={setActivePanel}
             />}
           </div>
-          <PanelBody>
+          <PanelBody style={activePanel === "stats" ? { padding: 0, gap: 0 } : undefined}>
           {activePanel === "settings" && <SettingsPanel {...props} />}
           {activePanel === "sets" && (
             <SetsPanel
@@ -385,24 +377,17 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               airportCatalog={props.airportCatalog}
               airportMeta={props.airportMeta}
               region={props.region}
+              selectedAirport={props.selectedAirport}
               airportSet={activeSelection}
               setMode={props.airportSet !== null}
               setName={props.setName}
               savedSets={props.savedSets}
               onApplySet={props.onApplySet}
+              onOpenAirport={props.onAirportChange}
               onToggleAirport={props.onToggleAirportInSet}
               onClearSet={props.onClearSet}
               onExitSetMode={props.onExitSetMode}
               onSceneSelect={props.onSceneSelect}
-            />
-          )}
-          {activePanel === "calendar" && (
-            <CalendarPanel
-              availableDates={props.availableDates}
-              fullDates={props.fullDates}
-              dateCounts={props.dateCounts}
-              selectedDate={props.selectedDate}
-              onDateSelect={props.onDateSelect}
             />
           )}
           {activePanel === "colors" && (
@@ -432,7 +417,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                 value={props.dataSource}
                 onChange={props.onDataSourceChange}
               />
-              <div style={{ fontSize: SIZE.s10, color: tokens.fg3, lineHeight: 1.5 }}>
+              <div style={{ fontSize: SIZE.minor, color: tokens.fg3, lineHeight: 1.5 }}>
                 {props.dataSource === "fused"
                   ? "切回航線軌跡：回到單一機場範圍、天數重設為 1 天、靜態軌跡透明度回到預設。"
                   : "切到空域快照：改看整個區域某天的空中快照，天數重設為 1 天、靜態軌跡調淡，並拉遠到區域視角。"}
@@ -465,6 +450,15 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onFiltersChange={props.onFlightFiltersChange}
               scaleByAircraftSize={props.scaleByAircraftSize}
               onScaleByAircraftSizeChange={props.onScaleByAircraftSizeChange}
+            />
+          )}
+          {activePanel === "stats" && (
+            <FlightStatsPanel
+              allFlights={props.statsAllFlights}
+              filteredFlights={props.summaryFlights}
+              selectedAirport={props.selectedAirport}
+              onSelectAirport={props.onStatsSelectAirport}
+              onSelectFlight={props.onStatsSelectFlight}
             />
           )}
           {activePanel === "atlas" && (

@@ -42,3 +42,19 @@ export function IconPause({ size = 10 }: { size?: number }) {
     </svg>
   );
 }
+
+export function IconPlus({ size = 10 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" aria-hidden="true">
+      <path d="M5 1.5v7M1.5 5h7" />
+    </svg>
+  );
+}
+
+export function IconMinus({ size = 10 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" aria-hidden="true">
+      <path d="M1.5 5h7" />
+    </svg>
+  );
+}

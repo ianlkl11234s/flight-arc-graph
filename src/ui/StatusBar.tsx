@@ -50,7 +50,7 @@ export function StatusBar({ state, message, detail, progress, action, width }: S
         backdropFilter: `blur(${BLUR}px)`,
         WebkitBackdropFilter: `blur(${BLUR}px)`,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         color: textColor,
         overflow: "hidden",
       }}
@@ -58,7 +58,7 @@ export function StatusBar({ state, message, detail, progress, action, width }: S
       <span aria-hidden="true" style={{ width: 6, height: 6, background: dotColor, flex: "none" }} />
       <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{message}</span>
       {detail && (
-        <span style={{ fontFamily: FONT.data, fontSize: SIZE.s10, color: tokens.fg3, fontVariantNumeric: "tabular-nums", flex: "none" }}>
+        <span style={{ fontFamily: FONT.data, fontSize: SIZE.minor, color: tokens.fg3, fontVariantNumeric: "tabular-nums", flex: "none" }}>
           {detail}
         </span>
       )}

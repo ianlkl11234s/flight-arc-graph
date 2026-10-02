@@ -7,6 +7,7 @@ import {
   Chip,
   ChipGroup,
   DockCard,
+  SelectionRing,
   Modal,
   Panel,
   PanelBody,
@@ -147,7 +148,7 @@ function SectionDemo() {
         open={open}
         onToggle={setOpen}
         badge={3}
-        right={<Button variant="ghost" style={{ height: 20, padding: `0 ${SPACE.s4}px`, fontSize: SIZE.s10 }}>清除</Button>}
+        right={<Button variant="ghost" style={{ height: 20, padding: `0 ${SPACE.s4}px`, fontSize: SIZE.minor }}>清除</Button>}
       >
         <span>受控收合 + 徽章 + 右側動作。</span>
       </Section>
@@ -325,6 +326,18 @@ function StatDemo() {
   );
 }
 
+function SelectionRingDemo() {
+  const { tokens } = useTheme();
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: SPACE.s16 }}>
+      <div style={{ position: "relative", width: 120, height: 72, background: tokens.mapBg, border: `1px dashed ${tokens.border}` }}>
+        <SelectionRing x={60} y={36} />
+      </div>
+      <SelectionRing x={0} y={0} floating={false} size={20} />
+    </div>
+  );
+}
+
 function DockDemo() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s8 }}>
@@ -429,7 +442,7 @@ function TokenSwatches() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: SPACE.s6, width: "100%" }}>
       {keys.map((k) => (
-        <div key={k} style={{ display: "flex", alignItems: "center", gap: SPACE.s8, fontFamily: FONT.data, fontSize: SIZE.s10 }}>
+        <div key={k} style={{ display: "flex", alignItems: "center", gap: SPACE.s8, fontFamily: FONT.data, fontSize: SIZE.minor }}>
           <span style={{ width: 28, height: 16, background: tokens[k], border: `1px solid ${tokens.border}`, flex: "none" }} />
           <span>{k}</span>
           <span style={{ color: tokens.fg3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tokens[k]}</span>
@@ -454,6 +467,7 @@ const SECTIONS = [
   { id: "chip", name: "Chip / ChipGroup", note: "篩選與最近瀏覽。選中 = accent 邊框；移除鈕為 SVG。ChipGroup 為多選集合。", render: () => <ChipDemo /> },
   { id: "stat", name: "StatCard", note: "card / row 兩種版型；數字一律 mono tabular；缺值顯示「—」（R9）。", render: () => <StatDemo /> },
   { id: "dock", name: "DockCard", note: "右下 dock 資訊卡外殼：眉標、標題、kv 列、動作列、關閉。", render: () => <DockDemo /> },
+  { id: "selection-ring", name: "SelectionRing", note: "點擊處的選取圈（R1）：固定在點擊位置，不吃滑鼠；相機移動或卡片關閉時由呼叫端移除。", render: () => <SelectionRingDemo /> },
   { id: "caption", name: "Caption", note: "左下圖說：機場碼 30px mono + 中文名、日期／班數／進離場；左側 2px 琥珀線。組合模式含退出鈕；面板收起時旁邊放引導入口（Q6）。", render: () => <CaptionDemo /> },
   { id: "status", name: "StatusBar", note: "單行載入狀態（外觀）。失敗與「這天沒資料」分開；顯示節奏（150ms / 600ms / 2s / 4s）P4 接。", render: () => <StatusDemo /> },
   { id: "modal", name: "Modal", note: "置中外殼、z modal、Esc 關閉（capture 階段攔截，R7 最上層）。上方為 inline 展示。", render: () => <ModalDemo /> },
@@ -464,12 +478,12 @@ export function DesignSystemPage() {
   return (
     <div style={{ background: t.mapBg, color: t.fg1, fontFamily: FONT.ui, minHeight: "100vh", padding: `${SPACE.s24}px ${SPACE.s24 + SPACE.s8}px` }}>
       <header style={{ marginBottom: SPACE.s24 }}>
-        <div style={{ fontFamily: FONT.data, fontSize: SIZE.s9, letterSpacing: ".18em", color: t.fg3 }}>FLIGHT ARC · STUDIO</div>
-        <h1 style={{ fontSize: SIZE.s18, fontWeight: 500, margin: `${SPACE.s4}px 0 ${SPACE.s8}px` }}>Design System · 活元件頁</h1>
-        <p style={{ fontSize: SIZE.s11, color: t.fg2, margin: 0 }}>
+        <div style={{ fontFamily: FONT.data, fontSize: SIZE.eyebrow, letterSpacing: ".18em", color: t.fg3 }}>FLIGHT ARC · STUDIO</div>
+        <h1 style={{ fontSize: SIZE.large, fontWeight: 500, margin: `${SPACE.s4}px 0 ${SPACE.s8}px` }}>Design System · 活元件頁</h1>
+        <p style={{ fontSize: SIZE.body, color: t.fg2, margin: 0 }}>
           src/ui 真元件，暗／淡並排。規格：docs/design-system/spec.md。新增元件必須同時加一段。
         </p>
-        <nav style={{ display: "flex", flexWrap: "wrap", gap: SPACE.s12, marginTop: SPACE.s12, fontFamily: FONT.data, fontSize: SIZE.s10 }}>
+        <nav style={{ display: "flex", flexWrap: "wrap", gap: SPACE.s12, marginTop: SPACE.s12, fontFamily: FONT.data, fontSize: SIZE.minor }}>
           {SECTIONS.map((s) => (
             <a key={s.id} href={`#${s.id}`} style={{ color: t.fg2 }}>
               {s.name}

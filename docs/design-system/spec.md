@@ -25,11 +25,11 @@
 | 語意色（P2 補） | danger、rec（錄影紅 `#e5484d`）、accentSoft（accent 12–16% 透明） |
 | `BLUR` | 10px，所有半透明面板共用 |
 | `FONT` | `ui`：JetBrains Mono → PingFang TC → Noto Sans TC；`data`：JetBrains Mono → ui-monospace |
-| `SIZE` | 9 眉標 · 10 次要 · **11 正文** · 12 · **14 面板標題** · 18 · 30 圖說機場碼 |
+| `SIZE` | key 為角色名：`eyebrow` 11 眉標 · `minor` 11.5 次要 · **`body` 12.5 正文** · `sub` 13 小標 · **`title` 15 面板標題** · `large` 18 大字 · `caption` 30 圖說機場碼。**chrome 最小字級 11**（含 SVG 圖表刻度；`design:guard` 硬規則，只准 0 處 <11；viewBox 內圖示字形以 `/* glyph */` 註記豁免）。錄影畫面（`useCanvasRecorder` 與其 HTML 鏡像標題）、地圖圖層內文字不屬本階層 |
 | `SPACE` | 2 · 4 · 6 · 8 · 12 · 16 · 24 |
 | `RADIUS` | **2**（面板與控件，近直角）· pill 99（僅狀態點） |
 | `Z` | mapOverlay 10 · panel 20 · toolbar 25 · popover 30 · modal 40 · toast 50 |
-| `LAYOUT` | railWidth 56 · panelWidth 288 · panelLeft 64 · panelTop 52 · mapBottomInset 64 · dockWidth 260 |
+| `LAYOUT` | railWidth 56 · panelWidth 288 · panelWidthWide 360（分析›統計）· panelLeft 64 · panelTop 52 · mapBottomInset 64 · dockWidth 260 |
 
 不得自創字級、圓角、z-index；需要新值先加 token（TS 與 CSS 同時加）。
 
@@ -46,9 +46,9 @@
 
 - **面板**：`panel` 底 + `BLUR` + 1px `border` + 圓角 2；左上與右下各一個 8px 琥珀直角刻度（`::before/::after`，opacity .8）
 - **rail 選中**：圖示變 fg1 + 左側 2px 琥珀直線
-- **圖說（Caption）**：左側 2px 琥珀直線；機場碼 30px mono
+- **圖說（Caption）**：左側 2px 琥珀直線；機場碼 `SIZE.caption` 30px mono
 - **開關、滑桿 thumb、勾選框**：方角
-- **眉標**：9px、字距 .18em、大寫英文 + 中文（例：`SELECTION · 機場`）
+- **眉標**：`SIZE.eyebrow` 11px、字距 .18em、大寫英文 + 中文（例：`SELECTION · 機場`）
 - **數字**：一律 `FONT.data` + `tabular-nums`
 
 ---
@@ -73,7 +73,7 @@
 
 | 元件 | 規格要點 | 取代的既有實作 |
 |---|---|---|
-| `PanelHeader` | 眉標 + 14px 標題 + 24×24 關閉鈕（SVG，不用「×」字元） | 各面板自寫標題 |
+| `PanelHeader` | 眉標 + `title` 15px 標題 + 24×24 關閉鈕（SVG，不用「×」字元） | 各面板自寫標題 |
 | `Section` | 眉標 + 右延細線；可收合時用 chevron | `SectionHeader`、DeepAnalysis/FlightStats `Section`、`SectionTitle`、`SectionLabel` |
 | `Button` | 高 28；primary（accent 底）／secondary（ctl 底 + border）／ghost／danger | 各處裸 `<button>` |
 | `Segmented` | 選項 ≤3；選中 = accent 字 + accentSoft 底 | `ToggleButtons`、`ChipGroup`、DepArr、DataSource |
@@ -81,7 +81,7 @@
 | `Toggle` | 28×16 方角，開 = accent 底 | `ToggleRow` checkbox 等 |
 | `Slider` | 全站唯一；2px 軌 + 6×14 方形 thumb；標籤與數值同一行，控件在下一行 | `SliderRow`、`DurationRange`、Cinema、Timeline 滑桿 |
 | `Chip` | 篩選與最近瀏覽；選中 = accent 邊框 | `SetChip` 等 |
-| `StatCard` | 標籤 9.5 / 數字 15 mono / 副標 9.5 | `Card`、`MetricBlock`、`StatRow` |
+| `StatCard` | 標籤 `minor` 11.5 / 數字 `title` 15 mono / 副標 `minor` 11.5（列式：標籤 `body` / 數字 `sub`） | `Card`、`MetricBlock`、`StatRow` |
 | `DockCard` | 右下資訊卡外殼：眉標、標題、`kv` 列、動作列、關閉 | `AirspaceInfoCard` 外殼、航班 tooltip |
 | `StatusBar` | 單行載入／完成／失敗（§6 R6） | 中央 `LoadingIndicator` |
 | `Modal` | 置中、z modal、Esc 關閉 | `InfoModal` 外殼 |
@@ -96,7 +96,7 @@
 |---|---|
 | R1 | 點擊資訊一律停靠右下 dock，點擊處畫選取圈；不用游標 tooltip 或 Mapbox popup 承載資訊 |
 | R2 | 左側面板與浮層互斥（純函式 + 測試）；新的浮層必須登記到互斥清單 |
-| R3 | 右上只有一條工具列，順序：起降 ｜ 染色 ｜ 2D/3D · 底圖 ｜ 錄影 · 說明。不得加第二排（航線軌跡／空域快照是 rail 上的獨立模式，見 Q4） |
+| R3 | 右上只有一條工具列，順序：起降 ｜ 染色 ｜ 2D/3D · 底圖 ｜ 錄影 · 說明。不得加第二排（航線軌跡／空域快照是 rail 上的獨立模式，見 Q4）。「染色」= `高度`（預設）｜`起降`：沒有選定機場（region 範圍）時「起降」disabled、提示「先選機場」；多日 Compare 時也 disabled（日期分色優先）；兩種情況下若正在起降模式會自動回到高度。起降與機場配色、分析染色互斥 |
 | R4 | 時間軸平常是膠囊；hover／鍵盤 focus／拖曳／日期面板開著 → 展開，全部解除後 2 秒收合；滑鼠點出來的 focus 不算 |
 | R5 | 時間軸與 dock 底邊共用 `mapBottomInset` |
 | R6 | 載入狀態條：150ms 內完成不顯示、至少顯示 600ms、完成停 2 秒、失敗停 4 秒、播放中不跳「已載入」；**失敗必須明講，和「這天沒資料」分開** |
@@ -113,7 +113,7 @@
 ## §7 禁止事項
 
 - 寫死色碼（hex／rgba）於 `src/components/**`、`src/App.tsx`、`src/ui/**`（由 `design:guard` 計數，只准減少）
-- 自創字級、圓角、z-index；寫死 ≥10 的 z-index
+- 自創字級、圓角、z-index；寫死 ≥10 的 z-index；chrome 字級 < 11（含 SVG 刻度）
 - 直接用 `isDarkTheme ? a : b` 取色（改用 `useTheme().tokens`）
 - 第二套月曆、第二排工具列、第二種資訊卡定位方式
 - 以 UI 改版為由改動軌跡渲染或 `COLOR_THEMES`

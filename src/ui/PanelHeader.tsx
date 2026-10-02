@@ -36,7 +36,7 @@ export function PanelHeader({ eyebrow, title, onClose, closeLabel = "關閉面�
         <div
           style={{
             fontFamily: FONT.ui,
-            fontSize: SIZE.s14,
+            fontSize: SIZE.title,
             fontWeight: 500,
             color: tokens.fg1,
             marginTop: eyebrow ? 3 : 0,
@@ -61,7 +61,7 @@ export function Eyebrow({ children, color }: { children: ReactNode; color?: stri
     <div
       style={{
         fontFamily: FONT.data,
-        fontSize: SIZE.s9,
+        fontSize: SIZE.eyebrow,
         letterSpacing: EYEBROW_LETTER_SPACING,
         textTransform: "uppercase",
         color: color ?? tokens.fg3,

@@ -3,6 +3,7 @@ import { getAirportInfo } from "../../map/cameraPresets";
 import { useTheme } from "../../styles/ThemeContext";
 import { FONT, RADIUS, SIZE, SPACE } from "../../styles/tokens";
 import { themeVars } from "../../ui/vars";
+import { IconMinus, IconPlus } from "../../ui/icons";
 
 /* ── Sub-components ──────────────────────────────────────── */
 
@@ -131,85 +132,119 @@ export function IconCamera() {
   );
 }
 
-/* ── SetsPanel: 多機場組合檢視 ─────────────────────────────── */
+/* ── SetsPanel：機場列（R11：點擊＝開啟機場；＋／Shift+點＝加入組合） ───── */
 
-export function AirportCheckboxRow({
+export function AirportRow({
   icao,
   name,
   iata,
-  checked,
+  current,
+  inSet,
   coverage,
   matchReason,
   disabled = false,
-  onToggle,
+  onOpen,
+  onToggleSet,
 }: {
   icao: string;
   name: string;
   iata?: string;
-  checked: boolean;
+  /** 目前正在看的單一機場（非組合模式） */
+  current: boolean;
+  /** 組合模式下已在組合中 */
+  inSet: boolean;
   coverage?: string;
   matchReason?: string;
   disabled?: boolean;
-  onToggle: () => void;
+  /** 單選並飛過去 */
+  onOpen: () => void;
+  /** 加入／移出組合 */
+  onToggleSet: () => void;
 }) {
   const { tokens } = useTheme();
   const info = getAirportInfo(icao);
+  const label = info?.name ?? name;
+  const highlighted = current || inSet;
+  const status = current ? "目前" : inSet ? "組合中" : coverage;
   return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={checked}
-      onClick={onToggle}
-      disabled={disabled}
-      title={disabled ? "目前尚無可載入的軌跡資料" : undefined}
-      className="fa-focus fa-hover"
+    <div
       style={{
         ...themeVars(tokens),
         display: "flex",
         alignItems: "center",
-        gap: SPACE.s8 + SPACE.s2,
-        padding: `${SPACE.s6}px ${SPACE.s8}px`,
-        background: checked ? tokens.accentSoft : "transparent",
-        border: "none",
+        gap: SPACE.s4,
+        background: highlighted ? tokens.accentSoft : "transparent",
         borderRadius: RADIUS.base,
-        cursor: disabled ? "not-allowed" : "pointer",
-        textAlign: "left",
-        width: "100%",
-        fontFamily: FONT.ui,
         opacity: disabled ? 0.52 : 1,
       }}
     >
-      <span
-        aria-hidden="true"
+      <button
+        type="button"
+        aria-current={current ? "true" : undefined}
+        onClick={(e) => {
+          if (e.shiftKey) onToggleSet();
+          else onOpen();
+        }}
+        disabled={disabled}
+        title={disabled ? "目前尚無可載入的軌跡資料" : "點擊開啟機場；Shift+點擊加入組合"}
+        className="fa-focus fa-hover"
         style={{
-          width: 14, height: 14, flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: SPACE.s8,
+          flex: 1,
+          minWidth: 0,
+          padding: `${SPACE.s6}px ${SPACE.s8}px`,
+          background: "transparent",
+          border: "none",
           borderRadius: RADIUS.base,
-          boxSizing: "border-box",
-          border: `1px solid ${checked ? tokens.accent : tokens.border}`,
-          background: checked ? tokens.accent : "transparent",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: tokens.accentInk,
+          cursor: disabled ? "not-allowed" : "pointer",
+          textAlign: "left",
+          fontFamily: FONT.ui,
         }}
       >
-        {checked && (
-          <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square">
-            <path d="M2 5.2l2.2 2.2L8 3" />
-          </svg>
-        )}
-      </span>
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontSize: SIZE.s11, color: checked ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
-          {info?.name ?? name}
-        </div>
-        <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data }}>
-          {info?.iata || iata || icao} / {icao}{coverage ? ` · ${coverage}` : ""}
-        </div>
-        {matchReason && (
-          <div style={{ fontSize: SIZE.s9, color: tokens.fg3, marginTop: SPACE.s2 }}>
-            符合：{matchReason}
+        <span
+          aria-hidden="true"
+          style={{ width: 2, height: 24, flexShrink: 0, background: highlighted ? tokens.accent : "transparent" }}
+        />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: SIZE.body, color: highlighted ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
+            {label}
           </div>
-        )}
-      </div>
-    </button>
+          <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data }}>
+            {info?.iata || iata || icao} / {icao}{status ? ` · ${status}` : ""}
+          </div>
+          {matchReason && (
+            <div style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, marginTop: SPACE.s2 }}>
+              符合：{matchReason}
+            </div>
+          )}
+        </div>
+      </button>
+      <button
+        type="button"
+        onClick={onToggleSet}
+        disabled={disabled}
+        aria-label={inSet ? `從組合移除 ${label}` : `加入組合：${label}`}
+        title={inSet ? "從組合移除" : "加入組合"}
+        className="fa-focus fa-hover-fg"
+        style={{
+          width: 24,
+          height: 24,
+          flex: "none",
+          marginRight: SPACE.s4,
+          display: "grid",
+          placeItems: "center",
+          padding: 0,
+          border: `1px solid ${inSet ? tokens.accent : tokens.border}`,
+          borderRadius: RADIUS.base,
+          background: inSet ? tokens.accent : "transparent",
+          color: inSet ? tokens.accentInk : tokens.fg3,
+          cursor: disabled ? "not-allowed" : "pointer",
+        }}
+      >
+        {inSet ? <IconMinus /> : <IconPlus />}
+      </button>
+    </div>
   );
 }

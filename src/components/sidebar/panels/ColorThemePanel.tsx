@@ -37,10 +37,10 @@ export function ColorThemePanel(props: ColorThemePanelProps) {
     borderRadius: RADIUS.base, cursor: "pointer", background: "transparent",
   };
   const labelStyle: React.CSSProperties = {
-    fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.ui, minWidth: 55,
+    fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.ui, minWidth: 55,
   };
 
-  const arrow = <span style={{ fontSize: SIZE.s9, color: tokens.fg3 }}>→</span>;
+  const arrow = <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3 }}>→</span>;
   const swatchBar = { borderRadius: RADIUS.base, border: `1px solid ${tokens.border}` } as const;
   const stepBtn = { width: 24, padding: 0 } as const;
   const modeTitles: Record<string, string> = {
@@ -128,7 +128,7 @@ export function ColorThemePanel(props: ColorThemePanelProps) {
       {/* ── Compare Airports（opt-in 比較模式）─────────────── */}
       <Section title="COMPARE · 機場配色">
         {compareModeActive && (
-          <div style={{ fontSize: SIZE.s10, color: tokens.fg3, lineHeight: 1.4 }}>
+          <div style={{ fontSize: SIZE.minor, color: tokens.fg3, lineHeight: 1.4 }}>
             日期 Compare 啟用時自動關閉
           </div>
         )}
@@ -161,7 +161,7 @@ export function ColorThemePanel(props: ColorThemePanelProps) {
           <>
             <div style={{
               display: "flex", justifyContent: "space-between", alignItems: "center",
-              fontSize: SIZE.s10, color: tokens.fg3,
+              fontSize: SIZE.minor, color: tokens.fg3,
             }}>
               <span>
                 {airportAssignment.airports.length} airport{airportAssignment.airports.length !== 1 ? "s" : ""}
@@ -211,11 +211,11 @@ export function ColorThemePanel(props: ColorThemePanelProps) {
                       }}
                     />
                   </label>
-                  <span style={{ fontSize: SIZE.s11, fontFamily: FONT.data, color: tokens.fg1, minWidth: 42 }}>
+                  <span style={{ fontSize: SIZE.body, fontFamily: FONT.data, color: tokens.fg1, minWidth: 42 }}>
                     {ap.icao}
                   </span>
                   <span style={{ flex: 1 }} />
-                  <span style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums" }}>
+                  <span style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums" }}>
                     {ap.count}
                   </span>
                   {ap.isCustom && (
@@ -231,7 +231,7 @@ export function ColorThemePanel(props: ColorThemePanelProps) {
                 </div>
               ))}
               {airportAssignment.airports.length === 0 && (
-                <div style={{ fontSize: SIZE.s10, color: tokens.fg3, padding: `${SPACE.s6}px 0` }}>
+                <div style={{ fontSize: SIZE.minor, color: tokens.fg3, padding: `${SPACE.s6}px 0` }}>
                   尚無航班資料
                 </div>
               )}

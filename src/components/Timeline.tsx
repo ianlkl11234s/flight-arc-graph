@@ -35,6 +35,8 @@ interface Props {
   dateCounts?: Record<string, number>;
   selectedDates?: string[];
   isMultiDateMode?: boolean;
+  /** 正在看的對象（機場碼／組合名／區域），月曆點到沒資料日期時的提示用 */
+  subjectLabel?: string;
   /** 每小時進場／離場數（App 依目前機場或組合計算） */
   hourBins: HourBin[];
   onToggle: () => void;
@@ -139,7 +141,12 @@ export function Timeline(p: Props) {
 
   /* ── 月曆 ── */
   const calendarOpen = state.popupOpen;
-  const setCalendarOpen = useCallback((open: boolean) => dispatch({ type: "popup", open }), [dispatch]);
+  /** 點到沒資料的日期時的提示（月曆內一行字）；開關月曆或選到有效日期時清掉 */
+  const [noDataNotice, setNoDataNotice] = useState<string | null>(null);
+  const setCalendarOpen = useCallback((open: boolean) => {
+    setNoDataNotice(null);
+    dispatch({ type: "popup", open });
+  }, [dispatch]);
   const [viewYM, setViewYM] = useState<[number, number]>(() => {
     const [y, m] = p.selectedDate.split("-").map(Number);
     return [y || new Date().getFullYear(), (m || 1) - 1];
@@ -234,7 +241,7 @@ export function Timeline(p: Props) {
       <span
         style={{
           fontFamily: FONT.data,
-          fontSize: SIZE.s12 + 1,
+          fontSize: SIZE.sub + 1,
           fontWeight: 500,
           fontVariantNumeric: "tabular-nums",
           color: tokens.fg1,
@@ -245,7 +252,7 @@ export function Timeline(p: Props) {
       >
         {expanded && (p.rangeDays > 1 || isMultiDateMode) ? formatDateTime(p.currentTime) : formatTime(p.currentTime)}
       </span>
-      <span style={{ fontFamily: FONT.data, fontSize: SIZE.s9, color: tokens.fg3, letterSpacing: ".08em", flex: "none" }}>UTC+8</span>
+      <span style={{ fontFamily: FONT.data, fontSize: SIZE.eyebrow, color: tokens.fg3, letterSpacing: ".08em", flex: "none" }}>UTC+8</span>
     </>
   );
 
@@ -281,7 +288,7 @@ export function Timeline(p: Props) {
         WebkitBackdropFilter: `blur(${BLUR}px) saturate(1.2)`,
         color: tokens.fg1,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         padding: `${SPACE.s8}px ${SPACE.s8 + SPACE.s2}px`,
         display: "flex",
         flexDirection: "column",
@@ -314,7 +321,7 @@ export function Timeline(p: Props) {
               icon={<IconChevron direction="left" />}
               onClick={() => setViewYM(viewMonth === 0 ? [viewYear - 1, 11] : [viewYear, viewMonth - 1])}
             />
-            <span style={{ fontFamily: FONT.data, fontSize: SIZE.s12, fontWeight: 600 }}>
+            <span style={{ fontFamily: FONT.data, fontSize: SIZE.sub, fontWeight: 600 }}>
               {viewYear}/{String(viewMonth + 1).padStart(2, "0")}
             </span>
             <Button
@@ -326,13 +333,14 @@ export function Timeline(p: Props) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 28px)", gap: SPACE.s2 }}>
             {WEEKDAYS.map((w) => (
-              <div key={w} style={{ textAlign: "center", fontSize: SIZE.s10, color: tokens.fg3 }}>{w}</div>
+              <div key={w} style={{ textAlign: "center", fontSize: SIZE.minor, color: tokens.fg3 }}>{w}</div>
             ))}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 28px)", gap: SPACE.s2, marginTop: SPACE.s2 }}>
             {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
+              const month = viewMonth + 1;
               const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
               const hasData = availableSet.has(dateStr);
               const isFull = fullSet.has(dateStr);
@@ -344,9 +352,12 @@ export function Timeline(p: Props) {
                   type="button"
                   title={hasData ? dateTitle(dateStr) : undefined}
                   aria-pressed={isSelected}
-                  disabled={!hasData}
+                  aria-disabled={!hasData || undefined}
                   onClick={() => {
-                    if (!hasData) return;
+                    if (!hasData) {
+                      setNoDataNotice(`${month}/${day} 沒有${p.subjectLabel ? ` ${p.subjectLabel} 的` : ""}資料`);
+                      return;
+                    }
                     p.onDateSelect?.(dateStr);
                     setCalendarOpen(false);
                   }}
@@ -359,14 +370,14 @@ export function Timeline(p: Props) {
                     alignItems: "center",
                     justifyContent: "center",
                     fontFamily: FONT.data,
-                    fontSize: SIZE.s11,
+                    fontSize: SIZE.body,
                     border: 0,
                     borderRadius: RADIUS.base,
                     background: isSelected ? tokens.accent : "transparent",
                     color: isSelected ? tokens.accentInk : hasData ? tokens.fg1 : mix(tokens.fg3, 55),
                     opacity: isPartial && !isSelected ? 0.55 : 1,
                     fontWeight: isSelected ? 700 : 400,
-                    cursor: hasData ? "pointer" : "default",
+                    cursor: hasData ? "pointer" : "not-allowed",
                   }}
                 >
                   {day}
@@ -387,6 +398,20 @@ export function Timeline(p: Props) {
               );
             })}
           </div>
+          {noDataNotice && (
+            <div
+              role="status"
+              style={{
+                marginTop: SPACE.s6,
+                maxWidth: 7 * 28 + 6 * SPACE.s2,
+                fontSize: SIZE.minor,
+                lineHeight: 1.4,
+                color: tokens.fg2,
+              }}
+            >
+              {noDataNotice}
+            </div>
+          )}
         </div>
       )}
 
@@ -466,7 +491,7 @@ export function Timeline(p: Props) {
             >
               {p.hourBins.map((b, i) => {
                 const cur = i === curIdx;
-                const color = cur ? tokens.accent : mix(tokens.fg1, isDark ? 28 : 35);
+                const color = cur ? tokens.accent : mix(tokens.fg2, isDark ? 45 : 50); // 圖表配色規則：目前用 accent，其餘中性灰階
                 const tw = new Date(b.start * 1000 + 8 * 3600_000);
                 const label = `${String(tw.getUTCMonth() + 1).padStart(2, "0")}/${String(tw.getUTCDate()).padStart(2, "0")} ${String(tw.getUTCHours()).padStart(2, "0")}:00 · 進場 ${b.arr} · 離場 ${b.dep}`;
                 return (
@@ -540,7 +565,7 @@ export function Timeline(p: Props) {
           </div>
         )}
         {expanded && (
-          <span style={{ fontFamily: FONT.data, fontSize: SIZE.s10, color: tokens.fg3, whiteSpace: "nowrap", flex: "none" }}>
+          <span style={{ fontFamily: FONT.data, fontSize: SIZE.minor, color: tokens.fg3, whiteSpace: "nowrap", flex: "none" }}>
             {formatTime(p.windowStart)}–{formatTime(p.windowEnd)}
           </span>
         )}

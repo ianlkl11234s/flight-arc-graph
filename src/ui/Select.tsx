@@ -10,13 +10,10 @@ export interface SelectOption<T extends string | number> {
   disabled?: boolean;
 }
 
-export interface SelectProps<T extends string | number> {
+interface SelectBaseProps<T extends string | number> {
   options: SelectOption<T>[];
   /** null ＝ 未選（顯示 placeholder） */
   value: T | null;
-  onChange: (v: T) => void;
-  /** 有傳時加一個空值選項（value=""），例如「— 選擇航班 —」 */
-  placeholder?: string;
   /** 左側行內標籤（與控件同一行） */
   label?: ReactNode;
   ariaLabel?: string;
@@ -26,6 +23,16 @@ export interface SelectProps<T extends string | number> {
   fullWidth?: boolean;
   style?: CSSProperties;
 }
+
+export type SelectProps<T extends string | number> = SelectBaseProps<T> &
+  (
+    | { placeholder?: undefined; onChange: (v: T) => void }
+    | {
+        /** 加一個空值選項（value=""），例如「— 選擇航班 —」；可選回，選回時 onChange(null) */
+        placeholder: string;
+        onChange: (v: T | null) => void;
+      }
+  );
 
 /** 下拉（選項 >3）：原生 select 套樣式 + SVG chevron；數字值也可（spec §5）。 */
 export function Select<T extends string | number>({
@@ -58,6 +65,10 @@ export function Select<T extends string | number>({
         disabled={disabled}
         value={value === null ? "" : String(value)}
         onChange={(e) => {
+          if (e.target.value === "" && placeholder !== undefined) {
+            (onChange as (v: T | null) => void)(null);
+            return;
+          }
           const hit = options.find((o) => String(o.value) === e.target.value);
           if (hit) onChange(hit.value);
         }}
@@ -70,7 +81,7 @@ export function Select<T extends string | number>({
           height: 28,
           padding: `0 ${SPACE.s24}px 0 ${SPACE.s8 + SPACE.s2}px`,
           fontFamily: FONT.ui,
-          fontSize: SIZE.s11,
+          fontSize: SIZE.body,
           color: tokens.fg1,
           background: tokens.ctl,
           border: `1px solid ${tokens.border}`,
@@ -83,7 +94,7 @@ export function Select<T extends string | number>({
         }}
       >
         {placeholder !== undefined && (
-          <option value="" disabled={value !== null}>
+          <option value="">
             {placeholder}
           </option>
         )}
@@ -118,7 +129,7 @@ export function Select<T extends string | number>({
         alignItems: "center",
         gap: SPACE.s8,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         color: tokens.fg1,
       }}
     >

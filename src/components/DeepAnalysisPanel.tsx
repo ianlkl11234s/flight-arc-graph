@@ -65,7 +65,7 @@ function MultiCheckList({
 }) {
   const { tokens } = useTheme();
   if (items.length === 0) {
-    return <div style={{ fontSize: SIZE.s10, color: tokens.fg3, padding: `${SPACE.s4}px 0` }}>(no data)</div>;
+    return <div style={{ fontSize: SIZE.minor, color: tokens.fg3, padding: `${SPACE.s4}px 0` }}>(no data)</div>;
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", maxHeight, overflowY: "auto", gap: 1 }}>
@@ -85,7 +85,7 @@ function MultiCheckList({
               alignItems: "center",
               gap: SPACE.s6,
               padding: `${SPACE.s4}px ${SPACE.s4}px`,
-              fontSize: SIZE.s11,
+              fontSize: SIZE.body,
               fontFamily: FONT.ui,
               cursor: "pointer",
               textAlign: "left",
@@ -120,7 +120,7 @@ function MultiCheckList({
               {it.label}
               {it.sub && <span style={{ color: tokens.fg3, marginLeft: SPACE.s4 }}>· {it.sub}</span>}
             </span>
-            <span style={{ color: tokens.fg3, fontSize: SIZE.s10, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums" }}>{it.count}</span>
+            <span style={{ color: tokens.fg3, fontSize: SIZE.minor, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums" }}>{it.count}</span>
           </button>
         );
       })}
@@ -239,7 +239,7 @@ export function DeepAnalysisPanel({
 
         {colorBy !== "none" && legend.length > 0 && (
           <>
-            <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data }}>
+            <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data }}>
               {totalInLegend.toLocaleString()} flights · {legend.length} groups
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s2, maxHeight: 180, overflowY: "auto" }}>
@@ -255,7 +255,7 @@ export function DeepAnalysisPanel({
                       padding: `${SPACE.s2}px ${SPACE.s4}px`,
                       borderRadius: RADIUS.base,
                       background: tokens.ctl,
-                      fontSize: SIZE.s10,
+                      fontSize: SIZE.minor,
                       fontFamily: FONT.ui,
                     }}
                   >
@@ -402,7 +402,7 @@ export function DeepAnalysisPanel({
         style={{
           paddingTop: SPACE.s6,
           borderTop: `1px solid ${tokens.border}`,
-          fontSize: SIZE.s10,
+          fontSize: SIZE.minor,
           fontFamily: FONT.data,
           color: tokens.fg3,
           textAlign: "center",

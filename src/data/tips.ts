@@ -1,4 +1,4 @@
-/** 所有使用技巧（單一真實來源），供 LoadingScreen 和 InfoModal 共用 */
+/** 所有使用技巧（單一真實來源），供 InfoModal 使用 */
 
 export const TIPS_BY_CATEGORY = [
   { cat: "資料來源", tips: [
@@ -43,6 +43,3 @@ export const TIPS_BY_CATEGORY = [
     "資料來源：FlightRadar24 API（航線）+ OpenSky Network（空域）",
   ]},
 ];
-
-/** 平面化的 tips 列表（LoadingScreen 輪播用） */
-export const FLAT_TIPS = TIPS_BY_CATEGORY.flatMap((g) => g.tips);

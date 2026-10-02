@@ -12,3 +12,4 @@ export { DockCard, type DockCardProps, type DockKV } from "./DockCard";
 export { StatusBar, type StatusBarProps, type StatusState } from "./StatusBar";
 export { Modal, type ModalProps } from "./Modal";
 export { Caption, type CaptionProps, type CaptionMetaItem } from "./Caption";
+export { SelectionRing, type SelectionRingProps } from "./SelectionRing";

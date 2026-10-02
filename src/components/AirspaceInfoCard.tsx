@@ -1,7 +1,7 @@
 import type React from "react";
 import type { AirspaceFeature } from "../data/airspaceLoader";
 import { AIRSPACE_CATEGORIES } from "../types/airspace";
-import { FONT } from "../styles/tokens";
+import { FONT, SIZE } from "../styles/tokens";
 import { DockCard } from "../ui";
 
 interface AirspaceInfoCardProps {
@@ -70,7 +70,7 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
           />
           <span
             style={{
-              fontSize: 10, fontFamily: FONT.ui,
+              fontSize: SIZE.minor, fontFamily: FONT.ui,
               fontWeight: 600, letterSpacing: "0.08em",
               color: badge.color, textTransform: "uppercase",
             }}
@@ -80,7 +80,7 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
         </div>
 
         {selected.nameEn && (
-          <div style={{ fontSize: 12, color: dimColor, marginBottom: 10, fontFamily: FONT.ui }}>
+          <div style={{ fontSize: SIZE.sub, color: dimColor, marginBottom: 10, fontFamily: FONT.ui }}>
             {selected.nameEn}
           </div>
         )}
@@ -104,10 +104,10 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
               marginBottom: 10,
               background: sectionBg,
               borderRadius: 6,
-              fontSize: 12,
+              fontSize: SIZE.sub,
             }}
           >
-            <span style={{ fontSize: 14 }}>🕐</span>
+            <span style={{ fontSize: SIZE.title }}>🕐</span>
             <span style={{ fontWeight: 500 }}>{hours}</span>
           </div>
         )}
@@ -121,7 +121,7 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
                 background: sectionBg,
                 borderRadius: 6,
                 padding: "10px 12px",
-                fontSize: 12,
+                fontSize: SIZE.sub,
                 lineHeight: 1.6,
                 maxHeight: 180,
                 overflowY: "auto",
@@ -145,7 +145,7 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
                 border: `1px solid ${warningBorder}`,
                 borderRadius: 6,
                 padding: "8px 12px",
-                fontSize: 11,
+                fontSize: SIZE.body,
                 lineHeight: 1.5,
               }}
             >
@@ -177,7 +177,7 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
                       borderRadius: 4,
                       cursor: "pointer",
                       background: sectionBg,
-                      fontSize: 11,
+                      fontSize: SIZE.body,
                       transition: "background 0.15s",
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"; }}
@@ -219,8 +219,8 @@ function MetricBlock({ label, value, dim, bg }: { label: string; value: string; 
         borderRadius: 6,
       }}
     >
-      <div style={{ fontSize: 9, letterSpacing: "0.1em", color: dim, marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 13, fontFamily: FONT.ui, fontWeight: 500 }}>{value}</div>
+      <div style={{ fontSize: SIZE.eyebrow, letterSpacing: "0.1em", color: dim, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: SIZE.sub, fontFamily: FONT.ui, fontWeight: 500 }}>{value}</div>
     </div>
   );
 }
@@ -229,7 +229,7 @@ function SectionLabel({ children, dim }: { children: React.ReactNode; dim: strin
   return (
     <div
       style={{
-        fontSize: 10,
+        fontSize: SIZE.minor,
         letterSpacing: "0.1em",
         textTransform: "uppercase",
         color: dim,

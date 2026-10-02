@@ -51,13 +51,13 @@ export function AtlasPanel({
   ];
 
   const { tokens } = useTheme();
-  const note = { fontSize: SIZE.s11, color: tokens.fg2, lineHeight: 1.6, fontFamily: FONT.ui } as const;
+  const note = { fontSize: SIZE.body, color: tokens.fg2, lineHeight: 1.6, fontFamily: FONT.ui } as const;
   const legendRows = legend.map((l) => (
     <div key={l.label} style={{ display: "flex", alignItems: "flex-start", gap: SPACE.s8 }}>
       <span style={{ width: 11, height: 11, borderRadius: "50%", background: l.color, opacity: l.opacity, marginTop: 2, flexShrink: 0, border: `1px solid ${tokens.border}` }} />
       <div>
-        <div style={{ fontSize: SIZE.s11, color: tokens.fg1, fontWeight: 500 }}>{l.label}</div>
-        <div style={{ fontSize: SIZE.s10, color: tokens.fg3 }}>{l.desc}</div>
+        <div style={{ fontSize: SIZE.body, color: tokens.fg1, fontWeight: 500 }}>{l.label}</div>
+        <div style={{ fontSize: SIZE.minor, color: tokens.fg3 }}>{l.desc}</div>
       </div>
     </div>
   ));
@@ -103,7 +103,7 @@ export function AtlasPanel({
           {[3, 8, 16].map((r, i) => (
             <div key={r} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SPACE.s4 }}>
               <span style={{ width: r * 2, height: r * 2, borderRadius: "50%", background: tokens.fg3, opacity: 0.5 }} />
-              <span style={{ fontSize: SIZE.s9, color: tokens.fg3 }}>{["少", "中", "多"][i]}</span>
+              <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3 }}>{["少", "中", "多"][i]}</span>
             </div>
           ))}
         </div>
@@ -130,7 +130,7 @@ export function AtlasPanel({
         />
 
         {/* 顏色維度切換 */}
-        <div style={{ fontSize: SIZE.s11, color: tokens.fg2 }}>顏色維度</div>
+        <div style={{ fontSize: SIZE.body, color: tokens.fg2 }}>顏色維度</div>
         <Segmented<AtlasColorMode>
           fullWidth
           options={[
@@ -152,7 +152,7 @@ export function AtlasPanel({
                 background: "linear-gradient(90deg, #ffffff 0%, #ff8c1a 50%, #ff1e1e 100%)",
               }}
             />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.s10, color: tokens.fg3 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.minor, color: tokens.fg3 }}>
               <span>流量低 · 白</span>
               <span>中 · 橘</span>
               <span>樞紐 · 紅</span>

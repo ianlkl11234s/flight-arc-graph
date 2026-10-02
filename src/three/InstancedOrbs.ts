@@ -50,6 +50,7 @@ function setTimeUniform(mat: THREE.Material, value: number) {
  * instanceMatrix 只在「真的需要」時才重算重傳，見 updateAll() 的簽章比對設計。
  */
 export class InstancedOrbs {
+  static readonly MAX_INSTANCES = MAX_INSTANCES;
   private layers: OrbLayer[] = [];
   private blinkLayer!: OrbLayer;
   private geo: THREE.IcosahedronGeometry;
@@ -84,7 +85,18 @@ export class InstancedOrbs {
   /** scaleMap 是參考型別，換一顆新 Map（即使內容相同）也要視為變了，故獨立用 !== 比對 */
   private lastScaleMapRef: Map<string, number> | null | undefined = undefined;
 
+  /** glow 兩層的主題色（setTheme 記住；per-instance 色關閉時復原用） */
+  private glowColor: THREE.Color;
+  /**
+   * 起降染色（§7）：per-instance glow 色來源（FlightScene 依 entries 順序寫入，3 floats/instance）。
+   * null = 原行為（glow 層用 material.color 單色，mesh.instanceColor 維持 null）。
+   */
+  private colorSrc: Float32Array | null = null;
+  /** glow 層的 instanceColor attribute：第一次啟用才配置，之後切換只換 mesh.instanceColor 參考 */
+  private instColorAttrs: Array<THREE.InstancedBufferAttribute | null> = [];
+
   constructor(scene: THREE.Scene, color: THREE.Color, blending: THREE.Blending) {
+    this.glowColor = color.clone();
     // T3-3（2026-09-03）：光球在螢幕上通常只佔數到數十像素，additive 疊加下 20 面體
     // （細分 0 階，12 頂點/60 verts）與原本 2 階細分（540 verts）難以肉眼分辨；改用最低
     // 細分把每顆光球的頂點量從 1,860 壓到 240，換 8 倍 MAX_INSTANCES（1,024→8,192），
@@ -307,6 +319,19 @@ export class InstancedOrbs {
       barr[off + 14] = gz;
     }
 
+    // 起降染色：glow 層 per-instance 色（手動逐元素拷貝，不配置 subarray view）
+    const src = this.colorSrc;
+    if (src) {
+      const n3 = this.count * 3;
+      for (let li = 1; li < this.layers.length; li++) {
+        const attr = this.layers[li]!.mesh.instanceColor;
+        if (!attr) continue;
+        const dst = attr.array as Float32Array;
+        for (let j = 0; j < n3; j++) dst[j] = src[j]!;
+        attr.needsUpdate = true;
+      }
+    }
+
     // 更新 instance counts 和 matrix
     for (const layer of this.layers) {
       layer.mesh.count = this.count;
@@ -335,12 +360,45 @@ export class InstancedOrbs {
 
   /** 切換主題 */
   setTheme(color: THREE.Color, blending: THREE.Blending) {
+    this.glowColor.copy(color);
     for (let i = 0; i < this.layers.length; i++) {
       const mat = this.layers[i]!.mesh.material as THREE.MeshBasicMaterial;
       mat.blending = blending;
-      if (i > 0) mat.color.copy(color);
+      // per-instance 色開啟時 material.color 維持白（instanceColor 乘上去才是實際色）
+      if (i > 0) {
+        if (this.colorSrc) mat.color.setRGB(1, 1, 1);
+        else mat.color.copy(color);
+      }
       mat.needsUpdate = true;
     }
+  }
+
+  /**
+   * 起降染色（§7）：glow 兩層改用 per-instance 色（core 白、blink 紅不動）。
+   * src = null → mesh.instanceColor 回 null、material.color 復原主題色，shader program 回到原本那支。
+   */
+  setInstanceColors(src: Float32Array | null) {
+    if (src === this.colorSrc) return;
+    this.colorSrc = src;
+    for (let i = 1; i < this.layers.length; i++) {
+      const mesh = this.layers[i]!.mesh;
+      const mat = mesh.material as THREE.MeshBasicMaterial;
+      if (src) {
+        let attr = this.instColorAttrs[i] ?? null;
+        if (!attr) {
+          attr = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 3), 3);
+          attr.setUsage(THREE.DynamicDrawUsage);
+          this.instColorAttrs[i] = attr;
+        }
+        mesh.instanceColor = attr;
+        mat.color.setRGB(1, 1, 1);
+      } else {
+        mesh.instanceColor = null;
+        mat.color.copy(this.glowColor);
+      }
+      mat.needsUpdate = true;
+    }
+    this.lastMatrixSig = null; // 下次 updateAll 強制重寫（含顏色）
   }
 
   /**

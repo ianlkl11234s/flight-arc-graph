@@ -64,15 +64,18 @@ export const FONT = {
   data: '"JetBrains Mono",ui-monospace,monospace',
 } as const;
 
-/** 字級（px）：9 眉標 / 10 / 11 正文 / 12 / 14 面板標題 / 18 / 30 圖說機場碼 */
+/**
+ * 字級（px），key 是角色名（2026-10 最小字級 11 拍板）：
+ * eyebrow 11 眉標 / minor 11.5 次要 / body 12.5 正文 / sub 13 小標 / title 15 面板標題 / large 18 大字 / caption 30 圖說機場碼
+ */
 export const SIZE = {
-  s9: 9,
-  s10: 10,
-  s11: 11,
-  s12: 12,
-  s14: 14,
-  s18: 18,
-  s30: 30,
+  eyebrow: 11,
+  minor: 11.5,
+  body: 12.5,
+  sub: 13,
+  title: 15,
+  large: 18,
+  caption: 30,
 } as const;
 
 /** 間距（px） */
@@ -106,6 +109,8 @@ export const Z = {
 export const LAYOUT = {
   railWidth: 56,
   panelWidth: 288,
+  /** 寬面板（分析 › 統計：圖表 300 + 左右留白） */
+  panelWidthWide: 360,
   panelLeft: 64,
   panelTop: 52,
   mapBottomInset: 64,

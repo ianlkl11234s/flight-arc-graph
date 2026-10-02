@@ -39,7 +39,7 @@ const t = (obj: T, lang: Lang) => obj[lang];
 function SectionTitle({ children }: { children: React.ReactNode }) {
   const S = useS();
   return (
-    <h3 style={{ fontSize: 11, color: S.label, margin: "0 0 10px", letterSpacing: 1.5, textTransform: "uppercase" }}>
+    <h3 style={{ fontSize: SIZE.body, color: S.label, margin: "0 0 10px", letterSpacing: 1.5, textTransform: "uppercase" }}>
       {children}
     </h3>
   );
@@ -61,8 +61,8 @@ function Card({ title, children, accentColor, style }: {
       borderLeft: accentColor ? `3px solid ${accentColor}` : undefined,
       ...style,
     }}>
-      {title && <div style={{ fontSize: 12, color: S.text, fontWeight: 600, marginBottom: 6 }}>{title}</div>}
-      <div style={{ fontSize: 12, lineHeight: 1.7, color: S.sub }}>{children}</div>
+      {title && <div style={{ fontSize: SIZE.sub, color: S.text, fontWeight: 600, marginBottom: 6 }}>{title}</div>}
+      <div style={{ fontSize: SIZE.sub, lineHeight: 1.7, color: S.sub }}>{children}</div>
     </div>
   );
 }
@@ -76,7 +76,7 @@ function Tag({ children }: { children: React.ReactNode }) {
       background: S.cardBg,
       border: `1px solid ${S.cardBorder}`,
       borderRadius: RADIUS.base,
-      fontSize: SIZE.s11,
+      fontSize: SIZE.body,
       color: S.sub,
     }}>
       {children}
@@ -93,7 +93,7 @@ function KeyBadge({ children }: { children: React.ReactNode }) {
       background: S.cardBg,
       border: `1px solid ${S.border}`,
       borderRadius: RADIUS.base,
-      fontSize: 11,
+      fontSize: SIZE.body,
       fontFamily: S.font,
       color: S.text,
     }}>
@@ -105,7 +105,7 @@ function KeyBadge({ children }: { children: React.ReactNode }) {
 function ParamRow({ label, desc }: { label: string; desc: string }) {
   const S = useS();
   return (
-    <div style={{ display: "flex", gap: 8, fontSize: 12, lineHeight: 1.6, marginBottom: 4 }}>
+    <div style={{ display: "flex", gap: 8, fontSize: SIZE.sub, lineHeight: 1.6, marginBottom: 4 }}>
       <span style={{ color: S.active, fontWeight: 600, minWidth: 80, flexShrink: 0 }}>{label}</span>
       <span style={{ color: S.sub }}>{desc}</span>
     </div>
@@ -119,7 +119,7 @@ function GettingStartedPage({ lang }: { lang: Lang }) {
   const L = lang === "zh";
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      <p style={{ fontSize: 13, lineHeight: 1.8, color: S.text, margin: 0 }}>
+      <p style={{ fontSize: SIZE.sub, lineHeight: 1.8, color: S.text, margin: 0 }}>
         {L
           ? <>歡迎使用 <b>Flight Arc</b> — 以 3D 弧線呈現航班軌跡的生成式藝術作品。</>
           : <>Welcome to <b>Flight Arc</b> — a generative art piece visualizing flight trajectories as 3D luminous arcs across East Asia and beyond.</>
@@ -293,16 +293,16 @@ function DataSourcesPage({ lang }: { lang: Lang }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <p style={{ fontSize: 13, lineHeight: 1.8, color: S.text, margin: "0 0 6px" }}>
+      <p style={{ fontSize: SIZE.sub, lineHeight: 1.8, color: S.text, margin: "0 0 6px" }}>
         {L
           ? "本專案整合多個航空資料來源，所有資料經腳本擷取、轉換、過濾後呈現："
           : "This project integrates multiple aviation data sources, all processed through automated scripts:"}
       </p>
       {sources.map((s) => (
         <Card key={t(s.name, lang)} accentColor={s.color}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: S.text, marginBottom: 4 }}>{t(s.name, lang)}</div>
-          <div style={{ fontSize: 11, color: S.active, marginBottom: 4 }}>{s.source}</div>
-          <div style={{ fontSize: 12, color: S.sub, lineHeight: 1.7 }}>{t(s.desc, lang)}</div>
+          <div style={{ fontSize: SIZE.sub, fontWeight: 600, color: S.text, marginBottom: 4 }}>{t(s.name, lang)}</div>
+          <div style={{ fontSize: SIZE.body, color: S.active, marginBottom: 4 }}>{s.source}</div>
+          <div style={{ fontSize: SIZE.sub, color: S.sub, lineHeight: 1.7 }}>{t(s.desc, lang)}</div>
         </Card>
       ))}
     </div>
@@ -324,8 +324,8 @@ function AboutPage({ lang }: { lang: Lang }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <div>
-        <h2 style={{ fontSize: 18, color: S.text, margin: "0 0 10px", letterSpacing: 1 }}>Flight Arc</h2>
-        <p style={{ fontSize: 13, lineHeight: 1.9, color: S.text, margin: 0 }}>
+        <h2 style={{ fontSize: SIZE.large, color: S.text, margin: "0 0 10px", letterSpacing: 1 }}>Flight Arc</h2>
+        <p style={{ fontSize: SIZE.sub, lineHeight: 1.9, color: S.text, margin: 0 }}>
           {L
             ? "航班軌跡生成式藝術視覺化。以東亞機場為中心，涵蓋台灣、日本、香港及更多地區，將航班起降軌跡轉化為光軌藝術作品。"
             : "Generative art visualization of flight trajectories. Centered on East Asian airports including Taiwan, Japan, Hong Kong, and beyond, transforming flight paths into luminous arc artworks."}
@@ -339,8 +339,8 @@ function AboutPage({ lang }: { lang: Lang }) {
             background: S.cardBg, border: `1px solid ${S.cardBorder}`, borderRadius: RADIUS.base,
             padding: "12px 14px", textAlign: "center",
           }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: S.active }}>{item.num}</div>
-            <div style={{ fontSize: 11, color: S.sub, marginTop: 2 }}>{t(item.label, lang)}</div>
+            <div style={{ fontSize: SIZE.large, fontWeight: 700, color: S.active }}>{item.num}</div>
+            <div style={{ fontSize: SIZE.body, color: S.sub, marginTop: 2 }}>{t(item.label, lang)}</div>
           </div>
         ))}
       </div>
@@ -399,17 +399,17 @@ function ProjectCard({ name, desc, screenshot, site, github }: {
         </div>
       )}
       <div style={{ padding: "10px 14px" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: S.text, marginBottom: 4 }}>{name}</div>
-        <div style={{ fontSize: 11, color: S.sub, marginBottom: 8, lineHeight: 1.5 }}>{desc}</div>
+        <div style={{ fontSize: SIZE.sub, fontWeight: 600, color: S.text, marginBottom: 4 }}>{name}</div>
+        <div style={{ fontSize: SIZE.body, color: S.sub, marginBottom: 8, lineHeight: 1.5 }}>{desc}</div>
         <div style={{ display: "flex", gap: 8 }}>
           {site && (
             <a href={site} target="_blank" rel="noopener noreferrer"
-              style={{ fontSize: 11, color: S.active, textDecoration: "none" }}>
+              style={{ fontSize: SIZE.body, color: S.active, textDecoration: "none" }}>
               Live
             </a>
           )}
           <a href={github} target="_blank" rel="noopener noreferrer"
-            style={{ fontSize: 11, color: S.sub, textDecoration: "none" }}>
+            style={{ fontSize: SIZE.body, color: S.sub, textDecoration: "none" }}>
             GitHub
           </a>
         </div>
@@ -465,8 +465,8 @@ function ProfilePage({ lang }: { lang: Lang }) {
         <img src="./screenshots/頭貼.jpg" alt="Migu"
           style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
         <div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: S.text }}>Migu</div>
-          <div style={{ fontSize: 12, color: S.sub }}>Senior Data Analyst / GIS</div>
+          <div style={{ fontSize: SIZE.title, fontWeight: 600, color: S.text }}>Migu</div>
+          <div style={{ fontSize: SIZE.sub, color: S.sub }}>Senior Data Analyst / GIS</div>
         </div>
       </div>
 
@@ -474,12 +474,12 @@ function ProfilePage({ lang }: { lang: Lang }) {
       <SectionTitle>{L ? "社群連結" : "SOCIAL LINKS"}</SectionTitle>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <a href="https://github.com/ianlkl11234s" target="_blank" rel="noopener noreferrer"
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: S.cardBg, border: `1px solid ${S.cardBorder}`, borderRadius: RADIUS.base, textDecoration: "none", color: S.text, fontSize: 12 }}>
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: S.cardBg, border: `1px solid ${S.cardBorder}`, borderRadius: RADIUS.base, textDecoration: "none", color: S.text, fontSize: SIZE.sub }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
           GitHub
         </a>
         <a href="https://www.threads.com/@ianlkl1314" target="_blank" rel="noopener noreferrer"
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: S.cardBg, border: `1px solid ${S.cardBorder}`, borderRadius: RADIUS.base, textDecoration: "none", color: S.text, fontSize: 12 }}>
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: S.cardBg, border: `1px solid ${S.cardBorder}`, borderRadius: RADIUS.base, textDecoration: "none", color: S.text, fontSize: SIZE.sub }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.59 12c.025 3.086.718 5.496 2.057 7.164 1.432 1.784 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.346-.789-.96-1.42-1.744-1.838.164 3.1-1.063 5.453-3.693 5.453-1.602 0-2.97-.767-3.652-2.048-.585-1.098-.63-2.545.013-3.878.926-1.916 3.083-2.878 5.29-2.472.1-.612.133-1.266.08-1.952l2.036-.244c.083.87.06 1.693-.06 2.455 1.038.497 1.892 1.2 2.494 2.1.864 1.29 1.196 2.86.96 4.539-.32 2.28-1.462 4.1-3.298 5.272C15.692 23.347 13.718 24 12.186 24zm.512-7.17c.828 0 1.474-.31 1.858-.892.532-.806.56-2.04-.02-2.834-.328-.21-.702-.382-1.126-.506-.078 1.072-.29 2.089-.648 2.983-.137.343-.5 1.25.064 1.25h-.128z"/></svg>
           Threads
         </a>
@@ -503,7 +503,7 @@ function TipsPage({ lang }: { lang: Lang }) {
   const L = lang === "zh";
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      <p style={{ fontSize: 13, lineHeight: 1.8, color: S.text, margin: 0 }}>
+      <p style={{ fontSize: SIZE.sub, lineHeight: 1.8, color: S.text, margin: 0 }}>
         {L ? "以下是一些實用的操作技巧，幫助你更好地探索東亞的空中交通：" : "Here are some useful tips to help you explore East Asia's air traffic:"}
       </p>
       {TIPS_BY_CATEGORY.map((group) => (
@@ -581,7 +581,7 @@ export function InfoModal({ open, onClose, isMobile }: InfoModalProps) {
         background: active ? S.activeSoft : "transparent",
         border: "none", borderRadius: RADIUS.base, padding: `${SPACE.s8}px ${SPACE.s12}px`, textAlign: "left",
         color: active ? S.active : S.sub,
-        fontSize: SIZE.s12, fontFamily: S.font, cursor: "pointer",
+        fontSize: SIZE.sub, fontFamily: S.font, cursor: "pointer",
         fontWeight: active ? 500 : 400,
       }}>
       {label}
@@ -591,13 +591,13 @@ export function InfoModal({ open, onClose, isMobile }: InfoModalProps) {
   function renderSidebar() {
     return (
       <div style={{
-        width: 160, flexShrink: 0,
+        width: 184, flexShrink: 0, // 眉標 11px 時「USER GUIDE · 使用指南」一行放得下
         display: "flex", flexDirection: "column", justifyContent: "space-between",
         borderRight: `1px solid ${S.border}`,
         paddingRight: SPACE.s12, marginRight: SPACE.s16,
       }}>
         <div>
-          <div style={{ fontSize: SIZE.s9, color: S.label, letterSpacing: ".18em", marginBottom: SPACE.s8, textTransform: "uppercase", fontFamily: FONT.data }}>
+          <div style={{ fontSize: SIZE.eyebrow, color: S.label, letterSpacing: ".18em", marginBottom: SPACE.s8, textTransform: "uppercase", fontFamily: FONT.data }}>
             {lang === "zh" ? "USER GUIDE · 使用指南" : "User Guide"}
           </div>
           {activeTab === "guide" && (

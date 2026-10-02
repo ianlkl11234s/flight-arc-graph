@@ -50,7 +50,7 @@ export function Section({
       {badge !== undefined && badge > 0 && (
         <span
           style={{
-            fontSize: SIZE.s9,
+            fontSize: SIZE.eyebrow,
             letterSpacing: 0,
             color: tokens.accent,
             background: tokens.accentSoft,
@@ -71,7 +71,7 @@ export function Section({
     alignItems: "center",
     gap: SPACE.s8,
     fontFamily: FONT.data,
-    fontSize: SIZE.s9,
+    fontSize: SIZE.eyebrow,
     letterSpacing: EYEBROW_LETTER_SPACING,
     textTransform: "uppercase" as const,
     color: tokens.fg3,

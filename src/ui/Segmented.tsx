@@ -67,7 +67,7 @@ export function Segmented<T extends string | number>({
               minWidth: 0,
               padding: `${SPACE.s4}px ${SPACE.s8 + SPACE.s2}px`,
               fontFamily: FONT.ui,
-              fontSize: SIZE.s11,
+              fontSize: SIZE.body,
               lineHeight: 1.4,
               whiteSpace: "nowrap",
               border: 0,

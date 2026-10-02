@@ -18,6 +18,8 @@ interface MapViewProps {
   showTrails?: boolean;
   atlasVisible?: boolean;
   compareColorMap?: Map<string, string>;
+  /** 起降染色組合內互飛：fr24_id → [起點離場色, 終點進場色]（2D 分段漸層）；高度模式為 undefined */
+  gradientColorMap?: Map<string, readonly [string, string]>;
   onMapReady?: (map: mapboxgl.Map) => void;
 }
 
@@ -220,7 +222,7 @@ function applyPureBlackTheme(map: mapboxgl.Map): void {
   }
 }
 
-export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, onMapReady }: MapViewProps) {
+export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, gradientColorMap, onMapReady }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const readyRef = useRef(false);
@@ -235,6 +237,7 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
   const isDarkThemeRef = useRef(isDarkTheme);
   const showTrailsRef = useRef(showTrails);
   const compareColorMapRef = useRef(compareColorMap);
+  const gradientColorMapRef = useRef(gradientColorMap);
   const trailLineWidthRef = useRef(trailLineWidth);
 
   onMapReadyRef.current = onMapReady;
@@ -246,6 +249,7 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
   isDarkThemeRef.current = isDarkTheme;
   showTrailsRef.current = showTrails;
   compareColorMapRef.current = compareColorMap;
+  gradientColorMapRef.current = gradientColorMap;
   trailLineWidthRef.current = trailLineWidth;
 
   const atlasVisibleRef = useRef(atlasVisible);
@@ -304,7 +308,7 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
 
       // 永遠保留 Mapbox 原生靜態軌跡
       const is3d = renderModeRef.current === "3d";
-      updateStaticTrails(map, flightsRef.current, isDarkThemeRef.current, is3d, compareColorMapRef.current);
+      updateStaticTrails(map, flightsRef.current, isDarkThemeRef.current, is3d, compareColorMapRef.current, gradientColorMapRef.current);
       setStaticTrailsLineWidth(map, trailLineWidthRef.current);
       // 3D 模式：根據當前 zoom 設定 2D 軌跡透明度
       if (is3d) {
@@ -390,12 +394,12 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
     if (!map || !readyRef.current || !map.isStyleLoaded()) return;
 
     const is3d = renderMode === "3d";
-    updateStaticTrails(map, flights, isDarkTheme, is3d, compareColorMap);
+    updateStaticTrails(map, flights, isDarkTheme, is3d, compareColorMap, gradientColorMap);
     if (is3d) {
       const { line, glow } = calc2dTrailOpacity(map.getZoom(), isDarkTheme);
       setStaticTrailsOpacity(map, line, glow);
     }
-  }, [renderMode, flights, isDarkTheme, compareColorMap]);
+  }, [renderMode, flights, isDarkTheme, compareColorMap, gradientColorMap]);
 
   // 3D 模式：zoom 驅動 2D 軌跡 crossfade（近看隱藏 2D，拉遠顯示 2D）
   useEffect(() => {

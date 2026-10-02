@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { dateToUnixTW } from "../utils/dateUtils";
+import { shiftToAvailableDate } from "../data/dateShift";
 
 /** currentTime state 節流發布頻率（Phase 1-3：播放時鐘留在 ref，React 只需 ~10 Hz） */
 const STATE_PUBLISH_INTERVAL_MS = 100;
@@ -214,15 +215,9 @@ export function useTimeline({
 
   const shiftDate = useCallback(
     (delta: number) => {
-      if (availableDates.length === 0) return;
-      const idx = availableDates.indexOf(selectedDate);
-      if (idx < 0) {
-        // 找最接近的
-        setSelectedDateRaw(availableDates[availableDates.length - 1]!);
-        return;
-      }
-      const newIdx = Math.max(0, Math.min(availableDates.length - 1, idx + delta));
-      setSelectedDateRaw(availableDates[newIdx]!);
+      // 前／後一個有資料的日期（目前日期不在清單內時往該方向找最近的；R12）
+      const next = shiftToAvailableDate(availableDates, selectedDate, delta);
+      if (next !== null) setSelectedDateRaw(next);
     },
     [availableDates, selectedDate],
   );

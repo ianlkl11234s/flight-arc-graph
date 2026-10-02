@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FONT, Z } from "../styles/tokens";
+import { FONT, SIZE, Z } from "../styles/tokens";
 
 interface Props {
   playing: boolean;
@@ -36,7 +36,7 @@ const getBtnStyle = (dark: boolean): React.CSSProperties => ({
   border: `1px solid ${dark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.15)"}`,
   borderRadius: 4,
   padding: "4px 10px",
-  fontSize: 14,
+  fontSize: SIZE.title,
   cursor: "pointer",
   fontFamily: FONT.ui,
   backdropFilter: "blur(8px)",
@@ -48,7 +48,7 @@ const getSelectStyle = (dark: boolean): React.CSSProperties => ({
   border: `1px solid ${dark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.15)"}`,
   borderRadius: 4,
   padding: "4px 8px",
-  fontSize: 13,
+  fontSize: SIZE.sub,
   fontFamily: FONT.ui,
   backdropFilter: "blur(8px)",
 });
@@ -135,7 +135,7 @@ export function TimelineControls({
     border: "none",
     color: calTextMain,
     cursor: "pointer",
-    fontSize: 14,
+    fontSize: SIZE.title,
     padding: "2px 8px",
     fontFamily: FONT.ui,
   };
@@ -165,7 +165,7 @@ export function TimelineControls({
           style={{
             ...getBtnStyle(isDarkTheme),
             padding: isMobile ? "6px 10px" : "4px 8px",
-            fontSize: isMobile ? 16 : 14,
+            fontSize: isMobile ? SIZE.large : SIZE.title,
           }}
         >
           ◀
@@ -178,7 +178,7 @@ export function TimelineControls({
             border: "none",
             padding: 0,
             color: isDarkTheme ? "#fff" : "rgba(50,50,50,0.9)",
-            fontSize: isMobile ? 14 : 13,
+            fontSize: isMobile ? SIZE.title : SIZE.sub,
             fontFamily: FONT.ui,
             fontWeight: 600,
             letterSpacing: 0.5,
@@ -227,7 +227,7 @@ export function TimelineControls({
                 >
                   ‹
                 </button>
-                <span style={{ fontSize: 12, fontFamily: FONT.ui, fontWeight: 600, color: calTextMain }}>
+                <span style={{ fontSize: SIZE.sub, fontFamily: FONT.ui, fontWeight: 600, color: calTextMain }}>
                   {viewYear}/{String(viewMonth + 1).padStart(2, "0")}
                 </span>
                 <button
@@ -242,7 +242,7 @@ export function TimelineControls({
                 {WEEKDAYS.map((w) => (
                   <div
                     key={w}
-                    style={{ textAlign: "center", fontSize: 10, fontFamily: FONT.ui, color: calTextDim }}
+                    style={{ textAlign: "center", fontSize: SIZE.minor, fontFamily: FONT.ui, color: calTextDim }}
                   >
                     {w}
                   </div>
@@ -282,7 +282,7 @@ export function TimelineControls({
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: 11,
+                        fontSize: SIZE.body,
                         fontFamily: FONT.ui,
                         border: "none",
                         borderRadius: 6,
@@ -323,7 +323,7 @@ export function TimelineControls({
           style={{
             ...getBtnStyle(isDarkTheme),
             padding: isMobile ? "6px 10px" : "4px 8px",
-            fontSize: isMobile ? 16 : 14,
+            fontSize: isMobile ? SIZE.large : SIZE.title,
           }}
         >
           ▶
@@ -345,7 +345,7 @@ export function TimelineControls({
             style={{
               ...getBtnStyle(isDarkTheme),
               padding: "4px 8px",
-              fontSize: 12,
+              fontSize: SIZE.sub,
               opacity: isMultiDateMode ? 1 : 0.65,
               background: isMultiDateMode
                 ? (isDarkTheme ? "rgba(99,102,241,0.5)" : "rgba(99,102,241,0.7)")
@@ -378,7 +378,7 @@ export function TimelineControls({
                 style={{
                   ...getBtnStyle(isDarkTheme),
                   padding: "3px 7px",
-                  fontSize: 11,
+                  fontSize: SIZE.body,
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
@@ -418,7 +418,7 @@ export function TimelineControls({
       >
         <button onClick={onToggle} style={{
           ...getBtnStyle(isDarkTheme),
-          ...(isMobile ? { width: 44, height: 44, fontSize: 18, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" } : {}),
+          ...(isMobile ? { width: 44, height: 44, fontSize: SIZE.large, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" } : {}),
         }}>
           {playing ? "\u23F8" : "\u25B6"}
         </button>
@@ -442,7 +442,7 @@ export function TimelineControls({
         <span
           style={{
             color: isDarkTheme ? "rgba(200,200,200,0.6)" : "rgba(255,255,255,0.7)",
-            fontSize: 13,
+            fontSize: SIZE.sub,
             fontFamily: FONT.ui,
           }}
         >
@@ -470,7 +470,7 @@ export function TimelineControls({
           display: "flex",
           justifyContent: "space-between",
           color: isDarkTheme ? "rgba(180,180,180,0.4)" : "rgba(0,0,0,0.3)",
-          fontSize: 10,
+          fontSize: SIZE.minor,
           fontFamily: FONT.ui,
           marginTop: 2,
         }}

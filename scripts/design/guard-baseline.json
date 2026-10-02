@@ -1,8 +1,8 @@
 {
   "files": {
     "src/App.tsx": {
-      "hex": 27,
-      "rgba": 79
+      "hex": 25,
+      "rgba": 67
     },
     "src/components/AirportSelector.tsx": {
       "hex": 2,
@@ -24,6 +24,10 @@
       "hex": 0,
       "rgba": 0
     },
+    "src/components/FlightInfoCard.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
     "src/components/FlightPicker.tsx": {
       "hex": 4,
       "rgba": 12
@@ -39,10 +43,6 @@
     "src/components/InfoModal.tsx": {
       "hex": 10,
       "rgba": 0
-    },
-    "src/components/LoadingScreen.tsx": {
-      "hex": 3,
-      "rgba": 15
     },
     "src/components/LoadingStatus.tsx": {
       "hex": 0,
@@ -82,10 +82,6 @@
     },
     "src/components/sidebar/panels/AtlasPanel.tsx": {
       "hex": 7,
-      "rgba": 0
-    },
-    "src/components/sidebar/panels/CalendarPanel.tsx": {
-      "hex": 0,
       "rgba": 0
     },
     "src/components/sidebar/panels/ColorThemePanel.tsx": {
@@ -149,6 +145,10 @@
       "rgba": 0
     },
     "src/ui/Select.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/SelectionRing.tsx": {
       "hex": 0,
       "rgba": 0
     },
