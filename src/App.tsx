@@ -2088,11 +2088,7 @@ export default function App() {
                 duration: 2000,
               });
             }}
-            availableDates={availableDates}
-            fullDates={fullDates}
-            dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
             selectedDate={timeline.selectedDate}
-            onDateSelect={timeline.setSelectedDate}
             summaryFlights={finalFlights}
             rangeDays={timeline.rangeDays}
             onStatsClick={() => setShowStats(true)}
@@ -2210,6 +2206,7 @@ export default function App() {
               dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
               selectedDates={timeline.selectedDates}
               isMultiDateMode={timeline.isMultiDateMode}
+              subjectLabel={captionCode}
               hourBins={hourBins}
               onToggle={timeline.toggle}
               onSpeedChange={timeline.setSpeed}

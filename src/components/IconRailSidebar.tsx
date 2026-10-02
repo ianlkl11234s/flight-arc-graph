@@ -15,7 +15,6 @@ import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, Ico
 import type { ScenePreset } from "./sidebar/scenePresets";
 import { SettingsPanel } from "./sidebar/panels/SettingsPanel";
 import { SetsPanel } from "./sidebar/panels/SetsPanel";
-import { CalendarPanel } from "./sidebar/panels/CalendarPanel";
 import { ColorThemePanel } from "./sidebar/panels/ColorThemePanel";
 import { SummaryPanel } from "./sidebar/panels/SummaryPanel";
 import { AtlasPanel } from "./sidebar/panels/AtlasPanel";
@@ -24,7 +23,7 @@ export { SCENE_PRESETS, type ScenePreset } from "./sidebar/scenePresets";
 
 /* ── Types ───────────────────────────────────────────────── */
 
-export type PanelId = "settings" | "sets" | "calendar" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
+export type PanelId = "settings" | "sets" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
 type WorkspaceId = "explore" | "selection" | "view" | "airspace" | "analyze";
 
 const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
@@ -37,7 +36,7 @@ const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
 
 function getWorkspace(panel: PanelId | null): WorkspaceId | null {
   if (panel === "atlas") return "explore";
-  if (panel === "sets" || panel === "calendar") return "selection";
+  if (panel === "sets") return "selection";
   if (panel === "settings" || panel === "colors") return "view";
   if (panel === "airspace") return "airspace";
   if (panel === "summary" || panel === "analysis") return "analyze";
@@ -103,14 +102,8 @@ export interface IconRailSidebarProps {
   onAirportChange: (icao: string) => void;
   onLocationJump: (icao: string) => void;
   onSceneSelect: (scene: ScenePreset) => void;
-  // Calendar
-  availableDates: string[];
-  /** 完整資料的日期（實心標記） */
-  fullDates: string[];
-  /** 各日期的軌跡筆數（單一機場模式才有，tooltip 顯示用） */
-  dateCounts?: Record<string, number>;
+  // 日期只在時間軸選（R12）；這裡只用來顯示「N 座無此日期」
   selectedDate: string | null;
-  onDateSelect: (date: string | null) => void;
   // Flights data (for summary panel — already filtered by time window)
   summaryFlights: Flight[];
   /** 時間範圍天數（1d / 3d / 7d）影響顯示內容 */
@@ -208,7 +201,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
   const workspaceTabs: Array<{ id: PanelId | "stats"; label: string }> = activeWorkspace === "explore"
     ? [{ id: "atlas", label: "地圖總覽" }]
     : activeWorkspace === "selection"
-      ? [{ id: "sets", label: "機場" }, { id: "calendar", label: "日期" }]
+      ? [{ id: "sets", label: "機場" }]
       : activeWorkspace === "view"
         ? [{ id: "settings", label: "顯示" }, { id: "colors", label: "色彩" }]
         : activeWorkspace === "airspace"
@@ -300,7 +293,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         <RailIcon
           active={activeWorkspace === "selection"}
           onClick={() => toggleWorkspace("selection")}
-          title="選擇機場與日期"
+          title="選擇機場"
         >
           <IconPinPlus />
         </RailIcon>
@@ -397,15 +390,6 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onClearSet={props.onClearSet}
               onExitSetMode={props.onExitSetMode}
               onSceneSelect={props.onSceneSelect}
-            />
-          )}
-          {activePanel === "calendar" && (
-            <CalendarPanel
-              availableDates={props.availableDates}
-              fullDates={props.fullDates}
-              dateCounts={props.dateCounts}
-              selectedDate={props.selectedDate}
-              onDateSelect={props.onDateSelect}
             />
           )}
           {activePanel === "colors" && (

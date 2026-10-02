@@ -84,10 +84,6 @@
       "hex": 7,
       "rgba": 0
     },
-    "src/components/sidebar/panels/CalendarPanel.tsx": {
-      "hex": 0,
-      "rgba": 0
-    },
     "src/components/sidebar/panels/ColorThemePanel.tsx": {
       "hex": 0,
       "rgba": 0

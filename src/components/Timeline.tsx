@@ -35,6 +35,8 @@ interface Props {
   dateCounts?: Record<string, number>;
   selectedDates?: string[];
   isMultiDateMode?: boolean;
+  /** 正在看的對象（機場碼／組合名／區域），月曆點到沒資料日期時的提示用 */
+  subjectLabel?: string;
   /** 每小時進場／離場數（App 依目前機場或組合計算） */
   hourBins: HourBin[];
   onToggle: () => void;
@@ -139,7 +141,12 @@ export function Timeline(p: Props) {
 
   /* ── 月曆 ── */
   const calendarOpen = state.popupOpen;
-  const setCalendarOpen = useCallback((open: boolean) => dispatch({ type: "popup", open }), [dispatch]);
+  /** 點到沒資料的日期時的提示（月曆內一行字）；開關月曆或選到有效日期時清掉 */
+  const [noDataNotice, setNoDataNotice] = useState<string | null>(null);
+  const setCalendarOpen = useCallback((open: boolean) => {
+    setNoDataNotice(null);
+    dispatch({ type: "popup", open });
+  }, [dispatch]);
   const [viewYM, setViewYM] = useState<[number, number]>(() => {
     const [y, m] = p.selectedDate.split("-").map(Number);
     return [y || new Date().getFullYear(), (m || 1) - 1];
@@ -333,6 +340,7 @@ export function Timeline(p: Props) {
             {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
+              const month = viewMonth + 1;
               const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
               const hasData = availableSet.has(dateStr);
               const isFull = fullSet.has(dateStr);
@@ -344,9 +352,12 @@ export function Timeline(p: Props) {
                   type="button"
                   title={hasData ? dateTitle(dateStr) : undefined}
                   aria-pressed={isSelected}
-                  disabled={!hasData}
+                  aria-disabled={!hasData || undefined}
                   onClick={() => {
-                    if (!hasData) return;
+                    if (!hasData) {
+                      setNoDataNotice(`${month}/${day} 沒有${p.subjectLabel ? ` ${p.subjectLabel} 的` : ""}資料`);
+                      return;
+                    }
                     p.onDateSelect?.(dateStr);
                     setCalendarOpen(false);
                   }}
@@ -366,7 +377,7 @@ export function Timeline(p: Props) {
                     color: isSelected ? tokens.accentInk : hasData ? tokens.fg1 : mix(tokens.fg3, 55),
                     opacity: isPartial && !isSelected ? 0.55 : 1,
                     fontWeight: isSelected ? 700 : 400,
-                    cursor: hasData ? "pointer" : "default",
+                    cursor: hasData ? "pointer" : "not-allowed",
                   }}
                 >
                   {day}
@@ -387,6 +398,20 @@ export function Timeline(p: Props) {
               );
             })}
           </div>
+          {noDataNotice && (
+            <div
+              role="status"
+              style={{
+                marginTop: SPACE.s6,
+                maxWidth: 7 * 28 + 6 * SPACE.s2,
+                fontSize: SIZE.s10,
+                lineHeight: 1.4,
+                color: tokens.fg2,
+              }}
+            >
+              {noDataNotice}
+            </div>
+          )}
         </div>
       )}
 
