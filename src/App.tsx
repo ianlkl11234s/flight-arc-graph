@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl, { type Map as MapboxMap } from "mapbox-gl";
-import type { DepArrFilter, Scope, TrackMode, RenderMode, DisplayMode, DataSource, Flight, Region, TrailDisplay, SavedAirportSet } from "./types";
+import type { DepArrFilter, Scope, TrackMode, RenderMode, DisplayMode, DataSource, Region, TrailDisplay, SavedAirportSet } from "./types";
 import { computeFitBoundsForSet } from "./map/fitBoundsForSet";
 import { BUILTIN_SETS } from "./map/savedSets";
 import type { FlightScene } from "./three/FlightScene";
@@ -19,6 +19,7 @@ import { defaultAirspaceSettings, type AirspaceSettings } from "./types/airspace
 import { getCachedAirspace, type AirspaceFeature } from "./data/airspaceLoader";
 import { pickAirspace } from "./map/airspacePicker";
 import { AirspaceInfoCard } from "./components/AirspaceInfoCard";
+import { FlightInfoCard } from "./components/FlightInfoCard";
 import { filterByAirport } from "./data/flightLoader";
 import type { LodLevel } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
@@ -51,7 +52,7 @@ import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOver
 import { setFrozenAnimTime } from "./three/animClock";
 import { ThemeProvider, useTheme } from "./styles/ThemeContext";
 import { FONT, LAYOUT, SIZE, SPACE, Z } from "./styles/tokens";
-import { Button, Caption, Segmented, type CaptionMetaItem } from "./ui";
+import { Button, Caption, Segmented, SelectionRing, type CaptionMetaItem } from "./ui";
 import { escLayerToClose, isEditableTarget } from "./ui/escStack";
 import { ALL_OVERLAYS_CLOSED, overlaysOpen, overlaysToClose, type OverlayKey, type OverlayState } from "./ui/overlayMutex";
 
@@ -383,7 +384,13 @@ export default function App() {
     } catch { /* ignore */ }
     return defaultAirspaceSettings();
   });
-  const [tooltipInfo, setTooltipInfo] = useState<{ flight: Flight; x: number; y: number; altitude: number | null } | null>(null);
+  // 右下 dock 航班卡（R1、Q5）：單擊航班出現；與單航班追蹤分開（退出追蹤卡片還在）。
+  // dock 同時只一張卡：開航班卡會關空域卡，反之亦然。
+  const [flightCardId, setFlightCardId] = useState<string | null>(null);
+  // 點擊處的選取圈：固定在點擊位置，相機一動就收掉
+  const [selectionRing, setSelectionRing] = useState<{ x: number; y: number } | null>(null);
+  const trackingRef = useRef(false);
+  trackingRef.current = trackMode === "single" && selectedFlightId !== null;
   const [atlasVisible, setAtlasVisible] = useState(false);
   // 機場點按鈕是否曾被使用者啟用過（用來決定待按小紅點是否顯示，啟用一次後永久消失）
   const [atlasEverEnabled, setAtlasEverEnabled] = useState(() => {
@@ -1462,19 +1469,15 @@ export default function App() {
           container.clientWidth, container.clientHeight,
         );
         if (flightId) {
-          const flight = flightsRef.current.find((f) => f.fr24_id === flightId);
-          if (flight) {
-            let altitude: number | null = null;
-            const t = timeRef.current;
-            for (let i = flight.path.length - 1; i >= 0; i--) {
-              if (flight.path.t(i) <= t) { altitude = Math.round(flight.path.alt(i)); break; }
-            }
-            setTooltipInfo({ flight, x: e.point.x, y: e.point.y, altitude });
-            setAirspaceSelection(null);
-          }
+          // 單擊航班 → dock 航班卡 + 選取圈（追蹤要按卡片上的「追蹤這班」，Q5）
+          setFlightCardId(flightId);
+          setSelectionRing({ x: e.point.x, y: e.point.y });
+          setAirspaceSelection(null);
           return;
         }
-        setTooltipInfo(null);
+        setSelectionRing(null);
+        // 點到空白處收掉航班卡（追蹤中保留，用卡片或 Esc 退出）
+        if (!trackingRef.current) setFlightCardId(null);
         // Atlas 機場點 pick（飛機之後、空域之前）
         atlasPopupRef.current?.remove();
         if (map.getLayer(ATLAS_LAYER)) {
@@ -1511,29 +1514,14 @@ export default function App() {
           const hits = pickAirspace(lng, lat, features, airspaceSettingsRef.current);
           if (hits.length > 0) {
             setAirspaceSelection({ selected: hits[0]!, others: hits.slice(1) });
+            setFlightCardId(null);
           } else {
             setAirspaceSelection(null);
           }
         }
       });
 
-      map.on("dblclick", (e) => {
-        const scene = flightSceneRef.current;
-        if (!scene) return;
-        const container = map.getContainer();
-        const flightId = scene.pickFlight(
-          e.point.x, e.point.y,
-          container.clientWidth, container.clientHeight,
-        );
-        if (flightId) {
-          e.preventDefault();
-          setTrackMode("single");
-          setSelectedFlightId(flightId);
-          setTooltipInfo(null);
-        }
-      });
-
-      map.on("move", () => setTooltipInfo(null));
+      map.on("move", () => setSelectionRing(null));
     }
   };
 
@@ -1544,6 +1532,42 @@ export default function App() {
     addFlightLayer(map);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAirport, scope, trackMode, selectedFlightId]);
+
+  // 換機場／組合時重置航班卡、選取圈與單航班模式（舊航班不在新資料裡）
+  const prevFlightScopeRef = useRef<string>(`${selectedAirport}|${airportSet?.join(",") ?? ""}`);
+  useEffect(() => {
+    const key = `${selectedAirport}|${airportSet?.join(",") ?? ""}`;
+    if (prevFlightScopeRef.current === key) return;
+    prevFlightScopeRef.current = key;
+    setFlightCardId(null);
+    setSelectionRing(null);
+    setTrackMode("stack");
+    setSelectedFlightId(null);
+  }, [selectedAirport, airportSet]);
+
+  // 不論從哪進單航班模式（航班卡、顯示面板的航班選單、統計、手機航班清單），dock 都顯示該班的卡（停止追蹤）
+  useEffect(() => {
+    if (trackMode !== "single" || !selectedFlightId) return;
+    setFlightCardId(selectedFlightId);
+    setAirspaceSelection(null);
+  }, [trackMode, selectedFlightId]);
+
+  const startTracking = useCallback((id: string) => {
+    setTrackMode("single");
+    setSelectedFlightId(id);
+  }, []);
+  const stopTracking = useCallback(() => {
+    setTrackMode("stack");
+    setSelectedFlightId(null);
+  }, []);
+  const closeFlightCard = useCallback(() => {
+    setFlightCardId(null);
+    setSelectionRing(null);
+  }, []);
+  const cardFlight = useMemo(
+    () => (flightCardId ? allFlights.find((f) => f.fr24_id === flightCardId) ?? null : null),
+    [flightCardId, allFlights],
+  );
 
   // Track Single 模式：相機鎖定飛機 + 動態視域扇形
   useEffect(() => {
@@ -1639,8 +1663,8 @@ export default function App() {
   }, [overlayState, captureMode, closeOverlay]);
 
   // ── Esc 分層（R7）：單一 handler，掛 window bubble 階段（Modal capture 階段、月曆 document 階段先攔）──
-  const escStateRef = useRef({ captureMode, isExporting, showInfo, airspaceSelection, trackMode, railPanel, showStats });
-  escStateRef.current = { captureMode, isExporting, showInfo, airspaceSelection, trackMode, railPanel, showStats };
+  const escStateRef = useRef({ captureMode, isExporting, showInfo, airspaceSelection, flightCardId, trackMode, railPanel, showStats });
+  escStateRef.current = { captureMode, isExporting, showInfo, airspaceSelection, flightCardId, trackMode, railPanel, showStats };
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
@@ -1651,15 +1675,22 @@ export default function App() {
         captureMode: cur.captureMode,
         exporting: cur.isExporting,
         infoOpen: cur.showInfo,
-        dockCardOpen: cur.airspaceSelection !== null,
+        dockCardOpen: cur.airspaceSelection !== null || cur.flightCardId !== null,
         singleFlight: cur.trackMode === "single",
+        // 航班卡在追蹤中一定是被追蹤那班（先開卡或隨追蹤打開）→ 先退出追蹤；
+        // 空域卡和單航班同時開著 = 追蹤中才點開的（開空域卡會關航班卡）→ 先關卡
+        dockNewerThanSingle: cur.airspaceSelection !== null,
         panelOpen: cur.railPanel !== null || cur.showStats,
       });
       if (!layer) return;
       e.preventDefault();
       if (layer === "capture") setCaptureMode(false);
       else if (layer === "info") setShowInfo(false);
-      else if (layer === "dock") setAirspaceSelection(null);
+      else if (layer === "dock") {
+        setAirspaceSelection(null);
+        setFlightCardId(null);
+        setSelectionRing(null);
+      }
       else if (layer === "single") {
         // 同 SettingsPanel 的 Track 切換：回 Stack All 並清掉選取
         setTrackMode("stack");
@@ -1997,7 +2028,7 @@ export default function App() {
             onFarViewChange={setFarView}
             farViewBoost={farViewBoost}
             onFarViewBoostChange={setFarViewBoost}
-            onDisplayModeChange={(m) => { setDisplayMode(m); setTooltipInfo(null); }}
+            onDisplayModeChange={setDisplayMode}
             onRenderModeChange={setRenderMode}
             onMapStyleChange={setMapStyleId}
             onAltExaggerationChange={setAltExaggeration}
@@ -2239,6 +2270,18 @@ export default function App() {
                 }}
               />
             </DockItem>
+            {cardFlight && (
+              <DockItem>
+                <FlightInfoCard
+                  flight={cardFlight}
+                  currentTime={timeline.currentTime}
+                  tracking={trackMode === "single" && selectedFlightId === cardFlight.fr24_id}
+                  onTrack={() => startTracking(cardFlight.fr24_id)}
+                  onStopTrack={stopTracking}
+                  onClose={closeFlightCard}
+                />
+              </DockItem>
+            )}
             {airspaceSelection && (
               <DockItem>
                 <AirspaceInfoCard
@@ -2431,7 +2474,7 @@ export default function App() {
                       {(["trails", "status"] as const).map((mode) => (
                         <button
                           key={mode}
-                          onClick={() => { setDisplayMode(mode); setTooltipInfo(null); }}
+                          onClick={() => setDisplayMode(mode)}
                           style={{
                             background: displayMode === mode
                               ? "rgba(100,170,255,0.3)" : "rgba(0,0,0,0.6)",
@@ -2538,38 +2581,20 @@ export default function App() {
         </>
       )}
 
-      {/* ── 飛機 Tooltip ── */}
-      {tooltipInfo && (
-        <div
-          style={{
-            position: "absolute",
-            left: tooltipInfo.x + 12,
-            top: tooltipInfo.y - 10,
-            zIndex: Z.popover,
-            background: isDarkTheme ? "rgba(10,10,20,0.9)" : "rgba(255,255,255,0.95)",
-            backdropFilter: "blur(12px)",
-            border: `1px solid ${isDarkTheme ? "rgba(100,170,255,0.4)" : "rgba(59,130,246,0.3)"}`,
-            borderRadius: 8,
-            padding: "10px 14px",
-            pointerEvents: "none",
-            fontFamily: FONT.ui,
-            minWidth: 160,
-            boxShadow: isDarkTheme ? "none" : "0 2px 12px rgba(0,0,0,0.1)",
-          }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 700, color: isDarkTheme ? "#fff" : "#1a1a1a", letterSpacing: 1 }}>
-            {tooltipInfo.flight.callsign}
-          </div>
-          <div style={{ fontSize: 11, color: isDarkTheme ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)", marginTop: 4 }}>
-            {tooltipInfo.flight.origin_iata} → {tooltipInfo.flight.dest_iata}
-          </div>
-          <div style={{ fontSize: 11, color: isDarkTheme ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)", marginTop: 2 }}>
-            {tooltipInfo.flight.aircraft_type}
-            {tooltipInfo.altitude != null && ` · ${tooltipInfo.altitude}m`}
-          </div>
-          <div style={{ fontSize: 10, color: isDarkTheme ? "rgba(100,170,255,0.6)" : "rgba(59,130,246,0.6)", marginTop: 4 }}>
-            double-click to track
-          </div>
+      {/* ── 點擊處的選取圈（R1；固定在點擊位置，相機一動就收）── */}
+      {!captureMode && selectionRing && cardFlight && <SelectionRing x={selectionRing.x} y={selectionRing.y} />}
+
+      {/* ── 手機版航班卡（取代舊游標 tooltip；版面不重排，固定在標頭下方右側）── */}
+      {!captureMode && isMobile && cardFlight && (
+        <div style={{ position: "absolute", top: 52, right: SPACE.s12, zIndex: Z.panel, maxWidth: `calc(100vw - ${SPACE.s12 * 2}px)` }}>
+          <FlightInfoCard
+            flight={cardFlight}
+            currentTime={timeline.currentTime}
+            tracking={trackMode === "single" && selectedFlightId === cardFlight.fr24_id}
+            onTrack={() => startTracking(cardFlight.fr24_id)}
+            onStopTrack={stopTracking}
+            onClose={closeFlightCard}
+          />
         </div>
       )}
 

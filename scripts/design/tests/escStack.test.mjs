@@ -11,6 +11,7 @@ const base = {
   infoOpen: false,
   dockCardOpen: false,
   singleFlight: false,
+  dockNewerThanSingle: true,
   panelOpen: false,
 };
 const s = (o = {}) => ({ ...base, ...o });
@@ -36,6 +37,23 @@ describe("Esc 分層（R7）", () => {
       };
     }
     assert.deepEqual(order, ["info", "dock", "single", "panel"]);
+  });
+
+  it("dock 卡與單航班都開著：最近開的先關", () => {
+    // 先開航班卡、再按「追蹤」→ 先退出追蹤、再關卡
+    let st = s({ dockCardOpen: true, singleFlight: true, dockNewerThanSingle: false });
+    assert.equal(escLayerToClose(st), "single");
+    st = { ...st, singleFlight: false };
+    assert.equal(escLayerToClose(st), "dock");
+    // 追蹤中才點開空域卡 → 先關卡、再退出追蹤
+    st = s({ dockCardOpen: true, singleFlight: true, dockNewerThanSingle: true });
+    assert.equal(escLayerToClose(st), "dock");
+    st = { ...st, dockCardOpen: false };
+    assert.equal(escLayerToClose(st), "single");
+  });
+
+  it("說明視窗仍在 dock 卡／單航班之上", () => {
+    assert.equal(escLayerToClose(s({ infoOpen: true, dockCardOpen: true, singleFlight: true, dockNewerThanSingle: false })), "info");
   });
 
   it("每次只處理最上面一層", () => {

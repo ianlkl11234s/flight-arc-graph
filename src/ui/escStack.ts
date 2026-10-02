@@ -2,7 +2,9 @@
  * Esc 分層（spec R7）：每次 Esc 只關最上面一層。
  *
  * 優先序：Capture（原本的退出邏輯，錄影／HQ 匯出中不退出）→ 說明視窗 → 時間軸月曆 →
- * dock 卡（空域卡）→ 單航班模式（退回 Stack All）→ 開著的面板／統計浮層 → 無。
+ * dock 卡（航班卡／空域卡，同一層、同時只一張）與單航班模式（退回 Stack All）——兩者都開著時
+ * 「最近開的先關」：先開卡再按「追蹤」→ 先退出追蹤、再關卡；追蹤中才點開空域卡 → 先關卡 →
+ * 開著的面板 → 無。
  *
  * 實際攔截順序：說明視窗由 Modal 在 window capture 階段攔下並 stopImmediatePropagation；
  * 月曆由 Timeline 在 document 階段處理並 preventDefault；App 的單一 handler 掛在 window
@@ -22,9 +24,12 @@ export interface EscState {
   /** 錄影或 HQ 匯出中（Capture 不退出） */
   exporting: boolean;
   infoOpen: boolean;
+  /** dock 卡（航班卡或空域卡）開著 */
   dockCardOpen: boolean;
   singleFlight: boolean;
-  /** rail 面板或統計浮層開著 */
+  /** dock 卡與單航班模式都開著時，dock 卡是否比單航班模式晚開（晚開的先關） */
+  dockNewerThanSingle: boolean;
+  /** rail 面板開著 */
   panelOpen: boolean;
 }
 
@@ -32,6 +37,7 @@ export function escLayerToClose(s: EscState): EscLayer | null {
   if (s.captureMode) return s.exporting ? null : "capture";
   if (s.defaultPrevented || s.editableTarget) return null;
   if (s.infoOpen) return "info";
+  if (s.dockCardOpen && s.singleFlight) return s.dockNewerThanSingle ? "dock" : "single";
   if (s.dockCardOpen) return "dock";
   if (s.singleFlight) return "single";
   if (s.panelOpen) return "panel";

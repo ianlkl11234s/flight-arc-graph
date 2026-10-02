@@ -1,8 +1,8 @@
 {
   "files": {
     "src/App.tsx": {
-      "hex": 27,
-      "rgba": 79
+      "hex": 25,
+      "rgba": 68
     },
     "src/components/AirportSelector.tsx": {
       "hex": 2,
@@ -21,6 +21,10 @@
       "rgba": 0
     },
     "src/components/Dock.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/components/FlightInfoCard.tsx": {
       "hex": 0,
       "rgba": 0
     },
@@ -145,6 +149,10 @@
       "rgba": 0
     },
     "src/ui/Select.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/ui/SelectionRing.tsx": {
       "hex": 0,
       "rgba": 0
     },
