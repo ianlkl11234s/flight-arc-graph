@@ -1,6 +1,6 @@
 # Flight Arc Design System（Studio · A 塔台儀表 · 琥珀）
 
-> 狀態：v0.1（2026-10-02，P1 完成、P2 進行中）
+> 狀態：**v1.0**（2026-10-03，P1–P8 完成）
 > 改 UI 前必讀本檔。規劃與進度見 [studio-design-system.md](../backlog/studio-design-system.md)；其他候選方向見 [direction-showcase](../design/direction-showcase/README.md)。
 > 骨架與 UX 規則借自 `mini-taiwan-pulse/docs/design-system/spec.md`；本檔只記 PlanArt 自己的版本與刻意偏離。
 
@@ -69,10 +69,51 @@
 
 ---
 
-## §5 元件（P2 起建立於 `src/ui/`）
+## §5 元件
 
-| 元件 | 規格要點 | 取代的既有實作 |
-|---|---|---|
+### `src/ui/`（基礎元件，由 `src/ui/index.ts` 統一匯出）
+
+| 元件 | 規格要點 |
+|---|---|
+| `Panel`／`PanelBody` | 左側浮動面板外殼（panel 底 + BLUR + 邊框 + 兩個琥珀刻度） |
+| `PanelHeader`（含 `Eyebrow`、`CloseButton`） | 眉標 + `title` 15px 標題 + 24×24 關閉鈕（SVG，不用「×」字元） |
+| `Section` | 眉標 + 右延細線；可收合時用 chevron |
+| `Button` | 高 28；primary（accent 底）／secondary（ctl 底 + border）／ghost／danger |
+| `Segmented` | 選項 ≤3；選中 = accent 字 + accentSoft 底 |
+| `Select` | 選項 >3；原生 select 套樣式 |
+| `Toggle` | 28×16 方角，開 = accent 底 |
+| `Slider` | 全站唯一；2px 軌 + 6×14 方形 thumb；標籤與數值同一行，控件在下一行；支援單值與區間 |
+| `Chip`／`ChipGroup` | 篩選與最近瀏覽；選中 = accent 邊框 |
+| `StatCard`／`StatGrid` | 標籤 `minor` 11.5 / 數字 `title` 15 mono / 副標 `minor` 11.5（列式：標籤 `body` / 數字 `sub`） |
+| `DockCard` | 右下資訊卡外殼：眉標、標題、`kv` 列、動作列、關閉 |
+| `StatusBar` | 單行載入／完成／空／失敗（§6 R6），搭配 `loadingStatusController` |
+| `Modal` | 置中、z modal、Esc 關閉 |
+| `Caption` | 左下圖說：左側 2px 琥珀線 + `SIZE.caption` 機場碼 + meta 列 |
+| `SelectionRing` | 點擊處選取圈（R1），相機一動就收 |
+| `icons`（`IconClose`／`Chevron`／`Play`／`Pause`／`Plus`／`Minus`／`Link`／`Info`） | SVG 圖示；不用「×」「▶」「▼」字元 |
+
+行為模組（純函式，有單元測試）：`escStack`（R7）、`overlayMutex`（R2）、`timelineExpand`（R4）、`loadingStatusController`（R6）；`vars.ts` 提供 `themeVars`／`mix`（在 token 色上取透明度，不寫死色碼）。
+
+### `src/components/`（由基礎元件組成的版面元件）
+
+| 元件 | 職責 |
+|---|---|
+| `Toolbar` | 右上唯一工具列（R3）：起降 ｜ 染色 ｜ 2D/3D · 底圖 ｜ 錄影 · 複製連結 · 說明 |
+| `Timeline` | 左下時間軸膠囊（R4／R5），手機固定展開 |
+| `Dock` | 右下 dock 容器（同時只一張卡）；內容為 `FlightInfoCard`／`AirspaceInfoCard`／機場資訊與圖例 |
+| `FlightInfoCard`、`AirspaceInfoCard` | 點擊資訊卡（內容；外殼是 `DockCard`） |
+| `LoadingStatus` | 把載入狀態接到 `StatusBar` |
+| `IconRailSidebar` + `sidebar/panels/*` | 左 rail 與各面板（一個 panel 一檔） |
+| `MobileHeader`、`MobileBottomSheet` | 手機版 chrome（只統一外觀，R11／Q8） |
+| `InfoModal` | 說明視窗內容（外殼是 `Modal`） |
+
+### 資料色與地圖疊層色（不屬 chrome）
+
+`src/types/colorTheme.ts`（軌跡配色）與 `src/types/dataColors.ts`（Atlas 完整度／流量漸層、日期 Compare 4 色、InfoModal 色條、空域類別與海峽中線、羅盤、拍攝模式疊層）是資料色 SSOT，兩者在 `design:guard` 排除清單內。元件取資料色一律從這裡 import，**不得在元件內寫色碼**；數值代表圖例意義，不隨意改。
+
+活元件頁：`design-system.html`（dev server 下開 `/design-system.html`），直接 import 真元件、暗／淡並排。新增元件必須同時加一段展示。**不進正式 build。**
+
+---|---|---|
 | `PanelHeader` | 眉標 + `title` 15px 標題 + 24×24 關閉鈕（SVG，不用「×」字元） | 各面板自寫標題 |
 | `Section` | 眉標 + 右延細線；可收合時用 chevron | `SectionHeader`、DeepAnalysis/FlightStats `Section`、`SectionTitle`、`SectionLabel` |
 | `Button` | 高 28；primary（accent 底）／secondary（ctl 底 + border）／ghost／danger | 各處裸 `<button>` |
@@ -108,6 +149,10 @@
 | R12 | 日期只有時間軸一套月曆（Q2） |
 | R13 | 進站面板收起，但要有可見的引導入口（Q6） |
 
+### 起降染色（R3 的「染色」）
+
+工具列「染色：高度（預設）｜起降」。判斷依據是選定機場（dest ∈ 選定 → 進場色，origin ∈ 選定 → 離場色），組合內互飛沿路漸層；region 範圍與多日 Compare 時不可選。光球與拖尾跟著起降色。完整規則見 [studio-design-system.md §7](../backlog/studio-design-system.md)；色票邏輯在 `src/data/depArrColors.ts`。
+
 ### R8 網址 key 表（P6，`src/data/urlState.ts`）
 
 | key | 內容 | 預設（不寫） |
@@ -136,7 +181,7 @@
 
 ## §7 禁止事項
 
-- 寫死色碼（hex／rgba）於 `src/components/**`、`src/App.tsx`、`src/ui/**`（由 `design:guard` 計數，只准減少）
+- 寫死色碼（hex／rgba）於 `src/components/**`、`src/App.tsx`、`src/ui/**`、`src/design-system/**`（`design:guard` baseline 全 0，只准 0；資料色放 `src/types/dataColors.ts`）
 - 自創字級、圓角、z-index；寫死 ≥10 的 z-index；chrome 字級 < 11（含 SVG 刻度）
 - 直接用 `isDarkTheme ? a : b` 取色（改用 `useTheme().tokens`）
 - 第二套月曆、第二排工具列、第二種資訊卡定位方式
@@ -148,7 +193,8 @@
 ## §8 PR / commit checklist
 
 - [ ] `npm run typecheck`（`tsc -b`）綠
-- [ ] `npm run design:guard` 綠；計數下降時用 `--update` 提交新 baseline
+- [ ] `npm run design:guard` 綠（色碼 baseline 已全 0，不得上升）
+- [ ] `npm run design:test` 綠（純函式與 URL／起降色單元測試）
 - [ ] `scripts/perf`：`summary-snapshot --compare` **完全相同**；`visual-check --compare` 差異只在 chrome（看 diff 圖），通過後 `--baseline` 重建
 - [ ] 暗、淡底圖都看過
 - [ ] 新元件已加進活元件頁

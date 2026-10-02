@@ -1,6 +1,6 @@
 # Studio（網站主體）UI／UX 統一規劃
 
-> 2026-10-02 · 狀態：**視覺方向已拍板（A 塔台儀表 · 琥珀）；UX 調整待逐項拍板（§6）**
+> 2026-10-02 · 狀態：**P1–P8 全數完成（2026-10-03）**；設計系統 v1.0 見 [spec.md](../design-system/spec.md)。已知限制與後續見 §8
 > 上游：[positioning-ui-ux.md](positioning-ui-ux.md)（定位決議）
 > 參考：`mini-taiwan-pulse/docs/design-system/spec.md`（骨架與 UX 規則來源）
 > 展示頁：[docs/design/direction-showcase/](../design/direction-showcase/README.md)（8 個方向全保留，日後可換）
@@ -125,14 +125,14 @@ ATC 雷達幕的語言。chrome 退成安靜的石墨色，讓夜空光軌當主
 | Phase | 內容 | 驗收 |
 |---|---|---|
 | ~~P0 定方向~~ | ✅ 2026-10-02 選 A 琥珀 | — |
-| **P1 基礎** | `src/styles/tokens.ts` + `tokens.css`（§1 數值，含 z-index 六層、layout 常數）；`ThemeContext` 取代 prop drilling（明暗仍由底圖決定）；載入 JetBrains Mono；guard test：寫死色碼只准減少（起點 hex 155／rgba 335） | typecheck；地圖主體像素不變 |
-| **P2 基礎元件** | `PanelHeader`、`Section`、`Button`、`Segmented`、`Toggle`、`Slider`、`Select`、`StatCard`、`DockCard`、`StatusBar`；從既有 5 份重複實作合併；開一頁活元件頁 | 元件頁暗／淡並排 |
-| **P3 版面骨架** | 左上字標加 HUD、右上工具列（R3）、左下圖說加時間軸膠囊（R4、R5）、右下 dock（R1）；拆 `IconRailSidebar.tsx`（一個 panel 一檔） | visual-check：差異只在 chrome |
-| **P4 互動規則** | 面板互斥（R2）、Esc 分層（R7）、載入狀態條加錯誤狀態（R6）、選取圈 | 純函式單元測試 |
-| **P5 流程修正** | 選機場單選化、月曆合一、單航班退出、Region 列、進站流程（§3，依 §6 拍板結果） | summary-snapshot 相同 |
+| ~~P1 基礎~~ ✅ | `src/styles/tokens.ts` + `tokens.css`（§1 數值，含 z-index 六層、layout 常數）；`ThemeContext` 取代 prop drilling（明暗仍由底圖決定）；載入 JetBrains Mono；guard test：寫死色碼只准減少（起點 hex 155／rgba 335） | typecheck；地圖主體像素不變 |
+| ~~P2 基礎元件~~ ✅ | `PanelHeader`、`Section`、`Button`、`Segmented`、`Toggle`、`Slider`、`Select`、`StatCard`、`DockCard`、`StatusBar`；從既有 5 份重複實作合併；開一頁活元件頁 | 元件頁暗／淡並排 |
+| ~~P3 版面骨架~~ ✅ | 左上字標加 HUD、右上工具列（R3）、左下圖說加時間軸膠囊（R4、R5）、右下 dock（R1）；拆 `IconRailSidebar.tsx`（一個 panel 一檔） | visual-check：差異只在 chrome |
+| ~~P4 互動規則~~ ✅ | 面板互斥（R2）、Esc 分層（R7）、載入狀態條加錯誤狀態（R6）、選取圈 | 純函式單元測試 |
+| ~~P5 流程修正~~ ✅ | 選機場單選化、月曆合一、單航班退出、Region 列、進站流程（§3，依 §6 拍板結果） | summary-snapshot 相同 |
 | ~~P6 URL 狀態~~ | ✅ 2026-10-03 R8：`src/data/urlState.ts` + 進站套用 + 寫回網址 + 工具列「複製連結」；key 表見 spec R8 | 重新整理和分享連結都能回到同一畫面 |
-| **P7 手機** | R11 | 400px 寬不橫向溢出 |
-| **P8 收尾** | 寫死色碼歸零（`COLOR_THEMES` 是資料色，不算）；刪死碼 | guard 計數 = 0 |
+| ~~P7 手機~~ ✅ 2026-10-03 | 手機 chrome 改用 ui 元件與 token、header 單排＋⋯ 選單、時間軸固定展開、chrome 跟隨底圖明暗 | 400px 寬不橫向溢出 |
+| ~~P8 收尾~~ ✅ 2026-10-03 | 寫死色碼歸零（資料色集中到 `src/types/dataColors.ts`、chrome 改 token，新增 `warn`）；刪死碼（`interpolation.ts`、`s3Loader.ts`）；icons 歸位；手機航班卡改在時間軸之下；文件定稿 | guard 計數 = 0（已達成，baseline 全 0） |
 
 **順手修**（低風險，可以排在 P1 之前當暖身）：§3 的兩處註解不符、`onInfoClick` 沒用、LocationsPanel 死碼、CalendarPanel 不翻月、Region 按鈕日期寫死。
 
@@ -168,3 +168,15 @@ ATC 雷達幕的語言。chrome 退成安靜的石墨色，讓夜空光軌當主
 - **起降篩選**：組合內航線在「進場」「離場」篩選都會出現
 - **光球與拖尾跟著起降色**：每班顏色與播放時刻無關；組合內航線的光球取目前位置在漸層上的顏色；切回高度染色即完全恢復
 - 驗收：高度染色模式下 visual-check 與 summary-snapshot 必須和改動前完全相同
+
+---
+
+## 8. 已知限制與後續（P8 結案時）
+
+- **作品頁**：定位決議（起降軌跡＋3D）下的作品頁尚未做，等視覺方向拍板；本輪只統一網站主體 UI。
+- **機場比較**：多機場並排比較視圖未做（現行只有「組合」的合併檢視）。
+- **跑道歸屬**：起降染色目前只分進場／離場，尚未依跑道分色（需 path 高解析，見 `project_track_path_jitter_limit`）。
+- **星圖完整度亮度**：Atlas 完整度的光球亮度與離散色（`ATLAS_STATUS_META` 的 opacity）是否要隨資料量連續變化，待議。
+- **手機**：只統一外觀，功能未與桌面對等（Q8）；手機航班卡與載入狀態條共用 `mobileStatusTop`，狀態條顯示時可能與航班卡重疊。
+- **空域資訊卡**：P8 改用 token 後，文字／區塊底色與舊值有細微差異（fg1／fg2／ctl），屬刻意統一。
+- **未清的未使用 export**：`noUnusedLocals` 抓不到未使用的 export；本輪只清了 UI 相關與無 importer 的檔案，`data/`、`map/` 內另有數個零引用函式（如 `filterByArrivalAirport`、`removeStaticTrails`），列為後續清理。
