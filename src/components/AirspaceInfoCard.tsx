@@ -3,6 +3,7 @@ import type { AirspaceFeature } from "../data/airspaceLoader";
 import { AIRSPACE_CATEGORIES } from "../types/airspace";
 import { FONT, SIZE } from "../styles/tokens";
 import { DockCard } from "../ui";
+import { AIRSPACE_FALLBACK_COLOR, rgbCss } from "../types/dataColors";
 
 interface AirspaceInfoCardProps {
   selected: AirspaceFeature;
@@ -27,9 +28,7 @@ function extractHours(remarks: string): string | null {
 function getCategoryBadge(f: AirspaceFeature, isDark: boolean): { color: string; label: string } {
   const conf = AIRSPACE_CATEGORIES.find((c) => c.id === f.category);
   const rgb = isDark ? conf?.colorDark : conf?.colorLight;
-  const color = rgb
-    ? `rgb(${Math.round(rgb[0] * 255)}, ${Math.round(rgb[1] * 255)}, ${Math.round(rgb[2] * 255)})`
-    : "#888";
+  const color = rgb ? rgbCss(rgb) : AIRSPACE_FALLBACK_COLOR;
   return { color, label: f.layer.toUpperCase() };
 }
 

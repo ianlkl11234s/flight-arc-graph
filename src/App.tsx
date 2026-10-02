@@ -42,6 +42,7 @@ import { computeBearing, getViewshedArcPoints, getViewshedRings } from "./map/vi
 import { CinemaBar } from "./components/CinemaBar";
 import { RecordingGuide } from "./components/RecordingGuide";
 import { COLOR_THEMES, DEFAULT_THEME_KEY } from "./types/colorTheme";
+import { ATLAS_POPUP as AP, ATLAS_STATUS_FALLBACK_COLOR, ATLAS_STATUS_META, CAPTURE_OVERLAY as CAP, COMPARE_COLORS, COMPASS } from "./types/dataColors";
 import { assignAirportColors, type AirportColorMode, type AirportAssignment } from "./types/airportColors";
 import { computeAnalysisColorMap, type AnalysisColorBy } from "./data/analysisColors";
 import { computeDepArrColoring, type TrajColorBy } from "./data/depArrColors";
@@ -69,33 +70,27 @@ interface AtlasProps {
   capturedFlights: number | null;
   estDaily: number | null;
 }
-const ATLAS_STATUS_META: Record<string, { label: string; color: string }> = {
-  complete: { label: "完整資料", color: "#3FB8A5" },
-  "core-partial": { label: "核心（部分）", color: "#f1c40f" },
-  partial: { label: "部分（附帶）", color: "#4C84B6" },
-  planned: { label: "僅規劃（未抓）", color: "#3E434A" },
-};
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
   );
 }
 function buildAtlasPopupHtml(p: AtlasProps): string {
-  const st = ATLAS_STATUS_META[p.status] ?? { label: p.status, color: "#888" };
+  const st = ATLAS_STATUS_META[p.status] ?? { label: p.status, color: ATLAS_STATUS_FALLBACK_COLOR };
   const rankLine = p.rank
     ? `Top-1000 排名 #${p.rank}`
     : "非前 1000（被動觸及）";
   const capt =
     p.capturedFlights != null ? `${p.capturedFlights.toLocaleString()} 條` : "—";
   const est = p.estDaily != null ? `${p.estDaily} 班/日（估）` : "—";
-  return `<div style="font-family:system-ui,-apple-system,sans-serif;min-width:180px;color:#1a1a1a">
+  return `<div style="font-family:system-ui,-apple-system,sans-serif;min-width:180px;color:${AP.ink}">
     <div style="font-weight:700;font-size:${SIZE.title}px;margin-bottom:2px">${escapeHtml(p.name)}</div>
-    <div style="font-size:${SIZE.body}px;color:#666;margin-bottom:6px">${p.icao}${p.iata ? " / " + p.iata : ""}${p.country ? " · " + p.country : ""}${p.continent ? " " + p.continent : ""}</div>
+    <div style="font-size:${SIZE.body}px;color:${AP.dim};margin-bottom:6px">${p.icao}${p.iata ? " / " + p.iata : ""}${p.country ? " · " + p.country : ""}${p.continent ? " " + p.continent : ""}</div>
     <div style="display:inline-flex;align-items:center;gap:5px;font-size:${SIZE.sub}px;font-weight:600;margin-bottom:6px">
       <span style="width:9px;height:9px;border-radius:50%;background:${st.color};display:inline-block"></span>${st.label}
     </div>
-    <div style="font-size:${SIZE.sub}px;color:#333;line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
-    ${p.status !== "planned" ? `<div style="--pa-line:#3b82f6;--pa-soft:#eaf3ff;--pa-ink:#174ea6;display:flex;gap:6px;margin-top:8px">
+    <div style="font-size:${SIZE.sub}px;color:${AP.body};line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
+    ${p.status !== "planned" ? `<div style="--pa-line:${AP.btnLine};--pa-soft:${AP.btnSoft};--pa-ink:${AP.btnInk};display:flex;gap:6px;margin-top:8px">
       <button type="button" data-atlas-open="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-ink);border-radius:2px;background:var(--pa-ink);color:var(--pa-soft);font:600 ${SIZE.body}px monospace;cursor:pointer">開啟機場</button>
       <button type="button" data-atlas-add="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-line);border-radius:2px;background:var(--pa-soft);color:var(--pa-ink);font:600 ${SIZE.body}px monospace;cursor:pointer">加入組合</button>
     </div>` : ""}
@@ -165,9 +160,8 @@ function OrientationOrb({
   const southLabelX = 22 + labelLength * Math.sin(bearingRad);
   const southLabelY = 22 + labelLength * Math.cos(bearingRad) + 1.8;
   const isUpright = Math.abs(bearing) < 1 && Math.abs(pitch) < 1;
-  const stroke = isDarkTheme ? "rgba(255,255,255,0.34)" : "rgba(20,30,45,0.35)";
-  const dim = isDarkTheme ? "rgba(255,255,255,0.18)" : "rgba(20,30,45,0.16)";
-  const text = isDarkTheme ? "rgba(255,255,255,0.82)" : "rgba(20,30,45,0.82)";
+  const C = isDarkTheme ? COMPASS.dark : COMPASS.light;
+  const { stroke, dim, text } = C;
 
   return (
     <button
@@ -181,13 +175,9 @@ function OrientationOrb({
         height: 52,
         padding: 3,
         borderRadius: "50%",
-        border: `1px solid ${isUpright ? "rgba(100,170,255,0.65)" : stroke}`,
-        background: isDarkTheme
-          ? "radial-gradient(circle at 34% 28%, rgba(100,170,255,0.16), rgba(0,0,0,0.55) 66%)"
-          : "radial-gradient(circle at 34% 28%, rgba(100,170,255,0.2), rgba(255,255,255,0.7) 66%)",
-        boxShadow: isDarkTheme
-          ? "0 5px 18px rgba(0,0,0,0.34), inset 0 0 12px rgba(100,170,255,0.08)"
-          : "0 5px 18px rgba(30,60,90,0.14), inset 0 0 12px rgba(100,170,255,0.12)",
+        border: `1px solid ${isUpright ? COMPASS.uprightBorder : stroke}`,
+        background: C.bg,
+        boxShadow: C.shadow,
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         cursor: "pointer",
@@ -201,12 +191,12 @@ function OrientationOrb({
         <circle cx="22" cy="22" r="18.5" fill="none" stroke={stroke} strokeWidth="1" />
         <ellipse cx="22" cy="22" rx="17" ry="6" fill="none" stroke={dim} strokeWidth="0.8" />
         <path d="M5 22h34" fill="none" stroke={dim} strokeWidth="0.65" strokeDasharray="1.5 2.5" />
-        <line x1={northX} y1={northY} x2={southX} y2={southY} stroke="rgba(100,170,255,0.72)" strokeWidth="1" />
-        <circle cx={northX} cy={northY} r="2.5" fill="#64aaff" />
-        <circle cx={southX} cy={southY} r="2" fill={isDarkTheme ? "rgba(255,255,255,0.58)" : "rgba(20,30,45,0.52)"} />
-        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill="#9acbff" fontSize={6 /* glyph */} fontFamily={FONT.ui} fontWeight="700">N</text>
+        <line x1={northX} y1={northY} x2={southX} y2={southY} stroke={COMPASS.northLine} strokeWidth="1" />
+        <circle cx={northX} cy={northY} r="2.5" fill={COMPASS.north} />
+        <circle cx={southX} cy={southY} r="2" fill={C.south} />
+        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill={COMPASS.northLabel} fontSize={6 /* glyph */} fontFamily={FONT.ui} fontWeight="700">N</text>
         <text x={southLabelX} y={southLabelY} textAnchor="middle" fill={text} fontSize={5.5 /* glyph */} fontFamily={FONT.ui}>S</text>
-        <circle cx="22" cy="22" r="1.5" fill={isUpright ? "#64aaff" : text} />
+        <circle cx="22" cy="22" r="1.5" fill={isUpright ? COMPASS.north : text} />
       </svg>
     </button>
   );
@@ -835,7 +825,6 @@ export default function App() {
       timeline.isMultiDateMode, timeline.dateWindowStarts, timeline.dateWindowEnds]);
 
   // Compare 模式：每個日期對應一個固定顏色，產生 fr24_id → hex Map
-  const COMPARE_COLORS = ["#4488ff", "#ff4444", "#f5a623", "#44cc88"];
   const compareColorMap = useMemo((): Map<string, string> | undefined => {
     if (!timeline.isMultiDateMode || timeline.dateWindowStarts.length === 0) return undefined;
     const map = new Map<string, string>();
@@ -2105,7 +2094,7 @@ export default function App() {
                 zIndex: Z.panel,
                 pointerEvents: "none",
                 background:
-                  "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 80%, rgba(0,0,0,0.6) 100%)",
+                  CAP.vignette,
               }}
             />
           )}
@@ -2125,9 +2114,9 @@ export default function App() {
                   fontSize: isMobile ? 20 : 28,
                   fontFamily: FONT.ui,
                   fontWeight: 700,
-                  color: "#fff",
+                  color: CAP.title,
                   letterSpacing: isMobile ? 2 : 4,
-                  textShadow: "0 2px 12px rgba(0,0,0,0.6)",
+                  textShadow: CAP.titleShadow,
                 }}
               >
                 {airportSet !== null ? selectionTitle : regionTitle}
@@ -2137,10 +2126,10 @@ export default function App() {
                   fontSize: 18,
                   fontFamily: FONT.ui,
                   fontWeight: 600,
-                  color: "rgba(255,255,255,0.7)",
+                  color: CAP.code,
                   letterSpacing: 2,
                   marginTop: 6,
-                  textShadow: "0 1px 8px rgba(0,0,0,0.5)",
+                  textShadow: CAP.codeShadow,
                 }}
               >
                 {selectionCodeLabel}
@@ -2149,10 +2138,10 @@ export default function App() {
                 style={{
                   fontSize: 14,
                   fontFamily: FONT.ui,
-                  color: "rgba(255,255,255,0.4)",
+                  color: CAP.time,
                   letterSpacing: 1,
                   marginTop: 4,
-                  textShadow: "0 1px 6px rgba(0,0,0,0.5)",
+                  textShadow: CAP.softShadow,
                 }}
               >
                 {new Date(timeline.currentTime * 1000).toLocaleString("zh-TW", {
@@ -2169,10 +2158,10 @@ export default function App() {
                 style={{
                   fontSize: 14,
                   fontFamily: FONT.ui,
-                  color: "rgba(255,255,255,0.3)",
+                  color: CAP.coord,
                   letterSpacing: 1,
                   marginTop: 4,
-                  textShadow: "0 1px 6px rgba(0,0,0,0.5)",
+                  textShadow: CAP.softShadow,
                 }}
               >
                 {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}

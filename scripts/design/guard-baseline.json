@@ -1,16 +1,16 @@
 {
   "files": {
     "src/App.tsx": {
-      "hex": 19,
-      "rgba": 27
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/AirportSelector.tsx": {
       "hex": 0,
       "rgba": 0
     },
     "src/components/AirspaceInfoCard.tsx": {
-      "hex": 5,
-      "rgba": 8
+      "hex": 4,
+      "rgba": 7
     },
     "src/components/CinemaBar.tsx": {
       "hex": 0,
@@ -41,7 +41,7 @@
       "rgba": 0
     },
     "src/components/InfoModal.tsx": {
-      "hex": 10,
+      "hex": 0,
       "rgba": 0
     },
     "src/components/LoadingStatus.tsx": {
@@ -77,11 +77,11 @@
       "rgba": 0
     },
     "src/components/sidebar/panels/AirspacePanel.tsx": {
-      "hex": 1,
-      "rgba": 1
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/sidebar/panels/AtlasPanel.tsx": {
-      "hex": 7,
+      "hex": 0,
       "rgba": 0
     },
     "src/components/sidebar/panels/ColorThemePanel.tsx": {
@@ -105,6 +105,18 @@
       "rgba": 0
     },
     "src/components/sidebar/scenePresets.ts": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/design-system/DesignSystemPage.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/design-system/Showcase.tsx": {
+      "hex": 0,
+      "rgba": 0
+    },
+    "src/design-system/main.tsx": {
       "hex": 0,
       "rgba": 0
     },

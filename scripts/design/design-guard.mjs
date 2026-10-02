@@ -2,7 +2,7 @@
 // Design guard ratchet：寫死色碼（hex / rgb(a)）數量只准降、不准升。
 //   node scripts/design/design-guard.mjs           # 與 baseline 比對，任一檔增加 → exit 1
 //   node scripts/design/design-guard.mjs --update  # 數字全部不升時寫回；有任何上升 → 拒絕
-// 掃描：src/components/**/*.{ts,tsx}、src/ui/**（baseline 0）與 src/App.tsx；排除 colorTheme.ts、src/three/**、src/map/**
+// 掃描：src/components/**/*.{ts,tsx}、src/ui/**、src/design-system/**（baseline 0）與 src/App.tsx；排除 colorTheme.ts／dataColors.ts（資料色 SSOT）、src/three/**、src/map/**
 // 另一條硬規則（不走 baseline，只准 0）：chrome 字級 < 11（最小字級拍板 2026-10）。
 //   掃 fontSize: N / fontSize={N} / fontSize="N" 與 CSS font-size: Npx；同時掃 src/design-system/** 與 src/styles/ui.css。
 //   viewBox 內的圖示字形（非文字）在數字後加 /* glyph */ 註記豁免，例：fontSize={6 /* glyph */}。
@@ -16,6 +16,7 @@ const update = process.argv.includes("--update");
 
 const EXCLUDE = [
   "src/types/colorTheme.ts",
+  "src/types/dataColors.ts",
   "src/three/",
   "src/map/",
 ];
@@ -35,6 +36,7 @@ const files = [
   resolve(root, "src/App.tsx"),
   ...walk(resolve(root, "src/components")),
   ...(existsSync(uiDir) ? walk(uiDir) : []),
+  ...walk(resolve(root, "src/design-system")),
 ]
   .map((p) => relative(root, p).split(sep).join("/"))
   .filter((f) => !EXCLUDE.some((x) => f === x || f.startsWith(x)))
