@@ -2,7 +2,7 @@
   "files": {
     "src/App.tsx": {
       "hex": 21,
-      "rgba": 49
+      "rgba": 48
     },
     "src/components/AirportSelector.tsx": {
       "hex": 0,
@@ -67,10 +67,6 @@
     "src/components/Timeline.tsx": {
       "hex": 0,
       "rgba": 0
-    },
-    "src/components/TimelineControls.tsx": {
-      "hex": 4,
-      "rgba": 43
     },
     "src/components/Toolbar.tsx": {
       "hex": 0,

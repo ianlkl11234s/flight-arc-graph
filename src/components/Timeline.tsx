@@ -39,6 +39,8 @@ interface Props {
   subjectLabel?: string;
   /** 每小時進場／離場數（App 依目前機場或組合計算） */
   hourBins: HourBin[];
+  /** 手機：固定展開（沒有 hover）、撐滿容器寬、月曆往下彈 */
+  fixedExpanded?: boolean;
   onToggle: () => void;
   onSpeedChange: (speed: number) => void;
   onSeekByProgress: (p: number) => void;
@@ -127,12 +129,13 @@ function useTimelineExpand() {
 /**
  * 時間軸膠囊（spec R4、R5）。收合：播放、時刻（台灣時間）、細進度條；
  * 展開：日期列（◀ 日期 ▶、月曆、天數、Compare）、每小時起降直方圖、Compare 日期、進度滑桿、速度。
- * 外層容器負責定位（底邊 LAYOUT.mapBottomInset，與 dock 共用）。手機仍用 TimelineControls。
+ * 外層容器負責定位（底邊 LAYOUT.mapBottomInset，與 dock 共用）。手機用 fixedExpanded：固定展開、撐滿寬、月曆往下彈。
  */
 export function Timeline(p: Props) {
   const { tokens, isDark } = useTheme();
   const { state, dispatch, onFocus, onBlur } = useTimelineExpand();
-  const expanded = isExpanded(state);
+  const fixed = p.fixedExpanded ?? false;
+  const expanded = fixed || isExpanded(state);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const availableDates = p.availableDates ?? [];
   const fullDates = p.fullDates ?? [];
@@ -212,8 +215,8 @@ export function Timeline(p: Props) {
   const curIdx = p.hourBins.findIndex((b) => p.currentTime >= b.start && p.currentTime < b.start + 3600);
 
   const iconBtn: CSSProperties = {
-    width: 24,
-    height: 24,
+    width: fixed ? 32 : 24,
+    height: fixed ? 32 : 24,
     padding: 0,
     border: 0,
     borderRadius: RADIUS.base,
@@ -278,8 +281,8 @@ export function Timeline(p: Props) {
         ...themeVars(tokens),
         position: "relative",
         pointerEvents: "auto",
-        width: expanded ? EXPANDED_W : COLLAPSED_W,
-        maxWidth: `calc(100vw - ${LEFT + LAYOUT.dockWidth + SPACE.s16 * 2}px)`,
+        width: fixed ? "100%" : expanded ? EXPANDED_W : COLLAPSED_W,
+        maxWidth: fixed ? undefined : `calc(100vw - ${LEFT + LAYOUT.dockWidth + SPACE.s16 * 2}px)`,
         boxSizing: "border-box",
         background: tokens.panel,
         border: `1px solid ${tokens.border}`,
@@ -293,7 +296,7 @@ export function Timeline(p: Props) {
         display: "flex",
         flexDirection: "column",
         gap: SPACE.s8,
-        transition: "width .25s ease",
+        transition: fixed ? undefined : "width .25s ease",
       }}
     >
       {/* ── 月曆（只此一套，R12）── */}
@@ -303,7 +306,7 @@ export function Timeline(p: Props) {
           aria-label="選擇日期"
           style={{
             position: "absolute",
-            bottom: "calc(100% + 8px)",
+            ...(fixed ? { top: "calc(100% + 8px)" } : { bottom: "calc(100% + 8px)" }),
             left: 0,
             zIndex: Z.popover,
             background: tokens.panel,

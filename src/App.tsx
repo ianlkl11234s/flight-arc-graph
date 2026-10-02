@@ -24,9 +24,8 @@ import { filterByAirport } from "./data/flightLoader";
 import type { LodLevel } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
 import { buildSearch, decodeUrlState, encodeUrlState, type UrlState } from "./data/urlState";
-import { MobileHeader } from "./components/MobileHeader";
+import { MobileHeader, MOBILE_HEADER_HEIGHT } from "./components/MobileHeader";
 import { FlightPicker } from "./components/FlightPicker";
-import { TimelineControls } from "./components/TimelineControls";
 import { Timeline, type HourBin } from "./components/Timeline";
 import { MAP_STYLES, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet, SheetNote } from "./components/MobileBottomSheet";
@@ -2648,17 +2647,15 @@ export default function App() {
             ref={mobileTimelineRef}
             style={{
               position: "absolute",
-              top: 44,
+              top: `calc(${MOBILE_HEADER_HEIGHT}px + env(safe-area-inset-top, 0px))`,
               left: 0,
               right: 0,
               zIndex: Z.mapOverlay,
-              padding: "8px 12px",
-              background: "rgba(0,0,0,0.4)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
+              padding: `${SPACE.s8}px ${SPACE.s12}px`,
+              pointerEvents: "none",
             }}
           >
-            <TimelineControls
+            <Timeline
               playing={timeline.playing}
               speed={timeline.speed}
               progress={timeline.progress}
@@ -2672,11 +2669,13 @@ export default function App() {
               dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
               selectedDates={timeline.selectedDates}
               isMultiDateMode={timeline.isMultiDateMode}
-              isDarkTheme={true}
-              isMobile={true}
+              subjectLabel={captionCode}
+              hourBins={hourBins}
+              fixedExpanded
               onToggle={timeline.toggle}
               onSpeedChange={timeline.setSpeed}
               onSeekByProgress={timeline.seekByProgress}
+              onSeek={timeline.seek}
               onDateShift={timeline.shiftDate}
               onDateSelect={timeline.setSelectedDate}
               onRangeDaysChange={timeline.setRangeDays}
