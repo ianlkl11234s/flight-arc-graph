@@ -3,6 +3,7 @@ import type { ColorTheme } from "../types/colorTheme";
 import type { AirspaceSettings } from "../types/airspace";
 import type { AirportColorMode, AirportAssignment } from "../types/airportColors";
 import { DeepAnalysisPanel } from "./DeepAnalysisPanel";
+import { FlightStatsPanel } from "./FlightStatsPanel";
 import type { AnalysisColorBy } from "../data/analysisColors";
 import type { FlightFilters } from "../data/classify";
 import type { AirportManifestEntry } from "../data/flightLoader";
@@ -23,7 +24,7 @@ export { SCENE_PRESETS, type ScenePreset } from "./sidebar/scenePresets";
 
 /* ── Types ───────────────────────────────────────────────── */
 
-export type PanelId = "settings" | "sets" | "colors" | "airspace" | "summary" | "analysis" | "atlas";
+export type PanelId = "settings" | "sets" | "colors" | "airspace" | "summary" | "analysis" | "stats" | "atlas";
 type WorkspaceId = "explore" | "selection" | "view" | "airspace" | "analyze";
 
 const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
@@ -39,7 +40,7 @@ function getWorkspace(panel: PanelId | null): WorkspaceId | null {
   if (panel === "sets") return "selection";
   if (panel === "settings" || panel === "colors") return "view";
   if (panel === "airspace") return "airspace";
-  if (panel === "summary" || panel === "analysis") return "analyze";
+  if (panel === "summary" || panel === "analysis" || panel === "stats") return "analyze";
   return null;
 }
 
@@ -108,8 +109,11 @@ export interface IconRailSidebarProps {
   summaryFlights: Flight[];
   /** 時間範圍天數（1d / 3d / 7d）影響顯示內容 */
   rangeDays: number;
-  // Stats
-  onStatsClick: () => void;
+  // 統計（分析 › 統計分頁，R2：不再是右側浮層）
+  /** 全部航班（ALL REGION 統計，不受篩選影響） */
+  statsAllFlights: Flight[];
+  onStatsSelectAirport: (icao: string) => void;
+  onStatsSelectFlight: (id: string) => void;
   onCaptureClick: () => void;
   // Info
   // Day/Night
@@ -198,7 +202,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
   const selectedAvailable = selectedDate
     ? activeSelection.filter((icao) => Boolean(props.airportCatalog[icao]?.dates?.[selectedDate])).length
     : 0;
-  const workspaceTabs: Array<{ id: PanelId | "stats"; label: string }> = activeWorkspace === "explore"
+  const workspaceTabs: Array<{ id: PanelId; label: string }> = activeWorkspace === "explore"
     ? [{ id: "atlas", label: "地圖總覽" }]
     : activeWorkspace === "selection"
       ? [{ id: "sets", label: "機場" }]
@@ -335,6 +339,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
       {activePanel !== null && (
         <Panel
           ariaLabel={workspaceTitle}
+          width={activePanel === "stats" ? LAYOUT.panelWidthWide : LAYOUT.panelWidth}
           maxHeight="70vh"
           style={{ animation: "iconRailFadeIn 0.25s ease-out" }}
         >
@@ -360,18 +365,15 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                   : ""}
               </div>
             )}
-            {workspaceTabs.length > 1 && <Segmented<PanelId | "stats">
+            {workspaceTabs.length > 1 && <Segmented<PanelId>
               fullWidth
               ariaLabel="面板分頁"
               options={workspaceTabs.map((tab) => ({ value: tab.id, label: tab.label }))}
               value={activePanel}
-              onChange={(id) => {
-                if (id === "stats") props.onStatsClick();
-                else setActivePanel(id);
-              }}
+              onChange={setActivePanel}
             />}
           </div>
-          <PanelBody>
+          <PanelBody style={activePanel === "stats" ? { padding: 0, gap: 0 } : undefined}>
           {activePanel === "settings" && <SettingsPanel {...props} />}
           {activePanel === "sets" && (
             <SetsPanel
@@ -452,6 +454,15 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onFiltersChange={props.onFlightFiltersChange}
               scaleByAircraftSize={props.scaleByAircraftSize}
               onScaleByAircraftSizeChange={props.onScaleByAircraftSizeChange}
+            />
+          )}
+          {activePanel === "stats" && (
+            <FlightStatsPanel
+              allFlights={props.statsAllFlights}
+              filteredFlights={props.summaryFlights}
+              selectedAirport={props.selectedAirport}
+              onSelectAirport={props.onStatsSelectAirport}
+              onSelectFlight={props.onStatsSelectFlight}
             />
           )}
           {activePanel === "atlas" && (

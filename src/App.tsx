@@ -30,7 +30,6 @@ import { TimelineControls } from "./components/TimelineControls";
 import { Timeline, type HourBin } from "./components/Timeline";
 import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
 import { MobileBottomSheet } from "./components/MobileBottomSheet";
-import { FlightStatsPanel } from "./components/FlightStatsPanel";
 import { Toolbar } from "./components/Toolbar";
 import { Dock, DockItem } from "./components/Dock";
 import { LoadingStatus } from "./components/LoadingStatus";
@@ -364,7 +363,6 @@ export default function App() {
   const [showInfo, setShowInfo] = useState(false);
   // 左側 rail 面板（進站預設收起，Q6；圖說旁的引導入口也會開它）
   const [railPanel, setRailPanel] = useState<PanelId | null>(null);
-  const [showStats, setShowStats] = useState(false);
   const [airspaceSelection, setAirspaceSelection] = useState<{ selected: AirspaceFeature; others: AirspaceFeature[] } | null>(null);
   const [airspaceSettings, setAirspaceSettings] = useState<AirspaceSettings>(() => {
     // 保留分類顯示 / opacity / heightScale / edgeGlow 等偏好，但每次載入強制 enabled=false
@@ -1646,13 +1644,12 @@ export default function App() {
 
   // ── 浮層互斥（R2）：只看「剛由關變開」的那個，關掉其他；Capture 進入時全關 ──
   const overlayState: OverlayState = useMemo(
-    () => ({ rail: railPanel !== null, stats: showStats, info: showInfo }),
-    [railPanel, showStats, showInfo],
+    () => ({ rail: railPanel !== null, info: showInfo }),
+    [railPanel, showInfo],
   );
   const prevOverlayRef = useRef<OverlayState>(ALL_OVERLAYS_CLOSED);
   const closeOverlay = useCallback((key: OverlayKey) => {
     if (key === "rail") setRailPanel(null);
-    else if (key === "stats") setShowStats(false);
     else setShowInfo(false);
   }, []);
   useEffect(() => {
@@ -1663,8 +1660,8 @@ export default function App() {
   }, [overlayState, captureMode, closeOverlay]);
 
   // ── Esc 分層（R7）：單一 handler，掛 window bubble 階段（Modal capture 階段、月曆 document 階段先攔）──
-  const escStateRef = useRef({ captureMode, isExporting, showInfo, airspaceSelection, flightCardId, trackMode, railPanel, showStats });
-  escStateRef.current = { captureMode, isExporting, showInfo, airspaceSelection, flightCardId, trackMode, railPanel, showStats };
+  const escStateRef = useRef({ captureMode, isExporting, showInfo, airspaceSelection, flightCardId, trackMode, railPanel });
+  escStateRef.current = { captureMode, isExporting, showInfo, airspaceSelection, flightCardId, trackMode, railPanel };
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
@@ -1680,7 +1677,7 @@ export default function App() {
         // 航班卡在追蹤中一定是被追蹤那班（先開卡或隨追蹤打開）→ 先退出追蹤；
         // 空域卡和單航班同時開著 = 追蹤中才點開的（開空域卡會關航班卡）→ 先關卡
         dockNewerThanSingle: cur.airspaceSelection !== null,
-        panelOpen: cur.railPanel !== null || cur.showStats,
+        panelOpen: cur.railPanel !== null,
       });
       if (!layer) return;
       e.preventDefault();
@@ -1697,7 +1694,6 @@ export default function App() {
         setSelectedFlightId(null);
       } else {
         setRailPanel(null);
-        setShowStats(false);
       }
     };
     window.addEventListener("keydown", handler);
@@ -2122,7 +2118,12 @@ export default function App() {
             selectedDate={timeline.selectedDate}
             summaryFlights={finalFlights}
             rangeDays={timeline.rangeDays}
-            onStatsClick={() => setShowStats(true)}
+            statsAllFlights={allFlights}
+            onStatsSelectAirport={openAirport}
+            onStatsSelectFlight={(id) => {
+              startTracking(id);
+              setRailPanel(null);
+            }}
             onCaptureClick={() => setCaptureMode(true)}
             showTerminator={showTerminator}
             onTerminatorChange={setShowTerminator}
@@ -2596,25 +2597,6 @@ export default function App() {
             onClose={closeFlightCard}
           />
         </div>
-      )}
-
-      {/* ── Stats 面板 ── */}
-      {showStats && !isMobile && (
-        <FlightStatsPanel
-          allFlights={allFlights}
-          filteredFlights={finalFlights}
-          selectedAirport={selectedAirport}
-          isDarkTheme={isDarkTheme}
-          onClose={() => setShowStats(false)}
-          onSelectAirport={(icao) => {
-            selectAirportSingle(icao);
-          }}
-          onSelectFlight={(id) => {
-            setTrackMode("single");
-            setSelectedFlightId(id);
-            setShowStats(false);
-          }}
-        />
       )}
 
       {/* ── Info Modal ── */}

@@ -29,7 +29,7 @@
 | `SPACE` | 2 · 4 · 6 · 8 · 12 · 16 · 24 |
 | `RADIUS` | **2**（面板與控件，近直角）· pill 99（僅狀態點） |
 | `Z` | mapOverlay 10 · panel 20 · toolbar 25 · popover 30 · modal 40 · toast 50 |
-| `LAYOUT` | railWidth 56 · panelWidth 288 · panelLeft 64 · panelTop 52 · mapBottomInset 64 · dockWidth 260 |
+| `LAYOUT` | railWidth 56 · panelWidth 288 · panelWidthWide 360（分析›統計）· panelLeft 64 · panelTop 52 · mapBottomInset 64 · dockWidth 260 |
 
 不得自創字級、圓角、z-index；需要新值先加 token（TS 與 CSS 同時加）。
 

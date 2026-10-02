@@ -24,9 +24,8 @@ import {
 } from "../data/flightStats";
 import type { TimelineSlot } from "../data/flightStats";
 import { useTheme } from "../styles/ThemeContext";
-import { BLUR, FONT, RADIUS, SPACE, Z } from "../styles/tokens";
-import { BELOW_TOOLBAR } from "./Toolbar";
-import { Button, Chip, PanelHeader, Section, Segmented } from "../ui";
+import { FONT, RADIUS, SPACE } from "../styles/tokens";
+import { Button, Chip, Section, Segmented } from "../ui";
 import { IconChevron } from "../ui/icons";
 import { mix } from "../ui/vars";
 
@@ -36,9 +35,6 @@ interface Props {
   /** 已套用 Deep Analysis filter 的航班（給 AIRPORT tab — 跟篩選同步） */
   filteredFlights: Flight[];
   selectedAirport: string;
-  /** 已不再用於取色（改走 useTheme）；保留欄位避免動 App.tsx，P4 一併移除 */
-  isDarkTheme?: boolean;
-  onClose: () => void;
   onSelectAirport: (icao: string) => void;
   onSelectFlight: (flightId: string) => void;
 }
@@ -794,50 +790,20 @@ function AllTaiwanTab({
   );
 }
 
-/* ── Main Panel ── */
+/* ── Main Panel（rail「分析 › 統計」分頁內容；外殼與標題由 rail 面板提供，R2） ── */
 
 export function FlightStatsPanel({
-  allFlights, filteredFlights, selectedAirport, onClose, onSelectAirport, onSelectFlight,
+  allFlights, filteredFlights, selectedAirport, onSelectAirport, onSelectFlight,
 }: Props) {
-  const colors = useColors();
   const { tokens } = useTheme();
   const [tab, setTab] = useState<StatsTab>("airport");
   const [drillDown, setDrillDown] = useState<StatsDrillDown | null>(null);
-  const [visible, setVisible] = useState(true);
-  const [panelWidth, setPanelWidth] = useState(340);
 
-  const handleClose = () => { setVisible(false); setTimeout(onClose, 300); };
   const handleSelectAirport = (icao: string) => { onSelectAirport(icao); setTab("airport"); setDrillDown(null); };
 
-  const handleDragStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startW = panelWidth;
-    const onMove = (ev: MouseEvent) => {
-      setPanelWidth(Math.min(Math.max(startW + (startX - ev.clientX), 280), 720));
-    };
-    const onUp = () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  };
-
   return (
-    <div style={{
-      position: "fixed", top: BELOW_TOOLBAR, right: 0, bottom: 0, width: panelWidth, zIndex: Z.panel,
-      background: colors.bg, backdropFilter: `blur(${BLUR}px)`, WebkitBackdropFilter: `blur(${BLUR}px)`,
-      borderLeft: `1px solid ${colors.divider}`,
-      display: "flex", flexDirection: "column", fontFamily: font,
-      transform: visible ? "translateX(0)" : "translateX(100%)",
-      transition: visible ? "transform 0.3s ease" : "transform 0.3s ease",
-    }}>
-      {/* Hover + drag styles */}
+    <div style={{ display: "flex", flexDirection: "column", fontFamily: font }}>
+      {/* Hover styles */}
       <style>{`
         .fp-row { transition: background 0.12s ease; }
         .fp-row:hover { background: ${mix(tokens.fg1, 8)} !important; }
@@ -845,47 +811,30 @@ export function FlightStatsPanel({
         .fp-card:hover { background: ${mix(tokens.fg1, 10)} !important; }
         .fp-bar { transition: filter 0.12s ease; }
         .fp-bar:hover { filter: brightness(1.5); }
-        .fp-drag { opacity: 0; transition: opacity 0.2s ease; }
-        .fp-drag:hover, .fp-drag:active { opacity: 1; }
       `}</style>
 
-      {/* Drag handle */}
-      <div className="fp-drag" onMouseDown={handleDragStart} style={{
-        position: "absolute", left: 0, top: 0, bottom: 0, width: 6,
-        cursor: "col-resize", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        <div style={{ width: 3, height: 48, borderRadius: 2, background: colors.textMuted }} />
-      </div>
-
-      {/* Header */}
-      <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s8, flexShrink: 0 }}>
-        <PanelHeader eyebrow="STATS · 統計" title="Flight Statistics" onClose={handleClose} />
-        {/* Tabs */}
-        <div style={{ padding: `0 ${SPACE.s12}px ${SPACE.s8}px` }}>
-          <Segmented<StatsTab>
-            fullWidth
-            ariaLabel="統計範圍"
-            options={[
-              { value: "airport", label: "AIRPORT" },
-              { value: "region", label: "ALL REGION" },
-            ]}
-            value={tab}
-            onChange={(id) => { setTab(id); setDrillDown(null); }}
-          />
-        </div>
+      {/* Tabs */}
+      <div style={{ padding: `${SPACE.s4}px ${SPACE.s12}px ${SPACE.s8}px` }}>
+        <Segmented<StatsTab>
+          fullWidth
+          ariaLabel="統計範圍"
+          options={[
+            { value: "airport", label: "AIRPORT" },
+            { value: "region", label: "ALL REGION" },
+          ]}
+          value={tab}
+          onChange={(id) => { setTab(id); setDrillDown(null); }}
+        />
       </div>
 
       <Divider />
 
-      {/* Scrollable Content */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
-        {tab === "airport" ? (
-          <AirportTab flights={filteredFlights} icao={selectedAirport}
-            drillDown={drillDown} setDrillDown={setDrillDown} onSelectFlight={onSelectFlight} />
-        ) : (
-          <AllTaiwanTab flights={allFlights} onSelectAirport={handleSelectAirport} />
-        )}
-      </div>
+      {tab === "airport" ? (
+        <AirportTab flights={filteredFlights} icao={selectedAirport}
+          drillDown={drillDown} setDrillDown={setDrillDown} onSelectFlight={onSelectFlight} />
+      ) : (
+        <AllTaiwanTab flights={allFlights} onSelectAirport={handleSelectAirport} />
+      )}
     </div>
   );
 }

@@ -106,6 +106,8 @@ export const Z = {
 export const LAYOUT = {
   railWidth: 56,
   panelWidth: 288,
+  /** 寬面板（分析 › 統計：圖表 300 + 左右留白） */
+  panelWidthWide: 360,
   panelLeft: 64,
   panelTop: 52,
   mapBottomInset: 64,
