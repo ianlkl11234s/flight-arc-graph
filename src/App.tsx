@@ -1710,9 +1710,11 @@ export default function App() {
     : scope === "region"
       ? regionTitle
       : airportMeta[selectedAirport]?.nameZh || airportMeta[selectedAirport]?.name || getAirportInfo(selectedAirport)?.name || "";
+  // 首次進站 availableDates 未到時 timeline 暫用今天；圖說改顯示 loader 實際在載的日期
+  const captionDate = availableDates.length === 0 ? (airspaceDate ?? timeline.selectedDate) : timeline.selectedDate;
   const captionMeta: CaptionMetaItem[] = [
     {
-      label: `${timeline.selectedDate} 週${"日一二三四五六"[new Date(`${timeline.selectedDate}T00:00:00Z`).getUTCDay()] ?? ""}`
+      label: `${captionDate} 週${"日一二三四五六"[new Date(`${captionDate}T00:00:00Z`).getUTCDay()] ?? ""}`
         + (timeline.rangeDays > 1 ? ` +${timeline.rangeDays - 1}d` : "")
         + (timeline.isMultiDateMode ? ` · Compare ${timeline.selectedDates.length} 日` : "")
         + " · 台灣時間",
