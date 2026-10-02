@@ -57,6 +57,13 @@ function hashFlightId(id: string): number {
  * 靜態軌跡地理分桶：每桶一個 LineSegments（本體＋glow 併單 pass，見 T0-1 frag shader），
  * 供 globe 模式下「桶整個在地平線背面」時整批 mesh.visible=false 剔除。
  */
+/**
+ * 起降染色（§7）組合內互飛的靜態軌跡可見度標記：per-vertex alpha 寫 3（一般 1）。
+ * staticTrail.frag 見 vAlpha > 1 時把本體透明度 ×3、上限 0.5（不低於原值）。
+ * 只有起降模式（depArrGradients 非 null）會寫出 3，高度模式 alpha 恆 ≤ 1，shader 結果逐像素不變。
+ */
+const INTERNAL_STATIC_ALPHA = 3.0;
+
 interface StaticBucket {
   mesh: THREE.LineSegments;
   geometry: THREE.BufferGeometry;
@@ -383,6 +390,11 @@ export class FlightScene {
    * light theme 用 NormalBlending，繪製順序影響混色 → 全部進單一桶，
    * 順序與舊的單一 mesh 完全一致（分桶剔除只在 dark/additive 模式生效）。
    */
+  private staticVisibleAlpha(id: string): number {
+    // 與 continueStaticBuild 的 grad 判斷一致：有沿路漸層且沒有被 perFlightColorMap 平色覆寫
+    return this.depArrGradients?.has(id) && !this.perFlightColorMap?.has(id) ? INTERNAL_STATIC_ALPHA : 1.0;
+  }
+
   private bucketKeyForFlight(f: Flight): number {
     if (!this.isDarkTheme) return 0;
     const midIdx = Math.floor(f.path.length / 2);
@@ -727,8 +739,9 @@ export class FlightScene {
           bucket.colors[o3 + 5] = cb;
         }
 
-        bucket.alphas[w] = 1.0;
-        bucket.alphas[w + 1] = 1.0;
+        const visAlpha = grad ? INTERNAL_STATIC_ALPHA : 1.0;
+        bucket.alphas[w] = visAlpha;
+        bucket.alphas[w + 1] = visAlpha;
 
         // T0-5：存相對秒數（減 staticTimeBase），避免 float32 存絕對 unix 秒的 ulp=128s 誤差
         bucket.timestamps[w] = aT - this.staticTimeBase;
@@ -885,8 +898,9 @@ export class FlightScene {
       if (!this.lastVisibleIds.has(id)) {
         const range = this.staticFlightRanges.get(id);
         if (range) {
+          const visAlpha = this.staticVisibleAlpha(id);
           for (let i = range.start; i < range.start + range.count; i++) {
-            range.bucket.alphas[i] = 1.0;
+            range.bucket.alphas[i] = visAlpha;
           }
           // T0-3：只登記此 flight 的 range（不 clear，可能與同幀 continueStaticBuild 的
           // range 疊加；three 支援同一 attribute 多個 update range）
@@ -930,6 +944,17 @@ export class FlightScene {
       // （下一次 updateStaticVisibility 重掃才會修回來）——這是既有行為，不在本次修動範圍內。
       for (const b of this.staticBuckets) {
         b.alphas.fill(1.0);
+      }
+      // 起降模式：組合內互飛的可見度標記（INTERNAL_STATIC_ALPHA）要補回，否則 fill 會把它蓋成 1
+      if (this.depArrGradients) {
+        for (const id of this.depArrGradients.keys()) {
+          const range = this.staticFlightRanges.get(id);
+          if (!range) continue;
+          const visAlpha = this.staticVisibleAlpha(id);
+          for (let i = range.start; i < range.start + range.count; i++) range.bucket.alphas[i] = visAlpha;
+        }
+      }
+      for (const b of this.staticBuckets) {
         b.alphaAttr.clearUpdateRanges();
         b.alphaAttr.needsUpdate = true;
       }

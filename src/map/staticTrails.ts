@@ -60,6 +60,21 @@ export function setMapTrailColors(hexA: string, hexB: string) {
   customLerpDark = makeLerpColor(hexA, hexB);
 }
 
+/**
+ * 起降染色（§7）組合內互飛的透明度提升：×3、上限 0.5（不低於原值）。
+ * 只在有 gradientMap（起降模式）時把 line-opacity 換成 data-driven 表達式；
+ * 高度模式維持原本的數值 paint，結果完全不變。
+ */
+const INTERNAL_OPACITY_BOOST = 3;
+const INTERNAL_OPACITY_CAP = 0.5;
+let internalBoostActive = false;
+
+function opacityPaint(base: number): number | unknown[] {
+  if (!internalBoostActive) return base;
+  const boosted = Math.max(base, Math.min(base * INTERNAL_OPACITY_BOOST, INTERNAL_OPACITY_CAP));
+  return ["case", ["==", ["get", "internal"], true], boosted, base];
+}
+
 /** 起降染色（§7）組合內互飛在 2D 的漸層段數（Mapbox line-color 是 per-feature 單色，故切段近似） */
 const GRADIENT_CHUNKS = 12;
 
@@ -82,6 +97,7 @@ function gradientFeatures(f: Flight, [depHex, arrHex]: readonly [string, string]
         origin: f.origin_iata,
         dest: f.dest_iata,
         color: mixHex(depHex, arrHex, (fracs[s]! + fracs[e]!) / 2),
+        internal: true,
       },
       geometry: { type: "LineString", coordinates: coords },
     });
@@ -162,16 +178,17 @@ export function updateStaticTrails(
   const scale = background ? 0 : 1.0;
   const lineOpacity = (isDark ? 0.25 : 0.5) * scale;
   const glowOpacity = (isDark ? 0.08 : 0.15) * scale;
+  internalBoostActive = !background && !!gradientMap && gradientMap.size > 0;
 
   if (source) {
     // 目前 3D 全程由 Three.js 畫軌跡，calc2dTrailOpacity 也固定為 0。
     // 清空 Mapbox source 避免同一批完整 path 同時佔用兩套 GPU/JS buffers。
     source.setData(background ? EMPTY_GEOJSON : flightsToGeoJSON(flights, isDark, compareColorMap, gradientMap));
     if (map.getLayer(LAYER_ID)) {
-      map.setPaintProperty(LAYER_ID, "line-opacity", lineOpacity);
+      map.setPaintProperty(LAYER_ID, "line-opacity", opacityPaint(lineOpacity) as number);
     }
     if (map.getLayer(GLOW_LAYER_ID)) {
-      map.setPaintProperty(GLOW_LAYER_ID, "line-opacity", glowOpacity);
+      map.setPaintProperty(GLOW_LAYER_ID, "line-opacity", opacityPaint(glowOpacity) as number);
     }
   } else {
     const geojson = background ? EMPTY_GEOJSON : flightsToGeoJSON(flights, isDark, compareColorMap, gradientMap);
@@ -188,7 +205,7 @@ export function updateStaticTrails(
       paint: {
         "line-color": ["get", "color"],
         "line-width": BASE_GLOW_WIDTH * lineWidthMultiplier,
-        "line-opacity": glowOpacity,
+        "line-opacity": opacityPaint(glowOpacity) as number,
         "line-blur": 4,
       },
     });
@@ -201,7 +218,7 @@ export function updateStaticTrails(
       paint: {
         "line-color": ["get", "color"],
         "line-width": BASE_LINE_WIDTH * lineWidthMultiplier,
-        "line-opacity": lineOpacity,
+        "line-opacity": opacityPaint(lineOpacity) as number,
         "line-blur": 1,
       },
     });
@@ -248,9 +265,9 @@ export function setStaticTrailsVisible(map: MapboxMap, visible: boolean) {
  */
 export function setStaticTrailsOpacity(map: MapboxMap, lineOpacity: number, glowOpacity: number) {
   if (map.getLayer(LAYER_ID)) {
-    map.setPaintProperty(LAYER_ID, "line-opacity", lineOpacity);
+    map.setPaintProperty(LAYER_ID, "line-opacity", opacityPaint(lineOpacity) as number);
   }
   if (map.getLayer(GLOW_LAYER_ID)) {
-    map.setPaintProperty(GLOW_LAYER_ID, "line-opacity", glowOpacity);
+    map.setPaintProperty(GLOW_LAYER_ID, "line-opacity", opacityPaint(glowOpacity) as number);
   }
 }
