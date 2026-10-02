@@ -23,13 +23,33 @@ interface LoadingStatusProps {
   /** 這次載入失敗（網路／伺服器錯誤）：狀態條停著顯示失敗，直到重試或下一次載入 */
   failed: boolean;
   onRetry: () => void;
+  /** 位置（預設：桌機右上工具列下方） */
+  top?: number;
+  right?: number;
+  /** 只在失敗時顯示（錄影 Capture 畫面：精簡失敗提示，載入中／已載入不出現） */
+  failOnly?: boolean;
+  /** 暫時不畫（例：錄影中 REC）；節奏控制器照常運作，解除後仍能看到持續中的失敗 */
+  hidden?: boolean;
 }
 
 /**
  * 右上工具列下方的載入狀態條（spec R6）。節奏在 ui/loadingStatusController，外觀是 ui/StatusBar。
- * 取代舊的畫面中央 LoadingIndicator 膠囊。手機版不掛。
+ * 取代舊的畫面中央 LoadingIndicator 膠囊。App 只掛一個實例（桌機／手機／錄影共用，切模式不漏掉進行中的失敗），
+ * 以 top/right/failOnly/hidden 依模式調整。
  */
-export function LoadingStatus({ loading, label, count, loaded, playing, failed, onRetry }: LoadingStatusProps) {
+export function LoadingStatus({
+  loading,
+  label,
+  count,
+  loaded,
+  playing,
+  failed,
+  onRetry,
+  top = BELOW_TOOLBAR,
+  right = SPACE.s16,
+  failOnly = false,
+  hidden = false,
+}: LoadingStatusProps) {
   const [view, setView] = useState<LoadingStatusView>(HIDDEN_LOADING_STATUS);
   const controllerRef = useRef<ReturnType<typeof createLoadingStatusController> | null>(null);
   const prevLoadingRef = useRef(loading);
@@ -81,6 +101,8 @@ export function LoadingStatus({ loading, label, count, loaded, playing, failed, 
   }, [failed]);
 
   if (!view.visible && view.label === "" && view.count === 0) return null;
+  if (hidden) return null;
+  if (failOnly && view.phase !== "error") return null;
 
   let state: StatusState;
   let message: string;
@@ -100,8 +122,8 @@ export function LoadingStatus({ loading, label, count, loaded, playing, failed, 
       aria-hidden={!view.visible}
       style={{
         position: "absolute",
-        top: BELOW_TOOLBAR,
-        right: SPACE.s16,
+        top,
+        right,
         zIndex: Z.toast,
         maxWidth: 360,
         opacity: view.visible ? 1 : 0,

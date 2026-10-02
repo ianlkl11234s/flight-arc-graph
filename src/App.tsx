@@ -241,6 +241,9 @@ function computeLodBand(zoom: number, current: LodLevel): LodLevel {
   return strictLodBand(zoom);
 }
 
+/** 錄影畫面的失敗提示：右上 16:9／Grid（top 32、高約 28）與手機退出鈕（top 16、48）之下 */
+const CAPTURE_STATUS_TOP = 72;
+
 // 「探索地圖總覽」地球 icon 展開時飛去的固定俯瞰視角
 /** 探索面板區域 chip 的順序（原頂部 Region 按鈕列） */
 const REGION_ORDER: Region[] = ["TW", "JP", "HK", "KR", "TH", "US", "UK", "CN", "world", "all"];
@@ -2353,16 +2356,6 @@ export default function App() {
             onCapture={() => setCaptureMode(true)}
             onInfo={() => setShowInfo(true)}
           />
-          {/* 工具列下方載入狀態條（R6） */}
-          <LoadingStatus
-            loading={loading}
-            label={statusLabel}
-            count={allFlights.length}
-            loaded={loadingProgress?.loaded}
-            playing={timeline.playing}
-            failed={loadError !== null}
-            onRetry={retryLoad}
-          />
 
         </>
       )}
@@ -2622,6 +2615,22 @@ export default function App() {
           </MobileBottomSheet>
         </>
       )}
+
+      {/* 載入狀態條（R6）：單一實例跨模式（切模式不漏掉進行中的失敗）。桌機＝工具列下方；
+          錄影畫面＝只顯示失敗（角落），錄影中（REC／HQ 匯出）不畫；手機暫不顯示 */}
+      <LoadingStatus
+        loading={loading}
+        label={statusLabel}
+        count={allFlights.length}
+        loaded={loadingProgress?.loaded}
+        playing={timeline.playing}
+        failed={loadError !== null}
+        onRetry={retryLoad}
+        top={captureMode ? CAPTURE_STATUS_TOP : undefined}
+        right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : undefined}
+        failOnly={captureMode}
+        hidden={captureMode ? isExporting : isMobile}
+      />
 
       {/* ── 點擊處的選取圈（R1；固定在點擊位置，相機一動就收）── */}
       {!captureMode && selectionRing && cardFlight && <SelectionRing x={selectionRing.x} y={selectionRing.y} />}
