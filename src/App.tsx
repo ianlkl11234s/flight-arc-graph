@@ -672,7 +672,7 @@ export default function App() {
   const isRecording = recorder.recordingState === "recording";
   const isExporting = isRecording || recorder.recordingState === "hq";
 
-  // 手機狀態條位置：header（44）＋固定在其下的時間軸，取時間軸實際底邊 + 8（時間軸高度隨日期面板等變動）
+  // 手機狀態條／航班卡位置：header（44）＋固定在其下的時間軸，取時間軸實際底邊 + 8（時間軸高度隨日期面板等變動）
   const mobileTimelineRef = useRef<HTMLDivElement>(null);
   const [mobileStatusTop, setMobileStatusTop] = useState(52);
   useEffect(() => {
@@ -2714,9 +2714,9 @@ export default function App() {
       {/* ── 點擊處的選取圈（R1；固定在點擊位置，相機一動就收）── */}
       {!captureMode && selectionRing && cardFlight && <SelectionRing x={selectionRing.x} y={selectionRing.y} />}
 
-      {/* ── 手機版航班卡（取代舊游標 tooltip；版面不重排，固定在標頭下方右側）── */}
+      {/* ── 手機版航班卡（取代舊游標 tooltip；版面不重排，固定在時間軸底邊之下、與手機狀態條同一算法）── */}
       {!captureMode && isMobile && cardFlight && (
-        <div style={{ position: "absolute", top: 52, right: SPACE.s12, zIndex: Z.panel, maxWidth: `calc(100vw - ${SPACE.s12 * 2}px)` }}>
+        <div style={{ position: "absolute", top: mobileStatusTop, right: SPACE.s12, zIndex: Z.panel, maxWidth: `calc(100vw - ${SPACE.s12 * 2}px)` }}>
           <FlightInfoCard
             flight={cardFlight}
             currentTime={timeline.currentTime}
