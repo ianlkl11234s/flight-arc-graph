@@ -2,9 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { RenderMode } from "../types";
 import { useTheme } from "../styles/ThemeContext";
 import { BLUR, FONT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
-import { Button } from "../ui";
+import { Button, IconInfo, IconLink } from "../ui";
 import { AirportSelector } from "./AirportSelector";
-import { IconInfo, IconLink } from "./Toolbar";
 
 /** 手機 header 內容高度（不含 safe-area-inset-top） */
 export const MOBILE_HEADER_HEIGHT = 44;

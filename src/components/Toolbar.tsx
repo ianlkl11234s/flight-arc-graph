@@ -3,7 +3,7 @@ import type { DepArrFilter, RenderMode } from "../types";
 import type { TrajColorBy } from "../data/depArrColors";
 import { useTheme } from "../styles/ThemeContext";
 import { BLUR, FONT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
-import { Button, Segmented } from "../ui";
+import { Button, IconInfo, IconLink, Segmented } from "../ui";
 import { StyleSelector } from "./StyleSelector";
 
 interface ToolbarProps {
@@ -21,15 +21,6 @@ interface ToolbarProps {
   onInfo: () => void;
   /** 複製目前畫面的連結（P6）；回傳是否成功 */
   onCopyLink: () => Promise<boolean>;
-}
-
-export function IconLink() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
-      <path d="M6 8a2.6 2.6 0 0 0 3.7 0l2-2a2.6 2.6 0 0 0-3.7-3.7l-.8.8" strokeLinecap="round" />
-      <path d="M8 6a2.6 2.6 0 0 0-3.7 0l-2 2a2.6 2.6 0 0 0 3.7 3.7l.8-.8" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 /** 「複製連結」按鈕：按下後 1.5 秒顯示「已複製」／「複製失敗」，固定寬度（R10） */
@@ -57,18 +48,8 @@ function CopyLinkButton({ onCopy }: { onCopy: () => Promise<boolean> }) {
   );
 }
 
-export function IconInfo() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
-      <circle cx="7" cy="7" r="5.8" />
-      <path d="M7 6.2v3.8" strokeLinecap="square" />
-      <circle cx="7" cy="4.2" r=".75" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
 /** 工具列高度（Segmented／Button 28 + padding 4×2 + border 1×2） */
-export const TOOLBAR_HEIGHT = 38;
+const TOOLBAR_HEIGHT = 38;
 /** 工具列下緣再空 8px：右上狀態條的 top */
 export const BELOW_TOOLBAR = SPACE.s16 + TOOLBAR_HEIGHT + SPACE.s8;
 

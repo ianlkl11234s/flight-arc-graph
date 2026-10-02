@@ -123,4 +123,3 @@ export const LAYOUT = {
   leftBottomReserve: 184,
 } as const;
 
-export const TOKENS = { COLOR, BLUR, FONT, SIZE, SPACE, RADIUS, Z, LAYOUT } as const;
