@@ -79,3 +79,14 @@ export function hexToRgb(hex: string): [number, number, number] {
     parseInt(h.substring(4, 6), 16) / 255,
   ];
 }
+
+/**
+ * 起降染色的資料色（docs/backlog/studio-design-system.md §7）：
+ * 進場（dest 在選定機場內）/ 離場（origin 在選定機場內）。
+ * 組合內互飛航線沿路由 dep → arr 漸層。暗色底圖用亮色、淡色底圖用深色。
+ * 這是資料色，與 COLOR_THEMES 同樣集中在此檔（不屬於 UI chrome tokens）。
+ */
+export const TRAJ = {
+  dark: { arr: "#5fb4ff", dep: "#ff9b55" },
+  light: { arr: "#1f6fbf", dep: "#c4561b" },
+} as const;
