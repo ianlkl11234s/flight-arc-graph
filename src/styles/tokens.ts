@@ -115,6 +115,8 @@ export const LAYOUT = {
   panelTop: 52,
   mapBottomInset: 64,
   dockWidth: 260,
+  /** 左下圖說 + 時間軸（展開，單日、無 Compare 清單）的高度；左側面板 maxHeight 往上讓出這一塊 */
+  leftBottomReserve: 184,
 } as const;
 
 export const TOKENS = { COLOR, BLUR, FONT, SIZE, SPACE, RADIUS, Z, LAYOUT } as const;

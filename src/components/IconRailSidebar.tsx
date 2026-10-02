@@ -336,7 +336,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         <Panel
           ariaLabel={workspaceTitle}
           width={activePanel === "stats" ? LAYOUT.panelWidthWide : LAYOUT.panelWidth}
-          maxHeight="70vh"
+          maxHeight={`calc(100vh - ${LAYOUT.panelTop + LAYOUT.mapBottomInset + LAYOUT.leftBottomReserve + SPACE.s8}px)`}
           style={{ animation: "iconRailFadeIn 0.25s ease-out" }}
         >
           <PanelHeader

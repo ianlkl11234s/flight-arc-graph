@@ -2177,22 +2177,16 @@ export default function App() {
               >
                 {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
               </div>
+              {/* Trail 模式切換 — 放在標題欄內，座標行換行時也不會貼上來；錄製中隨標題一起隱藏 */}
+              <div style={{ marginTop: SPACE.s12, pointerEvents: "auto", display: "flex" }}>
+                <Button
+                  onClick={() => setTrailDisplay(d => d === "full" ? "progressive" : "full")}
+                  pressed={trailDisplay === "progressive"}
+                >
+                  Trail: {trailDisplay === "full" ? "Full" : "Progressive"}
+                </Button>
+              </div>
             </div>
-          )}
-          {/* Trail 模式切換 — 錄製中隱藏 */}
-          {!isExporting && (
-            <Button
-              onClick={() => setTrailDisplay(d => d === "full" ? "progressive" : "full")}
-              pressed={trailDisplay === "progressive"}
-              style={{
-                position: "absolute",
-                top: isMobile ? 120 : 140,
-                left: isMobile ? 16 : 32,
-                zIndex: Z.toolbar,
-              }}
-            >
-              Trail: {trailDisplay === "full" ? "Full" : "Progressive"}
-            </Button>
           )}
           {/* 鏡頭控制列 — HTML overlay 不會被錄進影片 */}
           <CinemaBar

@@ -38,6 +38,7 @@
   --panel-top: 52px;
   --map-bottom-inset: 64px;
   --dock-width: 260px;
+  --left-bottom-reserve: 184px;
 }
 
 [data-theme="dark"] {
