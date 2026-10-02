@@ -71,7 +71,7 @@ export function Slider(props: SliderProps) {
             alignItems: "baseline",
             gap: SPACE.s8,
             fontFamily: FONT.ui,
-            fontSize: SIZE.s11,
+            fontSize: SIZE.body,
             color: tokens.fg1,
           }}
         >

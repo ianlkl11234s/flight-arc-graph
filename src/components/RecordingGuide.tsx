@@ -192,7 +192,7 @@ export function RecordingGuide({ visible, showGrid }: RecordingGuideProps) {
           position: "absolute",
           top: 6,
           right: 8,
-          fontSize: SIZE.s10,
+          fontSize: SIZE.minor,
           fontFamily: FONT.ui,
           color: mix(tokens.rec, 50),
           letterSpacing: 1,

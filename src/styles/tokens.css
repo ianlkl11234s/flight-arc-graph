@@ -5,13 +5,13 @@
 
   --blur: 10px;
 
-  --size-9: 9px;
-  --size-10: 10px;
-  --size-11: 11px;
-  --size-12: 12px;
-  --size-14: 14px;
-  --size-18: 18px;
-  --size-30: 30px;
+  --size-eyebrow: 11px;
+  --size-minor: 11.5px;
+  --size-body: 12.5px;
+  --size-sub: 13px;
+  --size-title: 15px;
+  --size-large: 18px;
+  --size-caption: 30px;
 
   --space-2: 2px;
   --space-4: 4px;

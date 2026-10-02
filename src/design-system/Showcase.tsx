@@ -12,7 +12,7 @@ function Surface({ children }: { children: ReactNode }) {
         background: tokens.mapBg,
         color: tokens.fg1,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         padding: SPACE.s24,
         minWidth: 0,
         display: "flex",
@@ -21,7 +21,7 @@ function Surface({ children }: { children: ReactNode }) {
         alignItems: "flex-start",
       }}
     >
-      <span style={{ fontFamily: FONT.data, fontSize: SIZE.s9, letterSpacing: ".18em", color: tokens.fg3 }}>
+      <span style={{ fontFamily: FONT.data, fontSize: SIZE.eyebrow, letterSpacing: ".18em", color: tokens.fg3 }}>
         {isDark ? "DARK · 暗" : "LIGHT · 淡"}
       </span>
       {children}
@@ -44,8 +44,8 @@ export function Showcase({
   const t = COLOR.dark;
   return (
     <section id={id} style={{ marginBottom: SPACE.s24 * 2 }}>
-      <h2 style={{ fontFamily: FONT.data, fontSize: SIZE.s14, fontWeight: 500, color: t.fg1, margin: `0 0 ${SPACE.s4}px` }}>{name}</h2>
-      <p style={{ fontSize: SIZE.s11, color: t.fg2, margin: `0 0 ${SPACE.s12}px`, maxWidth: 820, lineHeight: 1.6 }}>{note}</p>
+      <h2 style={{ fontFamily: FONT.data, fontSize: SIZE.title, fontWeight: 500, color: t.fg1, margin: `0 0 ${SPACE.s4}px` }}>{name}</h2>
+      <p style={{ fontSize: SIZE.body, color: t.fg2, margin: `0 0 ${SPACE.s12}px`, maxWidth: 820, lineHeight: 1.6 }}>{note}</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", border: `1px solid ${t.border}` }}>
         <ThemeProvider isDark>
           <Surface>{render()}</Surface>

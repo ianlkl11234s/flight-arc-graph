@@ -64,7 +64,7 @@ export function Button({
         justifyContent: "center",
         gap: SPACE.s6,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         whiteSpace: "nowrap",
         border: "1px solid",
         borderRadius: RADIUS.base,

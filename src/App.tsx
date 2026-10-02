@@ -88,15 +88,15 @@ function buildAtlasPopupHtml(p: AtlasProps): string {
     p.capturedFlights != null ? `${p.capturedFlights.toLocaleString()} 條` : "—";
   const est = p.estDaily != null ? `${p.estDaily} 班/日（估）` : "—";
   return `<div style="font-family:system-ui,-apple-system,sans-serif;min-width:180px;color:#1a1a1a">
-    <div style="font-weight:700;font-size:14px;margin-bottom:2px">${escapeHtml(p.name)}</div>
-    <div style="font-size:11px;color:#666;margin-bottom:6px">${p.icao}${p.iata ? " / " + p.iata : ""}${p.country ? " · " + p.country : ""}${p.continent ? " " + p.continent : ""}</div>
-    <div style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;margin-bottom:6px">
+    <div style="font-weight:700;font-size:${SIZE.title}px;margin-bottom:2px">${escapeHtml(p.name)}</div>
+    <div style="font-size:${SIZE.body}px;color:#666;margin-bottom:6px">${p.icao}${p.iata ? " / " + p.iata : ""}${p.country ? " · " + p.country : ""}${p.continent ? " " + p.continent : ""}</div>
+    <div style="display:inline-flex;align-items:center;gap:5px;font-size:${SIZE.sub}px;font-weight:600;margin-bottom:6px">
       <span style="width:9px;height:9px;border-radius:50%;background:${st.color};display:inline-block"></span>${st.label}
     </div>
-    <div style="font-size:12px;color:#333;line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
+    <div style="font-size:${SIZE.sub}px;color:#333;line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
     ${p.status !== "planned" ? `<div style="--pa-line:#3b82f6;--pa-soft:#eaf3ff;--pa-ink:#174ea6;display:flex;gap:6px;margin-top:8px">
-      <button type="button" data-atlas-open="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-ink);border-radius:2px;background:var(--pa-ink);color:var(--pa-soft);font:600 11px monospace;cursor:pointer">開啟機場</button>
-      <button type="button" data-atlas-add="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-line);border-radius:2px;background:var(--pa-soft);color:var(--pa-ink);font:600 11px monospace;cursor:pointer">加入組合</button>
+      <button type="button" data-atlas-open="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-ink);border-radius:2px;background:var(--pa-ink);color:var(--pa-soft);font:600 ${SIZE.body}px monospace;cursor:pointer">開啟機場</button>
+      <button type="button" data-atlas-add="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-line);border-radius:2px;background:var(--pa-soft);color:var(--pa-ink);font:600 ${SIZE.body}px monospace;cursor:pointer">加入組合</button>
     </div>` : ""}
   </div>`;
 }
@@ -120,14 +120,14 @@ function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: n
         whiteSpace: "nowrap",
       }}
     >
-      <span style={{ fontFamily: FONT.data, fontSize: SIZE.s12, fontWeight: 600, letterSpacing: ".18em", color: tokens.fg1 }}>
+      <span style={{ fontFamily: FONT.data, fontSize: SIZE.sub, fontWeight: 600, letterSpacing: ".18em", color: tokens.fg1 }}>
         FLIGHT ARC
       </span>
       <span
         title={cameraInfo.zoom < 3 ? "Drag globe · Scroll to zoom" : "Right-drag to rotate · Scroll to zoom"}
         style={{
           fontFamily: FONT.data,
-          fontSize: SIZE.s10,
+          fontSize: SIZE.minor,
           letterSpacing: ".04em",
           color: tokens.fg3,
           fontVariantNumeric: "tabular-nums",
@@ -195,6 +195,7 @@ function OrientationOrb({
       onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
     >
+      {/* N／S 是 44 單位 viewBox 內的圖示字形（非文字），fontSize 6/5.5 為 viewBox 單位，不套 chrome 字級 */}
       <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" style={{ display: "block" }}>
         <circle cx="22" cy="22" r="18.5" fill="none" stroke={stroke} strokeWidth="1" />
         <ellipse cx="22" cy="22" rx="17" ry="6" fill="none" stroke={dim} strokeWidth="0.8" />
@@ -202,8 +203,8 @@ function OrientationOrb({
         <line x1={northX} y1={northY} x2={southX} y2={southY} stroke="rgba(100,170,255,0.72)" strokeWidth="1" />
         <circle cx={northX} cy={northY} r="2.5" fill="#64aaff" />
         <circle cx={southX} cy={southY} r="2" fill={isDarkTheme ? "rgba(255,255,255,0.58)" : "rgba(20,30,45,0.52)"} />
-        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill="#9acbff" fontSize="6" fontFamily={FONT.ui} fontWeight="700">N</text>
-        <text x={southLabelX} y={southLabelY} textAnchor="middle" fill={text} fontSize="5.5" fontFamily={FONT.ui}>S</text>
+        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill="#9acbff" fontSize={6 /* glyph */} fontFamily={FONT.ui} fontWeight="700">N</text>
+        <text x={southLabelX} y={southLabelY} textAnchor="middle" fill={text} fontSize={5.5 /* glyph */} fontFamily={FONT.ui}>S</text>
         <circle cx="22" cy="22" r="1.5" fill={isUpright ? "#64aaff" : text} />
       </svg>
     </button>
@@ -1819,7 +1820,7 @@ export default function App() {
               }}
             />
           )}
-          {/* 左上標題 — 錄製中由 composite canvas 繪製，HTML 版隱藏 */}
+          {/* 左上標題 — 錄製中由 composite canvas 繪製，HTML 版隱藏。字級 28/18/14/14 與 useCanvasRecorder 的錄影畫面一致（錄影內容，不屬 chrome 字級階層，刻意不換 SIZE） */}
           {!isExporting && (
             <div
               style={{
@@ -1903,7 +1904,7 @@ export default function App() {
                 border: "1px solid rgba(255,255,255,0.2)",
                 background: trailDisplay === "progressive" ? "rgba(255,255,255,0.15)" : "rgba(60,60,60,0.4)",
                 color: trailDisplay === "progressive" ? "#fff" : "rgba(255,255,255,0.6)",
-                fontSize: 13,
+                fontSize: SIZE.sub,
                 fontFamily: FONT.ui,
                 cursor: "pointer",
                 backdropFilter: "blur(8px)",
@@ -1967,7 +1968,7 @@ export default function App() {
                 background: "rgba(0,0,0,0.4)",
                 border: "1px solid rgba(255,255,255,0.2)",
                 color: "#fff",
-                fontSize: 22,
+                fontSize: SIZE.large,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -1983,7 +1984,7 @@ export default function App() {
                 border: "1px solid rgba(255,255,255,0.15)",
                 borderRadius: 4,
                 color: "rgba(255,255,255,0.4)",
-                fontSize: 11,
+                fontSize: SIZE.body,
                 fontFamily: FONT.ui,
                 cursor: "pointer",
               }}
@@ -2011,7 +2012,7 @@ export default function App() {
                   border: `1px solid ${showGuide ? "rgba(255,80,80,0.4)" : "rgba(255,255,255,0.15)"}`,
                   background: showGuide ? "rgba(255,80,80,0.15)" : "rgba(255,255,255,0.08)",
                   color: showGuide ? "rgba(255,80,80,0.8)" : "rgba(255,255,255,0.4)",
-                  fontSize: 11,
+                  fontSize: SIZE.body,
                   fontFamily: FONT.ui,
                   cursor: "pointer",
                   backdropFilter: "blur(8px)",
@@ -2028,7 +2029,7 @@ export default function App() {
                     border: `1px solid ${showGuideGrid ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.15)"}`,
                     background: showGuideGrid ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.08)",
                     color: showGuideGrid ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)",
-                    fontSize: 11,
+                    fontSize: SIZE.body,
                     fontFamily: FONT.ui,
                     cursor: "pointer",
                     backdropFilter: "blur(8px)",
@@ -2398,7 +2399,7 @@ export default function App() {
             <div style={{ flex: 1 }} />
 
             {loading && (
-              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: FONT.ui }}>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: SIZE.body, fontFamily: FONT.ui }}>
                 Loading...
               </span>
             )}
@@ -2406,13 +2407,14 @@ export default function App() {
             <button
               onClick={() => setShowInfo(true)}
               style={{
-                width: 36,
+                minWidth: 36,
                 height: 36,
+                padding: "0 8px",
                 borderRadius: 8,
                 background: "rgba(255,255,255,0.1)",
                 border: "1px solid rgba(255,255,255,0.2)",
                 color: "#fff",
-                fontSize: 12,
+                fontSize: SIZE.sub,
                 fontFamily: FONT.ui,
                 cursor: "pointer",
                 display: "flex",
@@ -2432,7 +2434,7 @@ export default function App() {
                 background: "rgba(255,255,255,0.1)",
                 border: "1px solid rgba(255,255,255,0.2)",
                 color: "#fff",
-                fontSize: 12,
+                fontSize: SIZE.sub,
                 fontFamily: FONT.ui,
                 cursor: "pointer",
                 letterSpacing: 1,
@@ -2452,7 +2454,7 @@ export default function App() {
                   : "rgba(255,170,68,0.25)",
                 border: `1px solid ${renderMode === "3d" ? "rgba(80,140,255,0.5)" : "rgba(255,170,68,0.5)"}`,
                 color: "#fff",
-                fontSize: 12,
+                fontSize: SIZE.sub,
                 fontFamily: FONT.ui,
                 cursor: "pointer",
                 letterSpacing: 1,
@@ -2523,7 +2525,7 @@ export default function App() {
                               ? "rgba(100,170,255,0.6)" : "rgba(255,255,255,0.2)"}`,
                             borderRadius: 4,
                             padding: "8px 12px",
-                            fontSize: 12,
+                            fontSize: SIZE.sub,
                             cursor: "pointer",
                             fontFamily: FONT.ui,
                             whiteSpace: "nowrap",
@@ -2568,7 +2570,7 @@ export default function App() {
                       style={{
                         marginTop: 8,
                         color: "rgba(255,255,255,0.4)",
-                        fontSize: 11,
+                        fontSize: SIZE.body,
                         fontFamily: FONT.ui,
                       }}
                     >
@@ -2582,7 +2584,7 @@ export default function App() {
                 {level === "full" && (
                   <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: FONT.ui }}>Style</span>
+                      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: SIZE.body, fontFamily: FONT.ui }}>Style</span>
                       <StyleSelector
                         selected={mapStyleId}
                         isDarkTheme={true}
@@ -2600,7 +2602,7 @@ export default function App() {
                       ].map((s) => (
                         <label key={s.label} style={{
                           color: "rgba(255,255,255,0.6)",
-                          fontSize: 11,
+                          fontSize: SIZE.body,
                           fontFamily: FONT.ui,
                           display: "flex",
                           alignItems: "center",

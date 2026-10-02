@@ -75,8 +75,8 @@ check("BLUR", px(/export const BLUR\s*=\s*(\d+)/.exec(ts)[1]), root_["blur"]);
 // font
 for (const [k, v] of Object.entries(pairs(block(ts, /export const FONT\s*=\s*\{/)))) check(`FONT.${k}`, v, root_[`font-${k}`]);
 
-// size / space (keys sNN → --size-NN / --space-NN)
-for (const [k, v] of Object.entries(pairs(block(ts, /export const SIZE\s*=\s*\{/)))) check(`SIZE.${k}`, px(v), root_[`size-${k.slice(1)}`]);
+// size（key 為角色名 → --size-<role>）/ space（keys sNN → --space-NN）
+for (const [k, v] of Object.entries(pairs(block(ts, /export const SIZE\s*=\s*\{/)))) check(`SIZE.${k}`, px(v), root_[`size-${kebab(k)}`]);
 for (const [k, v] of Object.entries(pairs(block(ts, /export const SPACE\s*=\s*\{/)))) check(`SPACE.${k}`, px(v), root_[`space-${k.slice(1)}`]);
 
 // radius

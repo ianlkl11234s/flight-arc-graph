@@ -52,7 +52,7 @@ export function SummaryPanel({ flights, selectedAirport, scope, region, rangeDay
   if (flights.length === 0) {
     return (
       <Section title="SUMMARY · 總覽">
-        <div style={{ fontSize: SIZE.s11, color: tokens.fg3, fontFamily: FONT.ui, textAlign: "center", padding: "20px 0" }}>
+        <div style={{ fontSize: SIZE.body, color: tokens.fg3, fontFamily: FONT.ui, textAlign: "center", padding: "20px 0" }}>
           No flight data loaded
         </div>
       </Section>
@@ -91,10 +91,10 @@ export function SummaryPanel({ flights, selectedAirport, scope, region, rangeDay
           <Section title="ROUTES · 熱門航線">
             <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s2 }}>
               {topRoutes.map((r) => (
-                <div key={r.destIcao} style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.s11, fontFamily: FONT.ui, padding: `${SPACE.s2}px 0` }}>
+                <div key={r.destIcao} style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.body, fontFamily: FONT.ui, padding: `${SPACE.s2}px 0` }}>
                   <span style={{ color: tokens.fg1 }}>
                     {r.originIata}→{r.destIata}
-                    <span style={{ color: tokens.fg3, marginLeft: SPACE.s4, fontSize: SIZE.s10 }}>{r.airlines.join("/")}</span>
+                    <span style={{ color: tokens.fg3, marginLeft: SPACE.s4, fontSize: SIZE.minor }}>{r.airlines.join("/")}</span>
                   </span>
                   <span style={{ color: tokens.accent, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums" }}>{r.count}</span>
                 </div>

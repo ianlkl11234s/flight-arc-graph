@@ -1,5 +1,5 @@
 import { getAirportInfo } from "../map/cameraPresets";
-import { FONT } from "../styles/tokens";
+import { FONT, SIZE } from "../styles/tokens";
 
 interface Props {
   airports: string[];
@@ -14,9 +14,12 @@ const getStyle = (dark: boolean): React.CSSProperties => ({
   border: `1px solid ${dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
   borderRadius: 4,
   padding: "4px 8px",
-  fontSize: 14,
+  fontSize: SIZE.title,
   fontFamily: FONT.ui,
   backdropFilter: "blur(8px)",
+  // 手機 header 內可收縮（機場全名過長時不把右側按鈕擠出畫面）
+  flex: "0 1 auto",
+  minWidth: 0,
 });
 
 export function AirportSelector({ airports, selected, isDarkTheme = true, onChange }: Props) {

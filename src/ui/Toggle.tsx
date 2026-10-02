@@ -68,7 +68,7 @@ export function Toggle({ checked, onChange, label, description, ariaLabel, disab
         justifyContent: "space-between",
         gap: SPACE.s8 + SPACE.s2,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         color: disabled ? tokens.fg3 : tokens.fg1,
       }}
     >
@@ -78,7 +78,7 @@ export function Toggle({ checked, onChange, label, description, ariaLabel, disab
       >
         {label}
         {description && (
-          <span style={{ display: "block", fontSize: SIZE.s10, color: tokens.fg3, marginTop: SPACE.s2 }}>
+          <span style={{ display: "block", fontSize: SIZE.minor, color: tokens.fg3, marginTop: SPACE.s2 }}>
             {description}
           </span>
         )}

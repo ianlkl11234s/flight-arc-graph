@@ -46,7 +46,7 @@ export function Panel({
         WebkitBackdropFilter: `blur(${BLUR}px) saturate(1.2)`,
         color: tokens.fg1,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         boxSizing: "border-box",
         ...style,
       }}

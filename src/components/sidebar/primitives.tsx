@@ -208,14 +208,14 @@ export function AirportRow({
           style={{ width: 2, height: 24, flexShrink: 0, background: highlighted ? tokens.accent : "transparent" }}
         />
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: SIZE.s11, color: highlighted ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
+          <div style={{ fontSize: SIZE.body, color: highlighted ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
             {label}
           </div>
-          <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data }}>
+          <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data }}>
             {info?.iata || iata || icao} / {icao}{status ? ` · ${status}` : ""}
           </div>
           {matchReason && (
-            <div style={{ fontSize: SIZE.s9, color: tokens.fg3, marginTop: SPACE.s2 }}>
+            <div style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, marginTop: SPACE.s2 }}>
               符合：{matchReason}
             </div>
           )}

@@ -24,7 +24,7 @@ export function HourlyHeatmap({ hourly }: { hourly: { hour: number; count: numbe
           );
         })}
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.s9, color: tokens.fg3, fontFamily: FONT.data, marginTop: SPACE.s2 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data, marginTop: SPACE.s2 }}>
         <span>00</span><span>06</span><span>12</span><span>18</span><span>23</span>
       </div>
     </div>
@@ -53,7 +53,7 @@ export function DailyTrendChart({ daily }: { daily: { date: string; departures: 
         <polyline points={depPoints} fill="none" stroke={tokens.accent} strokeWidth="1.5" strokeLinejoin="round" />
         <polyline points={arrPoints} fill="none" stroke={tokens.fg2} strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3,2" />
       </svg>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.s9, color: tokens.fg3, fontFamily: FONT.data, marginTop: 1 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data, marginTop: 1 }}>
         <span>{daily[0]!.date.slice(5)}</span>
         <span style={{ display: "flex", gap: SPACE.s8 }}>
           <span style={{ color: tokens.accent }}>— Dep</span>
@@ -73,7 +73,7 @@ export function MiniBar({ items }: { items: { label: string; value: number; colo
     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {items.map((item) => (
         <div key={item.label} style={{ display: "flex", alignItems: "center", gap: SPACE.s6 }}>
-          <span style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data, width: 32, textAlign: "right", flexShrink: 0 }}>
+          <span style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data, width: 32, textAlign: "right", flexShrink: 0 }}>
             {item.label}
           </span>
           <div style={{ flex: 1, height: 10, background: mix(tokens.fg1, 12), borderRadius: RADIUS.base, overflow: "hidden" }}>
@@ -84,7 +84,7 @@ export function MiniBar({ items }: { items: { label: string; value: number; colo
               transition: "width 0.3s ease",
             }} />
           </div>
-          <span style={{ fontSize: SIZE.s10, color: tokens.fg2, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right", flexShrink: 0 }}>
+          <span style={{ fontSize: SIZE.minor, color: tokens.fg2, fontFamily: FONT.data, fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right", flexShrink: 0 }}>
             {item.value}
           </span>
         </div>

@@ -241,7 +241,7 @@ export function Timeline(p: Props) {
       <span
         style={{
           fontFamily: FONT.data,
-          fontSize: SIZE.s12 + 1,
+          fontSize: SIZE.sub + 1,
           fontWeight: 500,
           fontVariantNumeric: "tabular-nums",
           color: tokens.fg1,
@@ -252,7 +252,7 @@ export function Timeline(p: Props) {
       >
         {expanded && (p.rangeDays > 1 || isMultiDateMode) ? formatDateTime(p.currentTime) : formatTime(p.currentTime)}
       </span>
-      <span style={{ fontFamily: FONT.data, fontSize: SIZE.s9, color: tokens.fg3, letterSpacing: ".08em", flex: "none" }}>UTC+8</span>
+      <span style={{ fontFamily: FONT.data, fontSize: SIZE.eyebrow, color: tokens.fg3, letterSpacing: ".08em", flex: "none" }}>UTC+8</span>
     </>
   );
 
@@ -288,7 +288,7 @@ export function Timeline(p: Props) {
         WebkitBackdropFilter: `blur(${BLUR}px) saturate(1.2)`,
         color: tokens.fg1,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         padding: `${SPACE.s8}px ${SPACE.s8 + SPACE.s2}px`,
         display: "flex",
         flexDirection: "column",
@@ -321,7 +321,7 @@ export function Timeline(p: Props) {
               icon={<IconChevron direction="left" />}
               onClick={() => setViewYM(viewMonth === 0 ? [viewYear - 1, 11] : [viewYear, viewMonth - 1])}
             />
-            <span style={{ fontFamily: FONT.data, fontSize: SIZE.s12, fontWeight: 600 }}>
+            <span style={{ fontFamily: FONT.data, fontSize: SIZE.sub, fontWeight: 600 }}>
               {viewYear}/{String(viewMonth + 1).padStart(2, "0")}
             </span>
             <Button
@@ -333,7 +333,7 @@ export function Timeline(p: Props) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 28px)", gap: SPACE.s2 }}>
             {WEEKDAYS.map((w) => (
-              <div key={w} style={{ textAlign: "center", fontSize: SIZE.s10, color: tokens.fg3 }}>{w}</div>
+              <div key={w} style={{ textAlign: "center", fontSize: SIZE.minor, color: tokens.fg3 }}>{w}</div>
             ))}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 28px)", gap: SPACE.s2, marginTop: SPACE.s2 }}>
@@ -370,7 +370,7 @@ export function Timeline(p: Props) {
                     alignItems: "center",
                     justifyContent: "center",
                     fontFamily: FONT.data,
-                    fontSize: SIZE.s11,
+                    fontSize: SIZE.body,
                     border: 0,
                     borderRadius: RADIUS.base,
                     background: isSelected ? tokens.accent : "transparent",
@@ -404,7 +404,7 @@ export function Timeline(p: Props) {
               style={{
                 marginTop: SPACE.s6,
                 maxWidth: 7 * 28 + 6 * SPACE.s2,
-                fontSize: SIZE.s10,
+                fontSize: SIZE.minor,
                 lineHeight: 1.4,
                 color: tokens.fg2,
               }}
@@ -565,7 +565,7 @@ export function Timeline(p: Props) {
           </div>
         )}
         {expanded && (
-          <span style={{ fontFamily: FONT.data, fontSize: SIZE.s10, color: tokens.fg3, whiteSpace: "nowrap", flex: "none" }}>
+          <span style={{ fontFamily: FONT.data, fontSize: SIZE.minor, color: tokens.fg3, whiteSpace: "nowrap", flex: "none" }}>
             {formatTime(p.windowStart)}–{formatTime(p.windowEnd)}
           </span>
         )}

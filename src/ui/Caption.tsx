@@ -53,7 +53,7 @@ export function Caption({ code, name, meta, notice, onExit, exitLabel = "退出"
         <span
           style={{
             fontFamily: FONT.data,
-            fontSize: SIZE.s30,
+            fontSize: SIZE.caption,
             fontWeight: 500,
             lineHeight: 1,
             letterSpacing: ".04em",
@@ -63,7 +63,7 @@ export function Caption({ code, name, meta, notice, onExit, exitLabel = "退出"
           {code}
         </span>
         {name != null && name !== "" && (
-          <span style={{ fontSize: SIZE.s12, color: tokens.fg2, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: SIZE.sub, color: tokens.fg2, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {name}
           </span>
         )}
@@ -80,7 +80,7 @@ export function Caption({ code, name, meta, notice, onExit, exitLabel = "退出"
             flexWrap: "wrap",
             gap: `${SPACE.s2}px ${SPACE.s12}px`,
             fontFamily: FONT.data,
-            fontSize: SIZE.s10,
+            fontSize: SIZE.minor,
             color: tokens.fg2,
             letterSpacing: ".03em",
             fontVariantNumeric: "tabular-nums",
@@ -96,7 +96,7 @@ export function Caption({ code, name, meta, notice, onExit, exitLabel = "退出"
           ))}
         </div>
       )}
-      {notice && <div style={{ fontSize: SIZE.s10, color: tokens.fg2 }}>{notice}</div>}
+      {notice && <div style={{ fontSize: SIZE.minor, color: tokens.fg2 }}>{notice}</div>}
       {actions && (
         <div style={{ display: "flex", gap: SPACE.s6, marginTop: SPACE.s4, pointerEvents: "auto" }}>{actions}</div>
       )}

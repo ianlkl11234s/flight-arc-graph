@@ -70,7 +70,7 @@ export function Select<T extends string | number>({
           height: 28,
           padding: `0 ${SPACE.s24}px 0 ${SPACE.s8 + SPACE.s2}px`,
           fontFamily: FONT.ui,
-          fontSize: SIZE.s11,
+          fontSize: SIZE.body,
           color: tokens.fg1,
           background: tokens.ctl,
           border: `1px solid ${tokens.border}`,
@@ -118,7 +118,7 @@ export function Select<T extends string | number>({
         alignItems: "center",
         gap: SPACE.s8,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         color: tokens.fg1,
       }}
     >

@@ -75,7 +75,7 @@ export function Modal({
         WebkitBackdropFilter: `blur(${BLUR}px) saturate(1.2)`,
         color: tokens.fg1,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         outline: "none",
       }}
     >
@@ -91,7 +91,7 @@ export function Modal({
       >
         <div style={{ minWidth: 0 }}>
           {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-          <div style={{ fontSize: SIZE.s18, fontWeight: 500, marginTop: eyebrow ? SPACE.s4 : 0, lineHeight: 1.25 }}>{title}</div>
+          <div style={{ fontSize: SIZE.large, fontWeight: 500, marginTop: eyebrow ? SPACE.s4 : 0, lineHeight: 1.25 }}>{title}</div>
         </div>
         <CloseButton onClick={onClose} label="關閉說明" />
       </header>

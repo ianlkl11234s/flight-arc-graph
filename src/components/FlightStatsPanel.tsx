@@ -24,7 +24,7 @@ import {
 } from "../data/flightStats";
 import type { TimelineSlot } from "../data/flightStats";
 import { useTheme } from "../styles/ThemeContext";
-import { FONT, RADIUS, SPACE } from "../styles/tokens";
+import { FONT, RADIUS, SIZE, SPACE } from "../styles/tokens";
 import { Button, Chip, Section, Segmented } from "../ui";
 import { IconChevron } from "../ui/icons";
 import { mix } from "../ui/vars";
@@ -101,8 +101,9 @@ function DepArrLineChart({
     return data.some((d) => d.date !== firstDate);
   })();
 
-  const W = 300, H = multiDay ? 110 : 100;
-  const padL = 24, padR = 4, padT = 8, padB = multiDay ? 24 : 16;
+  // 刻度字 SIZE.eyebrow（viewBox 單位；圖寬 ≥300px 時實際 ≥11px），padL/padB 依字寬留白
+  const W = 300, H = multiDay ? 116 : 106;
+  const padL = 32, padR = 6, padT = 10, padB = multiDay ? 26 : 18;
   const cW = W - padL - padR;
   const cH = H - padT - padB;
   const maxVal = Math.max(...data.map((d) => Math.max(d.departures, d.arrivals)), 1);
@@ -137,8 +138,8 @@ function DepArrLineChart({
             stroke={colors.divider} strokeWidth={0.5} />
         ))}
         {/* Y labels */}
-        <text x={padL - 3} y={padT + 4} textAnchor="end" fill={colors.textMuted} fontSize={7} fontFamily={font}>{maxVal}</text>
-        <text x={padL - 3} y={padT + cH + 3} textAnchor="end" fill={colors.textMuted} fontSize={7} fontFamily={font}>0</text>
+        <text x={padL - 4} y={padT + 4} textAnchor="end" fill={colors.textMuted} fontSize={SIZE.eyebrow} fontFamily={font}>{maxVal}</text>
+        <text x={padL - 4} y={padT + cH + 4} textAnchor="end" fill={colors.textMuted} fontSize={SIZE.eyebrow} fontFamily={font}>0</text>
 
         {/* Day boundary separators (multi-day) */}
         {dayBounds.map(({ idx, label }, bi) => (
@@ -148,7 +149,7 @@ function DepArrLineChart({
                 stroke={colors.textMuted} strokeWidth={0.3} strokeDasharray="3,3" />
             )}
             <text x={x(idx + 12)} y={H - 4} textAnchor="middle"
-              fill={bi === 0 ? colors.textGray : colors.textMuted} fontSize={7} fontFamily={font} fontWeight={bi === 0 ? 600 : 400}>
+              fill={bi === 0 ? colors.textGray : colors.textMuted} fontSize={SIZE.eyebrow} fontFamily={font} fontWeight={bi === 0 ? 600 : 400}>
               {label}
             </text>
           </g>
@@ -156,7 +157,7 @@ function DepArrLineChart({
 
         {/* Single-day x labels */}
         {!multiDay && [0, 6, 12, 18, 23].map((h) => (
-          <text key={h} x={x(h)} y={H - 2} textAnchor="middle" fill={colors.textMuted} fontSize={7} fontFamily={font}>
+          <text key={h} x={x(h)} y={H - 2} textAnchor="middle" fill={colors.textMuted} fontSize={SIZE.eyebrow} fontFamily={font}>
             {String(h).padStart(2, "0")}
           </text>
         ))}
@@ -188,11 +189,11 @@ function DepArrLineChart({
       <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center", marginTop: 2 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <div style={{ width: 14, height: 1.5, background: colors.depLine }} />
-          <span style={{ fontSize: 8, color: colors.textDim, fontFamily: font }}>Dep</span>
+          <span style={{ fontSize: SIZE.eyebrow, color: colors.textDim, fontFamily: font }}>Dep</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <svg width={14} height={3}><line x1={0} y1={1.5} x2={14} y2={1.5} stroke={colors.arrLine} strokeWidth={1.5} strokeDasharray="3,2" /></svg>
-          <span style={{ fontSize: 8, color: colors.textDim, fontFamily: font }}>Arr</span>
+          <span style={{ fontSize: SIZE.eyebrow, color: colors.textDim, fontFamily: font }}>Arr</span>
         </div>
       </div>
 
@@ -204,7 +205,7 @@ function DepArrLineChart({
             ? { right: `${((W - x(hover)) / W * 100 + 3)}%` }
             : { left: `${(x(hover) / W * 100 + 3)}%` }),
           background: colors.tooltipBg, border: `1px solid ${colors.divider}`, borderRadius: RADIUS.base,
-          padding: "3px 8px", fontSize: 9, fontFamily: font, pointerEvents: "none", zIndex: 1,
+          padding: "3px 8px", fontSize: SIZE.eyebrow, fontFamily: font, pointerEvents: "none", zIndex: 1,
           whiteSpace: "nowrap",
         }}>
           <div style={{ color: colors.textWhite, fontWeight: 600 }}>
@@ -258,13 +259,13 @@ function HBar({
   const fill = opacity ? mix(colors.barFull, opacity * 100) : colors.barFull;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
-      <span style={{ width: labelWidth, fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font, flexShrink: 0 }}>
+      <span style={{ width: labelWidth, fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font, flexShrink: 0 }}>
         {label}
       </span>
       <div style={{ flex: 1, height: 8, background: colors.cardBg, position: "relative" }}>
         <div style={{ width: `${barWidth}%`, height: "100%", background: fill }} />
       </div>
-      <span style={{ width: 30, fontSize: 10, fontWeight: 500, color: colors.textDim, fontFamily: font, textAlign: "right", flexShrink: 0 }}>
+      <span style={{ width: 30, fontSize: SIZE.minor, fontWeight: 500, color: colors.textDim, fontFamily: font, textAlign: "right", flexShrink: 0 }}>
         {percentage}
       </span>
     </div>
@@ -338,15 +339,15 @@ function AirportTab({
         <div style={{ marginBottom: 8 }}>
           <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{drillDown.label}</div>
-        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
+        <div style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{drillDown.label}</div>
+        <div style={{ fontSize: SIZE.body, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {routeFlights.length} flights
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {routeFlights.map((f) => (
             <div key={f.fr24_id} className="fp-card" onClick={() => onSelectFlight(f.fr24_id)} style={{
               display: "flex", gap: 8, padding: "5px 8px", borderRadius: 4,
-              cursor: "pointer", fontFamily: font, fontSize: 11, background: colors.cardBg,
+              cursor: "pointer", fontFamily: font, fontSize: SIZE.body, background: colors.cardBg,
             }}>
               <span style={{ color: colors.textWhite, fontWeight: 600, minWidth: 55 }}>{f.callsign}</span>
               <span style={{ color: colors.textDim }}>
@@ -371,10 +372,10 @@ function AirportTab({
         <div style={{ marginBottom: 8 }}>
           <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>
+        <div style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>
           {info?.iata ?? icao} → {group.country}
         </div>
-        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
+        <div style={{ fontSize: SIZE.body, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {group.totalFlights} flights · {group.airports.length} airports
         </div>
         {group.airports.map((a) => (
@@ -386,8 +387,8 @@ function AirportTab({
             padding: "6px 8px", background: colors.cardBg, marginBottom: 4,
             cursor: "pointer", fontFamily: font,
           }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite }}>{a.iata}</span>
-            <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim }}>{a.count}</span>
+            <span style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite }}>{a.iata}</span>
+            <span style={{ fontSize: SIZE.sub, fontWeight: 500, color: colors.textDim }}>{a.count}</span>
           </div>
         ))}
       </div>
@@ -401,8 +402,8 @@ function AirportTab({
         <div style={{ marginBottom: 8 }}>
           <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Routes</div>
-        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
+        <div style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Routes</div>
+        <div style={{ fontSize: SIZE.body, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {topRoutes.length} routes from {info?.iata ?? icao}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -415,15 +416,15 @@ function AirportTab({
               padding: "6px 8px", background: colors.cardBg, cursor: "pointer",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: colors.textGray, fontFamily: font }}>{r.originIata}</span>
+                <span style={{ fontSize: SIZE.sub, fontWeight: 700, color: colors.textGray, fontFamily: font }}>{r.originIata}</span>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
                 </svg>
-                <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.destIata}</span>
+                <span style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.destIata}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{r.airlines.join("/")}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
+                <span style={{ fontSize: SIZE.minor, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{r.airlines.join("/")}</span>
+                <span style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
               </div>
             </div>
           ))}
@@ -439,8 +440,8 @@ function AirportTab({
         <div style={{ marginBottom: 8 }}>
           <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Destinations</div>
-        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
+        <div style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Destinations</div>
+        <div style={{ fontSize: SIZE.body, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {countries.length} regions from {info?.iata ?? icao}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -448,13 +449,13 @@ function AirportTab({
             <div key={g.country} className="fp-row" onClick={() => setDrillDown({ type: "country", key: g.country, label: g.country })}
               style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%", padding: "6px 8px", borderRadius: 2, background: colors.cardBg }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
+                <span style={{ fontSize: SIZE.minor, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
                   {getCountryCode(g.country)}
                 </span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: colors.textWhite, fontFamily: font }}>{g.country}</span>
-                <span style={{ fontSize: 10, color: colors.textMuted, fontFamily: font }}>{g.airports.length} apt</span>
+                <span style={{ fontSize: SIZE.sub, fontWeight: 500, color: colors.textWhite, fontFamily: font }}>{g.country}</span>
+                <span style={{ fontSize: SIZE.minor, color: colors.textMuted, fontFamily: font }}>{g.airports.length} apt</span>
               </div>
-              <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
+              <span style={{ fontSize: SIZE.sub, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
             </div>
           ))}
         </div>
@@ -469,8 +470,8 @@ function AirportTab({
         <div style={{ marginBottom: 8 }}>
           <Button variant="ghost" onClick={() => setDrillDown(null)}>{"< Back"}</Button>
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Aircraft Types</div>
-        <div style={{ fontSize: 11, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
+        <div style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>All Aircraft Types</div>
+        <div style={{ fontSize: SIZE.body, color: colors.textDim, fontFamily: font, marginBottom: 12 }}>
           {aircraft.length} types at {info?.iata ?? icao}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -490,10 +491,10 @@ function AirportTab({
       {/* Summary */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px" }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>
+          <div style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>
             {icao} {info?.name ?? ""}
           </div>
-          <div style={{ fontSize: 11, fontWeight: 500, color: colors.textDim, fontFamily: font, marginTop: 2 }}>
+          <div style={{ fontSize: SIZE.body, fontWeight: 500, color: colors.textDim, fontFamily: font, marginTop: 2 }}>
             {totalFlights} flights · {days > 0 ? `${Math.round(totalFlights / days)}/day` : ""}
           </div>
         </div>
@@ -502,13 +503,13 @@ function AirportTab({
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textGray} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M2 22h20" /><path d="M6.36 17.4 4 17l-2-4 1.1-.55a2 2 0 0 1 1.8 0l.17.1a2 2 0 0 0 1.8 0L8 12 5 6l3-1 4 4.5 5-2.5a2.5 2.5 0 0 1 3.12 3.37L17 14.5 8 18" />
             </svg>
-            <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{depArr.departures}</span>
+            <span style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{depArr.departures}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M2 22h20" /><path d="m3 9 2.5-.5a2.5 2.5 0 0 1 3.12 1.37L12 16l6-4-4-4.5 5-2.5a2.5 2.5 0 0 1 3.12 3.37l-9.74 6.5L7 18" />
             </svg>
-            <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{depArr.arrivals}</span>
+            <span style={{ fontSize: SIZE.sub, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{depArr.arrivals}</span>
           </div>
         </div>
       </div>
@@ -534,7 +535,7 @@ function AirportTab({
 
       {/* Dep/Arr Timeline Chart */}
       <Block title="DEPARTURES & ARRIVALS"
-        right={<span style={{ fontSize: 9, fontWeight: 500, color: colors.textDim, fontFamily: font }}>
+        right={<span style={{ fontSize: SIZE.eyebrow, fontWeight: 500, color: colors.textDim, fontFamily: font }}>
           {depArr.departures}↑ {depArr.arrivals}↓
         </span>}
       >
@@ -545,7 +546,7 @@ function AirportTab({
 
       {/* Hourly Pattern — vertical bar chart */}
       <Block title="HOURLY PATTERN"
-        right={<span style={{ fontSize: 9, fontWeight: 500, color: colors.textGray, fontFamily: font }}>
+        right={<span style={{ fontSize: SIZE.eyebrow, fontWeight: 500, color: colors.textGray, fontFamily: font }}>
           Peak {String(peakHour.hour).padStart(2, "0")}-{String(peakEnd).padStart(2, "0")}
         </span>}
       >
@@ -564,7 +565,7 @@ function AirportTab({
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
           {[0, 6, 12, 18, 23].map((h) => (
-            <span key={h} style={{ fontSize: 8, fontWeight: 500, color: colors.textMuted, fontFamily: font }}>
+            <span key={h} style={{ fontSize: SIZE.eyebrow, fontWeight: 500, color: colors.textMuted, fontFamily: font }}>
               {String(h).padStart(2, "0")}
             </span>
           ))}
@@ -586,7 +587,7 @@ function AirportTab({
                 width: `${widthPx}%`, height: "100%", background: fills[i],
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                <span style={{ fontSize: 9, fontWeight: 700, color: textColors[i], fontFamily: font, whiteSpace: "nowrap", overflow: "hidden" }}>
+                <span style={{ fontSize: SIZE.eyebrow, fontWeight: 700, color: textColors[i], fontFamily: font, whiteSpace: "nowrap", overflow: "hidden" }}>
                   {widthPx > 12 ? `${a.code} ${pct}%` : a.code}
                 </span>
               </div>
@@ -597,7 +598,7 @@ function AirportTab({
               flex: 1, height: "100%", background: colors.cardBg,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <span style={{ fontSize: 9, fontWeight: 500, color: colors.textDim, fontFamily: font }}>Others</span>
+              <span style={{ fontSize: SIZE.eyebrow, fontWeight: 500, color: colors.textDim, fontFamily: font }}>Others</span>
             </div>
           )}
         </div>
@@ -607,7 +608,7 @@ function AirportTab({
 
       {/* Top Routes — card style */}
       <Block title="TOP ROUTES"
-        right={<span style={{ fontSize: 9, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
+        right={<span style={{ fontSize: SIZE.eyebrow, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
           {topRoutes.length}
         </span>}
       >
@@ -620,15 +621,15 @@ function AirportTab({
             padding: "6px 8px", background: colors.cardBg, cursor: "pointer",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: colors.textGray, fontFamily: font }}>{r.originIata}</span>
+              <span style={{ fontSize: SIZE.sub, fontWeight: 700, color: colors.textGray, fontFamily: font }}>{r.originIata}</span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
               </svg>
-              <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.destIata}</span>
+              <span style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.destIata}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{r.airlines.join("/")}</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
+              <span style={{ fontSize: SIZE.minor, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{r.airlines.join("/")}</span>
+              <span style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
             </div>
           </div>
         ))}
@@ -641,7 +642,7 @@ function AirportTab({
 
       {/* Top Destinations — country list */}
       <Block title="TOP DESTINATIONS"
-        right={<span style={{ fontSize: 9, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
+        right={<span style={{ fontSize: SIZE.eyebrow, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
           {countries.length}
         </span>}
       >
@@ -649,12 +650,12 @@ function AirportTab({
           <div key={g.country} className="fp-row" onClick={() => setDrillDown({ type: "country", key: g.country, label: g.country })}
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%", padding: "4px 4px", borderRadius: 2 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
+              <span style={{ fontSize: SIZE.minor, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
                 {getCountryCode(g.country)}
               </span>
-              <span style={{ fontSize: 12, fontWeight: 500, color: colors.textWhite, fontFamily: font }}>{g.country}</span>
+              <span style={{ fontSize: SIZE.sub, fontWeight: 500, color: colors.textWhite, fontFamily: font }}>{g.country}</span>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
+            <span style={{ fontSize: SIZE.sub, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
           </div>
         ))}
         <ShowMoreButton total={countries.length} expanded={destMore}
@@ -666,7 +667,7 @@ function AirportTab({
 
       {/* Aircraft Types — horizontal bars */}
       <Block title="AIRCRAFT TYPES"
-        right={<span style={{ fontSize: 9, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
+        right={<span style={{ fontSize: SIZE.eyebrow, fontWeight: 600, color: colors.textDim, fontFamily: font, background: colors.cardBg, padding: "2px 6px" }}>
           {aircraft.length}
         </span>}
       >
@@ -732,13 +733,13 @@ function AllTaiwanTab({
               display: "flex", alignItems: "center", gap: 8, cursor: "pointer", width: "100%",
               padding: "4px 4px", borderRadius: 2,
             }}>
-              <span style={{ width: 32, fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font, flexShrink: 0 }}>
+              <span style={{ width: 32, fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font, flexShrink: 0 }}>
                 {a.iata}
               </span>
               <div style={{ flex: 1, height: 8, background: colors.cardBg }}>
                 <div style={{ width: `${barW}%`, height: "100%", background: colors.barFull }} />
               </div>
-              <span style={{ width: 32, fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font, textAlign: "right", flexShrink: 0 }}>
+              <span style={{ width: 32, fontSize: SIZE.sub, fontWeight: 500, color: colors.textDim, fontFamily: font, textAlign: "right", flexShrink: 0 }}>
                 {a.count}
               </span>
             </div>
@@ -753,14 +754,14 @@ function AllTaiwanTab({
         {reachable.slice(0, 8).map((g) => (
           <div key={g.country} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
+              <span style={{ fontSize: SIZE.minor, fontWeight: 700, color: colors.textGray, fontFamily: font, width: 20 }}>
                 {getCountryCode(g.country)}
               </span>
-              <span style={{ fontSize: 12, fontWeight: 500, color: colors.textWhite, fontFamily: font }}>{g.country}</span>
+              <span style={{ fontSize: SIZE.sub, fontWeight: 500, color: colors.textWhite, fontFamily: font }}>{g.country}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 10, color: colors.textMuted, fontFamily: font }}>{g.airports.length} apt</span>
-              <span style={{ fontSize: 12, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
+              <span style={{ fontSize: SIZE.minor, color: colors.textMuted, fontFamily: font }}>{g.airports.length} apt</span>
+              <span style={{ fontSize: SIZE.sub, fontWeight: 500, color: colors.textDim, fontFamily: font }}>{g.totalFlights}</span>
             </div>
           </div>
         ))}
@@ -771,18 +772,18 @@ function AllTaiwanTab({
       {/* Domestic Routes */}
       <Block title="DOMESTIC ROUTES">
         {domestic.length === 0 ? (
-          <span style={{ fontSize: 11, color: colors.textMuted, fontFamily: font }}>No domestic routes</span>
+          <span style={{ fontSize: SIZE.body, color: colors.textMuted, fontFamily: font }}>No domestic routes</span>
         ) : domestic.slice(0, 8).map((r) => (
           <div key={`${r.from}-${r.to}`} style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "6px 8px", background: colors.cardBg,
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: colors.textGray, fontFamily: font }}>{r.fromIata}</span>
-              <span style={{ fontSize: 10, color: colors.textMuted }}>↔</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.toIata}</span>
+              <span style={{ fontSize: SIZE.sub, fontWeight: 700, color: colors.textGray, fontFamily: font }}>{r.fromIata}</span>
+              <span style={{ fontSize: SIZE.minor, color: colors.textMuted }}>↔</span>
+              <span style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.toIata}</span>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
+            <span style={{ fontSize: SIZE.sub, fontWeight: 600, color: colors.textWhite, fontFamily: font }}>{r.count}</span>
           </div>
         ))}
       </Block>

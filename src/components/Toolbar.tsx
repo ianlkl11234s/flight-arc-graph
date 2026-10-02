@@ -82,7 +82,7 @@ export function Toolbar(p: ToolbarProps) {
         title={p.depArrColorDisabledReason ?? undefined}
         style={{ display: "inline-flex", alignItems: "center", gap: SPACE.s4 }}
       >
-        <span aria-hidden="true" style={{ fontFamily: FONT.ui, fontSize: SIZE.s11, color: tokens.fg3, whiteSpace: "nowrap" }}>
+        <span aria-hidden="true" style={{ fontFamily: FONT.ui, fontSize: SIZE.body, color: tokens.fg3, whiteSpace: "nowrap" }}>
           染色
         </span>
         <Segmented<TrajColorBy>

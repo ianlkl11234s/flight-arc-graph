@@ -57,7 +57,7 @@ export function DockCard({
         padding: `${SPACE.s8 + SPACE.s2}px ${SPACE.s12}px`,
         color: tokens.fg1,
         fontFamily: FONT.ui,
-        fontSize: SIZE.s11,
+        fontSize: SIZE.body,
         minWidth: 0,
         display: "flex",
         flexDirection: "column",
@@ -77,9 +77,9 @@ export function DockCard({
               marginTop: eyebrow ? 3 : 0,
             }}
           >
-            <span style={{ fontSize: SIZE.s18, fontWeight: 500, lineHeight: 1.2, minWidth: 0 }}>{title}</span>
+            <span style={{ fontSize: SIZE.large, fontWeight: 500, lineHeight: 1.2, minWidth: 0 }}>{title}</span>
             {subtitle && (
-              <span style={{ fontFamily: FONT.data, fontSize: SIZE.s11, color: tokens.fg2, whiteSpace: "nowrap" }}>{subtitle}</span>
+              <span style={{ fontFamily: FONT.data, fontSize: SIZE.body, color: tokens.fg2, whiteSpace: "nowrap" }}>{subtitle}</span>
             )}
           </div>
         </div>
@@ -95,7 +95,7 @@ export function DockCard({
             display: "grid",
             gridTemplateColumns: "auto 1fr",
             gap: `3px ${SPACE.s12}px`,
-            fontSize: SIZE.s10,
+            fontSize: SIZE.minor,
             margin: 0,
           }}
         >

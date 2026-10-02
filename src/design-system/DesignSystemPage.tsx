@@ -148,7 +148,7 @@ function SectionDemo() {
         open={open}
         onToggle={setOpen}
         badge={3}
-        right={<Button variant="ghost" style={{ height: 20, padding: `0 ${SPACE.s4}px`, fontSize: SIZE.s10 }}>清除</Button>}
+        right={<Button variant="ghost" style={{ height: 20, padding: `0 ${SPACE.s4}px`, fontSize: SIZE.minor }}>清除</Button>}
       >
         <span>受控收合 + 徽章 + 右側動作。</span>
       </Section>
@@ -442,7 +442,7 @@ function TokenSwatches() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: SPACE.s6, width: "100%" }}>
       {keys.map((k) => (
-        <div key={k} style={{ display: "flex", alignItems: "center", gap: SPACE.s8, fontFamily: FONT.data, fontSize: SIZE.s10 }}>
+        <div key={k} style={{ display: "flex", alignItems: "center", gap: SPACE.s8, fontFamily: FONT.data, fontSize: SIZE.minor }}>
           <span style={{ width: 28, height: 16, background: tokens[k], border: `1px solid ${tokens.border}`, flex: "none" }} />
           <span>{k}</span>
           <span style={{ color: tokens.fg3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tokens[k]}</span>
@@ -478,12 +478,12 @@ export function DesignSystemPage() {
   return (
     <div style={{ background: t.mapBg, color: t.fg1, fontFamily: FONT.ui, minHeight: "100vh", padding: `${SPACE.s24}px ${SPACE.s24 + SPACE.s8}px` }}>
       <header style={{ marginBottom: SPACE.s24 }}>
-        <div style={{ fontFamily: FONT.data, fontSize: SIZE.s9, letterSpacing: ".18em", color: t.fg3 }}>FLIGHT ARC · STUDIO</div>
-        <h1 style={{ fontSize: SIZE.s18, fontWeight: 500, margin: `${SPACE.s4}px 0 ${SPACE.s8}px` }}>Design System · 活元件頁</h1>
-        <p style={{ fontSize: SIZE.s11, color: t.fg2, margin: 0 }}>
+        <div style={{ fontFamily: FONT.data, fontSize: SIZE.eyebrow, letterSpacing: ".18em", color: t.fg3 }}>FLIGHT ARC · STUDIO</div>
+        <h1 style={{ fontSize: SIZE.large, fontWeight: 500, margin: `${SPACE.s4}px 0 ${SPACE.s8}px` }}>Design System · 活元件頁</h1>
+        <p style={{ fontSize: SIZE.body, color: t.fg2, margin: 0 }}>
           src/ui 真元件，暗／淡並排。規格：docs/design-system/spec.md。新增元件必須同時加一段。
         </p>
-        <nav style={{ display: "flex", flexWrap: "wrap", gap: SPACE.s12, marginTop: SPACE.s12, fontFamily: FONT.data, fontSize: SIZE.s10 }}>
+        <nav style={{ display: "flex", flexWrap: "wrap", gap: SPACE.s12, marginTop: SPACE.s12, fontFamily: FONT.data, fontSize: SIZE.minor }}>
           {SECTIONS.map((s) => (
             <a key={s.id} href={`#${s.id}`} style={{ color: t.fg2 }}>
               {s.name}

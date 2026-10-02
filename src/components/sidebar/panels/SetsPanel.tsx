@@ -148,7 +148,7 @@ export function SetsPanel({
     cursor: "pointer",
     fontFamily: FONT.ui,
   };
-  const eyebrow = { fontSize: SIZE.s9, color: tokens.fg3, letterSpacing: ".18em", textTransform: "uppercase" as const, fontFamily: FONT.data };
+  const eyebrow = { fontSize: SIZE.eyebrow, color: tokens.fg3, letterSpacing: ".18em", textTransform: "uppercase" as const, fontFamily: FONT.data };
 
   const rowProps = (icao: string) => ({
     current: !setMode && icao === selectedAirport,
@@ -193,10 +193,10 @@ export function SetsPanel({
         {setMode ? (
           <>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: SPACE.s8 }}>
-              <div style={{ fontSize: SIZE.s11, color: tokens.fg2, lineHeight: 1.3, fontFamily: FONT.ui }}>
+              <div style={{ fontSize: SIZE.body, color: tokens.fg2, lineHeight: 1.3, fontFamily: FONT.ui }}>
                 組合 <strong style={{ color: tokens.fg1, fontFamily: FONT.data }}>{airportSet.length}</strong> 座
                 {setName && (
-                  <span style={{ marginLeft: SPACE.s6, fontSize: SIZE.s10, color: tokens.fg3 }}>· {setName}</span>
+                  <span style={{ marginLeft: SPACE.s6, fontSize: SIZE.minor, color: tokens.fg3 }}>· {setName}</span>
                 )}
               </div>
               <div style={{ display: "flex", gap: SPACE.s4 }}>
@@ -222,7 +222,7 @@ export function SetsPanel({
             )}
           </>
         ) : (
-          <div style={{ fontSize: SIZE.s10, color: tokens.fg3, lineHeight: 1.45, fontFamily: FONT.ui }}>
+          <div style={{ fontSize: SIZE.minor, color: tokens.fg3, lineHeight: 1.45, fontFamily: FONT.ui }}>
             點擊機場＝開啟並飛過去；按列尾 ＋ 或 Shift+點擊＝加入組合
           </div>
         )}
@@ -244,14 +244,14 @@ export function SetsPanel({
             background: tokens.ctl,
             color: tokens.fg1,
             fontFamily: FONT.ui,
-            fontSize: SIZE.s11,
+            fontSize: SIZE.body,
           }}
         />
       </div>
 
       {search.trim() && (
         <div style={{ paddingBottom: SPACE.s8 }}>
-          <div style={{ fontSize: SIZE.s10, color: tokens.fg3, padding: `${SPACE.s4}px ${SPACE.s4}px` }}>
+          <div style={{ fontSize: SIZE.minor, color: tokens.fg3, padding: `${SPACE.s4}px ${SPACE.s4}px` }}>
             {searchResults.length > 0
               ? searchResults.length > 60
                 ? `顯示前 60 座／共 ${searchResults.length} 座`
@@ -296,10 +296,10 @@ export function SetsPanel({
             >
               <span style={{ width: 2, height: 24, background: isActive ? tokens.accent : tokens.border, flexShrink: 0 }} />
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: SIZE.s11, color: isActive ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
+                <div style={{ fontSize: SIZE.body, color: isActive ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
                   {s.name}
                 </div>
-                <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data }}>
+                <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data }}>
                   {s.icaos.length} 座 · {s.icaos.slice(0, 4).join(" · ")}{s.icaos.length > 4 ? " …" : ""}
                 </div>
               </div>
@@ -314,7 +314,7 @@ export function SetsPanel({
           collapsible
           open={scenesOpen}
           onToggle={setScenesOpen}
-          right={<span style={{ fontFamily: FONT.data, fontSize: SIZE.s10, letterSpacing: 0 }}>{filteredScenes.length}</span>}
+          right={<span style={{ fontFamily: FONT.data, fontSize: SIZE.minor, letterSpacing: 0 }}>{filteredScenes.length}</span>}
         >
           {filteredScenes.map((scene) => (
             <button
@@ -326,8 +326,8 @@ export function SetsPanel({
             >
               <span style={{ width: 2, height: 24, background: tokens.accent, flexShrink: 0 }} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: SIZE.s11, color: tokens.fg1 }}>{scene.name}</div>
-                <div style={{ fontSize: SIZE.s10, color: tokens.fg3 }}>{scene.desc}</div>
+                <div style={{ fontSize: SIZE.body, color: tokens.fg1 }}>{scene.name}</div>
+                <div style={{ fontSize: SIZE.minor, color: tokens.fg3 }}>{scene.desc}</div>
               </div>
             </button>
           ))}
@@ -339,7 +339,7 @@ export function SetsPanel({
       {/* Complete airport directory: Taiwan / Japan / continent → country → airport */}
       <div style={{ display: "flex", alignItems: "baseline", gap: SPACE.s6, padding: `${SPACE.s2}px ${SPACE.s8}px ${SPACE.s4}px` }}>
         <span style={eyebrow}>ALL · 全部機場</span>
-        <span style={{ fontSize: SIZE.s9, color: tokens.fg3, fontFamily: FONT.data }}>
+        <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data }}>
           {catalogIcaos.length.toLocaleString()} 座 · {airports.length.toLocaleString()} 座有軌跡
         </span>
       </div>
@@ -357,8 +357,8 @@ export function SetsPanel({
               style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px`, color: tokens.fg3 }}
             >
               <IconChevron size={9} direction={open ? "down" : "right"} />
-              <span style={{ fontSize: SIZE.s11, color: tokens.fg1, flex: 1 }}>{continent.label}</span>
-              <span style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data }}>
+              <span style={{ fontSize: SIZE.body, color: tokens.fg1, flex: 1 }}>{continent.label}</span>
+              <span style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data }}>
                 {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{continentIcaos.length}
               </span>
             </button>
@@ -378,8 +378,8 @@ export function SetsPanel({
                     style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px`, color: tokens.fg3 }}
                   >
                     <IconChevron size={8} direction={countryOpen ? "down" : "right"} />
-                    <span style={{ fontSize: SIZE.s10, color: tokens.fg2, flex: 1 }}>{country.label}</span>
-                    <span style={{ fontSize: SIZE.s9, color: tokens.fg3, fontFamily: FONT.data }}>
+                    <span style={{ fontSize: SIZE.minor, color: tokens.fg2, flex: 1 }}>{country.label}</span>
+                    <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data }}>
                       {selectedInCountry > 0 ? `${selectedInCountry}/` : ""}{country.icaos.length}
                     </span>
                   </button>

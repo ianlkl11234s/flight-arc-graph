@@ -44,10 +44,10 @@ export function StatCard({ label, value, sub, layout = "card", emphasis, title }
           fontFamily: FONT.ui,
         }}
       >
-        <span style={{ fontSize: SIZE.s11, color: tokens.fg2, minWidth: 0 }}>{label}</span>
-        <span style={{ ...numStyle, fontSize: SIZE.s12 }}>
+        <span style={{ fontSize: SIZE.body, color: tokens.fg2, minWidth: 0 }}>{label}</span>
+        <span style={{ ...numStyle, fontSize: SIZE.sub }}>
           {shown}
-          {sub && <span style={{ fontSize: SIZE.s10, color: tokens.fg3, marginLeft: SPACE.s4, fontWeight: 400 }}>{sub}</span>}
+          {sub && <span style={{ fontSize: SIZE.minor, color: tokens.fg3, marginLeft: SPACE.s4, fontWeight: 400 }}>{sub}</span>}
         </span>
       </div>
     );
@@ -68,11 +68,11 @@ export function StatCard({ label, value, sub, layout = "card", emphasis, title }
         fontFamily: FONT.ui,
       }}
     >
-      <span style={{ fontSize: SIZE.s10, color: tokens.fg3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <span style={{ fontSize: SIZE.minor, color: tokens.fg3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {label}
       </span>
-      <span style={{ ...numStyle, fontSize: SIZE.s14 }}>{shown}</span>
-      {sub && <span style={{ fontSize: SIZE.s10, color: tokens.fg2, fontFamily: FONT.data }}>{sub}</span>}
+      <span style={{ ...numStyle, fontSize: SIZE.title }}>{shown}</span>
+      {sub && <span style={{ fontSize: SIZE.minor, color: tokens.fg2, fontFamily: FONT.data }}>{sub}</span>}
     </div>
   );
 }

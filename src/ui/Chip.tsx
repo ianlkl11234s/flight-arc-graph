@@ -26,7 +26,7 @@ export function Chip({ label, selected = false, onClick, onRemove, removeLabel =
     alignItems: "center",
     gap: SPACE.s4,
     fontFamily: mono ? FONT.data : FONT.ui,
-    fontSize: SIZE.s10,
+    fontSize: SIZE.minor,
     lineHeight: 1.4,
     padding: onRemove ? `${SPACE.s2}px ${SPACE.s2}px ${SPACE.s2}px ${SPACE.s8}px` : `${SPACE.s2}px ${SPACE.s8}px`,
     borderRadius: RADIUS.base,

@@ -17,7 +17,7 @@ export function SettingsPanel(props: IconRailSidebarProps) {
             borderRadius: RADIUS.base,
             background: tokens.accentSoft,
             color: tokens.fg1,
-            fontSize: SIZE.s10,
+            fontSize: SIZE.minor,
             fontFamily: FONT.ui,
             lineHeight: 1.45,
           }}>

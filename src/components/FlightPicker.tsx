@@ -1,5 +1,5 @@
 import type { Flight, Scope, TrackMode } from "../types";
-import { FONT } from "../styles/tokens";
+import { FONT, SIZE } from "../styles/tokens";
 
 interface Props {
   flights: Flight[];
@@ -21,7 +21,7 @@ const btnStyle = (active: boolean, dark: boolean): React.CSSProperties => ({
   border: `1px solid ${active ? (dark ? "rgba(100,170,255,0.6)" : "rgba(100,170,255,0.5)") : (dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)")}`,
   borderRadius: 4,
   padding: "4px 10px",
-  fontSize: 11,
+  fontSize: SIZE.body,
   cursor: "pointer",
   fontFamily: FONT.ui,
   backdropFilter: "blur(8px)",
@@ -34,7 +34,7 @@ const getSelectStyle = (dark: boolean): React.CSSProperties => ({
   border: `1px solid ${dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
   borderRadius: 4,
   padding: "4px 8px",
-  fontSize: 11,
+  fontSize: SIZE.body,
   fontFamily: FONT.ui,
   maxWidth: 220,
   backdropFilter: "blur(8px)",
@@ -71,7 +71,7 @@ export function FlightPicker({
           key={s}
           style={{
             ...btnStyle(scope === s, isDarkTheme),
-            ...(isMobile ? { padding: "10px 12px", fontSize: 12 } : {}),
+            ...(isMobile ? { padding: "10px 12px", fontSize: SIZE.sub } : {}),
           }}
           onClick={() => onScopeChange(s)}
         >
@@ -84,7 +84,7 @@ export function FlightPicker({
           key={m}
           style={{
             ...btnStyle(trackMode === m, isDarkTheme),
-            ...(isMobile ? { padding: "10px 12px", fontSize: 12 } : {}),
+            ...(isMobile ? { padding: "10px 12px", fontSize: SIZE.sub } : {}),
           }}
           onClick={() => {
             onTrackModeChange(m);

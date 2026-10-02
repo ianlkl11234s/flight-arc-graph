@@ -353,7 +353,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               </div>
             )}
             {(activeWorkspace === "selection" || activeWorkspace === "explore") && (
-              <div style={{ fontSize: SIZE.s10, color: tokens.fg3, fontFamily: FONT.data, lineHeight: 1.45 }}>
+              <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data, lineHeight: 1.45 }}>
                 {activeSelection.length} 座機場
                 {selectedDate ? ` · ${selectedDate}` : ""}
                 {selectedDate && selectedAvailable < activeSelection.length
@@ -417,7 +417,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                 value={props.dataSource}
                 onChange={props.onDataSourceChange}
               />
-              <div style={{ fontSize: SIZE.s10, color: tokens.fg3, lineHeight: 1.5 }}>
+              <div style={{ fontSize: SIZE.minor, color: tokens.fg3, lineHeight: 1.5 }}>
                 {props.dataSource === "fused"
                   ? "切回航線軌跡：回到單一機場範圍、天數重設為 1 天、靜態軌跡透明度回到預設。"
                   : "切到空域快照：改看整個區域某天的空中快照，天數重設為 1 天、靜態軌跡調淡，並拉遠到區域視角。"}

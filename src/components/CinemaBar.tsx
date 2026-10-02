@@ -31,13 +31,13 @@ function DurationInput({ value, onChange, min = 0, max = 5999, compact = false }
     border: `1px solid ${tokens.border}`,
     borderRadius: RADIUS.base,
     color: tokens.fg1,
-    fontSize: compact ? SIZE.s10 : SIZE.s11,
+    fontSize: compact ? SIZE.minor : SIZE.body,
     fontFamily: FONT.data,
     padding: compact ? "2px 3px" : "3px 4px",
     textAlign: "center",
   };
   const labelStyle: React.CSSProperties = {
-    color: tokens.fg3, fontSize: SIZE.s9, fontFamily: FONT.ui,
+    color: tokens.fg3, fontSize: SIZE.eyebrow, fontFamily: FONT.ui,
   };
   const clamp = (newM: number, newS: number) => {
     const total = Math.max(min, Math.min(max, newM * 60 + newS));
@@ -166,9 +166,9 @@ export function CinemaBar({
     transform: "translateX(-50%)",
     zIndex: Z.toolbar,
   };
-  const labelStyle: React.CSSProperties = { color: tokens.fg3, fontSize: SIZE.s10, fontFamily: FONT.ui };
+  const labelStyle: React.CSSProperties = { color: tokens.fg3, fontSize: SIZE.minor, fontFamily: FONT.ui };
   const rowBg = { background: tokens.ctl, borderRadius: RADIUS.base } as const;
-  const smallText: React.CSSProperties = { fontFamily: FONT.ui, fontSize: SIZE.s11, color: tokens.fg2 };
+  const smallText: React.CSSProperties = { fontFamily: FONT.ui, fontSize: SIZE.body, color: tokens.fg2 };
   const ghostSmall = { width: 24, height: 24 } as const;
   const textInput: React.CSSProperties = {
     background: tokens.ctl,
@@ -201,14 +201,14 @@ export function CinemaBar({
       {cinemaPhase === "play" ? (
         /* ── Playing: 精簡 UI ── */
         <div style={{ display: "flex", alignItems: "center", gap: SPACE.s12 }}>
-          <span style={{ color: tokens.fg1, fontSize: SIZE.s11, fontFamily: FONT.data, display: "inline-flex", alignItems: "center", gap: SPACE.s6 }}>
+          <span style={{ color: tokens.fg1, fontSize: SIZE.body, fontFamily: FONT.data, display: "inline-flex", alignItems: "center", gap: SPACE.s6 }}>
             <IconPlay /> KF {currentKfIndex + 1}/{keyframes.length}{loop ? " · loop" : ""}
           </span>
           <div style={{ flex: 1, height: 2, background: mix(tokens.fg1, 20), minWidth: 100 }}>
             <div style={{ width: `${sequenceProgress * 100}%`, height: "100%", background: tokens.accent, transition: "width 0.1s" }} />
           </div>
           {isRecording && (
-            <span style={{ color: tokens.rec, fontSize: SIZE.s11, fontFamily: FONT.data, animation: "pulse 1s ease-in-out infinite" }}>
+            <span style={{ color: tokens.rec, fontSize: SIZE.body, fontFamily: FONT.data, animation: "pulse 1s ease-in-out infinite" }}>
               REC {formatTime(recordingTime)}
             </span>
           )}
@@ -324,7 +324,7 @@ export function CinemaBar({
                       flex: 1,
                       height: 28,
                       boxSizing: "border-box",
-                      fontSize: SIZE.s11,
+                      fontSize: SIZE.body,
                       padding: "0 8px",
                     }}
                     autoFocus
@@ -357,7 +357,7 @@ export function CinemaBar({
                       <span style={{ ...smallText, flex: 1, color: tokens.fg1 }}>
                         {seq.name}
                       </span>
-                      <span style={{ ...labelStyle, fontSize: SIZE.s10 }}>
+                      <span style={{ ...labelStyle, fontSize: SIZE.minor }}>
                         {seq.keyframes.length} KF
                       </span>
                       <Button variant="ghost" onClick={() => { onLoadSequence(seq.id); setShowLoadList(false); }} style={{ height: 24 }}>
@@ -382,7 +382,7 @@ export function CinemaBar({
                         padding: "4px 8px",
                         ...rowBg,
                       }}>
-                        <span style={{ ...labelStyle, fontSize: SIZE.s11, minWidth: 20, fontFamily: FONT.data }}>
+                        <span style={{ ...labelStyle, fontSize: SIZE.body, minWidth: 20, fontFamily: FONT.data }}>
                           {i + 1}.
                         </span>
                         <span style={{ ...smallText, fontFamily: FONT.data, minWidth: 45 }}>
@@ -462,7 +462,7 @@ export function CinemaBar({
                                   style={{
                                     ...textInput,
                                     width: 36,
-                                    fontSize: SIZE.s10,
+                                    fontSize: SIZE.minor,
                                     fontFamily: FONT.data,
                                     padding: "1px 3px",
                                     textAlign: "center" as const,

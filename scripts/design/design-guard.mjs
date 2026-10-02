@@ -3,6 +3,9 @@
 //   node scripts/design/design-guard.mjs           # 與 baseline 比對，任一檔增加 → exit 1
 //   node scripts/design/design-guard.mjs --update  # 數字全部不升時寫回；有任何上升 → 拒絕
 // 掃描：src/components/**/*.{ts,tsx}、src/ui/**（baseline 0）與 src/App.tsx；排除 colorTheme.ts、src/three/**、src/map/**
+// 另一條硬規則（不走 baseline，只准 0）：chrome 字級 < 11（最小字級拍板 2026-10）。
+//   掃 fontSize: N / fontSize={N} / fontSize="N" 與 CSS font-size: Npx；同時掃 src/design-system/** 與 src/styles/ui.css。
+//   viewBox 內的圖示字形（非文字）在數字後加 /* glyph */ 註記豁免，例：fontSize={6 /* glyph */}。
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, resolve, relative, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -46,6 +49,30 @@ for (const f of files) {
   current[f] = { hex: (src.match(HEX) ?? []).length, rgba: (src.match(RGB) ?? []).length };
 }
 
+// ── 最小字級（硬規則：0） ──
+const MIN_FONT = 11;
+const fontFiles = [
+  ...files,
+  ...walk(resolve(root, "src/design-system")).map((p) => relative(root, p).split(sep).join("/")),
+  "src/styles/ui.css",
+].filter((f) => existsSync(resolve(root, f)));
+const FONT_RE = /fontSize\s*[:=]\s*\{?\s*["']?([0-9]+(?:\.[0-9]+)?)(?![0-9.])(?!\s*\/\*\s*glyph)|font-size\s*:\s*([0-9]+(?:\.[0-9]+)?)px/g;
+const smallFonts = [];
+for (const f of fontFiles) {
+  const lines = readFileSync(resolve(root, f), "utf8").split("\n");
+  lines.forEach((line, i) => {
+    for (const m of line.matchAll(FONT_RE)) {
+      const v = Number(m[1] ?? m[2]);
+      if (v < MIN_FONT) smallFonts.push(`${f}:${i + 1}: ${m[0].trim()}`);
+    }
+  });
+}
+if (smallFonts.length) {
+  console.error(`design-guard: chrome 字級 < ${MIN_FONT}px 共 ${smallFonts.length} 處（只准 0；改用 SIZE.*）：`);
+  for (const r of smallFonts) console.error("  " + r);
+  process.exit(1);
+}
+
 const total = (o) => Object.values(o).reduce((a, v) => ({ hex: a.hex + v.hex, rgba: a.rgba + v.rgba }), { hex: 0, rgba: 0 });
 
 const baseline = existsSync(baselinePath) ? JSON.parse(readFileSync(baselinePath, "utf8")).files : null;
@@ -79,5 +106,5 @@ if (update) {
   console.log(`baseline 已更新：hex ${bt.hex} -> ${t.hex}、rgba ${bt.rgba} -> ${t.rgba}`);
 } else {
   const lowered = t.hex < bt.hex || t.rgba < bt.rgba;
-  console.log(`design-guard: OK（hex ${t.hex}、rgba ${t.rgba}）${lowered ? "；數字已低於 baseline，可用 --update 收緊" : ""}`);
+  console.log(`design-guard: OK（hex ${t.hex}、rgba ${t.rgba}、字級<${MIN_FONT} 0 處）${lowered ? "；數字已低於 baseline，可用 --update 收緊" : ""}`);
 }
