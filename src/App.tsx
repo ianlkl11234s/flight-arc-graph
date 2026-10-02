@@ -2049,6 +2049,30 @@ export default function App() {
   };
   urlBuildRef.current = buildUrlSearch;
 
+  // 工具列「複製連結」：當下現算（鏡頭 debounce 可能還沒寫回），同時更新網址列
+  const handleCopyLink = async (): Promise<boolean> => {
+    const search = buildUrlSearch();
+    const path = `${window.location.pathname}${search}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", path);
+    const url = `${window.location.origin}${path}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      return true;
+    } catch {
+      // clipboard API 不可用（非安全來源等）→ 退回 execCommand
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch { ok = false; }
+      ta.remove();
+      return ok;
+    }
+  };
+
   return (
     <ThemeProvider isDark={isDarkTheme}>
     <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
@@ -2599,6 +2623,7 @@ export default function App() {
             onMapStyleChange={setMapStyleId}
             onCapture={() => setCaptureMode(true)}
             onInfo={() => setShowInfo(true)}
+            onCopyLink={handleCopyLink}
           />
 
         </>

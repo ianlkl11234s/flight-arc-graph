@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import type { DepArrFilter, RenderMode } from "../types";
 import type { TrajColorBy } from "../data/depArrColors";
 import { useTheme } from "../styles/ThemeContext";
@@ -18,6 +19,42 @@ interface ToolbarProps {
   onMapStyleChange: (id: string) => void;
   onCapture: () => void;
   onInfo: () => void;
+  /** 複製目前畫面的連結（P6）；回傳是否成功 */
+  onCopyLink: () => Promise<boolean>;
+}
+
+function IconLink() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+      <path d="M6 8a2.6 2.6 0 0 0 3.7 0l2-2a2.6 2.6 0 0 0-3.7-3.7l-.8.8" strokeLinecap="round" />
+      <path d="M8 6a2.6 2.6 0 0 0-3.7 0l-2 2a2.6 2.6 0 0 0 3.7 3.7l.8-.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** 「複製連結」按鈕：按下後 1.5 秒顯示「已複製」／「複製失敗」，固定寬度（R10） */
+function CopyLinkButton({ onCopy }: { onCopy: () => Promise<boolean> }) {
+  const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  const handleClick = async () => {
+    const ok = await onCopy();
+    setStatus(ok ? "copied" : "failed");
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setStatus("idle"), 1500);
+  };
+  return (
+    <Button
+      variant="ghost"
+      icon={<IconLink />}
+      width={100}
+      onClick={handleClick}
+      title="複製目前畫面的連結（機場、日期、時刻、鏡頭…）"
+      aria-live="polite"
+    >
+      {status === "copied" ? "已複製" : status === "failed" ? "複製失敗" : "複製連結"}
+    </Button>
+  );
 }
 
 function IconInfo() {
@@ -41,7 +78,7 @@ function Divider() {
 }
 
 /**
- * 右上唯一工具列（spec R3）：起降 ｜ 染色 ｜ 2D/3D · 底圖 ｜ 錄影 · 說明，固定順序、單排。
+ * 右上唯一工具列（spec R3）：起降 ｜ 染色 ｜ 2D/3D · 底圖 ｜ 錄影 · 複製連結 · 說明，固定順序、單排。
  * 染色：高度（預設）｜起降（§7）；沒有選定機場或 Compare 時「起降」disabled。
  */
 export function Toolbar(p: ToolbarProps) {
@@ -119,6 +156,7 @@ export function Toolbar(p: ToolbarProps) {
       >
         錄影
       </Button>
+      <CopyLinkButton onCopy={p.onCopyLink} />
       <Button variant="ghost" icon={<IconInfo />} ariaLabel="說明" onClick={p.onInfo} />
     </div>
   );
