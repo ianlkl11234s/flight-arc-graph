@@ -54,7 +54,6 @@ export function MobileBottomSheet({ isLandscape, children }: Props) {
         right: 0,
         height,
         zIndex: Z.popover,
-        borderBottom: 0,
         transition: "height 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
         overflow: "hidden",

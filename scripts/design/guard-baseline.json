@@ -1,8 +1,8 @@
 {
   "files": {
     "src/App.tsx": {
-      "hex": 21,
-      "rgba": 48
+      "hex": 19,
+      "rgba": 27
     },
     "src/components/AirportSelector.tsx": {
       "hex": 0,

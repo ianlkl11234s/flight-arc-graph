@@ -51,6 +51,7 @@ import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOver
 import { setFrozenAnimTime } from "./three/animClock";
 import { ThemeProvider, useTheme } from "./styles/ThemeContext";
 import { FONT, LAYOUT, SIZE, SPACE, Z } from "./styles/tokens";
+import { IconClose } from "./ui/icons";
 import { Button, Caption, Segmented, SelectionRing, Select, Slider, type CaptionMetaItem } from "./ui";
 import { escLayerToClose, isEditableTarget } from "./ui/escStack";
 import { ALL_OVERLAYS_CLOSED, overlaysOpen, overlaysToClose, type OverlayKey, type OverlayState } from "./ui/overlayMutex";
@@ -2180,26 +2181,18 @@ export default function App() {
           )}
           {/* Trail 模式切換 — 錄製中隱藏 */}
           {!isExporting && (
-            <button
+            <Button
               onClick={() => setTrailDisplay(d => d === "full" ? "progressive" : "full")}
+              pressed={trailDisplay === "progressive"}
               style={{
                 position: "absolute",
                 top: isMobile ? 120 : 140,
                 left: isMobile ? 16 : 32,
                 zIndex: Z.toolbar,
-                padding: "5px 14px",
-                borderRadius: 16,
-                border: "1px solid rgba(255,255,255,0.2)",
-                background: trailDisplay === "progressive" ? "rgba(255,255,255,0.15)" : "rgba(60,60,60,0.4)",
-                color: trailDisplay === "progressive" ? "#fff" : "rgba(255,255,255,0.6)",
-                fontSize: SIZE.sub,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
               }}
             >
               Trail: {trailDisplay === "full" ? "Full" : "Progressive"}
-            </button>
+            </Button>
           )}
           {/* 鏡頭控制列 — HTML overlay 不會被錄進影片 */}
           <CinemaBar
@@ -2243,42 +2236,16 @@ export default function App() {
             />
           {/* 退出按鈕 — 錄製中隱藏，避免誤按中斷 */}
           {!isExporting && (
-            <button
+            <Button
               onClick={() => setCaptureMode(false)}
-              style={isMobile ? {
-                position: "absolute",
-                top: 16,
-                right: 16,
-                zIndex: Z.toolbar,
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                background: "rgba(0,0,0,0.4)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "#fff",
-                fontSize: SIZE.large,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backdropFilter: "blur(8px)",
-              } : {
-                position: "absolute",
-                bottom: 32,
-                right: 32,
-                zIndex: Z.toolbar,
-                padding: "4px 12px",
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 4,
-                color: "rgba(255,255,255,0.4)",
-                fontSize: SIZE.body,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-              }}
+              ariaLabel="離開錄影"
+              icon={isMobile ? <IconClose size={14} /> : undefined}
+              style={isMobile
+                ? { position: "absolute", top: 16, right: 16, zIndex: Z.toolbar, width: 36, height: 36 }
+                : { position: "absolute", bottom: 32, right: 32, zIndex: Z.toolbar }}
             >
-              {isMobile ? "✕" : "ESC"}
-            </button>
+              {isMobile ? null : "ESC"}
+            </Button>
           )}
           {/* 攝影輔助框（HTML overlay，不會被錄進影片） */}
           <RecordingGuide visible={showGuide} showGrid={showGuideGrid} />
@@ -2287,44 +2254,14 @@ export default function App() {
             <div style={{
               position: "absolute",
               top: isMobile ? 16 : 32,
-              right: isMobile ? 16 : 32,
+              right: isMobile ? 16 + 36 + SPACE.s6 : 32, // 手機：讓出右上角的離開鈕
               zIndex: Z.toast,
               display: "flex",
-              gap: 6,
+              gap: SPACE.s6,
             }}>
-              <button
-                onClick={() => setShowGuide(g => !g)}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: 8,
-                  border: `1px solid ${showGuide ? "rgba(255,80,80,0.4)" : "rgba(255,255,255,0.15)"}`,
-                  background: showGuide ? "rgba(255,80,80,0.15)" : "rgba(255,255,255,0.08)",
-                  color: showGuide ? "rgba(255,80,80,0.8)" : "rgba(255,255,255,0.4)",
-                  fontSize: SIZE.body,
-                  fontFamily: FONT.ui,
-                  cursor: "pointer",
-                  backdropFilter: "blur(8px)",
-                }}
-              >
-                16:9
-              </button>
+              <Button pressed={showGuide} onClick={() => setShowGuide(g => !g)}>16:9</Button>
               {showGuide && (
-                <button
-                  onClick={() => setShowGuideGrid(g => !g)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 8,
-                    border: `1px solid ${showGuideGrid ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.15)"}`,
-                    background: showGuideGrid ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.08)",
-                    color: showGuideGrid ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)",
-                    fontSize: SIZE.body,
-                    fontFamily: FONT.ui,
-                    cursor: "pointer",
-                    backdropFilter: "blur(8px)",
-                  }}
-                >
-                  Grid
-                </button>
+                <Button pressed={showGuideGrid} onClick={() => setShowGuideGrid(g => !g)}>Grid</Button>
               )}
             </div>
           )}
@@ -2630,7 +2567,7 @@ export default function App() {
 
       {/* ── 手機版 UI ── */}
       {!captureMode && isMobile && (
-        <ThemeProvider isDark syncDocument={false}>
+        <>
           {/* Compact Header */}
           <MobileHeader
             airports={airports}
@@ -2771,7 +2708,7 @@ export default function App() {
               </>
             )}
           </MobileBottomSheet>
-        </ThemeProvider>
+        </>
       )}
 
       {/* 載入狀態條（R6）：單一實例跨模式。桌機＝工具列下方；手機＝header＋時間軸下方、右 10；
