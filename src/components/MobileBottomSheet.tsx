@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
-import { Z } from "../styles/tokens";
+import { useTheme } from "../styles/ThemeContext";
+import { FONT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
+import { Panel } from "../ui";
 
 type SheetLevel = "collapsed" | "half" | "full";
 
@@ -25,7 +27,9 @@ function getHeight(level: SheetLevel, isLandscape: boolean): number {
   }
 }
 
+/** 手機底部抽屜：Panel 外殼語言（panel 底 + blur + 細框 + 近直角），上緣 grab bar；對角刻度省略（spec §3）。 */
 export function MobileBottomSheet({ isLandscape, children }: Props) {
+  const { tokens } = useTheme();
   const [level, setLevel] = useState<SheetLevel>("collapsed");
 
   const cycleLevel = useCallback(() => {
@@ -38,7 +42,11 @@ export function MobileBottomSheet({ isLandscape, children }: Props) {
   const height = getHeight(level, isLandscape);
 
   return (
-    <div
+    <Panel
+      floating={false}
+      ticks={false}
+      ariaLabel="設定抽屜"
+      width="auto"
       style={{
         position: "fixed",
         bottom: 0,
@@ -46,39 +54,34 @@ export function MobileBottomSheet({ isLandscape, children }: Props) {
         right: 0,
         height,
         zIndex: Z.popover,
-        background: "rgba(0,0,0,0.7)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        borderTop: "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "16px 16px 0 0",
+        borderBottom: 0,
         transition: "height 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        display: "flex",
-        flexDirection: "column",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
         overflow: "hidden",
       }}
     >
-      {/* Drag handle */}
-      <div
+      {/* Grab bar：點一下切換 收合／半開／全開 */}
+      <button
+        type="button"
         onClick={cycleLevel}
+        aria-label="展開或收合設定抽屜"
+        className="fa-focus"
         style={{
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          padding: "10px 0 6px",
+          padding: `${SPACE.s8}px 0`,
+          border: 0,
+          background: "transparent",
           cursor: "pointer",
           flexShrink: 0,
         }}
       >
-        <div
-          style={{
-            width: 36,
-            height: 4,
-            borderRadius: 2,
-            background: "rgba(255,255,255,0.3)",
-          }}
+        <span
+          aria-hidden="true"
+          style={{ width: 36, height: 4, borderRadius: RADIUS.base, background: tokens.fg3 }}
         />
-      </div>
+      </button>
 
       {/* Content */}
       <div
@@ -86,11 +89,21 @@ export function MobileBottomSheet({ isLandscape, children }: Props) {
           flex: 1,
           overflowY: level === "full" ? "auto" : "hidden",
           overflowX: "hidden",
-          padding: "0 16px",
+          padding: `0 ${SPACE.s16}px`,
         }}
       >
         {children(level)}
       </div>
+    </Panel>
+  );
+}
+
+/** 抽屜內的次要說明行（例：班數）。 */
+export function SheetNote({ children }: { children: React.ReactNode }) {
+  const { tokens } = useTheme();
+  return (
+    <div style={{ marginTop: SPACE.s8, color: tokens.fg3, fontSize: SIZE.body, fontFamily: FONT.ui }}>
+      {children}
     </div>
   );
 }

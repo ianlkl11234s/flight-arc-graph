@@ -24,12 +24,12 @@ import { filterByAirport } from "./data/flightLoader";
 import type { LodLevel } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
 import { buildSearch, decodeUrlState, encodeUrlState, type UrlState } from "./data/urlState";
-import { AirportSelector } from "./components/AirportSelector";
+import { MobileHeader } from "./components/MobileHeader";
 import { FlightPicker } from "./components/FlightPicker";
 import { TimelineControls } from "./components/TimelineControls";
 import { Timeline, type HourBin } from "./components/Timeline";
-import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
-import { MobileBottomSheet } from "./components/MobileBottomSheet";
+import { MAP_STYLES, getStyleUrl } from "./components/StyleSelector";
+import { MobileBottomSheet, SheetNote } from "./components/MobileBottomSheet";
 import { Toolbar } from "./components/Toolbar";
 import { Dock, DockItem } from "./components/Dock";
 import { LoadingStatus } from "./components/LoadingStatus";
@@ -52,7 +52,7 @@ import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOver
 import { setFrozenAnimTime } from "./three/animClock";
 import { ThemeProvider, useTheme } from "./styles/ThemeContext";
 import { FONT, LAYOUT, SIZE, SPACE, Z } from "./styles/tokens";
-import { Button, Caption, Segmented, SelectionRing, type CaptionMetaItem } from "./ui";
+import { Button, Caption, Segmented, SelectionRing, Select, Slider, type CaptionMetaItem } from "./ui";
 import { escLayerToClose, isEditableTarget } from "./ui/escStack";
 import { ALL_OVERLAYS_CLOSED, overlaysOpen, overlaysToClose, type OverlayKey, type OverlayState } from "./ui/overlayMutex";
 
@@ -2631,94 +2631,17 @@ export default function App() {
 
       {/* ── 手機版 UI ── */}
       {!captureMode && isMobile && (
-        <>
+        <ThemeProvider isDark syncDocument={false}>
           {/* Compact Header */}
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 44,
-              zIndex: Z.mapOverlay,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "0 12px",
-              paddingTop: "env(safe-area-inset-top, 0px)",
-              background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-            }}
-          >
-            <AirportSelector
-              airports={airports}
-              selected={selectedAirport}
-              isDarkTheme={true}
-              onChange={selectAirportSingle}
-            />
-
-            <div style={{ flex: 1 }} />
-
-            <button
-              onClick={() => setShowInfo(true)}
-              style={{
-                minWidth: 36,
-                height: 36,
-                padding: "0 8px",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "#fff",
-                fontSize: SIZE.sub,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              Info
-            </button>
-
-            <button
-              onClick={() => setCaptureMode(true)}
-              style={{
-                height: 36,
-                padding: "0 10px",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "#fff",
-                fontSize: SIZE.sub,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-                letterSpacing: 1,
-              }}
-            >
-              Capture
-            </button>
-
-            <button
-              onClick={() => setRenderMode((m) => (m === "3d" ? "2d" : "3d"))}
-              style={{
-                height: 36,
-                padding: "0 10px",
-                borderRadius: 8,
-                background: renderMode === "3d"
-                  ? "rgba(80,140,255,0.25)"
-                  : "rgba(255,170,68,0.25)",
-                border: `1px solid ${renderMode === "3d" ? "rgba(80,140,255,0.5)" : "rgba(255,170,68,0.5)"}`,
-                color: "#fff",
-                fontSize: SIZE.sub,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-                letterSpacing: 1,
-              }}
-            >
-              {renderMode === "3d" ? "3D" : "2D"}
-            </button>
-          </div>
+          <MobileHeader
+            airports={airports}
+            selectedAirport={selectedAirport}
+            onAirportChange={selectAirportSingle}
+            renderMode={renderMode}
+            onRenderModeChange={setRenderMode}
+            onCapture={() => setCaptureMode(true)}
+            onInfo={() => setShowInfo(true)}
+          />
 
           {/* Timeline 固定在 header 下方 */}
           <div
@@ -2768,30 +2691,17 @@ export default function App() {
               <>
                 {/* half: FlightPicker + Stats */}
                 {(level === "half" || level === "full") && (
-                  <div style={{ marginTop: 12 }}>
-                    <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
-                      {(["trails", "status"] as const).map((mode) => (
-                        <button
-                          key={mode}
-                          onClick={() => setDisplayMode(mode)}
-                          style={{
-                            background: displayMode === mode
-                              ? "rgba(100,170,255,0.3)" : "rgba(0,0,0,0.6)",
-                            color: "#fff",
-                            border: `1px solid ${displayMode === mode
-                              ? "rgba(100,170,255,0.6)" : "rgba(255,255,255,0.2)"}`,
-                            borderRadius: 4,
-                            padding: "8px 12px",
-                            fontSize: SIZE.sub,
-                            cursor: "pointer",
-                            fontFamily: FONT.ui,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {mode === "trails" ? "Flight Trails" : "Live Status"}
-                        </button>
-                      ))}
-                      <span style={{ color: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center" }}>|</span>
+                  <div style={{ marginTop: SPACE.s4 }}>
+                    <div style={{ display: "flex", gap: SPACE.s6, marginBottom: SPACE.s8, flexWrap: "wrap" }}>
+                      <Segmented<DisplayMode>
+                        ariaLabel="顯示模式"
+                        options={[
+                          { value: "trails", label: "Flight Trails" },
+                          { value: "status", label: "Live Status" },
+                        ]}
+                        value={displayMode}
+                        onChange={setDisplayMode}
+                      />
                       <Segmented<DataSource>
                         ariaLabel="資料來源"
                         options={[
@@ -2817,67 +2727,52 @@ export default function App() {
                       scope={scope}
                       trackMode={trackMode}
                       selectedFlightId={selectedFlightId}
-                      isDarkTheme={true}
-                      isMobile={true}
                       onScopeChange={setScope}
                       onTrackModeChange={setTrackMode}
                       onFlightSelect={setSelectedFlightId}
                     />
-                    <div
-                      style={{
-                        marginTop: 8,
-                        color: "rgba(255,255,255,0.4)",
-                        fontSize: SIZE.body,
-                        fontFamily: FONT.ui,
-                      }}
-                    >
+                    <SheetNote>
                       {finalFlights.length} flights
                       {scope === "region" && ` (${REGION_CONFIG[region].label})`}
-                    </div>
+                    </SheetNote>
                   </div>
                 )}
 
                 {/* full: Sliders + StyleSelector */}
                 {level === "full" && (
-                  <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: SIZE.body, fontFamily: FONT.ui }}>Style</span>
-                      <StyleSelector
-                        selected={mapStyleId}
-                        isDarkTheme={true}
-                        onChange={setMapStyleId}
+                  <div style={{ marginTop: SPACE.s12, paddingBottom: SPACE.s12, display: "flex", flexDirection: "column", gap: SPACE.s12 }}>
+                    <Select<string>
+                      label="Style"
+                      ariaLabel="底圖"
+                      options={MAP_STYLES.map((m) => ({ value: m.id, label: m.name }))}
+                      value={mapStyleId}
+                      onChange={setMapStyleId}
+                    />
+                    {[
+                      { label: "Alt", fmt: (v: number) => `×${v.toFixed(1)}`, min: 1, max: 5, step: 0.5, value: altExaggeration, set: setAltExaggeration },
+                      { label: "Z", fmt: (v: number) => `+${v}m`, min: 0, max: 1000, step: 50, value: altOffset, set: setAltOffset },
+                      { label: "Opacity", fmt: (v: number) => v.toFixed(2), min: 0.02, max: 0.5, step: 0.02, value: staticOpacity, set: setStaticOpacity },
+                      { label: "Orb", fmt: (v: number) => (v * 100000).toFixed(1), min: 0.000001, max: 0.00001, step: 0.000001, value: orbScale, set: setOrbScale },
+                      { label: "APT", fmt: (v: number) => v.toFixed(2), min: 0, max: 0.3, step: 0.01, value: airportOpacity, set: setAirportOpacity },
+                      { label: "Glow", fmt: (v: number) => v.toFixed(1), min: 0, max: 2, step: 0.1, value: airportGlow, set: setAirportGlow },
+                    ].map((sl) => (
+                      <Slider
+                        key={sl.label}
+                        label={sl.label}
+                        format={sl.fmt}
+                        min={sl.min}
+                        max={sl.max}
+                        step={sl.step}
+                        value={sl.value}
+                        onChange={sl.set}
                       />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {[
-                        { label: `Alt ×${altExaggeration.toFixed(1)}`, min: 1, max: 5, step: 0.5, value: altExaggeration, set: setAltExaggeration },
-                        { label: `Z +${altOffset}m`, min: 0, max: 1000, step: 50, value: altOffset, set: setAltOffset },
-                        { label: `Opacity ${staticOpacity.toFixed(2)}`, min: 0.02, max: 0.5, step: 0.02, value: staticOpacity, set: setStaticOpacity },
-                        { label: `Orb ${(orbScale * 100000).toFixed(1)}`, min: 0.000001, max: 0.00001, step: 0.000001, value: orbScale, set: setOrbScale },
-                        { label: `APT ${airportOpacity.toFixed(2)}`, min: 0, max: 0.3, step: 0.01, value: airportOpacity, set: setAirportOpacity },
-                        { label: `Glow ${airportGlow.toFixed(1)}`, min: 0, max: 2, step: 0.1, value: airportGlow, set: setAirportGlow },
-                      ].map((s) => (
-                        <label key={s.label} style={{
-                          color: "rgba(255,255,255,0.6)",
-                          fontSize: SIZE.body,
-                          fontFamily: FONT.ui,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}>
-                          <span style={{ minWidth: 90 }}>{s.label}</span>
-                          <input type="range" min={s.min} max={s.max} step={s.step} value={s.value}
-                            onChange={(e) => s.set(Number(e.target.value))}
-                            style={{ flex: 1, height: 6, accentColor: "rgba(255,255,255,0.6)" }} />
-                        </label>
-                      ))}
-                    </div>
+                    ))}
                   </div>
                 )}
               </>
             )}
           </MobileBottomSheet>
-        </>
+        </ThemeProvider>
       )}
 
       {/* 載入狀態條（R6）：單一實例跨模式。桌機＝工具列下方；手機＝header＋時間軸下方、右 10；

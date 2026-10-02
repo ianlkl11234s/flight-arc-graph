@@ -1,12 +1,12 @@
 {
   "files": {
     "src/App.tsx": {
-      "hex": 25,
-      "rgba": 67
+      "hex": 21,
+      "rgba": 49
     },
     "src/components/AirportSelector.tsx": {
-      "hex": 2,
-      "rgba": 4
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/AirspaceInfoCard.tsx": {
       "hex": 5,
@@ -29,8 +29,8 @@
       "rgba": 0
     },
     "src/components/FlightPicker.tsx": {
-      "hex": 4,
-      "rgba": 12
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/FlightStatsPanel.tsx": {
       "hex": 0,
@@ -50,7 +50,11 @@
     },
     "src/components/MobileBottomSheet.tsx": {
       "hex": 0,
-      "rgba": 3
+      "rgba": 0
+    },
+    "src/components/MobileHeader.tsx": {
+      "hex": 0,
+      "rgba": 0
     },
     "src/components/RecordingGuide.tsx": {
       "hex": 0,
