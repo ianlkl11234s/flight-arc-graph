@@ -1,5 +1,6 @@
 import type { Map as MapboxMap, GeoJSONSource } from "mapbox-gl";
 import type { Flight } from "../types";
+import { cumulativeFractions, mixHex } from "../data/depArrColors";
 
 const SOURCE_ID = "static-trails";
 const LAYER_ID = "static-trails-line";
@@ -59,15 +60,68 @@ export function setMapTrailColors(hexA: string, hexB: string) {
   customLerpDark = makeLerpColor(hexA, hexB);
 }
 
+/** 起降染色（§7）組合內互飛在 2D 的漸層段數（Mapbox line-color 是 per-feature 單色，故切段近似） */
+const GRADIENT_CHUNKS = 12;
+
+/** 組合內互飛航班 → GRADIENT_CHUNKS 段 LineString，各段取段中點距離比例的漸層色（首尾共點保持連續） */
+function gradientFeatures(f: Flight, [depHex, arrHex]: readonly [string, string]): GeoJSON.Feature[] {
+  const n = f.path.length;
+  const fracs = cumulativeFractions(f.path);
+  const chunks = Math.min(GRADIENT_CHUNKS, n - 1);
+  const out: GeoJSON.Feature[] = [];
+  for (let c = 0; c < chunks; c++) {
+    const s = Math.floor((c * (n - 1)) / chunks);
+    const e = Math.floor(((c + 1) * (n - 1)) / chunks);
+    if (e <= s) continue;
+    const coords: [number, number][] = [];
+    for (let i = s; i <= e; i++) coords.push([f.path.lng(i), f.path.lat(i)]);
+    out.push({
+      type: "Feature",
+      properties: {
+        callsign: f.callsign,
+        origin: f.origin_iata,
+        dest: f.dest_iata,
+        color: mixHex(depHex, arrHex, (fracs[s]! + fracs[e]!) / 2),
+      },
+      geometry: { type: "LineString", coordinates: coords },
+    });
+  }
+  return out;
+}
+
 /**
  * 將航班路徑轉為 GeoJSON FeatureCollection
+ * @param gradientMap 起降染色組合內互飛：fr24_id → [起點離場色, 終點進場色]；未傳時輸出與原本完全相同
  */
 function flightsToGeoJSON(
   flights: Flight[],
   isDark = true,
   compareColorMap?: Map<string, string>,
+  gradientMap?: Map<string, readonly [string, string]>,
 ): GeoJSON.FeatureCollection {
   const lerpColor = isDark ? (customLerpDark ?? lerpColorDark) : lerpColorLight;
+  if (gradientMap && gradientMap.size > 0) {
+    const features: GeoJSON.Feature[] = [];
+    for (const f of flights) {
+      if (f.path.length < 2) continue;
+      const g = gradientMap.get(f.fr24_id);
+      if (g) {
+        for (const ft of gradientFeatures(f, g)) features.push(ft);
+        continue;
+      }
+      features.push({
+        type: "Feature",
+        properties: {
+          callsign: f.callsign,
+          origin: f.origin_iata,
+          dest: f.dest_iata,
+          color: compareColorMap?.get(f.fr24_id) ?? lerpColor(hashToUnit(f.fr24_id)),
+        },
+        geometry: { type: "LineString", coordinates: pathToLineCoords(f.path) },
+      });
+    }
+    return { type: "FeatureCollection", features };
+  }
   return {
     type: "FeatureCollection",
     features: flights
@@ -93,6 +147,7 @@ function flightsToGeoJSON(
  * 新增或更新靜態軌跡圖層
  * @param background - 3D 模式下作為背景路線，降低透明度
  * @param compareColorMap - Compare 模式下，fr24_id → 日期色對應表
+ * @param gradientMap - 起降染色組合內互飛的沿路漸層（見 flightsToGeoJSON）
  */
 export function updateStaticTrails(
   map: MapboxMap,
@@ -100,6 +155,7 @@ export function updateStaticTrails(
   isDark = true,
   background = false,
   compareColorMap?: Map<string, string>,
+  gradientMap?: Map<string, readonly [string, string]>,
 ) {
   const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
 
@@ -110,7 +166,7 @@ export function updateStaticTrails(
   if (source) {
     // 目前 3D 全程由 Three.js 畫軌跡，calc2dTrailOpacity 也固定為 0。
     // 清空 Mapbox source 避免同一批完整 path 同時佔用兩套 GPU/JS buffers。
-    source.setData(background ? EMPTY_GEOJSON : flightsToGeoJSON(flights, isDark, compareColorMap));
+    source.setData(background ? EMPTY_GEOJSON : flightsToGeoJSON(flights, isDark, compareColorMap, gradientMap));
     if (map.getLayer(LAYER_ID)) {
       map.setPaintProperty(LAYER_ID, "line-opacity", lineOpacity);
     }
@@ -118,7 +174,7 @@ export function updateStaticTrails(
       map.setPaintProperty(GLOW_LAYER_ID, "line-opacity", glowOpacity);
     }
   } else {
-    const geojson = background ? EMPTY_GEOJSON : flightsToGeoJSON(flights, isDark, compareColorMap);
+    const geojson = background ? EMPTY_GEOJSON : flightsToGeoJSON(flights, isDark, compareColorMap, gradientMap);
     map.addSource(SOURCE_ID, {
       type: "geojson",
       data: geojson,

@@ -3,6 +3,8 @@ import type { Flight, RenderMode } from "../types";
 import type { ColorTheme } from "../types/colorTheme";
 import { COLOR_THEMES, DEFAULT_THEME_KEY, hexToRgb } from "../types/colorTheme";
 import { toMercator } from "../utils/coordinates";
+import type { TrackPath } from "../types/trackPath";
+import { cumulativeFractions, fractionAtTime } from "../data/depArrColors";
 import { BatchedTrails } from "./BatchedTrails";
 import { InstancedOrbs } from "./InstancedOrbs";
 
@@ -80,6 +82,8 @@ interface StaticBucket {
 
 /** update() 每幀重用的光軌頭部 scratch（避免每航班一次物件配置） */
 const _trailHead = { x: 0, y: 0, z: 0 };
+/** update() 每幀重用的起降漸層取色 scratch（writeTrail 立即讀 r/g/b，不保留 reference） */
+const _gradColor = new THREE.Color();
 
 /** 靜態軌跡分桶網格：經度 30° × 緯度 45°（12×4 = 48 格；只建非空桶） */
 const BUCKET_LNG_DEG = 30;
@@ -151,6 +155,18 @@ export class FlightScene {
   private perFlightColorMap: Map<string, THREE.Color> | null = null;
   /** 上次 setPerFlightColorMap 的內容簽章（避免 prop reference 變但內容相同時重建） */
   private lastColorMapSignature = "__init__";
+  /**
+   * 起降染色（§7）：組合內互飛航班 fr24_id → 沿路漸層端點色（起點離場 → 終點進場）。
+   * null = 不在起降模式（高度模式的著色路徑完全不經過這裡）。
+   */
+  private depArrGradients: Map<string, { dep: THREE.Color; arr: THREE.Color }> | null = null;
+  private lastGradientSignature = "__init__";
+  /** 起降模式：光球 glow 層跟著光軌色（per-instance color）；false = 主題 orbGlow（原行為） */
+  private orbsFollowTrailColor = false;
+  /** 起降模式的光球顏色 staging buffer（update() 依 orbEntries 順序寫入，InstancedOrbs 讀） */
+  private orbColorBuf: Float32Array | null = null;
+  /** 漸層比例快取：keyed by TrackPath（LOD 換層 path 物件會換，WeakMap 自動失效） */
+  private gradFracCache = new WeakMap<TrackPath, Float32Array>();
   private colorTheme: ColorTheme = COLOR_THEMES[DEFAULT_THEME_KEY]!;
   private themeColors: THREE.Color[] = themeToColors(COLOR_THEMES[DEFAULT_THEME_KEY]!);
   private lastMatrix: THREE.Matrix4 | null = null;
@@ -224,6 +240,7 @@ export class FlightScene {
 
     this.instancedOrbs = new InstancedOrbs(this.scene, this.colors[0]!, this.blending);
     this.instancedOrbs.setScale(this.currentOrbScale);
+    if (this.orbsFollowTrailColor) this.instancedOrbs.setInstanceColors(this.ensureOrbColorBuf());
 
     this.batchedTrails = new BatchedTrails(this.globeUniforms, this.blending);
     this.scene.add(this.batchedTrails.mesh);
@@ -278,6 +295,57 @@ export class FlightScene {
     this.applyColors();
     // 靜態 3D mesh 重建（per-vertex color 從 altitude gradient 換成 airport 色 / 反之）
     this.forceRebuildStatic();
+  }
+
+  /**
+   * 起降染色（§7）：設定組合內互飛航班的沿路漸層，並決定光球是否跟著光軌色。
+   * 進場／離場的平色仍走 setPerFlightColorMap。傳 (null, false) → 完全回到原行為。
+   * @param hexMap fr24_id → [起點離場色, 終點進場色]
+   * @param orbsFollow 光球 glow 層改用每班光軌色（起降模式開啟時 true）
+   */
+  setDepArrGradients(hexMap: Map<string, readonly [string, string]> | null, orbsFollow: boolean) {
+    let sig = `${orbsFollow ? 1 : 0}|`;
+    if (hexMap && hexMap.size > 0) {
+      sig += `${hexMap.size}|`;
+      let n = 0;
+      for (const [id, [a, b]] of hexMap) {
+        sig += `${id}:${a}>${b};`;
+        if (++n >= 8) break;
+      }
+    }
+    if (sig === this.lastGradientSignature) return;
+    this.lastGradientSignature = sig;
+
+    if (!hexMap || hexMap.size === 0) {
+      this.depArrGradients = null;
+    } else {
+      const m = new Map<string, { dep: THREE.Color; arr: THREE.Color }>();
+      for (const [id, [a, b]] of hexMap) {
+        const [ar, ag, ab] = hexToRgb(a);
+        const [br, bg, bb] = hexToRgb(b);
+        m.set(id, { dep: new THREE.Color(ar, ag, ab), arr: new THREE.Color(br, bg, bb) });
+      }
+      this.depArrGradients = m;
+    }
+    this.orbsFollowTrailColor = orbsFollow;
+    this.instancedOrbs?.setInstanceColors(orbsFollow ? this.ensureOrbColorBuf() : null);
+    // 推進 epoch（光軌/光球重寫）+ 靜態 mesh 重建
+    this.applyColors();
+  }
+
+  private ensureOrbColorBuf(): Float32Array {
+    if (!this.orbColorBuf) this.orbColorBuf = new Float32Array(InstancedOrbs.MAX_INSTANCES * 3);
+    return this.orbColorBuf;
+  }
+
+  /** 起降漸層：path 的累積距離比例（每個 path 物件只算一次） */
+  private gradientFractions(path: TrackPath): Float32Array {
+    let f = this.gradFracCache.get(path);
+    if (!f) {
+      f = cumulativeFractions(path);
+      this.gradFracCache.set(path, f);
+    }
+    return f;
   }
 
   private applyColors() {
@@ -599,6 +667,9 @@ export class FlightScene {
       if (!dirtyStart.has(bucket)) dirtyStart.set(bucket, bucketVertStart);
       // 若此 flight 有指定顏色（per-airport 模式），整條 trail 使用平色，忽略 altitude gradient
       const airportOverride = this.perFlightColorMap?.get(f.fr24_id) ?? null;
+      // 起降染色（§7）組合內互飛：沿路漸層（只在起降模式 depArrGradients 非 null 時才可能命中）
+      const grad = airportOverride || !this.depArrGradients ? undefined : this.depArrGradients.get(f.fr24_id);
+      const gradFracs = grad ? this.gradientFractions(f.path) : null;
       const ax = bucket.axis.x, ay = bucket.axis.y, az = bucket.axis.z;
 
       for (let i = startPt; i < f.path.length - 1 && vertsThisFrame < limit; i++) {
@@ -634,6 +705,15 @@ export class FlightScene {
           bucket.colors[o3 + 3] = r;
           bucket.colors[o3 + 4] = g;
           bucket.colors[o3 + 5] = bl;
+        } else if (grad) {
+          const fa = gradFracs![i]!, fb = gradFracs![i + 1]!;
+          const d = grad.dep, a = grad.arr;
+          bucket.colors[o3] = d.r + (a.r - d.r) * fa;
+          bucket.colors[o3 + 1] = d.g + (a.g - d.g) * fa;
+          bucket.colors[o3 + 2] = d.b + (a.b - d.b) * fa;
+          bucket.colors[o3 + 3] = d.r + (a.r - d.r) * fb;
+          bucket.colors[o3 + 4] = d.g + (a.g - d.g) * fb;
+          bucket.colors[o3 + 5] = d.b + (a.b - d.b) * fb;
         } else {
           let t = Math.min(Math.max(aAlt / MAX_ALT, 0), 1);
           let [cr, cg, cb] = lerpGradient(t);
@@ -989,9 +1069,22 @@ export class FlightScene {
     const activeIds = new Set<string>();
     const orbEntries: Array<{ id: string; x: number; y: number; z: number }> = [];
     const trailOpacity = this.isDarkTheme ? 0.8 : 1.0;
+    // 起降染色（§7）：高度模式下兩者皆 null，迴圈內只多兩次 null 判斷
+    const grads = this.depArrGradients;
+    const orbBuf = this.orbsFollowTrailColor ? this.orbColorBuf : null;
 
     for (const flight of activeFlights) {
       activeIds.add(flight.fr24_id);
+
+      // 組合內互飛：光軌（與光球）取目前位置在漸層上的顏色；其餘沿用 colorForFlight
+      const g = grads ? grads.get(flight.fr24_id) : undefined;
+      let color: THREE.Color;
+      if (g) {
+        const fr = fractionAtTime(flight.path, this.gradientFractions(flight.path), currentTime);
+        color = _gradColor.copy(g.dep).lerp(g.arr, fr);
+      } else {
+        color = this.colorForFlight(flight.fr24_id);
+      }
 
       const cache = this.getMercatorPath(flight);
       const endTime = flight.path.length > 0 ? flight.path.t(flight.path.length - 1) : currentTime;
@@ -1001,12 +1094,20 @@ export class FlightScene {
         cache.pts,
         cache.ecef,
         currentTime,
-        this.colorForFlight(flight.fr24_id),
+        color,
         trailOpacity,
         _trailHead,
       );
       if (!written) continue; // <2 點：無光軌也無光球（同舊行為）
 
+      if (orbBuf) {
+        const k = orbEntries.length * 3;
+        if (k < orbBuf.length) {
+          orbBuf[k] = color.r;
+          orbBuf[k + 1] = color.g;
+          orbBuf[k + 2] = color.b;
+        }
+      }
       orbEntries.push({ id: flight.fr24_id, x: _trailHead.x, y: _trailHead.y, z: _trailHead.z });
     }
 
