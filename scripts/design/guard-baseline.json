@@ -2,7 +2,7 @@
   "files": {
     "src/App.tsx": {
       "hex": 25,
-      "rgba": 68
+      "rgba": 67
     },
     "src/components/AirportSelector.tsx": {
       "hex": 2,

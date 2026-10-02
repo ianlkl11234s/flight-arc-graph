@@ -243,6 +243,8 @@ function computeLodBand(zoom: number, current: LodLevel): LodLevel {
 
 /** 錄影畫面的失敗提示：右上 16:9／Grid（top 32、高約 28）與手機退出鈕（top 16、48）之下 */
 const CAPTURE_STATUS_TOP = 72;
+/** 手機狀態條右距（參考 Pulse 手機規則 right 10） */
+const MOBILE_STATUS_RIGHT = 10;
 
 // 「探索地圖總覽」地球 icon 展開時飛去的固定俯瞰視角
 /** 探索面板區域 chip 的順序（原頂部 Region 按鈕列） */
@@ -657,6 +659,20 @@ export default function App() {
   const recorder = useCanvasRecorder({ map: mapRef.current });
   const isRecording = recorder.recordingState === "recording";
   const isExporting = isRecording || recorder.recordingState === "hq";
+
+  // 手機狀態條位置：header（44）＋固定在其下的時間軸，取時間軸實際底邊 + 8（時間軸高度隨日期面板等變動）
+  const mobileTimelineRef = useRef<HTMLDivElement>(null);
+  const [mobileStatusTop, setMobileStatusTop] = useState(52);
+  useEffect(() => {
+    if (!isMobile || captureMode) return;
+    const el = mobileTimelineRef.current;
+    if (!el) return;
+    const update = () => setMobileStatusTop(Math.round(el.getBoundingClientRect().bottom) + SPACE.s8);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isMobile, captureMode]);
 
   // ── Dynamic overlay provider: reads live map state each frame ──
   const selectedAirportRef = useRef(selectedAirport);
@@ -2391,12 +2407,6 @@ export default function App() {
 
             <div style={{ flex: 1 }} />
 
-            {loading && (
-              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: SIZE.body, fontFamily: FONT.ui }}>
-                Loading...
-              </span>
-            )}
-
             <button
               onClick={() => setShowInfo(true)}
               style={{
@@ -2459,6 +2469,7 @@ export default function App() {
 
           {/* Timeline 固定在 header 下方 */}
           <div
+            ref={mobileTimelineRef}
             style={{
               position: "absolute",
               top: 44,
@@ -2616,8 +2627,8 @@ export default function App() {
         </>
       )}
 
-      {/* 載入狀態條（R6）：單一實例跨模式（切模式不漏掉進行中的失敗）。桌機＝工具列下方；
-          錄影畫面＝只顯示失敗（角落），錄影中（REC／HQ 匯出）不畫；手機暫不顯示 */}
+      {/* 載入狀態條（R6）：單一實例跨模式。桌機＝工具列下方；手機＝header＋時間軸下方、右 10；
+          錄影畫面＝只顯示失敗（角落精簡），錄影中（REC／HQ 匯出）不畫 */}
       <LoadingStatus
         loading={loading}
         label={statusLabel}
@@ -2626,10 +2637,10 @@ export default function App() {
         playing={timeline.playing}
         failed={loadError !== null}
         onRetry={retryLoad}
-        top={captureMode ? CAPTURE_STATUS_TOP : undefined}
-        right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : undefined}
+        top={captureMode ? CAPTURE_STATUS_TOP : isMobile ? mobileStatusTop : undefined}
+        right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : isMobile ? MOBILE_STATUS_RIGHT : undefined}
         failOnly={captureMode}
-        hidden={captureMode ? isExporting : isMobile}
+        hidden={captureMode && isExporting}
       />
 
       {/* ── 點擊處的選取圈（R1；固定在點擊位置，相機一動就收）── */}
