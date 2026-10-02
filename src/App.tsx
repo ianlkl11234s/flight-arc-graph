@@ -44,6 +44,7 @@ import { RecordingGuide } from "./components/RecordingGuide";
 import { COLOR_THEMES, DEFAULT_THEME_KEY } from "./types/colorTheme";
 import { assignAirportColors, type AirportColorMode, type AirportAssignment } from "./types/airportColors";
 import { computeAnalysisColorMap, type AnalysisColorBy } from "./data/analysisColors";
+import { computeDepArrColoring, type TrajColorBy } from "./data/depArrColors";
 import { getAircraftInfo, type AircraftCategory as AcCat } from "./data/aircraftDatabase";
 import { setMapTrailColors } from "./map/staticTrails";
 import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOverlay";
@@ -304,6 +305,7 @@ export default function App() {
   const [timeWindow, setTimeWindow] = useState(false);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [mapStyleId, setMapStyleId] = useState("dark");
+  const isDarkTheme = !["light", "streets"].includes(mapStyleId);
   const [renderMode, setRenderMode] = useState<RenderMode>("3d");
   const [altExaggeration, setAltExaggeration] = useState(3);
   const [altOffset, setAltOffset] = useState(50);
@@ -340,6 +342,8 @@ export default function App() {
   };
   // 🔬 Deep Analysis colorBy（機型/航司/用途/時長/航線）— 與 airport colorBy 正交
   const [analysisColorBy, setAnalysisColorBy] = useState<AnalysisColorBy>("none");
+  // 工具列「染色：高度｜起降」（§7）；高度 = 原本的著色行為
+  const [trajColorBy, setTrajColorBy] = useState<TrajColorBy>("altitude");
   // 🔬 Deep Analysis 點位大小依機型分類自動縮放
   const [scaleByAircraftSize, setScaleByAircraftSize] = useState(false);
   const [airportColorOverrides, setAirportColorOverrides] = useState<Record<string, string>>(() => {
@@ -1025,6 +1029,46 @@ export default function App() {
     [finalFlights, analysisColorBy],
   );
 
+  // 起降染色（§7）：需要「選定的機場」（單機場或非空組合）；Compare 多日時日期分色優先 → 停用
+  const depArrDisabledReason: string | null = timeline.isMultiDateMode
+    ? "多日比較時停用（日期分色）"
+    : dataSource === "fused" ||
+        !((airportSet !== null && airportSet.length > 0) || (airportSet === null && scope === "airport"))
+      ? "先選機場"
+      : null;
+  // 正在起降模式時切到 region／Compare → 自動回到高度（state 真的回去，Segmented 才不會顯示錯）
+  useEffect(() => {
+    if (trajColorBy === "deparr" && depArrDisabledReason !== null) setTrajColorBy("altitude");
+  }, [trajColorBy, depArrDisabledReason]);
+  const depArrActive = trajColorBy === "deparr" && depArrDisabledReason === null;
+  const depArrColoring = useMemo(
+    () => (depArrActive ? computeDepArrColoring(finalFlights, activeIcaoSet, isDarkTheme) : null),
+    [depArrActive, finalFlights, activeIcaoSet, isDarkTheme],
+  );
+  const depArrColoringRef = useRef(depArrColoring);
+  depArrColoringRef.current = depArrColoring;
+  useEffect(() => {
+    flightSceneRef.current?.setDepArrGradients(depArrColoring?.gradients ?? null, depArrColoring !== null);
+  }, [depArrColoring]);
+
+  // 染色方式互斥（§7）：選「起降」→ 機場配色回 theme、分析染色回 none；
+  // 反之選了機場配色／分析染色 → 染色回「高度」。包在 handler 裡（同一次 commit），不用 effect。
+  const handleTrajColorByChange = useCallback((v: TrajColorBy) => {
+    setTrajColorBy(v);
+    if (v === "deparr") {
+      setColorBy("theme");
+      setAnalysisColorBy("none");
+    }
+  }, []);
+  const handleColorByChange = useCallback((v: AirportColorMode) => {
+    setColorBy(v);
+    if (v !== "theme") setTrajColorBy("altitude");
+  }, []);
+  const handleAnalysisColorByChange = useCallback((v: AnalysisColorBy) => {
+    setAnalysisColorBy(v);
+    if (v !== "none") setTrajColorBy("altitude");
+  }, []);
+
   // 🔬 點位大小 multiplier（按機型分類）
   const perFlightScaleMap = useMemo((): Map<string, number> | null => {
     if (!scaleByAircraftSize) return null;
@@ -1052,13 +1096,15 @@ export default function App() {
   }, [perFlightScaleMap]);
 
   // 給 MapView + FlightScene 的最終 per-flight color map
-  // 優先序：Analysis > Compare > Airport > theme（fallback undefined）
+  // 優先序：起降染色 > Analysis > Compare > Airport > theme（fallback undefined）
+  // 起降染色與其他三者互斥（見 handler／depArrDisabledReason），放最前只是保險
   const perFlightColorMap = useMemo((): Map<string, string> | undefined => {
+    if (depArrColoring) return depArrColoring.flat.size > 0 ? depArrColoring.flat : undefined;
     if (analysisColorMap && analysisColorMap.size > 0) return analysisColorMap;
     if (compareColorMap) return compareColorMap;
     if (airportAssignment && airportAssignment.flightColors.size > 0) return airportAssignment.flightColors;
     return undefined;
-  }, [analysisColorMap, compareColorMap, airportAssignment]);
+  }, [depArrColoring, analysisColorMap, compareColorMap, airportAssignment]);
 
   const perFlightColorMapRef = useRef(perFlightColorMap);
   perFlightColorMapRef.current = perFlightColorMap;
@@ -1068,7 +1114,6 @@ export default function App() {
     flightSceneRef.current?.setPerFlightColorMap(perFlightColorMap ?? null);
   }, [perFlightColorMap]);
 
-  const isDarkTheme = !["light", "streets"].includes(mapStyleId);
 
   const flightsRef = useRef(finalFlights);
   // Phase 1-3：不再自己維護一份「每次 render 從 state 複製」的 ref（那會被 10 Hz
@@ -1400,6 +1445,7 @@ export default function App() {
         flightSceneRef.current = scene;
         // 初次或 style 切換後重新套用 per-flight 顏色
         scene.setPerFlightColorMap(perFlightColorMapRef.current ?? null);
+        scene.setDepArrGradients(depArrColoringRef.current?.gradients ?? null, depArrColoringRef.current !== null);
       },
     });
     map.addLayer(layer);
@@ -1753,6 +1799,7 @@ export default function App() {
         showTrails={showTrails}
         atlasVisible={atlasVisible}
         compareColorMap={perFlightColorMap}
+        gradientColorMap={depArrColoring?.gradients}
         onMapReady={handleMapReady}
       />
 
@@ -2123,7 +2170,7 @@ export default function App() {
             airspaceSettings={airspaceSettings}
             onAirspaceSettingsChange={setAirspaceSettings}
             colorBy={colorBy}
-            onColorByChange={setColorBy}
+            onColorByChange={handleColorByChange}
             airportAssignment={airportAssignment}
             airportColorOverrides={airportColorOverrides}
             onAirportColorOverride={(icao, hex) => {
@@ -2146,7 +2193,7 @@ export default function App() {
             analysisFilteredFlights={finalFlights}
             analysisPreFilterFlights={displayedFlights}
             analysisColorBy={analysisColorBy}
-            onAnalysisColorByChange={setAnalysisColorBy}
+            onAnalysisColorByChange={handleAnalysisColorByChange}
             flightFilters={flightFilters}
             onFlightFiltersChange={setFlightFilters}
             scaleByAircraftSize={scaleByAircraftSize}
@@ -2295,6 +2342,9 @@ export default function App() {
           <Toolbar
             depArrFilter={depArrFilter}
             onDepArrChange={setDepArrFilter}
+            trajColorBy={trajColorBy}
+            onTrajColorByChange={handleTrajColorByChange}
+            depArrColorDisabledReason={depArrDisabledReason}
             renderMode={renderMode}
             onRenderModeChange={setRenderMode}
             mapStyleId={mapStyleId}

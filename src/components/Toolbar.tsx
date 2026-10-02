@@ -1,12 +1,17 @@
 import type { DepArrFilter, RenderMode } from "../types";
+import type { TrajColorBy } from "../data/depArrColors";
 import { useTheme } from "../styles/ThemeContext";
-import { BLUR, RADIUS, SPACE, Z } from "../styles/tokens";
+import { BLUR, FONT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
 import { Button, Segmented } from "../ui";
 import { StyleSelector } from "./StyleSelector";
 
 interface ToolbarProps {
   depArrFilter: DepArrFilter;
   onDepArrChange: (f: DepArrFilter) => void;
+  trajColorBy: TrajColorBy;
+  onTrajColorByChange: (c: TrajColorBy) => void;
+  /** 非 null = 「起降」染色不可選，字串即提示（先選機場／Compare 停用） */
+  depArrColorDisabledReason: string | null;
   renderMode: RenderMode;
   onRenderModeChange: (m: RenderMode) => void;
   mapStyleId: string;
@@ -36,8 +41,8 @@ function Divider() {
 }
 
 /**
- * 右上唯一工具列（spec R3）：起降 ｜ 2D/3D · 底圖 ｜ 錄影 · 說明，固定順序、單排。
- * 「染色」組未放：現有程式沒有「起降染色」模式（見 P3 回報）。
+ * 右上唯一工具列（spec R3）：起降 ｜ 染色 ｜ 2D/3D · 底圖 ｜ 錄影 · 說明，固定順序、單排。
+ * 染色：高度（預設）｜起降（§7）；沒有選定機場或 Compare 時「起降」disabled。
  */
 export function Toolbar(p: ToolbarProps) {
   const { tokens } = useTheme();
@@ -72,6 +77,29 @@ export function Toolbar(p: ToolbarProps) {
         value={p.depArrFilter}
         onChange={p.onDepArrChange}
       />
+      <Divider />
+      <span
+        title={p.depArrColorDisabledReason ?? undefined}
+        style={{ display: "inline-flex", alignItems: "center", gap: SPACE.s4 }}
+      >
+        <span aria-hidden="true" style={{ fontFamily: FONT.ui, fontSize: SIZE.s11, color: tokens.fg3, whiteSpace: "nowrap" }}>
+          染色
+        </span>
+        <Segmented<TrajColorBy>
+          ariaLabel="染色"
+          options={[
+            { value: "altitude", label: "高度", title: "依高度漸層染色" },
+            {
+              value: "deparr",
+              label: "起降",
+              title: p.depArrColorDisabledReason ?? "進場藍、離場橘；組合內互飛沿路漸層",
+              disabled: p.depArrColorDisabledReason !== null,
+            },
+          ]}
+          value={p.trajColorBy}
+          onChange={p.onTrajColorByChange}
+        />
+      </span>
       <Divider />
       <Segmented<RenderMode>
         ariaLabel="2D／3D"

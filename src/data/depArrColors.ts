@@ -14,6 +14,9 @@ import { TRAJ } from "../types/colorTheme";
 
 export type DepArrKind = "arr" | "dep" | "internal";
 
+/** 工具列「染色」：altitude = 高度漸層（預設、原行為）；deparr = 起降染色 */
+export type TrajColorBy = "altitude" | "deparr";
+
 export function classifyDepArr(
   origin: string | null | undefined,
   dest: string | null | undefined,
