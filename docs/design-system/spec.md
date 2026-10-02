@@ -22,7 +22,7 @@
 | 分組 | 內容 |
 |---|---|
 | `COLOR.dark / light` | panel、border、fg1/2/3、ctl、accent、accentInk、rail、mapBg（數值見 tokens.ts） |
-| 語意色（P2 補） | danger、rec（錄影紅 `#e5484d`）、accentSoft（accent 12–16% 透明） |
+| 語意色（P2 補） | danger、rec（錄影紅 `#e5484d`）、warn（警示琥珀 `#f59e0b`，兩色同）、accentSoft（accent 12–16% 透明） |
 | `BLUR` | 10px，所有半透明面板共用 |
 | `FONT` | `ui`：JetBrains Mono → PingFang TC → Noto Sans TC；`data`：JetBrains Mono → ui-monospace |
 | `SIZE` | key 為角色名：`eyebrow` 11 眉標 · `minor` 11.5 次要 · **`body` 12.5 正文** · `sub` 13 小標 · **`title` 15 面板標題** · `large` 18 大字 · `caption` 30 圖說機場碼。**chrome 最小字級 11**（含 SVG 圖表刻度；`design:guard` 硬規則，只准 0 處 <11；viewBox 內圖示字形以 `/* glyph */` 註記豁免）。錄影畫面（`useCanvasRecorder` 與其 HTML 鏡像標題）、地圖圖層內文字不屬本階層 |

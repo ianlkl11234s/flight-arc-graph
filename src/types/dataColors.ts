@@ -55,9 +55,6 @@ export const AIRSPACE_FALLBACK_COLOR = "#888";
 /** 海峽中線（地圖上畫白線，圖例同色） */
 export const MEDIAN_LINE_COLOR = "#ffffff";
 
-/** 空域資訊卡警示色（#f59e0b 家族）：底／框透明度見 AirspaceInfoCard */
-export const WARN = "#f59e0b";
-
 /** 羅盤（地球方位重置鈕）：疊在地圖上的 HUD，藍色 = 北 */
 export const COMPASS = {
   north: "#64aaff",

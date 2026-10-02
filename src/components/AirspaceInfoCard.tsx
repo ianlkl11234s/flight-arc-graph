@@ -3,6 +3,8 @@ import type { AirspaceFeature } from "../data/airspaceLoader";
 import { AIRSPACE_CATEGORIES } from "../types/airspace";
 import { FONT, SIZE } from "../styles/tokens";
 import { DockCard } from "../ui";
+import { mix } from "../ui/vars";
+import { useTheme } from "../styles/ThemeContext";
 import { AIRSPACE_FALLBACK_COLOR, rgbCss } from "../types/dataColors";
 
 interface AirspaceInfoCardProps {
@@ -37,11 +39,12 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
   const badge = getCategoryBadge(selected, isDarkTheme);
   const hasClass = selected.airspaceClass && selected.airspaceClass.trim() !== "";
 
-  const textColor = isDarkTheme ? "#E5E7EB" : "#1a1a1a";
-  const dimColor = isDarkTheme ? "#8a909b" : "#6b7280";
-  const sectionBg = isDarkTheme ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
-  const warningBg = isDarkTheme ? "rgba(245, 158, 11, 0.12)" : "rgba(245, 158, 11, 0.18)";
-  const warningBorder = "rgba(245, 158, 11, 0.45)";
+  const { tokens } = useTheme();
+  const textColor = tokens.fg1;
+  const dimColor = tokens.fg2;
+  const sectionBg = tokens.ctl;
+  const warningBg = mix(tokens.warn, isDarkTheme ? 12 : 18);
+  const warningBorder = mix(tokens.warn, 45);
 
   // 外殼 = DockCard（右下 dock，R1）；內文與關閉行為不變
   return (
@@ -179,7 +182,7 @@ export function AirspaceInfoCard({ selected, others, onSelect, onClose, isDarkTh
                       fontSize: SIZE.body,
                       transition: "background 0.15s",
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = isDarkTheme ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = mix(tokens.fg1, 8); }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = sectionBg; }}
                   >
                     <span

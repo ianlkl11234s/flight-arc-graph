@@ -20,6 +20,8 @@ export interface ColorTokens {
   danger: string;
   /** 語意色：錄影紅（兩色同） */
   rec: string;
+  /** 語意色：警示（空域限航提示等；兩色同） */
+  warn: string;
   /** accent 12–16% 透明，選中底 */
   accentSoft: string;
 }
@@ -38,6 +40,7 @@ export const COLOR: { dark: ColorTokens; light: ColorTokens } = {
     mapBg: "#05070a",
     danger: "#ff6b6b",
     rec: "#e5484d",
+    warn: "#f59e0b",
     accentSoft: "rgba(242,169,59,.14)",
   },
   light: {
@@ -53,6 +56,7 @@ export const COLOR: { dark: ColorTokens; light: ColorTokens } = {
     mapBg: "#e8eaec",
     danger: "#c62828",
     rec: "#e5484d",
+    warn: "#f59e0b",
     accentSoft: "rgba(168,98,0,.12)",
   },
 };
