@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AIRSPACE_CATEGORIES, type AirspaceCategory, type AirspaceSettings } from "../../../types/airspace";
 import { useTheme } from "../../../styles/ThemeContext";
+import { SPACE } from "../../../styles/tokens";
 import { Section, Slider, Toggle } from "../../../ui";
 
 export function AirspacePanel({
@@ -40,54 +41,54 @@ export function AirspacePanel({
         <Toggle label="Show Airspace" checked={settings.enabled} onChange={(v) => update({ enabled: v })} />
       </Section>
 
-      {/* 分類 */}
-      <Section title="LAYERS · 分類">
-        {AIRSPACE_CATEGORIES.map((conf) => {
-          const isOn = settings.visibility[conf.id];
-          const color = getSwatchColor(conf.id);
-          return (
-            <Toggle
-              key={conf.id}
-              disabled={!settings.enabled}
-              checked={isOn}
-              onChange={() => toggleCategory(conf.id)}
-              label={swatchLabel(
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: color,
-                    boxShadow: isOn ? `0 0 6px ${color}` : "none",
-                    flexShrink: 0,
-                  }}
-                />,
-                conf.label,
-              )}
-            />
-          );
-        })}
-      </Section>
+      {/* 分類／疊加：總開關關閉時變暗但仍可點（預先設定，開總開關後生效） */}
+      <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s12, opacity: settings.enabled ? 1 : 0.45, transition: "opacity .15s" }}>
+        <Section title="LAYERS · 分類">
+          {AIRSPACE_CATEGORIES.map((conf) => {
+            const isOn = settings.visibility[conf.id];
+            const color = getSwatchColor(conf.id);
+            return (
+              <Toggle
+                key={conf.id}
+                checked={isOn}
+                onChange={() => toggleCategory(conf.id)}
+                label={swatchLabel(
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: color,
+                      boxShadow: isOn ? `0 0 6px ${color}` : "none",
+                      flexShrink: 0,
+                    }}
+                  />,
+                  conf.label,
+                )}
+              />
+            );
+          })}
+        </Section>
 
-      {/* Overlays */}
-      <Section title="OVERLAYS · 疊加">
-        <Toggle
-          disabled={!settings.enabled}
-          checked={settings.showMedianLine}
-          onChange={(v) => update({ showMedianLine: v })}
-          label={swatchLabel(
-            <span
-              style={{
-                width: 18,
-                height: 2,
-                background: settings.showMedianLine ? "#ffffff" : tokens.fg3,
-                flexShrink: 0,
-              }}
-            />,
-            "海峽中線 Median Line",
-          )}
-        />
-      </Section>
+        {/* Overlays */}
+        <Section title="OVERLAYS · 疊加">
+          <Toggle
+            checked={settings.showMedianLine}
+            onChange={(v) => update({ showMedianLine: v })}
+            label={swatchLabel(
+              <span
+                style={{
+                  width: 18,
+                  height: 2,
+                  background: settings.showMedianLine ? "#ffffff" : tokens.fg3,
+                  flexShrink: 0,
+                }}
+              />,
+              "海峽中線 Median Line",
+            )}
+          />
+        </Section>
+      </div>
 
       {/* Style */}
       <Section title="STYLE · 樣式">
