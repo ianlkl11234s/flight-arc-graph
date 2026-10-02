@@ -94,7 +94,10 @@ function buildAtlasPopupHtml(p: AtlasProps): string {
       <span style="width:9px;height:9px;border-radius:50%;background:${st.color};display:inline-block"></span>${st.label}
     </div>
     <div style="font-size:12px;color:#333;line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
-    ${p.status !== "planned" ? `<button data-atlas-add="${escapeHtml(p.icao)}" style="margin-top:8px;width:100%;padding:6px 8px;border:1px solid #3b82f6;border-radius:6px;background:#eaf3ff;color:#174ea6;font:600 11px monospace;cursor:pointer">+ 加入 Selection</button>` : ""}
+    ${p.status !== "planned" ? `<div style="--pa-line:#3b82f6;--pa-soft:#eaf3ff;--pa-ink:#174ea6;display:flex;gap:6px;margin-top:8px">
+      <button type="button" data-atlas-open="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-ink);border-radius:2px;background:var(--pa-ink);color:var(--pa-soft);font:600 11px monospace;cursor:pointer">開啟機場</button>
+      <button type="button" data-atlas-add="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-line);border-radius:2px;background:var(--pa-soft);color:var(--pa-ink);font:600 11px monospace;cursor:pointer">加入組合</button>
+    </div>` : ""}
   </div>`;
 }
 
@@ -900,6 +903,27 @@ export default function App() {
     setSetName(null);
   }, []);
 
+  // 開啟機場（R11／Q1）：機場面板點擊、搜尋結果、Atlas popup 的主動作 = 單選並飛過去。
+  // 走 selectAirportSingle（退出組合）＋ 切回單一機場範圍；空域快照模式先切回航線軌跡
+  // （否則選到的機場沒有軌跡可看）。同一座機場再點一次也要飛回去（preset 沒變 MapView 不會飛）。
+  const openAirport = useCallback((icao: string) => {
+    if (dataSource === "fused") {
+      setDataSource("api");
+    }
+    setScope("airport");
+    selectAirportSingle(icao);
+    if (icao === selectedAirport && mapRef.current) {
+      const m = airportMeta[icao];
+      const cam = cameraForAirport(
+        icao,
+        m ? { lat: m.lat, lng: m.lng, name: m.name, flights: airportCatalog[icao]?.flights } : undefined,
+      );
+      if (cam) mapRef.current.flyTo({ center: cam.center, zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing, duration: 2000 });
+    }
+  }, [dataSource, selectAirportSingle, selectedAirport, airportMeta, airportCatalog]);
+  const openAirportRef = useRef(openAirport);
+  openAirportRef.current = openAirport;
+
   // Dep/Arr filter（兼容 single + set）
   const finalFlights = useMemo(() => {
     if (depArrFilter === "all") return setFilteredFlights;
@@ -1462,6 +1486,11 @@ export default function App() {
               .setHTML(buildAtlasPopupHtml(atlasProps))
               .addTo(map);
             atlasPopupRef.current = popup;
+            // 主動作：開啟機場（單選並飛過去，R11）；次動作：加入組合
+            popup.getElement()?.querySelector<HTMLButtonElement>("[data-atlas-open]")?.addEventListener("click", () => {
+              openAirportRef.current(atlasProps.icao);
+              popup.remove();
+            });
             popup.getElement()?.querySelector<HTMLButtonElement>("[data-atlas-add]")?.addEventListener("click", () => {
               setAirportSet((current) => {
                 const base = current ?? [selectedAirportRef.current];
@@ -2006,7 +2035,7 @@ export default function App() {
             airportCatalog={airportCatalog}
             airportMeta={airportMeta}
             selectedAirport={selectedAirport}
-            onAirportChange={selectAirportSingle}
+            onAirportChange={openAirport}
             onLocationJump={(icao) => {
               const m = airportMeta[icao];
               const cam = cameraForAirport(

@@ -99,6 +99,7 @@ export interface IconRailSidebarProps {
   /** 機場 metadata（座標/名稱/國家），含無 preset 的長尾機場，key = ICAO */
   airportMeta: Record<string, AirportMeta>;
   selectedAirport: string;
+  /** 開啟機場：單選並飛過去（R11；機場面板點擊、搜尋結果） */
   onAirportChange: (icao: string) => void;
   onLocationJump: (icao: string) => void;
   onSceneSelect: (scene: ScenePreset) => void;
@@ -385,11 +386,13 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               airportCatalog={props.airportCatalog}
               airportMeta={props.airportMeta}
               region={props.region}
+              selectedAirport={props.selectedAirport}
               airportSet={activeSelection}
               setMode={props.airportSet !== null}
               setName={props.setName}
               savedSets={props.savedSets}
               onApplySet={props.onApplySet}
+              onOpenAirport={props.onAirportChange}
               onToggleAirport={props.onToggleAirportInSet}
               onClearSet={props.onClearSet}
               onExitSetMode={props.onExitSetMode}
