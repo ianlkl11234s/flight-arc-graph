@@ -37,7 +37,8 @@ try {
       break;
     }
     case 'stats': break;
-    case 'reload': { await c.send('Page.reload', { ignoreCache: false }); await sleep(3000);
+    case 'reload': { // P6 起網址會記住狀態：導回無參數網址，不用 Page.reload（否則會還原上一輪的機場／鏡頭）
+      await c.send('Page.navigate', { url: 'http://localhost:5199/' }); await sleep(3000);
       for (let i = 0; i < 60; i++) { try { const ok = await ev(`!!(window.__flightArcDebug && window.__flightArcDebug.map && window.__flightArcDebug.scene && window.__flightArcDebug.getFlights().length > 0)`); if (ok) break; } catch {} await sleep(1000); }
       console.log('stable', await waitStable()); break; }
     case 'seek-empty': await ev(`window.__flightArcDebug.timeline.pause(); window.__flightArcDebug.timeline.seek(${process.argv[3] || 0}); 1`); await sleep(1500); break;

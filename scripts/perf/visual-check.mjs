@@ -275,7 +275,8 @@ async function waitAppReady(maxMs = 120000) {
 // 再強制走一次 light → dark，讓所有執行都從「切換過」的同一起點出發。
 async function bootstrap() {
   console.log('bootstrap：reload → style 歸零（light → dark），讓每次執行起點一致');
-  await cdp.send('Page.reload', { ignoreCache: false });
+  // P6 起網址會記住狀態：導回無參數網址，不用 Page.reload（否則會還原前一輪場景留在網址裡的機場／鏡頭）
+  await cdp.send('Page.navigate', { url: 'http://localhost:5199/' });
   await sleep(3000);
   await waitAppReady();
   await ensureCanvasSize();

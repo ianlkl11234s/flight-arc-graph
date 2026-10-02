@@ -23,7 +23,7 @@ import { FlightInfoCard } from "./components/FlightInfoCard";
 import { filterByAirport } from "./data/flightLoader";
 import type { LodLevel } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
-import { decodeUrlState, type UrlState } from "./data/urlState";
+import { buildSearch, decodeUrlState, encodeUrlState, type UrlState } from "./data/urlState";
 import { AirportSelector } from "./components/AirportSelector";
 import { FlightPicker } from "./components/FlightPicker";
 import { TimelineControls } from "./components/TimelineControls";
@@ -1797,7 +1797,7 @@ export default function App() {
   const urlTargetRef = useRef<UrlState | null>(null);
   if (urlTargetRef.current === null) urlTargetRef.current = decodeUrlState(window.location.search);
   const urlLiveRef = useRef<UrlLive | null>(null);
-  const [, setUrlWriteEnabled] = useState(false);
+  const [urlWriteEnabled, setUrlWriteEnabled] = useState(false);
   useEffect(() => {
     const target = urlTargetRef.current ?? {};
     let cancelled = false;
@@ -1916,6 +1916,30 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
+  // 寫回網址：套用序列完成後才開始（否則首載前的中間狀態會弄髒網址）。
+  // 鏡頭與其他狀態拆兩個 effect：播放中 currentTime 10 Hz 更新，若共用 debounce 鏡頭永遠寫不出去。
+  const urlBuildRef = useRef<() => string>(() => "");
+  const writeUrlNow = useCallback(() => {
+    const search = urlBuildRef.current();
+    if (search === window.location.search) return;
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${search}${window.location.hash}`);
+  }, []);
+  const urlTimeKey = timeline.playing ? -1 : timeline.currentTime;
+  useEffect(() => {
+    if (!urlWriteEnabled) return;
+    const id = setTimeout(writeUrlNow, 150);
+    return () => clearTimeout(id);
+  }, [
+    urlWriteEnabled, writeUrlNow, dataSource, scope, region, selectedAirport, airportSet, setName,
+    timeline.selectedDate, timeline.rangeDays, timeline.selectedDates, timeline.playing, urlTimeKey,
+    depArrFilter, trajColorBy, depArrDisabledReason, colorThemeKey, flightCardId, selectedFlightId, trackMode,
+  ]);
+  useEffect(() => {
+    if (!urlWriteEnabled) return;
+    const id = setTimeout(writeUrlNow, 500);
+    return () => clearTimeout(id);
+  }, [urlWriteEnabled, writeUrlNow, cameraInfo]);
+
   // ── 左下圖說內容 ──
   const captionCode = airportSet !== null
     ? setName ?? "自訂組合"
@@ -1983,6 +2007,47 @@ export default function App() {
     openAirport, applySavedSet, handleRegionSelect, handleScopeChange,
     handleTrajColorByChange, handleColorThemeChange,
   };
+
+  // ── P6 網址記住狀態：狀態變動寫回網址（R8，只寫與預設不同的值）──
+  // 單機場模式的「預設鏡頭」= 機場 preset；組合（fitBounds）與區域沒有穩定參照，鏡頭一律寫。
+  const buildUrlSearch = (): string => {
+    const st: UrlState = {};
+    let defaultCamera: UrlState["camera"];
+    if (dataSource === "fused") {
+      st.dataSource = "airspace";
+      st.scope = region;
+    } else if (airportSet !== null && airportSet.length > 0) {
+      const builtin = BUILTIN_SETS.find((b) => b.shortName === setName
+        && b.icaos.length === airportSet.length && b.icaos.every((i) => airportSet.includes(i)));
+      if (builtin) st.setId = builtin.id;
+      else st.setIcaos = airportSet;
+    } else if (scope === "region" && airportSet === null) {
+      st.scope = region;
+    } else {
+      st.airport = selectedAirport;
+      defaultCamera = { lat: preset.center[1], lng: preset.center[0], zoom: preset.zoom, pitch: preset.pitch, bearing: preset.bearing };
+    }
+    st.date = timeline.selectedDate;
+    if (timeline.isMultiDateMode) st.compare = [...new Set(timeline.selectedDates)].sort();
+    else st.days = timeline.rangeDays;
+    st.depArr = depArrFilter;
+    if (depArrActive) st.colorBy = "deparr";
+    st.theme = colorThemeKey;
+    // 有 t ＝ 暫停在該時刻；播放中不寫（不每幀改網址）
+    if (!timeline.playing) {
+      const rel = Math.max(0, Math.floor(timeline.currentTime - timeline.windowStart));
+      st.time = { minutes: Math.floor((rel % 86400) / 60), dayOffset: Math.floor(rel / 86400) };
+    }
+    const map = mapRef.current;
+    if (map) {
+      const c = map.getCenter();
+      st.camera = { lat: c.lat, lng: c.lng, zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() };
+    }
+    const flight = trackMode === "single" && selectedFlightId ? selectedFlightId : flightCardId;
+    if (flight) st.flight = flight;
+    return buildSearch(encodeUrlState(st, { defaultCamera }));
+  };
+  urlBuildRef.current = buildUrlSearch;
 
   return (
     <ThemeProvider isDark={isDarkTheme}>
