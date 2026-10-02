@@ -23,6 +23,7 @@ import { FlightInfoCard } from "./components/FlightInfoCard";
 import { filterByAirport } from "./data/flightLoader";
 import type { LodLevel } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
+import { decodeUrlState, type UrlState } from "./data/urlState";
 import { AirportSelector } from "./components/AirportSelector";
 import { FlightPicker } from "./components/FlightPicker";
 import { TimelineControls } from "./components/TimelineControls";
@@ -255,6 +256,27 @@ const EXPLORE_OVERVIEW_CAMERA = {
   zoom: 2.5,
   pitch: 0,
   bearing: 0,
+};
+
+/** P6 網址套用序列讀的「最新」state 與 handler（每次 render 寫進 urlLiveRef） */
+type UrlLive = Pick<ReturnType<typeof useFlightData>, "loading" | "airportCatalog" | "hasFused" | "allFlights" | "selectedAirport"> & {
+  airportMeta: Record<string, AirportMeta>;
+  availableDates: string[];
+  dataSource: DataSource;
+  scope: Scope;
+  region: Region;
+  airportSet: string[] | null;
+  airspaceDate: string | undefined;
+  airspaceRangeDays: number;
+  airspaceSelectedDates: string[];
+  timeline: ReturnType<typeof useTimeline>;
+  depArrDisabledReason: string | null;
+  openAirport: (icao: string) => void;
+  applySavedSet: (set: SavedAirportSet) => void;
+  handleRegionSelect: (r: Region) => void;
+  handleScopeChange: (s: Scope) => void;
+  handleTrajColorByChange: (v: TrajColorBy) => void;
+  handleColorThemeChange: (key: string) => void;
 };
 
 export default function App() {
@@ -1767,6 +1789,133 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, availableDates.length]);
 
+  // ── P6 網址記住狀態：進站時套用一次（R8）────────────────────────────────
+  // 套用是跨多次 render 的序列（等目錄 → 選取對象 → 日期 → 等資料載完 → 其餘），
+  // 每一步都走既有 handler，不直接塞 state 繞過副作用。讀 state 一律經 urlLiveRef
+  // （每次 render 更新），不吃 effect closure —— loading 在 closure 裡會有一個 commit 的落差。
+  // 無參數進站：什麼都不做，只在首次載完後打開「寫回網址」開關。
+  const urlTargetRef = useRef<UrlState | null>(null);
+  if (urlTargetRef.current === null) urlTargetRef.current = decodeUrlState(window.location.search);
+  const urlLiveRef = useRef<UrlLive | null>(null);
+  const [, setUrlWriteEnabled] = useState(false);
+  useEffect(() => {
+    const target = urlTargetRef.current ?? {};
+    let cancelled = false;
+    const live = () => urlLiveRef.current!;
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const waitFor = async (cond: () => boolean, timeoutMs: number) => {
+      const t0 = Date.now();
+      while (!cancelled && Date.now() - t0 < timeoutMs) {
+        if (cond()) return true;
+        await wait(100);
+      }
+      return false;
+    };
+    // 「載完且穩定」：loader 已拿到 timeline 的日期、loading 連續 4 次（~400ms）為 false
+    const waitSettled = async (timeoutMs: number) => {
+      let calm = 0;
+      return waitFor(() => {
+        const L = live();
+        const synced = L.availableDates.length > 0 && L.airspaceDate === L.timeline.selectedDate
+          && L.airspaceRangeDays === L.timeline.rangeDays
+          && L.airspaceSelectedDates.length === new Set(L.timeline.selectedDates).size;
+        calm = synced && !L.loading ? calm + 1 : 0;
+        return calm >= 4;
+      }, timeoutMs);
+    };
+
+    (async () => {
+      const hasTarget = Object.keys(target).length > 0;
+      if (hasTarget) {
+        // 1. 等機場目錄、機場 metadata（否則 preset 晚到會再飛一次）與地圖
+        await waitFor(() => {
+          const L = live();
+          return Object.keys(L.airportCatalog).length > 0 && Object.keys(L.airportMeta).length > 0 && mapRef.current !== null;
+        }, 30000);
+        if (cancelled) return;
+        const catalog = live().airportCatalog;
+        const regionKey = target.scope && (REGION_ORDER as string[]).includes(target.scope) ? target.scope as Region : null;
+
+        // 2. 選取對象（資料來源 → 組合 / 區域 / 單一機場）
+        if (target.dataSource === "airspace") {
+          await waitFor(() => live().hasFused, 10000);
+          if (live().hasFused) {
+            if (regionKey) live().handleRegionSelect(regionKey);
+            await wait(150);
+            // 空域快照 effect：範圍切 region、1d、飛到 region 視角
+            setDataSource("fused");
+          }
+        } else if (target.setId || target.setIcaos) {
+          const builtin = target.setId ? BUILTIN_SETS.find((s) => s.id === target.setId) : undefined;
+          const icaos = (builtin?.icaos ?? target.setIcaos ?? []).filter((i) => catalog[i]);
+          if (builtin && icaos.length === builtin.icaos.length) live().applySavedSet(builtin);
+          else if (icaos.length > 0) {
+            live().applySavedSet({ id: "url", name: "", shortName: "", icaos });
+            setSetName(null); // 自訂組合沒有名稱
+          }
+        } else if (regionKey) {
+          live().handleRegionSelect(regionKey);
+          await waitFor(() => live().region === regionKey, 2000);
+          live().handleScopeChange("region");
+        } else if (target.airport && catalog[target.airport] && target.airport !== live().selectedAirport) {
+          live().openAirport(target.airport);
+        }
+        // 讓 dataSource／機場改變的 effect 先跑完（它們會改 rangeDays／日期）
+        await wait(300);
+        if (cancelled) return;
+
+        // 3. 日期（只收這個選取對象有資料的日期；不合法就留在預設日）
+        const avail = live().availableDates;
+        const tl = live().timeline;
+        const cmp = (target.compare ?? []).filter((d) => avail.includes(d));
+        if (target.date && avail.includes(target.date) && target.date !== tl.selectedDate) tl.setSelectedDate(target.date);
+        if (cmp.length > 0) {
+          for (const d of cmp) tl.toggleMultiDate(d);
+        } else if (target.days && [1, 3, 7].includes(target.days) && target.days !== tl.rangeDays) {
+          tl.setRangeDays(target.days);
+        }
+        await wait(500);
+      }
+
+      // 4. 等資料載完（同時涵蓋「無參數進站」的首次載入與自動播放）
+      await waitSettled(90000);
+      if (cancelled) return;
+
+      if (hasTarget) {
+        // 5. 篩選、配色、染色
+        if (target.depArr) setDepArrFilter(target.depArr);
+        if (target.theme) live().handleColorThemeChange(target.theme);
+        if (target.colorBy === "deparr" && live().depArrDisabledReason === null) live().handleTrajColorByChange("deparr");
+
+        // 6. 播放時刻：有 t ＝ 暫停在該時刻（自動播放已在載完時觸發，這裡蓋掉）
+        if (target.time) {
+          const tl = live().timeline;
+          tl.pause();
+          tl.seek(tl.windowStart + target.time.dayOffset * 86400 + target.time.minutes * 60);
+        }
+
+        // 7. 鏡頭：在機場／組合／區域的預設飛行之後套用（先 stop 掉還在飛的動畫）
+        const map = mapRef.current;
+        if (target.camera && map) {
+          map.stop();
+          map.jumpTo({
+            center: [target.camera.lng, target.camera.lat],
+            zoom: target.camera.zoom,
+            pitch: target.camera.pitch,
+            bearing: target.camera.bearing,
+          });
+        }
+
+        // 8. 選取的航班：資料裡找得到才開航班卡
+        if (target.flight && live().allFlights.some((f) => f.fr24_id === target.flight)) {
+          setFlightCardId(target.flight);
+        }
+      }
+      setUrlWriteEnabled(true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   // ── 左下圖說內容 ──
   const captionCode = airportSet !== null
     ? setName ?? "自訂組合"
@@ -1802,6 +1951,38 @@ export default function App() {
     + (airspaceSelectedDates.length > 0
       ? `${airspaceSelectedDates.length} 日`
       : `${airspaceDate ?? timeline.selectedDate}${airspaceRangeDays > 1 ? ` +${airspaceRangeDays - 1}d` : ""}`);
+
+  // 範圍切換（設定面板）與 Region chip（探索面板）；網址套用（P6）也走這兩個
+  const handleScopeChange = (s: Scope) => {
+    setScope(s);
+    if (s === "airport") {
+      // 切回單一機場 scope → 退出組合模式
+      exitSetMode();
+    }
+    if (s === "region") {
+      const cam = REGION_CONFIG[region].regionCamera ?? REGION_CONFIG[region].camera;
+      mapRef.current?.flyTo({ ...cam, duration: 2000 });
+    }
+  };
+  const handleRegionSelect = (r: Region) => {
+    setRegion(r);
+    setScope("airport");
+    const cfg = REGION_CONFIG[r];
+    if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
+    // 日期：切機場後由「機場改變」effect 處理（目前日期不可用才跳 preferredDate）
+    // 飛到預設機場視角
+    mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
+  };
+
+  // P6 網址套用時讀「最新」的 state 與 handler（套用是跨多次 render 的非同步序列）
+  urlLiveRef.current = {
+    loading, airportCatalog, airportMeta, hasFused, availableDates,
+    dataSource, scope, region, selectedAirport, airportSet,
+    airspaceDate, airspaceRangeDays, airspaceSelectedDates, timeline,
+    depArrDisabledReason, allFlights,
+    openAirport, applySavedSet, handleRegionSelect, handleScopeChange,
+    handleTrajColorByChange, handleColorThemeChange,
+  };
 
   return (
     <ThemeProvider isDark={isDarkTheme}>
@@ -2100,17 +2281,7 @@ export default function App() {
             timeWindow={timeWindow}
             pickableFlights={pickableFlights}
             selectedFlightId={selectedFlightId}
-            onScopeChange={(s) => {
-              setScope(s);
-              if (s === "airport") {
-                // 切回單一機場 scope → 退出組合模式
-                exitSetMode();
-              }
-              if (s === "region") {
-                const cam = REGION_CONFIG[region].regionCamera ?? REGION_CONFIG[region].camera;
-                mapRef.current?.flyTo({ ...cam, duration: 2000 });
-              }
-            }}
+            onScopeChange={handleScopeChange}
             onTrackModeChange={setTrackMode}
             onTimeWindowChange={setTimeWindow}
             onFlightSelect={setSelectedFlightId}
@@ -2232,15 +2403,7 @@ export default function App() {
             hasFused={hasFused}
             onDataSourceChange={setDataSource}
             regions={REGION_ORDER.map((r) => ({ id: r, label: REGION_CONFIG[r].label }))}
-            onRegionSelect={(r) => {
-              setRegion(r);
-              setScope("airport");
-              const cfg = REGION_CONFIG[r];
-              if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
-              // 日期：切機場後由「機場改變」effect 處理（目前日期不可用才跳 preferredDate）
-              // 飛到預設機場視角
-              mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
-            }}
+            onRegionSelect={handleRegionSelect}
           />
 
           {/* 左下圖說：在看什麼（機場／組合、日期、班數、進離場）+ 進站引導（Q6） */}
