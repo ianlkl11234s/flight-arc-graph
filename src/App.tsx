@@ -23,7 +23,6 @@ import { FlightInfoCard } from "./components/FlightInfoCard";
 import { filterByAirport } from "./data/flightLoader";
 import type { LodLevel } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
-import { LoadingScreen } from "./components/LoadingScreen";
 import { AirportSelector } from "./components/AirportSelector";
 import { FlightPicker } from "./components/FlightPicker";
 import { TimelineControls } from "./components/TimelineControls";
@@ -295,12 +294,6 @@ export default function App() {
     airspaceSelectedDates,
     lod,
   );
-  const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
-
-  useEffect(() => {
-    if (!loading) setHasCompletedInitialLoad(true);
-  }, [loading]);
-
   // 機場 metadata（座標/名稱/國家，含無 preset 的長尾機場）— 一次性載入，失敗回空物件
   const [airportMeta, setAirportMeta] = useState<Record<string, AirportMeta>>({});
   useEffect(() => {
@@ -1735,14 +1728,12 @@ export default function App() {
   ];
 
   // 狀態條的載入對象：機場／組合／區域 · 日期（R9：不露 region key 等內部代號）
+  // 日期取 loader 實際在載的那份（airspaceDate 等），不是 timeline 的：首次進站 availableDates
+  // 還沒到時 timeline 暫用今天，但 loader 載的是預設日（見上方「同步 timeline 日期給 loader」）
   const statusLabel = `${captionCode} · `
-    + (timeline.isMultiDateMode
-      ? `${timeline.selectedDates.length} 日`
-      : `${timeline.selectedDate}${timeline.rangeDays > 1 ? ` +${timeline.rangeDays - 1}d` : ""}`);
-
-  if (!hasCompletedInitialLoad && loading && allFlights.length === 0) {
-    return <LoadingScreen />;
-  }
+    + (airspaceSelectedDates.length > 0
+      ? `${airspaceSelectedDates.length} 日`
+      : `${airspaceDate ?? timeline.selectedDate}${airspaceRangeDays > 1 ? ` +${airspaceRangeDays - 1}d` : ""}`);
 
   return (
     <ThemeProvider isDark={isDarkTheme}>

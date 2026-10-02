@@ -43,6 +43,12 @@ export function LoadingStatus({ loading, label, count, loaded, playing, failed, 
   useEffect(() => {
     const controller = createLoadingStatusController({ onChange: setView });
     controllerRef.current = controller;
+    // 首次進站：掛載時已在載入（沒有 false→true 的變化）→ 補送開始事件，地圖先出現、狀態條顯示載入中（R6）
+    if (prevLoadingRef.current) {
+      playingAtStartRef.current = committedPlayingRef.current;
+      controller.setPlaying(false);
+      controller.handle({ type: "start", label: latest.current.label });
+    }
     return () => {
       controller.dispose();
       controllerRef.current = null;

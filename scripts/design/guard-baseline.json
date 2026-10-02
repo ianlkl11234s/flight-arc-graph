@@ -44,10 +44,6 @@
       "hex": 10,
       "rgba": 0
     },
-    "src/components/LoadingScreen.tsx": {
-      "hex": 3,
-      "rgba": 15
-    },
     "src/components/LoadingStatus.tsx": {
       "hex": 0,
       "rgba": 0
