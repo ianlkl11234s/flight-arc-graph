@@ -28,7 +28,7 @@
 | `SIZE` | key 為角色名：`eyebrow` 11 眉標 · `minor` 11.5 次要 · **`body` 12.5 正文** · `sub` 13 小標 · **`title` 15 面板標題** · `large` 18 大字 · `caption` 30 圖說機場碼。**chrome 最小字級 11**（含 SVG 圖表刻度；`design:guard` 硬規則，只准 0 處 <11；viewBox 內圖示字形以 `/* glyph */` 註記豁免）。錄影畫面（`useCanvasRecorder` 與其 HTML 鏡像標題）、地圖圖層內文字不屬本階層 |
 | `SPACE` | 2 · 4 · 6 · 8 · 12 · 16 · 24 |
 | `RADIUS` | **2**（面板與控件，近直角）· pill 99（僅狀態點） |
-| `Z` | mapOverlay 10 · panel 20 · toolbar 25 · popover 30 · modal 40 · toast 50 |
+| `Z` | mapOverlay 10 · panel 20 · toolbar 25 · popover 30 · modal 40 · toast 50 · boot 60（開場遮罩，唯一高於 toast 的一層） |
 | `LAYOUT` | railWidth 56 · panelWidth 288 · panelWidthWide 360（分析›統計）· panelLeft 64 · panelTop 52 · mapBottomInset 64 · dockWidth 260 |
 
 不得自創字級、圓角、z-index；需要新值先加 token（TS 與 CSS 同時加）。
@@ -106,6 +106,7 @@
 | `IconRailSidebar` + `sidebar/panels/*` | 左 rail 與各面板（一個 panel 一檔） |
 | `MobileHeader`、`MobileBottomSheet` | 手機版 chrome（只統一外觀，R11／Q8） |
 | `InfoModal` | 說明視窗內容（外殼是 `Modal`） |
+| `boot/BootScreen` | 首次載入的雷達遮罩（見下方「開場（Boot）」） |
 
 ### 資料色與地圖疊層色（不屬 chrome）
 
@@ -176,6 +177,28 @@
 - 壞值只丟該 key、不 throw；查目錄才知道的（機場不存在、該日無資料）在套用時落回預設。
 - 進站只套用一次，順序：資料來源 → 選取對象 → 日期 → 等資料載完 → 篩選／配色／染色 → 暫停在 `t` → 鏡頭（蓋掉預設飛行）→ 航班卡。
 - 寫回用 `history.replaceState`：鏡頭 debounce 500ms，其他 150ms；套用完成前不寫。
+
+### 開場（Boot）
+
+首次進站才出現一次的全螢幕遮罩（C「雷達掃描」，設計稿 `docs/design/boot-and-list/boot-and-list.tpl.html` Q1-C）；之後的載入一律走 R6 狀態條。機制照 Pulse M2。
+
+- **畫面**：`tokens.mapBg` 底；canvas 雷達（距離環、琥珀掃描扇形＋掃描線、掃過處亮起的點）；下方字標 `FLIGHT ARC`（ARC 為 accent）與狀態 chip「載入軌跡 · {機場／組合／區域}」＋旋轉小環 → 「完成」（逾時或失敗時改「進入地圖」，失敗由狀態條說明＋重試）。顏色全從 tokens 讀，canvas 也是（扇形用 globalAlpha 切片，不寫色碼）。
+- **雷達上的點不捏造**：預設機場（組合取第一座）周邊 `radiusKm` 內的真實機場，依大圓方位與距離投影（北在上）；座標取機場目錄（`airport-points.geojson`），未載入時退回 `cameraPresets`；中心機場沒有座標就只畫環與掃描線。
+- **時序**（`src/components/boot/bootSequence.ts`，純函式＋測試）：
+
+| 階段 | 條件／長度 | `<html data-boot>` |
+|---|---|---|
+| loading | 至少 `minShowMs`（預設 2000），且等「地圖 ready ＋第一批航班載完或失敗」；30s 未就緒直接跳 leaving | `wait` |
+| done | 「完成」停 0.4s | `wait` |
+| leaving | 遮罩淡出 0.45s，內容放大 1.04 | `wait` |
+| entering | 主畫面元件彈入：`cubic-bezier(0.34,1.56,0.64,1)` 0.85s；rail 0 → toolbar 0.12 → timeline 0.24 → caption 0.30 → title 0.36s；rail 圖示 0.4s 逐一放大（延遲 0.40–0.70s）；timeline 到位閃一下 accent 光暈；總長 1.6s。全部時間 × `enterScale`（`--boot-k`） | `enter` |
+| gone | 移除 `data-boot` | — |
+
+  減少動態（`prefers-reduced-motion`）：就緒即結束，不等最少顯示、不淡出、不彈入。
+- **`data-boot-part`**：`src/main.tsx` 在 render 前設 `data-boot="wait"`。參與進場的元件**只加屬性、不加 props**：`rail`（IconRailSidebar 的 rail，子元素逐一放大）、`toolbar`（Toolbar、MobileHeader、手機時間軸）、`timeline`、`caption`、`title`（左上字標）、`fade`（手機抽屜，只淡入）。屬性要加在元件自己的定位根節點上；**不要用帶 transform 的外層包住 absolute／fixed 元件**（transform 會變成新的定位基準）。規則在 `src/components/boot/boot.css`。
+- 遮罩是蓋在地圖上的 overlay，地圖在下面照常初始化（P5「先出地圖」不變）；遮罩期間 `LoadingStatus` 不畫，結束後接手。
+- **可調參數**集中在 `src/components/boot/bootLayout.ts`（雷達直徑／上限／位移、環數、掃描秒數、外圈距離、點大小、字標字級與間距、chip 間距、最少顯示、進場倍率）。調整頁：dev server 下開 **`/boot-tuner.html`**（不進正式 build），調好按「複製設定」貼回 `BOOT_LAYOUT`。調整頁的暫存值只存在該頁的 localStorage，正式站只讀 `bootLayout.ts`。
+- `scripts/perf` 的 `waitStable` 會等 `data-boot` 消失才算穩定。
 
 ---
 
