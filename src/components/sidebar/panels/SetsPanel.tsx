@@ -6,11 +6,26 @@ import { getContinentLabel, getCountryLabel, searchAirports, type AirportSearchC
 import { getAirportInfo } from "../../../map/cameraPresets";
 import { useTheme } from "../../../styles/ThemeContext";
 import { FONT, RADIUS, SIZE, SPACE } from "../../../styles/tokens";
-import { Button, Chip, Section } from "../../../ui";
+import { Button, Chip, Section, Segmented } from "../../../ui";
 import { IconChevron } from "../../../ui/icons";
 import { themeVars } from "../../../ui/vars";
 import { AirportRow } from "../primitives";
 import { SCENE_PRESETS, type ScenePreset } from "../scenePresets";
+
+type SetsTab = "airports" | "sets" | "scenes";
+const TAB_KEY = "fa-sets-tab";
+
+function loadTab(): SetsTab {
+  try {
+    const v = localStorage.getItem(TAB_KEY);
+    if (v === "airports" || v === "sets" || v === "scenes") return v;
+  } catch { /* localStorage 不可用 */ }
+  return "airports";
+}
+
+function saveTab(tab: SetsTab) {
+  try { localStorage.setItem(TAB_KEY, tab); } catch { /* ignore */ }
+}
 
 export function SetsPanel({
   airports,
@@ -52,7 +67,9 @@ export function SetsPanel({
   const available = new Set(airports);
   const selectedSet = new Set(airportSet);
   const [search, setSearch] = useState("");
-  const [scenesOpen, setScenesOpen] = useState(true);
+  const [tab, setTabState] = useState<SetsTab>(loadTab);
+  const setTab = (next: SetsTab) => { setTabState(next); saveTab(next); };
+  const applySet = (set: SavedAirportSet) => { onApplySet(set); setTab("sets"); };
   const firstAirportMeta = airportMeta[airportSet[0] ?? ""];
   const defaultCatalogGroup = firstAirportMeta?.country === "TW" || firstAirportMeta?.country === "JP"
     ? firstAirportMeta.country
@@ -189,67 +206,47 @@ export function SetsPanel({
           boxShadow: `0 1px 0 ${tokens.border}`,
         }}
       >
-        {/* 組合模式：組合內容 + 動作（單選時不顯示，組合是第二步） */}
-        {setMode ? (
-          <>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: SPACE.s8 }}>
-              <div style={{ fontSize: SIZE.body, color: tokens.fg2, lineHeight: 1.3, fontFamily: FONT.ui }}>
-                組合 <strong style={{ color: tokens.fg1, fontFamily: FONT.data }}>{airportSet.length}</strong> 座
-                {setName && (
-                  <span style={{ marginLeft: SPACE.s6, fontSize: SIZE.minor, color: tokens.fg3 }}>· {setName}</span>
-                )}
-              </div>
-              <div style={{ display: "flex", gap: SPACE.s4 }}>
-                <Button onClick={onClearSet} disabled={airportSet.length === 0}>清空</Button>
-                <Button onClick={onExitSetMode} title="退出組合模式（回到單一機場）">退出</Button>
-              </div>
-            </div>
-            {airportSet.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: SPACE.s4 }}>
-                {airportSet.map((icao) => {
-                  const info = getAirportInfo(icao);
-                  return (
-                    <Chip
-                      key={icao}
-                      selected
-                      label={info?.iata ?? icao}
-                      title={info?.name ?? icao}
-                      onRemove={() => onToggleAirport(icao)}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </>
-        ) : (
-          <div style={{ fontSize: SIZE.minor, color: tokens.fg3, lineHeight: 1.45, fontFamily: FONT.ui }}>
-            點擊機場＝開啟並飛過去；按列尾 ＋ 或 Shift+點擊＝加入組合
-          </div>
-        )}
-
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="搜尋機場、國家、洲別、ICAO / IATA"
-          aria-label="搜尋機場"
-          className="fa-focus"
-          style={{
-            ...themeVars(tokens),
-            width: "100%",
-            boxSizing: "border-box",
-            height: 28,
-            padding: `0 ${SPACE.s8 + SPACE.s2}px`,
-            borderRadius: RADIUS.base,
-            border: `1px solid ${tokens.border}`,
-            background: tokens.ctl,
-            color: tokens.fg1,
-            fontFamily: FONT.ui,
-            fontSize: SIZE.body,
-          }}
+        <Segmented<SetsTab>
+          fullWidth
+          ariaLabel="機場面板分頁"
+          options={[
+            { value: "airports", label: "機場" },
+            { value: "sets", label: "組合" },
+            { value: "scenes", label: "場景" },
+          ]}
+          value={tab}
+          onChange={setTab}
         />
+        {tab === "airports" && (
+          <>
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="搜尋機場、國家、洲別、ICAO / IATA"
+              aria-label="搜尋機場"
+              className="fa-focus"
+              style={{
+                ...themeVars(tokens),
+                width: "100%",
+                boxSizing: "border-box",
+                height: 28,
+                padding: `0 ${SPACE.s8 + SPACE.s2}px`,
+                borderRadius: RADIUS.base,
+                border: `1px solid ${tokens.border}`,
+                background: tokens.ctl,
+                color: tokens.fg1,
+                fontFamily: FONT.ui,
+                fontSize: SIZE.body,
+              }}
+            />
+            <div style={{ fontSize: SIZE.minor, color: tokens.fg3, lineHeight: 1.45, fontFamily: FONT.ui }}>
+              點擊＝開啟並飛過去；＋ 或 Shift+點擊＝加入組合
+            </div>
+          </>
+        )}
       </div>
 
-      {search.trim() && (
+      {tab === "airports" && search.trim() && (
         <div style={{ paddingBottom: SPACE.s8 }}>
           <div style={{ fontSize: SIZE.minor, color: tokens.fg3, padding: `${SPACE.s4}px ${SPACE.s4}px` }}>
             {searchResults.length > 0
@@ -276,7 +273,46 @@ export function SetsPanel({
         </div>
       )}
 
-      {/* 預設組合：固定位置（Q1），點擊套用 */}
+      {tab === "sets" && (
+        <>
+          {/* 目前組合：只在組合模式出現 */}
+          {setMode ? (
+            <Section title="CURRENT · 目前組合">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: SPACE.s8 }}>
+                <div style={{ fontSize: SIZE.body, color: tokens.fg2, lineHeight: 1.3, fontFamily: FONT.ui }}>
+                  組合 <strong style={{ color: tokens.fg1, fontFamily: FONT.data }}>{airportSet.length}</strong> 座
+                  {setName && (
+                    <span style={{ marginLeft: SPACE.s6, fontSize: SIZE.minor, color: tokens.fg3 }}>· {setName}</span>
+                  )}
+                </div>
+                <div style={{ display: "flex", gap: SPACE.s4 }}>
+                  <Button onClick={onClearSet} disabled={airportSet.length === 0}>清空</Button>
+                  <Button onClick={onExitSetMode} title="退出組合模式（回到單一機場）">退出</Button>
+                </div>
+              </div>
+              {airportSet.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: SPACE.s4 }}>
+                  {airportSet.map((icao) => {
+                    const info = getAirportInfo(icao);
+                    return (
+                      <Chip
+                        key={icao}
+                        selected
+                        label={info?.iata ?? icao}
+                        title={info?.name ?? icao}
+                        onRemove={() => onToggleAirport(icao)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </Section>
+          ) : (
+            <div style={{ fontSize: SIZE.minor, color: tokens.fg3, lineHeight: 1.45, fontFamily: FONT.ui, padding: `${SPACE.s4}px ${SPACE.s8}px` }}>
+              目前是單一機場。到「機場」分頁按列尾 ＋ 加入組合，或直接套用下方預設組合。
+            </div>
+          )}
+
       <Section title="PRESETS · 預設組合">
         {savedSets.map((s) => {
           const isActive = s.id === matchedSavedSetId;
@@ -285,7 +321,7 @@ export function SetsPanel({
               key={s.id}
               type="button"
               aria-pressed={isActive}
-              onClick={() => onApplySet(s)}
+              onClick={() => applySet(s)}
               className="fa-focus fa-hover"
               style={{
                 ...rowBase,
@@ -308,12 +344,14 @@ export function SetsPanel({
         })}
       </Section>
 
+        </>
+      )}
+
+      {tab === "scenes" && (
+        <>
       {filteredScenes.length > 0 && (
         <Section
           title="SCENES · 場景預設"
-          collapsible
-          open={scenesOpen}
-          onToggle={setScenesOpen}
           right={<span style={{ fontFamily: FONT.data, fontSize: SIZE.minor, letterSpacing: 0 }}>{filteredScenes.length}</span>}
         >
           {filteredScenes.map((scene) => (
@@ -334,62 +372,72 @@ export function SetsPanel({
         </Section>
       )}
 
-      <div style={{ height: 1, background: tokens.border, margin: `${SPACE.s8}px 0 ${SPACE.s4}px` }} />
+          {filteredScenes.length === 0 && (
+            <div style={{ fontSize: SIZE.minor, color: tokens.fg3, padding: `${SPACE.s4}px ${SPACE.s8}px` }}>此區域沒有場景預設</div>
+          )}
+        </>
+      )}
 
-      {/* Complete airport directory: Taiwan / Japan / continent → country → airport */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: SPACE.s6, padding: `${SPACE.s2}px ${SPACE.s8}px ${SPACE.s4}px` }}>
-        <span style={eyebrow}>ALL · 全部機場</span>
-        <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data }}>
-          {catalogIcaos.length.toLocaleString()} 座 · {airports.length.toLocaleString()} 座有軌跡
-        </span>
-      </div>
-      {groupedCatalog.map((continent) => {
-        const open = openContinents.has(continent.key);
-        const continentIcaos = continent.countries.flatMap((country) => country.icaos);
-        const selectedInGroup = continentIcaos.filter((icao) => selectedSet.has(icao)).length;
-        return (
-          <div key={continent.key}>
-            <button
-              type="button"
-              aria-expanded={open}
-              onClick={() => toggleSetKey(setOpenContinents, continent.key)}
-              className="fa-focus fa-hover"
-              style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px`, color: tokens.fg3 }}
-            >
-              <IconChevron size={9} direction={open ? "down" : "right"} />
-              <span style={{ fontSize: SIZE.body, color: tokens.fg1, flex: 1 }}>{continent.label}</span>
-              <span style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data }}>
-                {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{continentIcaos.length}
-              </span>
-            </button>
-            {open && continent.flattenCountries && continentIcaos.map((icao) => (
-              <div key={icao} style={{ paddingLeft: SPACE.s8 }}>{airportRow(icao)}</div>
-            ))}
-            {open && !continent.flattenCountries && continent.countries.map((country) => {
-              const countryOpen = openCountries.has(country.key);
-              const selectedInCountry = country.icaos.filter((icao) => selectedSet.has(icao)).length;
-              return (
-                <div key={country.key} style={{ paddingLeft: SPACE.s8 }}>
-                  <button
-                    type="button"
-                    aria-expanded={countryOpen}
-                    onClick={() => toggleSetKey(setOpenCountries, country.key)}
-                    className="fa-focus fa-hover"
-                    style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px`, color: tokens.fg3 }}
-                  >
-                    <IconChevron size={8} direction={countryOpen ? "down" : "right"} />
-                    <span style={{ fontSize: SIZE.minor, color: tokens.fg2, flex: 1 }}>{country.label}</span>
-                    <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data }}>
-                      {selectedInCountry > 0 ? `${selectedInCountry}/` : ""}{country.icaos.length}
-                    </span>
-                  </button>
-                  {countryOpen && country.icaos.map((icao) => airportRow(icao))}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
+      {tab === "airports" && (
+        <>
+        <div style={{ height: 1, background: tokens.border, margin: `${SPACE.s8}px 0 ${SPACE.s4}px` }} />
+
+        {/* Complete airport directory: Taiwan / Japan / continent → country → airport */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: SPACE.s6, padding: `${SPACE.s2}px ${SPACE.s8}px ${SPACE.s4}px` }}>
+          <span style={eyebrow}>ALL · 全部機場</span>
+          <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data }}>
+            {catalogIcaos.length.toLocaleString()} 座 · {airports.length.toLocaleString()} 座有軌跡
+          </span>
+        </div>
+        {groupedCatalog.map((continent) => {
+          const open = openContinents.has(continent.key);
+          const continentIcaos = continent.countries.flatMap((country) => country.icaos);
+          const selectedInGroup = continentIcaos.filter((icao) => selectedSet.has(icao)).length;
+          return (
+            <div key={continent.key}>
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => toggleSetKey(setOpenContinents, continent.key)}
+                className="fa-focus fa-hover"
+                style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px`, color: tokens.fg3 }}
+              >
+                <IconChevron size={9} direction={open ? "down" : "right"} />
+                <span style={{ fontSize: SIZE.body, color: tokens.fg1, flex: 1 }}>{continent.label}</span>
+                <span style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data }}>
+                  {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{continentIcaos.length}
+                </span>
+              </button>
+              {open && continent.flattenCountries && continentIcaos.map((icao) => (
+                <div key={icao} style={{ paddingLeft: SPACE.s8 }}>{airportRow(icao)}</div>
+              ))}
+              {open && !continent.flattenCountries && continent.countries.map((country) => {
+                const countryOpen = openCountries.has(country.key);
+                const selectedInCountry = country.icaos.filter((icao) => selectedSet.has(icao)).length;
+                return (
+                  <div key={country.key} style={{ paddingLeft: SPACE.s8 }}>
+                    <button
+                      type="button"
+                      aria-expanded={countryOpen}
+                      onClick={() => toggleSetKey(setOpenCountries, country.key)}
+                      className="fa-focus fa-hover"
+                      style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px`, color: tokens.fg3 }}
+                    >
+                      <IconChevron size={8} direction={countryOpen ? "down" : "right"} />
+                      <span style={{ fontSize: SIZE.minor, color: tokens.fg2, flex: 1 }}>{country.label}</span>
+                      <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data }}>
+                        {selectedInCountry > 0 ? `${selectedInCountry}/` : ""}{country.icaos.length}
+                      </span>
+                    </button>
+                    {countryOpen && country.icaos.map((icao) => airportRow(icao))}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+        </>
+      )}
     </div>
   );
 }
