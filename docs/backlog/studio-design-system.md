@@ -171,12 +171,37 @@ ATC 雷達幕的語言。chrome 退成安靜的石墨色，讓夜空光軌當主
 
 ---
 
-## 8. 已知限制與後續（P8 結案時）
+## 8. Backlog（v3.2.0 發布後，2026-10-03 更新）
 
-- **作品頁**：定位決議（起降軌跡＋3D）下的作品頁尚未做，等視覺方向拍板；本輪只統一網站主體 UI。
-- **機場比較**：多機場並排比較視圖未做（現行只有「組合」的合併檢視）。
-- **跑道歸屬**：起降染色目前只分進場／離場，尚未依跑道分色（需 path 高解析，見 `project_track_path_jitter_limit`）。
-- **星圖完整度亮度**：Atlas 完整度的光球亮度與離散色（`ATLAS_STATUS_META` 的 opacity）是否要隨資料量連續變化，待議。
-- **手機**：只統一外觀，功能未與桌面對等（Q8）；手機航班卡與載入狀態條共用 `mobileStatusTop`，狀態條顯示時可能與航班卡重疊。
-- **空域資訊卡**：P8 改用 token 後，文字／區塊底色與舊值有細微差異（fg1／fg2／ctl），屬刻意統一。
-- **未清的未使用 export**：`noUnusedLocals` 抓不到未使用的 export；本輪只清了 UI 相關與無 importer 的檔案，`data/`、`map/` 內另有數個零引用函式（如 `filterByArrivalAirport`、`removeStaticTrails`），列為後續清理。
+> 原則：新項目從 `develop` 開 `feat/*` / `fix/*`；發布流程見 [RELEASING.md](../RELEASING.md)。
+
+### 8.1 待決策（需使用者拍板）
+- [ ] **多日比較跳過空檔日**：Compare 是「依日期先後串成一條時間軸」（`useTimeline.ts:81,89,152–157`），選 2/18 + 3/5 時會空播中間日子（60x 約 6 小時，把手停在前段末端）。改法：播放時鐘跳過未選日期，需改 `useTimeline`。
+
+### 8.2 已知限制（小修）
+- [ ] 手機版多日比較、一次選 5 天以上（出現 +N、日期列兩列）尚未實機／截圖驗證
+- [ ] 開場：頁面載入後約 0.3 秒雷達尚未畫出，會先看到空白底色 → `index.html` 放一層靜態遮罩
+- [ ] 開場：用網址指定其他機場進站時，雷達中心與 chip 可能從 RCTP 換過去一次
+- [ ] 手機航班卡與載入狀態條共用 `mobileStatusTop`，狀態條顯示時短暫重疊
+- [ ] 手機錄影模式 16:9／Grid 會壓到左上標題右端
+- [ ] 起降染色：組合內互飛的拖尾是單色（靜態軌跡已是沿路漸層）
+- [ ] 網址還原 region 範圍時，選定機場會換成該區預設機場（例：JP → RJTT）；`a=` 不帶 region
+- [ ] 多日比較移除中間日期時，後面日期的比較色會跟著換（依加入順序配色）
+- [ ] 空域資訊卡：P8 改用 token 後文字／區塊底色與舊值有細微差異，visual-check 場景未涵蓋，需人工看過
+
+### 8.3 新功能候選（依優先建議排序）
+1. [ ] **作品頁 `/p/:id`**：可序列化狀態（機場、日期、篩選、鏡頭、配色）＋標題＋兩句圖說，無 chrome；P6 網址狀態已鋪好地基（見 [positioning-ui-ux.md](positioning-ui-ux.md) §3）
+2. [ ] **機場比較小多圖**：同比例尺、跑道對齊並排；「距跑道頭距離 × 高度」剖面疊圖（需 L0 全解析）
+3. [ ] **跑道歸屬**：最終航向＋門檻距離分到跑道 → 跑道使用率、配置翻轉偵測（需高解析 path，見記憶 `project_track_path_jitter_limit`）
+4. [ ] **星圖改用資料完整度當亮度**＋「隨機一座機場」入口（先完成 [airport-selection-ux.md](airport-selection-ux.md) ① 重建 completeness metadata）
+5. [ ] **全球一日全景**：全球一日抓取完成後的全景模式（高空／低空分層可調亮度）
+
+### 8.4 清理
+- [ ] 確認線上 v3.2.0 正常後刪除 `public/tracks/manifest.backup-20261003-0947.json`、`manifest.s3-backup-20261003-0947.json`（gitignored）；Zeabur `/data/tracks/manifest.backup-20261003.json` 同理
+- [ ] `scripts/perf/out/` 的 `chrome-profile-polluted-*`、`baseline-polluted-*`、各輪截圖可清（gitignored）
+- [ ] `data/`、`map/` 內零引用的 export（如 `filterByArrivalAirport`、`removeStaticTrails`）——`noUnusedLocals` 抓不到
+- [ ] `docs/backlog/ios-app-plan.md` 長期未追蹤：決定收進 develop 或移除（非本系列產出）
+
+### 8.5 驗收待辦
+- [ ] 線上站確認 v3.2.0 部署成功：開場雷達、機場列表進／離數字（Zeabur manifest 已更新）
+- [ ] GitHub Release v1.0.0、v2.0.0 的重點為事後依 log 整理，人工確認內容
