@@ -358,13 +358,11 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                 ))}
               </div>
             )}
-            {(activeWorkspace === "selection" || activeWorkspace === "explore") && (
+            {/* 機場數與日期已在左下圖說；這裡只在有機場缺這天資料時提醒 */}
+            {(activeWorkspace === "selection" || activeWorkspace === "explore")
+              && selectedDate && selectedAvailable < activeSelection.length && (
               <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data, lineHeight: 1.45 }}>
-                {activeSelection.length} 座機場
-                {selectedDate ? ` · ${selectedDate}` : ""}
-                {selectedDate && selectedAvailable < activeSelection.length
-                  ? ` · ${activeSelection.length - selectedAvailable} 座無此日期`
-                  : ""}
+                {activeSelection.length - selectedAvailable}／{activeSelection.length} 座無 {selectedDate} 資料
               </div>
             )}
             {workspaceTabs.length > 1 && <Segmented<PanelId>
