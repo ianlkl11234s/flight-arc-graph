@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState, type CSSProperties } from "react";
 import { useTheme } from "../styles/ThemeContext";
 import { BLUR, FONT, LAYOUT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
 import { Button, Chip, Segmented, Select, Slider } from "../ui";
@@ -138,6 +139,7 @@ export function Timeline(p: Props) {
   const fixed = p.fixedExpanded ?? false;
   const expanded = fixed || isExpanded(state);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const calendarRef = useRef<HTMLDivElement | null>(null);
   const availableDates = p.availableDates ?? [];
   const fullDates = p.fullDates ?? [];
   const selectedDates = p.selectedDates ?? [];
@@ -163,12 +165,28 @@ export function Timeline(p: Props) {
     }
     setCalendarOpen(!calendarOpen);
   };
+  // 月曆 portal 到 body：外層容器（z-index 10）自成 stacking context，popover 留在裡面會被 z 20 的左側面板蓋住。
+  // 位置依時間軸根節點量測（桌面往上彈、手機往下彈）。
+  const [calendarPos, setCalendarPos] = useState<CSSProperties | null>(null);
+  useLayoutEffect(() => {
+    if (!calendarOpen) return;
+    const measure = () => {
+      const r = rootRef.current?.getBoundingClientRect();
+      if (!r) return;
+      setCalendarPos(fixed
+        ? { top: r.bottom + SPACE.s8, left: r.left }
+        : { bottom: window.innerHeight - r.top + SPACE.s8, left: r.left });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [calendarOpen, fixed, expanded]);
   // 月曆開著：點時間軸外或按 Esc 關閉
   useEffect(() => {
     if (!calendarOpen) return;
     const onPointerDown = (e: PointerEvent) => {
       const root = rootRef.current;
-      if (root && e.target instanceof Node && !root.contains(e.target)) setCalendarOpen(false);
+      if (root && e.target instanceof Node && !root.contains(e.target) && !calendarRef.current?.contains(e.target)) setCalendarOpen(false);
     };
     // Esc 分層（R7）：月曆排在說明視窗之後、dock 卡之前；preventDefault 讓 App 的 Esc handler 略過這一次
     const onKeyDown = (e: KeyboardEvent) => {
@@ -305,15 +323,18 @@ export function Timeline(p: Props) {
       }}
     >
       {/* ── 月曆（只此一套，R12）── */}
-      {calendarOpen && (
+      {calendarOpen && calendarPos && createPortal(
         <div
+          ref={calendarRef}
           role="dialog"
           aria-label="選擇日期"
           style={{
-            position: "absolute",
-            ...(fixed ? { top: "calc(100% + 8px)" } : { bottom: "calc(100% + 8px)" }),
-            left: 0,
+            ...themeVars(tokens),
+            position: "fixed",
+            ...calendarPos,
             zIndex: Z.popover,
+            color: tokens.fg1,
+            fontFamily: FONT.ui,
             background: tokens.panel,
             border: `1px solid ${tokens.border}`,
             borderRadius: RADIUS.base,
@@ -420,7 +441,8 @@ export function Timeline(p: Props) {
               {noDataNotice}
             </div>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
 
       {expanded && (
