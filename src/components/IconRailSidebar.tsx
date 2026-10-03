@@ -237,6 +237,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
 
       {/* Icon Rail (top icons) */}
       <div
+        data-boot-part="rail"
         style={{
           position: "absolute",
           left: 0,

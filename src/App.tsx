@@ -55,6 +55,11 @@ import { FONT, LAYOUT, SIZE, SPACE, Z } from "./styles/tokens";
 import { IconClose } from "./ui/icons";
 import { Button, Caption, Segmented, SelectionRing, Select, Slider, type CaptionMetaItem } from "./ui";
 import { escLayerToClose, isEditableTarget } from "./ui/escStack";
+import { BootScreen } from "./components/boot/BootScreen";
+import { BOOT_LAYOUT } from "./components/boot/bootLayout";
+import { bootMaskVisible } from "./components/boot/bootSequence";
+import { bootRadarPoints } from "./components/boot/radar";
+import { useBootPhase } from "./components/boot/useBootPhase";
 import { ALL_OVERLAYS_CLOSED, overlaysOpen, overlaysToClose, type OverlayKey, type OverlayState } from "./ui/overlayMutex";
 
 // ── Atlas 機場點：點擊 popup ──
@@ -104,6 +109,7 @@ function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: n
   const lng = `${Math.abs(cameraInfo.lng).toFixed(4)}°${cameraInfo.lng >= 0 ? "E" : "W"}`;
   return (
     <div
+      data-boot-part="title"
       style={{
         position: "absolute",
         left: LAYOUT.panelLeft + SPACE.s8,
@@ -417,6 +423,9 @@ export default function App() {
   const [atlasColorMode, setAtlasColorMode] = useState<AtlasColorMode>("flow");
   const [atlasGlowSize, setAtlasGlowSize] = useState(1.6);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
+  // 開場（spec「開場（Boot）」）：地圖 ready（handleMapReady）＋第一批航班載完或失敗 → 雷達遮罩收掉
+  const [bootMapReady, setBootMapReady] = useState(false);
+  const [bootDataSettled, setBootDataSettled] = useState(false);
   const { isMobile, isLandscape } = useIsMobile();
 
   // Phase 2-2：cameraInfo.zoom 變動時依 hysteresis band 重算 LOD 層（setLodOverride 期間暫停）。
@@ -1496,6 +1505,7 @@ export default function App() {
 
   const handleMapReady = (map: MapboxMap) => {
     mapRef.current = map;
+    setBootMapReady(true);
     addAirspaceLayer(map);
     addFlightLayer(map);
     addAtlasGlowLayer(map);
@@ -1965,6 +1975,19 @@ export default function App() {
       ? `${airspaceSelectedDates.length} 日`
       : `${airspaceDate ?? timeline.selectedDate}${airspaceRangeDays > 1 ? ` +${airspaceRangeDays - 1}d` : ""}`);
 
+  // ── 開場雷達 ──
+  // useFlightData 的 loading 初值為 true：第一次變 false（完成）或出現 loadError（失敗）即視為第一批已結束
+  useEffect(() => {
+    if (!bootDataSettled && (!loading || loadError !== null)) setBootDataSettled(true);
+  }, [bootDataSettled, loading, loadError]);
+  const boot = useBootPhase({ mapReady: bootMapReady, dataSettled: bootDataSettled }, BOOT_LAYOUT.minShowMs, BOOT_LAYOUT.enterScale);
+  const bootMask = bootMaskVisible(boot.phase);
+  const bootCenterIcao = airportSet?.[0] ?? selectedAirport;
+  const bootPoints = useMemo(
+    () => (bootMask ? bootRadarPoints(bootCenterIcao, airportMeta, BOOT_LAYOUT.radiusKm) : []),
+    [bootMask, bootCenterIcao, airportMeta],
+  );
+
   // 範圍切換（設定面板）與 Region chip（探索面板）；網址套用（P6）也走這兩個
   const handleScopeChange = (s: Scope) => {
     setScope(s);
@@ -2428,6 +2451,7 @@ export default function App() {
               pointerEvents: "none",
             }}
           >
+            <div data-boot-part="caption">
             <Caption
               code={captionCode}
               name={captionName}
@@ -2450,7 +2474,9 @@ export default function App() {
               ) : undefined}
               style={{ maxWidth: 520 }}
             />
+            </div>
             {/* 時間軸膠囊（R4；底邊 = mapBottomInset，與 dock 共用，R5） */}
+            <div data-boot-part="timeline">
             <Timeline
               playing={timeline.playing}
               speed={timeline.speed}
@@ -2477,6 +2503,7 @@ export default function App() {
               onToggleMultiDate={timeline.toggleMultiDate}
               onClearMultiDates={timeline.clearMultiDates}
             />
+            </div>
           </div>
 
           {/* 左上：字標 + 相機 HUD */}
@@ -2566,6 +2593,7 @@ export default function App() {
           {/* Timeline 固定在 header 下方 */}
           <div
             ref={mobileTimelineRef}
+            data-boot-part="toolbar"
             style={{
               position: "absolute",
               top: `calc(${MOBILE_HEADER_HEIGHT}px + env(safe-area-inset-top, 0px))`,
@@ -2606,6 +2634,7 @@ export default function App() {
           </div>
 
           {/* Bottom Sheet */}
+          <div data-boot-part="fade">
           <MobileBottomSheet isLandscape={isLandscape}>
             {(level) => (
               <>
@@ -2692,6 +2721,7 @@ export default function App() {
               </>
             )}
           </MobileBottomSheet>
+          </div>
         </>
       )}
 
@@ -2708,7 +2738,7 @@ export default function App() {
         top={captureMode ? CAPTURE_STATUS_TOP : isMobile ? mobileStatusTop : undefined}
         right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : isMobile ? MOBILE_STATUS_RIGHT : undefined}
         failOnly={captureMode}
-        hidden={captureMode && isExporting}
+        hidden={(captureMode && isExporting) || bootMask}
       />
 
       {/* ── 點擊處的選取圈（R1；固定在點擊位置，相機一動就收）── */}
@@ -2730,6 +2760,17 @@ export default function App() {
 
       {/* ── Info Modal ── */}
       <InfoModal open={showInfo} onClose={() => setShowInfo(false)} isMobile={isMobile} />
+
+      {/* ── 開場雷達遮罩（蓋在地圖上；地圖在下面照常初始化）── */}
+      {bootMask && (
+        <BootScreen
+          phase={boot.phase === "loading" ? "loading" : boot.phase === "done" ? "done" : "leaving"}
+          label={captionCode}
+          points={bootPoints}
+          outcome={boot.timedOut ? "timeout" : loadError !== null ? "failed" : "ok"}
+          reducedMotion={boot.reducedMotion}
+        />
+      )}
 
     </div>
     </ThemeProvider>

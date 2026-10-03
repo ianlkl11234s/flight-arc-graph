@@ -68,6 +68,7 @@ export function Toolbar(p: ToolbarProps) {
     <div
       role="toolbar"
       aria-label="工具列"
+      data-boot-part="toolbar"
       style={{
         position: "absolute",
         top: SPACE.s16,

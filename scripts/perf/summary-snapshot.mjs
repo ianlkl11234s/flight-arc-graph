@@ -36,7 +36,7 @@ const ev = (js) => evalJs(cdp, js);
 async function waitStable(maxMs = 120000) {
   let last = -1, sf = 0; const t0 = Date.now();
   while (Date.now() - t0 < maxMs) {
-    const s = await ev(`(() => { const d = window.__flightArcDebug; return [d.getFlights().length, d.scene.isStaticBuilding() || d.map.isMoving() || !d.map.areTilesLoaded() || !d.map.isStyleLoaded()]; })()`);
+    const s = await ev(`(() => { const d = window.__flightArcDebug; return [d.getFlights().length, !!document.documentElement.dataset.boot || d.scene.isStaticBuilding() || d.map.isMoving() || !d.map.areTilesLoaded() || !d.map.isStyleLoaded()]; })()`);
     if (s[0] > 0 && s[0] === last && !s[1]) { sf += 1000; if (sf >= 3000) return; } else sf = 0;
     last = s[0]; await sleep(1000);
   }

@@ -169,6 +169,7 @@ export function MobileHeader(p: Props) {
     <div
       role="toolbar"
       aria-label="工具列"
+      data-boot-part="toolbar"
       style={{
         position: "absolute",
         top: 0,

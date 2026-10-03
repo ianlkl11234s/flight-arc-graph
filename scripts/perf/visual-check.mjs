@@ -69,7 +69,7 @@ async function waitStable(maxMs = 60000) {
   let stableFor = 0;
   const t0 = Date.now();
   while (Date.now() - t0 < maxMs) {
-    const s = await ev(`(() => { const d = window.__flightArcDebug; return [d.getFlights().length, d.scene.isStaticBuilding() || d.map.isMoving() || !d.map.areTilesLoaded() || !d.map.isStyleLoaded(), document.visibilityState]; })()`);
+    const s = await ev(`(() => { const d = window.__flightArcDebug; return [d.getFlights().length, !!document.documentElement.dataset.boot || d.scene.isStaticBuilding() || d.map.isMoving() || !d.map.areTilesLoaded() || !d.map.isStyleLoaded(), document.visibilityState]; })()`);
     if (s[0] > 0 && s[0] === last && !s[1]) {
       stableFor += 1000;
       if (stableFor >= 3000) return s;
