@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { DataSource, DisplayMode, Region, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
 import type { ColorTheme } from "../types/colorTheme";
 import type { AirspaceSettings } from "../types/airspace";
@@ -15,7 +16,7 @@ import { Chip, Panel, PanelBody, PanelHeader, Section, Segmented } from "../ui";
 import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, IconRouteAnalysis, IconCamera, IconRadar } from "./sidebar/primitives";
 import type { ScenePreset } from "./sidebar/scenePresets";
 import { SettingsPanel } from "./sidebar/panels/SettingsPanel";
-import { SetsPanel } from "./sidebar/panels/SetsPanel";
+import { SetsPanel, loadSetsTab, type SetsTab } from "./sidebar/panels/SetsPanel";
 import { ColorThemePanel } from "./sidebar/panels/ColorThemePanel";
 import { SummaryPanel } from "./sidebar/panels/SummaryPanel";
 import { AtlasPanel } from "./sidebar/panels/AtlasPanel";
@@ -195,6 +196,8 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
   const { activePanel, onActivePanelChange: setActivePanel } = props;
   const { tokens } = useTheme();
   const activeWorkspace = getWorkspace(activePanel);
+  /** 機場面板目前分頁（機場分頁用較寬的 panelWidthList） */
+  const [setsTab, setSetsTab] = useState<SetsTab>(loadSetsTab);
   const activeSelection = props.airportSet ?? [props.selectedAirport];
   const selectedDate = props.selectedDate;
   const selectedAvailable = selectedDate
@@ -338,7 +341,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
       {activePanel !== null && (
         <Panel
           ariaLabel={workspaceTitle}
-          width={activePanel === "stats" ? LAYOUT.panelWidthWide : LAYOUT.panelWidth}
+          width={activePanel === "stats" ? LAYOUT.panelWidthWide : activePanel === "sets" && setsTab === "airports" ? LAYOUT.panelWidthList : LAYOUT.panelWidth}
           maxHeight={`calc(100vh - ${LAYOUT.panelTop + LAYOUT.mapBottomInset + LAYOUT.leftBottomReserve + SPACE.s8}px)`}
           style={{ animation: "iconRailFadeIn 0.25s ease-out" }}
         >
@@ -372,7 +375,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onChange={setActivePanel}
             />}
           </div>
-          <PanelBody style={activePanel === "stats" ? { padding: 0, gap: 0 } : undefined}>
+          <PanelBody style={activePanel === "stats" ? { padding: 0, gap: 0 } : activePanel === "sets" ? { overflowY: "hidden" } : undefined}>
           {activePanel === "settings" && <SettingsPanel {...props} />}
           {activePanel === "sets" && (
             <SetsPanel
@@ -392,6 +395,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onExitSetMode={props.onExitSetMode}
               onSceneSelect={props.onSceneSelect}
               statDates={props.statDates}
+              onTabChange={setSetsTab}
             />
           )}
           {activePanel === "colors" && (

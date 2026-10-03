@@ -11,6 +11,37 @@ export type AirportSortKey = "tot" | "arr" | "dep" | "name";
 
 export const AIRPORT_SORT_KEYS: readonly AirportSortKey[] = ["tot", "arr", "dep", "name"];
 
+export type SortDir = "asc" | "desc";
+
+/** 欄首排序狀態：哪一欄、哪個方向 */
+export interface AirportSort {
+  key: AirportSortKey;
+  dir: SortDir;
+}
+
+/** 預設方向：數字欄由大到小，名稱升冪 */
+export function defaultSortDir(key: AirportSortKey): SortDir {
+  return key === "name" ? "asc" : "desc";
+}
+
+/** 點欄首：換欄 → 該欄預設方向；同欄 → 反向 */
+export function nextSort(cur: AirportSort, key: AirportSortKey): AirportSort {
+  if (cur.key !== key) return { key, dir: defaultSortDir(key) };
+  return { key, dir: cur.dir === "asc" ? "desc" : "asc" };
+}
+
+/** localStorage 值 → 排序狀態。新格式 `key:dir`；舊值只有 key（tot/arr/dep/name）→ 該欄預設方向；壞值 → 總量由大到小 */
+export function parseSort(raw: string | null | undefined): AirportSort {
+  const [k, d] = (raw ?? "").split(":");
+  if (!AIRPORT_SORT_KEYS.includes(k as AirportSortKey)) return { key: "tot", dir: "desc" };
+  const key = k as AirportSortKey;
+  return { key, dir: d === "asc" || d === "desc" ? d : defaultSortDir(key) };
+}
+
+export function serializeSort(s: AirportSort): string {
+  return `${s.key}:${s.dir}`;
+}
+
 export interface ArrDepCount {
   arr: number | null;
   dep: number | null;
@@ -55,6 +86,13 @@ export function getArrDep(entry: StatsEntry | undefined, dates: readonly string[
   return { arr: sumOver(entry.datesArr, dates), dep: sumOver(entry.datesDep, dates) };
 }
 
+/** 總量（顯示用）：dates 加總；沒有任何一天有資料 → null（顯示「—」，R9）；沒選日期 → 全期 flights。 */
+export function getTotalOrNull(entry: StatsEntry | undefined, dates: readonly string[]): number | null {
+  if (!entry) return null;
+  if (dates.length === 0) return entry.flights ?? null;
+  return sumOver(entry.dates, dates);
+}
+
 /** 總量（排序用）：有日期 → dates 加總（沒資料 = 0）；沒選日期 → 全期 flights。 */
 export function getTotal(entry: StatsEntry | undefined, dates: readonly string[]): number {
   if (!entry) return 0;
@@ -72,10 +110,16 @@ export interface AirportSortContext {
 }
 
 /**
- * 排序（不改動輸入）：有軌跡者在前；key 為數字時由大到小，缺值（null）排在有值之後；
- * 同分以全期 flights、ICAO 決勝。name = 顯示名 zh-Hant 升冪。
+ * 排序（不改動輸入）：有軌跡者在前；數字欄預設由大到小，缺值（null）不論方向都排在有值之後；
+ * 同分以全期 flights、ICAO 決勝。name = 顯示名 zh-Hant 升冪。dir 省略 = 該欄預設方向。
  */
-export function sortAirports(icaos: readonly string[], key: AirportSortKey, ctx: AirportSortContext): string[] {
+export function sortAirports(
+  icaos: readonly string[],
+  key: AirportSortKey,
+  ctx: AirportSortContext,
+  dir: SortDir = defaultSortDir(key),
+): string[] {
+  const sign = dir === defaultSortDir(key) ? 1 : -1;
   const value = (icao: string): number => {
     const entry = ctx.catalog[icao];
     if (key === "tot") return getTotal(entry, ctx.dates);
@@ -86,10 +130,14 @@ export function sortAirports(icaos: readonly string[], key: AirportSortKey, ctx:
     const avail = Number(ctx.available.has(b)) - Number(ctx.available.has(a));
     if (avail) return avail;
     if (key === "name") {
-      return ctx.nameOf(a).localeCompare(ctx.nameOf(b), "zh-Hant") || a.localeCompare(b);
+      return sign * (ctx.nameOf(a).localeCompare(ctx.nameOf(b), "zh-Hant") || a.localeCompare(b));
     }
+    const va = value(a);
+    const vb = value(b);
+    // 缺值（-1）固定殿後，不隨方向翻轉
+    if ((va < 0) !== (vb < 0)) return va < 0 ? 1 : -1;
     return (
-      value(b) - value(a) ||
+      sign * (vb - va) ||
       (ctx.catalog[b]?.flights ?? 0) - (ctx.catalog[a]?.flights ?? 0) ||
       a.localeCompare(b)
     );

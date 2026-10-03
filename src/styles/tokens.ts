@@ -117,6 +117,8 @@ export const LAYOUT = {
   panelWidth: 288,
   /** 寬面板（分析 › 統計：圖表 300 + 左右留白） */
   panelWidthWide: 360,
+  /** 機場面板「機場」分頁（名稱＋總／進／離三欄數字＋ ＋ 鈕） */
+  panelWidthList: 320,
   panelLeft: 64,
   panelTop: 52,
   mapBottomInset: 64,

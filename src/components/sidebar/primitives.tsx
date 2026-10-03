@@ -3,9 +3,8 @@ import { getAirportInfo } from "../../map/cameraPresets";
 import { useTheme } from "../../styles/ThemeContext";
 import { FONT, RADIUS, SIZE, SPACE } from "../../styles/tokens";
 import { themeVars } from "../../ui/vars";
-import { IconMinus, IconPlus } from "../../ui/icons";
+import { IconChevron, IconMinus, IconPlus } from "../../ui/icons";
 import { TRAJ } from "../../types/colorTheme";
-import type { ArrDepCount } from "../../data/airportListStats";
 
 /* ── Sub-components ──────────────────────────────────────── */
 
@@ -134,31 +133,110 @@ export function IconCamera() {
   );
 }
 
-/** 進／離數字欄寬（欄首與每列共用，讓兩者對齊） */
-export const STAT_COL_W = 38;
+/** 數字欄之間的間距（欄首與每列共用） */
+const COL_GAP = SPACE.s6;
+/** 列右側 ＋ 鈕（24）與其左右間距：欄首右側要留同寬，數字欄才會對齊 */
+const ADD_BTN_SPACE = SPACE.s4 + 24 + SPACE.s4;
 
 const fmtStat = (n: number | null) => (n === null ? "—" : n.toLocaleString());
 
-/** 數字欄欄首：進（TRAJ 進場色）、離（TRAJ 離場色）。右側留出 ＋ 鈕的位置。 */
-export function AirportStatHeader() {
-  const { tokens, isDark } = useTheme();
-  const pal = isDark ? TRAJ.dark : TRAJ.light;
-  const cell = { width: STAT_COL_W, textAlign: "right" as const, flex: "none" as const };
+/** 機場列的三個數字：總（manifest dates）、進、離；null = 缺值顯示「—」（R9） */
+export interface AirportStats {
+  tot: number | null;
+  arr: number | null;
+  dep: number | null;
+}
+
+/**
+ * 數字欄寬（px）：依目前清單最大值的字元數固定（FONT.data 字寬 0.6em），
+ * 下限容得下欄首「● 進 ▾」。
+ */
+export function statColWidth(values: Iterable<number | null>): number {
+  let len = 1;
+  for (const v of values) len = Math.max(len, fmtStat(v).length);
+  return Math.max(34, Math.ceil(len * 0.6 * SIZE.body) + 2);
+}
+
+export type AirportColumn = "name" | "tot" | "arr" | "dep";
+
+/**
+ * 機場列表欄首：機場｜總｜進｜離（＋ 欄不需欄首）。點欄首 = 依該欄排序（onSort），
+ * 目前排序欄 accent + 小箭頭，其他 fg3。
+ */
+export function AirportColumnHeader({
+  sortKey,
+  sortDir,
+  colWidth,
+  onSort,
+}: {
+  sortKey: AirportColumn;
+  sortDir: "asc" | "desc";
+  colWidth: number;
+  onSort: (key: AirportColumn) => void;
+}) {
+  const { tokens } = useTheme();
+  const cols: { key: AirportColumn; label: string; title: string }[] = [
+    { key: "name", label: "機場", title: "名稱" },
+    { key: "tot", label: "總", title: "總量" },
+    { key: "arr", label: "進", title: "進場" },
+    { key: "dep", label: "離", title: "離場" },
+  ];
   return (
     <div
-      aria-hidden="true"
+      role="group"
+      aria-label="排序欄首"
       style={{
+        ...themeVars(tokens),
         display: "flex",
-        gap: SPACE.s8,
-        padding: `0 ${SPACE.s8 + 24 + SPACE.s4 + SPACE.s4}px ${SPACE.s2}px ${SPACE.s8}px`,
+        alignItems: "center",
+        gap: COL_GAP,
+        padding: `0 ${SPACE.s8 + ADD_BTN_SPACE}px 0 ${SPACE.s8}px`,
+        borderBottom: `1px solid ${tokens.border}`,
         fontSize: SIZE.eyebrow,
-        fontFamily: FONT.data,
-        color: tokens.fg3,
+        fontFamily: FONT.ui,
       }}
     >
-      <span style={{ flex: 1 }} />
-      <span style={{ ...cell, color: pal.arr }}>進</span>
-      <span style={{ ...cell, color: pal.dep }}>離</span>
+      {cols.map((c) => {
+        const active = c.key === sortKey;
+        const isName = c.key === "name";
+        const dirLabel = isName
+          ? (active && sortDir === "desc" ? "反序" : "正序")
+          : (active && sortDir === "asc" ? "由小到大" : "由大到小");
+        return (
+          <button
+            key={c.key}
+            type="button"
+            onClick={() => onSort(c.key)}
+            aria-pressed={active}
+            aria-label={`依${c.title}排序${active ? `（目前${dirLabel}，再點反向）` : ""}`}
+            title={`依${c.title}排序`}
+            className="fa-focus fa-hover-fg"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: isName ? "flex-start" : "flex-end",
+              gap: SPACE.s2,
+              flex: isName ? 1 : "none",
+              width: isName ? undefined : colWidth,
+              minWidth: 0,
+              height: 24,
+              padding: isName ? `0 0 0 ${2 + SPACE.s8}px` : 0,
+              border: 0,
+              background: "transparent",
+              color: active ? tokens.accent : tokens.fg3,
+              font: "inherit",
+              fontWeight: active ? 600 : 400,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {c.label}
+            <span aria-hidden="true" style={{ width: 8, display: "inline-flex", visibility: active ? "visible" : "hidden" }}>
+              <IconChevron size={8} direction={sortDir === "asc" ? "up" : "down"} />
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -174,6 +252,8 @@ export function AirportRow({
   coverage,
   matchReason,
   stats,
+  colWidth = 34,
+  indent = 0,
   disabled = false,
   onOpen,
   onToggleSet,
@@ -187,8 +267,12 @@ export function AirportRow({
   inSet: boolean;
   coverage?: string;
   matchReason?: string;
-  /** 所選日期的進／離場數；傳入才顯示數字欄，null = 缺值顯示「—」（R9） */
-  stats?: ArrDepCount;
+  /** 所選日期的總／進／離；傳入才顯示數字欄，null = 缺值顯示「—」（R9） */
+  stats?: AirportStats;
+  /** 數字欄寬（與 AirportColumnHeader 同值） */
+  colWidth?: number;
+  /** 目錄樹的縮排（只加在名稱側，數字欄維持與欄首對齊） */
+  indent?: number;
   disabled?: boolean;
   /** 單選並飛過去 */
   onOpen: () => void;
@@ -221,15 +305,15 @@ export function AirportRow({
           else onOpen();
         }}
         disabled={disabled}
-        title={disabled ? "目前尚無可載入的軌跡資料" : "點擊開啟機場；Shift+點擊加入組合"}
+        title={disabled ? "目前尚無可載入的軌跡資料" : "點擊開啟並飛過去；Shift+點擊加入組合"}
         className="fa-focus fa-hover"
         style={{
           display: "flex",
           alignItems: "center",
-          gap: SPACE.s8,
+          gap: COL_GAP,
           flex: 1,
           minWidth: 0,
-          padding: `${SPACE.s6}px ${SPACE.s8}px`,
+          padding: `${SPACE.s6}px ${SPACE.s8}px ${SPACE.s6}px ${SPACE.s8 + indent}px`,
           background: "transparent",
           border: "none",
           borderRadius: RADIUS.base,
@@ -240,10 +324,10 @@ export function AirportRow({
       >
         <span
           aria-hidden="true"
-          style={{ width: 2, height: 24, flexShrink: 0, background: highlighted ? tokens.accent : "transparent" }}
+          style={{ width: 2, height: 24, flexShrink: 0, marginRight: SPACE.s8 - COL_GAP, background: highlighted ? tokens.accent : "transparent" }}
         />
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: SIZE.body, color: highlighted ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
+          <div style={{ fontSize: SIZE.body, color: highlighted ? tokens.fg1 : tokens.fg2, lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {label}
           </div>
           <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -257,8 +341,9 @@ export function AirportRow({
         </div>
         {stats && (
           <>
-            <StatNum value={stats.arr} color={pal.arr} label="進場" />
-            <StatNum value={stats.dep} color={pal.dep} label="離場" />
+            <StatNum value={stats.tot} width={colWidth} color={tokens.fg1} label="總量" />
+            <StatNum value={stats.arr} width={colWidth} color={pal.arr} label="進場" />
+            <StatNum value={stats.dep} width={colWidth} color={pal.dep} label="離場" />
           </>
         )}
       </button>
@@ -290,13 +375,13 @@ export function AirportRow({
   );
 }
 
-function StatNum({ value, color, label }: { value: number | null; color: string; label: string }) {
+function StatNum({ value, width, color, label }: { value: number | null; width: number; color: string; label: string }) {
   const { tokens } = useTheme();
   return (
     <span
       aria-label={`${label} ${value === null ? "無資料" : value}`}
       style={{
-        width: STAT_COL_W,
+        width,
         flex: "none",
         textAlign: "right",
         fontFamily: FONT.data,

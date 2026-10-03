@@ -1,7 +1,7 @@
 // node --import tsx --test scripts/design/tests/airportListStats.test.mjs（npm run design:test）
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { effectiveDates, getArrDep, getTotal, sortAirports } from "../../../src/data/airportListStats.ts";
+import { effectiveDates, getArrDep, getTotal, getTotalOrNull, nextSort, parseSort, serializeSort, sortAirports } from "../../../src/data/airportListStats.ts";
 
 const KATL = { flights: 2000, dates: { "2026-02-18": 1870, "2026-02-19": 100 }, datesArr: { "2026-02-18": 966, "2026-02-19": 50 }, datesDep: { "2026-02-18": 904, "2026-02-19": 50 } };
 const OLD = { flights: 500, dates: { "2026-02-18": 500 } }; // 舊 manifest：沒有 datesArr / datesDep
@@ -32,6 +32,34 @@ describe("getTotal 不用 arr+dep", () => {
   it("該日沒資料 → 0", () => assert.equal(getTotal(KATL, ["2026-03-01"]), 0));
 });
 
+describe("getTotalOrNull（顯示用，R9）", () => {
+  it("用 dates 加總", () => assert.equal(getTotalOrNull(KATL, ["2026-02-18"]), 1870));
+  it("該日沒資料 → null", () => assert.equal(getTotalOrNull(KATL, ["2026-03-01"]), null));
+  it("沒選日期 → flights", () => assert.equal(getTotalOrNull(KATL, []), 2000));
+  it("沒有 entry → null", () => assert.equal(getTotalOrNull(undefined, ["2026-02-18"]), null));
+});
+
+describe("排序狀態（欄首點擊、localStorage 遷移）", () => {
+  it("舊值只有 key → 該欄預設方向", () => {
+    assert.deepEqual(parseSort("tot"), { key: "tot", dir: "desc" });
+    assert.deepEqual(parseSort("arr"), { key: "arr", dir: "desc" });
+    assert.deepEqual(parseSort("name"), { key: "name", dir: "asc" });
+  });
+  it("新格式 key:dir", () => assert.deepEqual(parseSort("dep:asc"), { key: "dep", dir: "asc" }));
+  it("壞值 → 總量由大到小", () => {
+    assert.deepEqual(parseSort(null), { key: "tot", dir: "desc" });
+    assert.deepEqual(parseSort("xx:asc"), { key: "tot", dir: "desc" });
+    assert.deepEqual(parseSort("arr:up"), { key: "arr", dir: "desc" });
+  });
+  it("序列化可往返", () => assert.deepEqual(parseSort(serializeSort({ key: "name", dir: "desc" })), { key: "name", dir: "desc" }));
+  it("換欄 → 預設方向；同欄 → 反向", () => {
+    assert.deepEqual(nextSort({ key: "tot", dir: "desc" }, "arr"), { key: "arr", dir: "desc" });
+    assert.deepEqual(nextSort({ key: "arr", dir: "desc" }, "arr"), { key: "arr", dir: "asc" });
+    assert.deepEqual(nextSort({ key: "arr", dir: "asc" }, "arr"), { key: "arr", dir: "desc" });
+    assert.deepEqual(nextSort({ key: "tot", dir: "desc" }, "name"), { key: "name", dir: "asc" });
+  });
+});
+
 describe("sortAirports", () => {
   const catalog = { KATL, OLD1: OLD, ZERO1: ZERO, NONE: { flights: 0 } };
   const names = { KATL: "亞特蘭大", OLD1: "舊站", ZERO1: "零進場", NONE: "無軌跡" };
@@ -50,6 +78,15 @@ describe("sortAirports", () => {
     assert.equal(out[out.length - 1], "NONE");
     assert.deepEqual([...out.slice(0, 3)].sort(), ["KATL", "OLD1", "ZERO1"]);
   });
+  it("總量反向：由小到大，無軌跡仍殿後", () => assert.deepEqual(sortAirports(ids, "tot", ctx, "asc"), ["ZERO1", "OLD1", "KATL", "NONE"]));
+  it("進場反向：缺值仍排在有值之後", () => assert.deepEqual(sortAirports(ids, "arr", ctx, "asc"), ["ZERO1", "KATL", "OLD1", "NONE"]));
+  it("名稱反向 = 升冪反轉（無軌跡仍殿後）", () => {
+    const asc = sortAirports(ids, "name", ctx, "asc").slice(0, 3);
+    const desc = sortAirports(ids, "name", ctx, "desc");
+    assert.deepEqual(desc.slice(0, 3), [...asc].reverse());
+    assert.equal(desc[3], "NONE");
+  });
+  it("dir 省略 = 預設方向", () => assert.deepEqual(sortAirports(ids, "arr", ctx), sortAirports(ids, "arr", ctx, "desc")));
   it("不改動輸入", () => {
     const copy = [...ids];
     sortAirports(ids, "tot", ctx);

@@ -29,7 +29,7 @@
 | `SPACE` | 2 · 4 · 6 · 8 · 12 · 16 · 24 |
 | `RADIUS` | **2**（面板與控件，近直角）· pill 99（僅狀態點） |
 | `Z` | mapOverlay 10 · panel 20 · toolbar 25 · popover 30 · modal 40 · toast 50 · boot 60（開場遮罩，唯一高於 toast 的一層） |
-| `LAYOUT` | railWidth 56 · panelWidth 288 · panelWidthWide 360（分析›統計）· panelLeft 64 · panelTop 52 · mapBottomInset 64 · dockWidth 260 |
+| `LAYOUT` | railWidth 56 · panelWidth 288 · panelWidthWide 360（分析›統計）· panelWidthList 320（機場面板「機場」分頁）· panelLeft 64 · panelTop 52 · mapBottomInset 64 · dockWidth 260 |
 
 不得自創字級、圓角、z-index；需要新值先加 token（TS 與 CSS 同時加）。
 
@@ -104,7 +104,7 @@
 | `FlightInfoCard`、`AirspaceInfoCard` | 點擊資訊卡（內容；外殼是 `DockCard`） |
 | `LoadingStatus` | 把載入狀態接到 `StatusBar` |
 | `IconRailSidebar` + `sidebar/panels/*` | 左 rail 與各面板（一個 panel 一檔） |
-| `sidebar/panels/SetsPanel` | 機場面板：頂部 `Segmented` 三分頁「機場｜組合｜場景」（選擇記 localStorage `fa-sets-tab`；套用預設組合後停在組合）。機場分頁 = 搜尋 + 一行操作說明 + 排序列（總量／進場／離場／名稱，記 `fa-sets-sort`）+ 欄首「進」「離」+ 洲／國家樹狀目錄；每列右側兩欄數字（`AirportRow` 的 `stats`），進場用 `TRAJ` 進場色、離場用離場色，`FONT.data` + tabular-nums。組合分頁 = 目前組合（成員 chip、清空、退出）+ 預設組合。場景分頁 = 場景預設 |
+| `sidebar/panels/SetsPanel` | 機場面板：頂部 `Segmented` 三分頁「機場｜組合｜場景」（選擇記 localStorage `fa-sets-tab`；套用預設組合後停在組合）。機場分頁（面板寬 `panelWidthList`）= 搜尋 + 可點擊欄首列「機場｜總｜進｜離」（`AirportColumnHeader`）+ 搜尋結果／洲／國家樹狀目錄。分頁、搜尋、欄首不捲動、直接坐在面板底色上（不另鋪底色），清單在下方自己捲動，所以欄首恆在清單頂端。點欄首＝依該欄排序：數字欄預設由大到小、名稱升冪，再點同一欄反向；目前排序欄 accent + 小箭頭（SVG），其他 fg3；狀態記 `fa-sets-sort`（`key:dir`，舊值只有 key 時視為該欄預設方向）。每列三欄數字（`AirportRow` 的 `stats`：總／進／離），欄寬依清單最大值位數固定（`statColWidth`）、右對齊、`FONT.data` + tabular-nums；樹狀縮排只加在名稱側，數字欄與欄首對齊。操作提示放在列的 `title`（點擊開啟並飛過去；Shift+點擊加入組合），＋ 鈕 aria-label／title「加入組合」。組合分頁 = 目前組合（成員 chip、清空、退出）+ 預設組合。場景分頁 = 場景預設 |
 | `MobileHeader`、`MobileBottomSheet` | 手機版 chrome（只統一外觀，R11／Q8） |
 | `InfoModal` | 說明視窗內容（外殼是 `Modal`） |
 | `boot/BootScreen` | 首次載入的雷達遮罩（見下方「開場（Boot）」） |
@@ -157,7 +157,7 @@
 
 ### 機場列數字欄（進／離）
 
-資料取 manifest 每機場 `datesArr[date]`／`datesDep[date]`；多日（Nd、Compare）加總所選日期（`effectiveDates`）。**缺值不是 0（R9）**：舊 manifest 沒這兩欄、或所選日期沒資料 → 顯示「—」。排序的「總量」用 `dates[date]`（或全期 `flights`），不用 arr + dep 相加（兩者不一定相等）；缺值在進場／離場排序中排在有值（含 0）之後；樹狀分組時排序作用在每個分組內，搜尋結果套用同一套數字欄與排序。純函式與測試：`src/data/airportListStats.ts`、`scripts/design/tests/airportListStats.test.mjs`。
+資料取 manifest 每機場 `datesArr[date]`／`datesDep[date]`；多日（Nd、Compare）加總所選日期（`effectiveDates`）。**缺值不是 0（R9）**：舊 manifest 沒這兩欄、或所選日期沒資料 → 顯示「—」。「總」欄與總量排序用 `dates[date]`（或全期 `flights`），不用 arr + dep 相加（兩者不一定相等），顯示用 `getTotalOrNull`（缺值「—」）；缺值不論升降冪都排在有值（含 0）之後；樹狀分組時排序作用在每個分組內，搜尋結果套用同一套數字欄與排序。純函式與測試：`src/data/airportListStats.ts`、`scripts/design/tests/airportListStats.test.mjs`。
 
 ### R8 網址 key 表（P6，`src/data/urlState.ts`）
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { COLOR, FONT, SIZE, SPACE } from "../styles/tokens";
+import { COLOR, FONT, LAYOUT, SIZE, SPACE } from "../styles/tokens";
 import { useTheme } from "../styles/ThemeContext";
 import {
   Button,
@@ -22,7 +22,8 @@ import {
   Toggle,
 } from "../ui";
 import { Showcase } from "./Showcase";
-import { AirportRow, AirportStatHeader } from "../components/sidebar/primitives";
+import { AirportColumnHeader, AirportRow, statColWidth, type AirportColumn } from "../components/sidebar/primitives";
+import { nextSort, type AirportSort } from "../data/airportListStats";
 import { BootScreen } from "../components/boot/BootScreen";
 import { bootRadarPoints } from "../components/boot/radar";
 import { BOOT_LAYOUT } from "../components/boot/bootLayout";
@@ -120,16 +121,24 @@ function PanelDemo() {
 
 function SetsPanelDemo() {
   const [tab, setTab] = useState<"airports" | "sets" | "scenes">("airports");
-  const [sort, setSort] = useState<"tot" | "arr" | "dep">("tot");
+  const [sort, setSort] = useState<AirportSort>({ key: "tot", dir: "desc" });
   // 2026-02-18 真實數字；NZAA 模擬舊 manifest（無進離欄）→ 「—」（R9）
   const rows = [
     { icao: "KATL", name: "亞特蘭大哈次菲爾德", tot: 1868, arr: 966 as number | null, dep: 904 as number | null },
     { icao: "KORD", name: "芝加哥歐海爾", tot: 1913, arr: 866, dep: 1047 },
     { icao: "RCTP", name: "臺灣桃園", tot: 651, arr: 352, dep: 299 },
     { icao: "NZAA", name: "奧克蘭", tot: 210, arr: null, dep: null },
-  ].sort((a, b) => (sort === "tot" ? b.tot - a.tot : (b[sort] ?? -1) - (a[sort] ?? -1)));
+  ].sort((a, b) => {
+    const sign = sort.dir === "desc" ? 1 : -1;
+    if (sort.key === "name") return -sign * a.name.localeCompare(b.name, "zh-Hant");
+    const va = a[sort.key] ?? -1;
+    const vb = b[sort.key] ?? -1;
+    if ((va < 0) !== (vb < 0)) return va < 0 ? 1 : -1; // 缺值固定殿後
+    return sign * (vb - va);
+  });
+  const colWidth = statColWidth(rows.flatMap((r) => [r.tot, r.arr, r.dep]));
   return (
-    <Panel floating={false} ariaLabel="機場面板">
+    <Panel floating={false} ariaLabel="機場面板" width={tab === "airports" ? LAYOUT.panelWidthList : LAYOUT.panelWidth}>
       <PanelHeader eyebrow="SELECTION · 機場" title="2026-02-18" />
       <PanelBody>
         <Segmented
@@ -145,13 +154,12 @@ function SetsPanelDemo() {
         />
         {tab === "airports" ? (
           <>
-            <div role="group" aria-label="排序" style={{ display: "flex", gap: SPACE.s4, alignItems: "center", flexWrap: "wrap" }}>
-              <span style={{ fontSize: SIZE.minor }}>排序</span>
-              {([["tot", "總量"], ["arr", "進場"], ["dep", "離場"]] as const).map(([k, label]) => (
-                <Chip key={k} mono={false} label={label} selected={sort === k} onClick={() => setSort(k)} />
-              ))}
-            </div>
-            <AirportStatHeader />
+            <AirportColumnHeader
+              sortKey={sort.key}
+              sortDir={sort.dir}
+              colWidth={colWidth}
+              onSort={(k: AirportColumn) => setSort(nextSort(sort, k))}
+            />
             <div>
               {rows.map((r) => (
                 <AirportRow
@@ -160,7 +168,8 @@ function SetsPanelDemo() {
                   name={r.name}
                   current={r.icao === "KATL"}
                   inSet={false}
-                  stats={{ arr: r.arr, dep: r.dep }}
+                  stats={{ tot: r.tot, arr: r.arr, dep: r.dep }}
+                  colWidth={colWidth}
                   onOpen={() => undefined}
                   onToggleSet={() => undefined}
                 />

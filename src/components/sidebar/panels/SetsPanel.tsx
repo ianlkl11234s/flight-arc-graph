@@ -9,24 +9,23 @@ import { FONT, RADIUS, SIZE, SPACE } from "../../../styles/tokens";
 import { Button, Chip, Section, Segmented } from "../../../ui";
 import { IconChevron } from "../../../ui/icons";
 import { themeVars } from "../../../ui/vars";
-import { AirportRow, AirportStatHeader } from "../primitives";
-import { AIRPORT_SORT_KEYS, getArrDep, sortAirports, type AirportSortKey } from "../../../data/airportListStats";
+import { AirportColumnHeader, AirportRow, statColWidth, type AirportStats } from "../primitives";
+import { getArrDep, getTotalOrNull, nextSort, parseSort, serializeSort, sortAirports, type AirportSort } from "../../../data/airportListStats";
 import { SCENE_PRESETS, type ScenePreset } from "../scenePresets";
 
-type SetsTab = "airports" | "sets" | "scenes";
+export type SetsTab = "airports" | "sets" | "scenes";
 const TAB_KEY = "fa-sets-tab";
+/** 值格式 `key:dir`；舊版只存 key（tot/arr/dep/name），由 parseSort 遷移 */
 const SORT_KEY = "fa-sets-sort";
-const SORT_LABEL: Record<AirportSortKey, string> = { tot: "總量", arr: "進場", dep: "離場", name: "名稱" };
 
-function loadSort(): AirportSortKey {
+function loadSort(): AirportSort {
   try {
-    const v = localStorage.getItem(SORT_KEY);
-    if (AIRPORT_SORT_KEYS.includes(v as AirportSortKey)) return v as AirportSortKey;
+    return parseSort(localStorage.getItem(SORT_KEY));
   } catch { /* localStorage 不可用 */ }
-  return "tot";
+  return parseSort(null);
 }
 
-function loadTab(): SetsTab {
+export function loadSetsTab(): SetsTab {
   try {
     const v = localStorage.getItem(TAB_KEY);
     if (v === "airports" || v === "sets" || v === "scenes") return v;
@@ -55,6 +54,7 @@ export function SetsPanel({
   onExitSetMode,
   onSceneSelect,
   statDates,
+  onTabChange,
 }: {
   airports: string[];
   airportCatalog: Record<string, AirportManifestEntry>;
@@ -76,17 +76,21 @@ export function SetsPanel({
   onSceneSelect: (scene: ScenePreset) => void;
   /** 數字欄統計的日期（單日／連續 N 天／Compare 多日） */
   statDates: readonly string[];
+  /** 分頁切換（IconRailSidebar 依此決定面板寬度：機場分頁較寬） */
+  onTabChange?: (tab: SetsTab) => void;
 }) {
   const { tokens } = useTheme();
   const available = new Set(airports);
   const selectedSet = new Set(airportSet);
   const [search, setSearch] = useState("");
-  const [tab, setTabState] = useState<SetsTab>(loadTab);
-  const setTab = (next: SetsTab) => { setTabState(next); saveTab(next); };
-  const [sortKey, setSortKeyState] = useState<AirportSortKey>(loadSort);
-  const setSortKey = (next: AirportSortKey) => {
-    setSortKeyState(next);
-    try { localStorage.setItem(SORT_KEY, next); } catch { /* ignore */ }
+  const [tab, setTabState] = useState<SetsTab>(loadSetsTab);
+  const setTab = (next: SetsTab) => { setTabState(next); saveTab(next); onTabChange?.(next); };
+  const [sort, setSortState] = useState<AirportSort>(loadSort);
+  const sortKey = sort.key;
+  const onSort = (key: AirportSort["key"]) => {
+    const next = nextSort(sort, key);
+    setSortState(next);
+    try { localStorage.setItem(SORT_KEY, serializeSort(next)); } catch { /* ignore */ }
   };
   const applySet = (set: SavedAirportSet) => { onApplySet(set); setTab("sets"); };
   const firstAirportMeta = airportMeta[airportSet[0] ?? ""];
@@ -117,10 +121,10 @@ export function SetsPanel({
 
   const searchResults = useMemo(() => {
     const found = searchAirports(search, searchCandidates);
-    const order = sortAirports(found.map((r) => r.icao), sortKey, sortCtx);
+    const order = sortAirports(found.map((r) => r.icao), sortKey, sortCtx, sort.dir);
     const rank = new Map(order.map((icao, i) => [icao, i]));
     return [...found].sort((a, b) => rank.get(a.icao)! - rank.get(b.icao)!);
-  }, [search, searchCandidates, sortKey, statDates, airportCatalog, airportMeta, airports]);
+  }, [search, searchCandidates, sort, statDates, airportCatalog, airportMeta, airports]);
 
   const groupedCatalog = useMemo(() => {
     const byGroup = new Map<string, Map<string, string[]>>();
@@ -145,7 +149,7 @@ export function SetsPanel({
         flattenCountries: group === "TW" || group === "JP",
         countries: Array.from(countries.entries())
           .map(([country, icaos]) => {
-            const sortedIcaos = sortAirports(icaos, sortKey, sortCtx);
+            const sortedIcaos = sortAirports(icaos, sortKey, sortCtx, sort.dir);
             return {
               key: `${group}:${country}`,
               code: country,
@@ -157,7 +161,25 @@ export function SetsPanel({
           .sort((a, b) => b.flightCount - a.flightCount || a.label.localeCompare(b.label, "zh-Hant")),
       }))
       .sort((a, b) => groupOrder.indexOf(a.key) - groupOrder.indexOf(b.key));
-  }, [catalogIcaos, airportMeta, airportCatalog, airports, sortKey, statDates]);
+  }, [catalogIcaos, airportMeta, airportCatalog, airports, sort, statDates]);
+
+  /** 每座機場的總／進／離（目錄＋搜尋共用）與數字欄寬（依最大值位數固定） */
+  const statsOf = useMemo(() => {
+    const cache = new Map<string, AirportStats>();
+    return (icao: string): AirportStats => {
+      let v = cache.get(icao);
+      if (!v) {
+        const entry = airportCatalog[icao];
+        v = { tot: getTotalOrNull(entry, statDates), ...getArrDep(entry, statDates) };
+        cache.set(icao, v);
+      }
+      return v;
+    };
+  }, [airportCatalog, statDates]);
+  const colWidth = useMemo(
+    () => statColWidth(catalogIcaos.flatMap((icao) => { const v = statsOf(icao); return [v.tot, v.arr, v.dep]; })),
+    [catalogIcaos, statsOf],
+  );
 
   const toggleSetKey = (setter: typeof setOpenContinents, key: string) => {
     setter((prev) => {
@@ -196,7 +218,7 @@ export function SetsPanel({
     onToggleSet: () => onToggleAirport(icao),
   });
 
-  const airportRow = (icao: string) => {
+  const airportRow = (icao: string, indent = 0) => {
     const meta = airportMeta[icao];
     const selectable = available.has(icao);
     return (
@@ -207,26 +229,25 @@ export function SetsPanel({
         iata={meta?.iata}
         coverage={selectable ? undefined : "尚無軌跡"}
         disabled={!selectable}
-        stats={getArrDep(airportCatalog[icao], statDates)}
+        stats={statsOf(icao)}
+        colWidth={colWidth}
+        indent={indent}
         {...rowProps(icao)}
       />
     );
   };
 
+  // 版面：頂部（分頁／搜尋／欄首）不捲動、直接坐在面板底色上；下方清單自己捲動 ——
+  // 欄首因此恆在清單頂端（等同 sticky），不需要另一塊不透明底色。
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: SPACE.s2 }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <div
         style={{
-          position: "sticky",
-          top: -SPACE.s4,
-          zIndex: 2,
-          flexShrink: 0,
+          flex: "none",
           display: "flex",
           flexDirection: "column",
           gap: SPACE.s8,
-          padding: `${SPACE.s4}px 0 ${SPACE.s8}px`,
-          background: tokens.mapBg,
-          boxShadow: `0 1px 0 ${tokens.border}`,
+          padding: `${SPACE.s4}px 0 ${tab === "airports" ? 0 : SPACE.s8}px`,
         }}
       >
         <Segmented<SetsTab>
@@ -262,19 +283,12 @@ export function SetsPanel({
                 fontSize: SIZE.body,
               }}
             />
-            <div style={{ fontSize: SIZE.minor, color: tokens.fg3, lineHeight: 1.45, fontFamily: FONT.ui }}>
-              點擊＝開啟並飛過去；＋ 或 Shift+點擊＝加入組合
-            </div>
-            <div role="group" aria-label="排序" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: SPACE.s4 }}>
-              <span style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.ui }}>排序</span>
-              {AIRPORT_SORT_KEYS.map((k) => (
-                <Chip key={k} mono={false} label={SORT_LABEL[k]} selected={sortKey === k} onClick={() => setSortKey(k)} />
-              ))}
-            </div>
-            <AirportStatHeader />
+            <AirportColumnHeader sortKey={sortKey} sortDir={sort.dir} colWidth={colWidth} onSort={onSort} />
           </>
         )}
       </div>
+
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: SPACE.s2, paddingTop: SPACE.s2 }}>
 
       {tab === "airports" && search.trim() && (
         <div style={{ paddingBottom: SPACE.s8 }}>
@@ -295,7 +309,8 @@ export function SetsPanel({
                 iata={meta?.iata}
                 coverage={result.selectable ? undefined : "尚無軌跡"}
                 matchReason={result.matchReason}
-                stats={getArrDep(airportCatalog[result.icao], statDates)}
+                stats={statsOf(result.icao)}
+                colWidth={colWidth}
                 disabled={!result.selectable}
                 {...rowProps(result.icao)}
               />
@@ -411,7 +426,7 @@ export function SetsPanel({
 
       {tab === "airports" && (
         <>
-        <div style={{ height: 1, background: tokens.border, margin: `${SPACE.s8}px 0 ${SPACE.s4}px` }} />
+        {search.trim() && <div style={{ height: 1, background: tokens.border, margin: `${SPACE.s8}px 0 ${SPACE.s4}px` }} />}
 
         {/* Complete airport directory: Taiwan / Japan / continent → country → airport */}
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", columnGap: SPACE.s6, rowGap: SPACE.s2, padding: `${SPACE.s2}px ${SPACE.s8}px ${SPACE.s4}px` }}>
@@ -439,20 +454,18 @@ export function SetsPanel({
                   {selectedInGroup > 0 ? `${selectedInGroup}/` : ""}{continentIcaos.length}
                 </span>
               </button>
-              {open && continent.flattenCountries && continentIcaos.map((icao) => (
-                <div key={icao} style={{ paddingLeft: SPACE.s8 }}>{airportRow(icao)}</div>
-              ))}
+              {open && continent.flattenCountries && continentIcaos.map((icao) => airportRow(icao, SPACE.s8))}
               {open && !continent.flattenCountries && continent.countries.map((country) => {
                 const countryOpen = openCountries.has(country.key);
                 const selectedInCountry = country.icaos.filter((icao) => selectedSet.has(icao)).length;
                 return (
-                  <div key={country.key} style={{ paddingLeft: SPACE.s8 }}>
+                  <div key={country.key}>
                     <button
                       type="button"
                       aria-expanded={countryOpen}
                       onClick={() => toggleSetKey(setOpenCountries, country.key)}
                       className="fa-focus fa-hover"
-                      style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px`, color: tokens.fg3 }}
+                      style={{ ...rowBase, gap: SPACE.s6, padding: `${SPACE.s4}px ${SPACE.s8}px ${SPACE.s4}px ${SPACE.s8 * 2}px`, color: tokens.fg3 }}
                     >
                       <IconChevron size={8} direction={countryOpen ? "down" : "right"} />
                       <span style={{ fontSize: SIZE.minor, color: tokens.fg2, flex: 1 }}>{country.label}</span>
@@ -460,7 +473,7 @@ export function SetsPanel({
                         {selectedInCountry > 0 ? `${selectedInCountry}/` : ""}{country.icaos.length}
                       </span>
                     </button>
-                    {countryOpen && country.icaos.map((icao) => airportRow(icao))}
+                    {countryOpen && country.icaos.map((icao) => airportRow(icao, SPACE.s8))}
                   </div>
                 );
               })}
@@ -469,6 +482,7 @@ export function SetsPanel({
         })}
         </>
       )}
+      </div>
     </div>
   );
 }
