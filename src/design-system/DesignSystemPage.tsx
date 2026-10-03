@@ -22,6 +22,7 @@ import {
   Toggle,
 } from "../ui";
 import { Showcase } from "./Showcase";
+import { AirportRow, AirportStatHeader } from "../components/sidebar/primitives";
 import { BootScreen } from "../components/boot/BootScreen";
 import { bootRadarPoints } from "../components/boot/radar";
 import { BOOT_LAYOUT } from "../components/boot/bootLayout";
@@ -112,6 +113,65 @@ function PanelDemo() {
             <StatCard label="準點率" value={null} sub="未涵蓋" />
           </StatGrid>
         </Section>
+      </PanelBody>
+    </Panel>
+  );
+}
+
+function SetsPanelDemo() {
+  const [tab, setTab] = useState<"airports" | "sets" | "scenes">("airports");
+  const [sort, setSort] = useState<"tot" | "arr" | "dep">("tot");
+  // 2026-02-18 真實數字；NZAA 模擬舊 manifest（無進離欄）→ 「—」（R9）
+  const rows = [
+    { icao: "KATL", name: "亞特蘭大哈次菲爾德", tot: 1868, arr: 966 as number | null, dep: 904 as number | null },
+    { icao: "KORD", name: "芝加哥歐海爾", tot: 1913, arr: 866, dep: 1047 },
+    { icao: "RCTP", name: "臺灣桃園", tot: 651, arr: 352, dep: 299 },
+    { icao: "NZAA", name: "奧克蘭", tot: 210, arr: null, dep: null },
+  ].sort((a, b) => (sort === "tot" ? b.tot - a.tot : (b[sort] ?? -1) - (a[sort] ?? -1)));
+  return (
+    <Panel floating={false} ariaLabel="機場面板">
+      <PanelHeader eyebrow="SELECTION · 機場" title="2026-02-18" />
+      <PanelBody>
+        <Segmented
+          fullWidth
+          ariaLabel="機場面板分頁"
+          options={[
+            { value: "airports" as const, label: "機場" },
+            { value: "sets" as const, label: "組合" },
+            { value: "scenes" as const, label: "場景" },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
+        {tab === "airports" ? (
+          <>
+            <div role="group" aria-label="排序" style={{ display: "flex", gap: SPACE.s4, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: SIZE.minor }}>排序</span>
+              {([["tot", "總量"], ["arr", "進場"], ["dep", "離場"]] as const).map(([k, label]) => (
+                <Chip key={k} mono={false} label={label} selected={sort === k} onClick={() => setSort(k)} />
+              ))}
+            </div>
+            <AirportStatHeader />
+            <div>
+              {rows.map((r) => (
+                <AirportRow
+                  key={r.icao}
+                  icao={r.icao}
+                  name={r.name}
+                  current={r.icao === "KATL"}
+                  inSet={false}
+                  stats={{ arr: r.arr, dep: r.dep }}
+                  onOpen={() => undefined}
+                  onToggleSet={() => undefined}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div style={{ fontSize: SIZE.minor }}>
+            {tab === "sets" ? "PRESETS · 預設組合與目前組合" : "SCENES · 場景預設"}
+          </div>
+        )}
       </PanelBody>
     </Panel>
   );
@@ -475,6 +535,7 @@ const SECTIONS = [
   { id: "section", name: "Section", note: "眉標 + 右延細線。collapsible 支援受控（open/onToggle）與非受控（defaultOpen）。", render: () => <SectionDemo /> },
   { id: "button", name: "Button", note: "高 28：primary / secondary / ghost / danger；pressed 輸出 aria-pressed；會換字的按鈕給固定 width（R10）。", render: () => <ButtonDemo /> },
   { id: "segmented", name: "Segmented", note: "選項 ≤3。選中 = accent 字 + accentSoft 底。disabledValues 相容 ToggleButtons。", render: () => <SegmentedDemo /> },
+  { id: "sets-panel", name: "機場面板（三分頁＋數字欄）", note: "Segmented 三分頁：機場｜組合｜場景。機場列右側兩欄數字：進場（TRAJ 進場色）、離場（TRAJ 離場色），欄首「進」「離」；缺值顯示「—」（R9，NZAA 範例）。排序列：總量／進場／離場／名稱。", render: () => <SetsPanelDemo /> },
   { id: "select", name: "Select", note: "選項 >3。原生 select + SVG chevron；支援數字值、placeholder、行內標籤。", render: () => <SelectDemo /> },
   { id: "toggle", name: "Toggle", note: "28×16 方角開關，開 = accent 底。", render: () => <ToggleDemo /> },
   { id: "slider", name: "Slider", note: "全站唯一滑桿：2px 軌 + 6×14 方形 thumb；標籤與數值同一行。range 模式為雙把手（取代 DurationRange）。", render: () => <SliderDemo /> },

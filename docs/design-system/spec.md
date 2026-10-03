@@ -104,6 +104,7 @@
 | `FlightInfoCard`、`AirspaceInfoCard` | 點擊資訊卡（內容；外殼是 `DockCard`） |
 | `LoadingStatus` | 把載入狀態接到 `StatusBar` |
 | `IconRailSidebar` + `sidebar/panels/*` | 左 rail 與各面板（一個 panel 一檔） |
+| `sidebar/panels/SetsPanel` | 機場面板：頂部 `Segmented` 三分頁「機場｜組合｜場景」（選擇記 localStorage `fa-sets-tab`；套用預設組合後停在組合）。機場分頁 = 搜尋 + 一行操作說明 + 排序列（總量／進場／離場／名稱，記 `fa-sets-sort`）+ 欄首「進」「離」+ 洲／國家樹狀目錄；每列右側兩欄數字（`AirportRow` 的 `stats`），進場用 `TRAJ` 進場色、離場用離場色，`FONT.data` + tabular-nums。組合分頁 = 目前組合（成員 chip、清空、退出）+ 預設組合。場景分頁 = 場景預設 |
 | `MobileHeader`、`MobileBottomSheet` | 手機版 chrome（只統一外觀，R11／Q8） |
 | `InfoModal` | 說明視窗內容（外殼是 `Modal`） |
 | `boot/BootScreen` | 首次載入的雷達遮罩（見下方「開場（Boot）」） |
@@ -153,6 +154,10 @@
 ### 起降染色（R3 的「染色」）
 
 工具列「染色：高度（預設）｜起降」。判斷依據是選定機場（dest ∈ 選定 → 進場色，origin ∈ 選定 → 離場色），組合內互飛沿路漸層；region 範圍與多日 Compare 時不可選。光球與拖尾跟著起降色。完整規則見 [studio-design-system.md §7](../backlog/studio-design-system.md)；色票邏輯在 `src/data/depArrColors.ts`。
+
+### 機場列數字欄（進／離）
+
+資料取 manifest 每機場 `datesArr[date]`／`datesDep[date]`；多日（Nd、Compare）加總所選日期（`effectiveDates`）。**缺值不是 0（R9）**：舊 manifest 沒這兩欄、或所選日期沒資料 → 顯示「—」。排序的「總量」用 `dates[date]`（或全期 `flights`），不用 arr + dep 相加（兩者不一定相等）；缺值在進場／離場排序中排在有值（含 0）之後；樹狀分組時排序作用在每個分組內，搜尋結果套用同一套數字欄與排序。純函式與測試：`src/data/airportListStats.ts`、`scripts/design/tests/airportListStats.test.mjs`。
 
 ### R8 網址 key 表（P6，`src/data/urlState.ts`）
 
