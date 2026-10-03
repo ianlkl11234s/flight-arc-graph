@@ -22,6 +22,9 @@ import {
   Toggle,
 } from "../ui";
 import { Showcase } from "./Showcase";
+import { BootScreen } from "../components/boot/BootScreen";
+import { bootRadarPoints } from "../components/boot/radar";
+import { BOOT_LAYOUT } from "../components/boot/bootLayout";
 
 /* ── 共用示範資料（真實語境） ── */
 
@@ -452,6 +455,17 @@ function TokenSwatches() {
   );
 }
 
+function BootDemo() {
+  const { tokens } = useTheme();
+  // 同步可得的 camera preset 座標（真實機場）；正式站另會用機場目錄
+  const points = bootRadarPoints("RCTP", {}, BOOT_LAYOUT.radiusKm);
+  return (
+    <div style={{ position: "relative", width: 420, height: 300, border: `1px solid ${tokens.border}`, overflow: "hidden" }}>
+      <BootScreen contained phase="loading" label="RCTP" points={points} />
+    </div>
+  );
+}
+
 /* ── Page ── */
 
 const SECTIONS = [
@@ -470,6 +484,7 @@ const SECTIONS = [
   { id: "selection-ring", name: "SelectionRing", note: "點擊處的選取圈（R1）：固定在點擊位置，不吃滑鼠；相機移動或卡片關閉時由呼叫端移除。", render: () => <SelectionRingDemo /> },
   { id: "caption", name: "Caption", note: "左下圖說：機場碼 30px mono + 中文名、日期／班數／進離場；左側 2px 琥珀線。組合模式含退出鈕；面板收起時旁邊放引導入口（Q6）。", render: () => <CaptionDemo /> },
   { id: "status", name: "StatusBar", note: "單行載入狀態（外觀）。失敗與「這天沒資料」分開；顯示節奏（150ms / 600ms / 2s / 4s）P4 接。", render: () => <StatusDemo /> },
+  { id: "boot", name: "BootScreen", note: "開場雷達遮罩（contained 預覽）：環、掃描、RCTP 周邊真實機場點、字標與狀態 chip。尺寸參數在 bootLayout.ts；完整時序與參數調整見 /boot-tuner.html。", render: () => <BootDemo /> },
   { id: "modal", name: "Modal", note: "置中外殼、z modal、Esc 關閉（capture 階段攔截，R7 最上層）。上方為 inline 展示。", render: () => <ModalDemo /> },
 ];
 
