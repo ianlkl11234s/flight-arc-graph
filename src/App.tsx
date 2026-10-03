@@ -116,7 +116,7 @@ function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: n
         whiteSpace: "nowrap",
       }}
     >
-      <span style={{ fontFamily: FONT.data, fontSize: SIZE.sub, fontWeight: 600, letterSpacing: ".18em", color: tokens.fg1 }}>
+      <span style={{ fontFamily: FONT.data, fontSize: SIZE.large, fontWeight: 700, letterSpacing: ".18em", lineHeight: 1.2, color: tokens.fg1 }}>
         FLIGHT ARC
       </span>
       <span
