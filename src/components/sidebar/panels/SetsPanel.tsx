@@ -414,9 +414,9 @@ export function SetsPanel({
         <div style={{ height: 1, background: tokens.border, margin: `${SPACE.s8}px 0 ${SPACE.s4}px` }} />
 
         {/* Complete airport directory: Taiwan / Japan / continent → country → airport */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: SPACE.s6, padding: `${SPACE.s2}px ${SPACE.s8}px ${SPACE.s4}px` }}>
-          <span style={eyebrow}>ALL · 全部機場</span>
-          <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", columnGap: SPACE.s6, rowGap: SPACE.s2, padding: `${SPACE.s2}px ${SPACE.s8}px ${SPACE.s4}px` }}>
+          <span style={{ ...eyebrow, whiteSpace: "nowrap" }}>ALL · 全部機場</span>
+          <span style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, fontFamily: FONT.data, whiteSpace: "nowrap" }}>
             {catalogIcaos.length.toLocaleString()} 座 · {airports.length.toLocaleString()} 座有軌跡
           </span>
         </div>
