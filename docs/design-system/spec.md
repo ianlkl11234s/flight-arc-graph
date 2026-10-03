@@ -113,7 +113,7 @@
 
 `src/types/colorTheme.ts`（軌跡配色）與 `src/types/dataColors.ts`（Atlas 完整度／流量漸層、日期 Compare 4 色、InfoModal 色條、空域類別與海峽中線、羅盤、拍攝模式疊層）是資料色 SSOT，兩者在 `design:guard` 排除清單內。元件取資料色一律從這裡 import，**不得在元件內寫色碼**；數值代表圖例意義，不隨意改。
 
-活元件頁：`design-system.html`（dev server 下開 `/design-system.html`），直接 import 真元件、暗／淡並排。新增元件必須同時加一段展示。**不進正式 build。**
+活元件頁：`design-tools/design-system.html`（dev server 下開 `/design-tools/design-system.html`），直接 import 真元件、暗／淡並排。新增元件必須同時加一段展示。**不進正式 build。**
 
 ---|---|---|
 | `PanelHeader` | 眉標 + `title` 15px 標題 + 24×24 關閉鈕（SVG，不用「×」字元） | 各面板自寫標題 |
@@ -129,7 +129,7 @@
 | `StatusBar` | 單行載入／完成／失敗（§6 R6） | 中央 `LoadingIndicator` |
 | `Modal` | 置中、z modal、Esc 關閉 | `InfoModal` 外殼 |
 
-活元件頁：`design-system.html`（dev server 下開 `/design-system.html`），直接 import 真元件、暗／淡並排。新增元件必須同時加一段展示。**不進正式 build。**
+活元件頁：`design-tools/design-system.html`（dev server 下開 `/design-tools/design-system.html`），直接 import 真元件、暗／淡並排。新增元件必須同時加一段展示。**不進正式 build。**
 
 ---
 
@@ -209,7 +209,7 @@
   減少動態（`prefers-reduced-motion`）：就緒即結束，不等最少顯示、不淡出、不彈入。
 - **`data-boot-part`**：`src/main.tsx` 在 render 前設 `data-boot="wait"`。參與進場的元件**只加屬性、不加 props**：`rail`（IconRailSidebar 的 rail，子元素逐一放大）、`toolbar`（Toolbar、MobileHeader、手機時間軸）、`timeline`、`caption`、`title`（左上字標）、`fade`（手機抽屜，只淡入）。屬性要加在元件自己的定位根節點上；**不要用帶 transform 的外層包住 absolute／fixed 元件**（transform 會變成新的定位基準）。規則在 `src/components/boot/boot.css`。
 - 遮罩是蓋在地圖上的 overlay，地圖在下面照常初始化（P5「先出地圖」不變）；遮罩期間 `LoadingStatus` 不畫，結束後接手。
-- **可調參數**集中在 `src/components/boot/bootLayout.ts`（雷達直徑／上限／位移、環數、掃描秒數、外圈距離、點大小、字標字級與間距、chip 間距、最少顯示、進場倍率）。調整頁：dev server 下開 **`/boot-tuner.html`**（不進正式 build），調好按「複製設定」貼回 `BOOT_LAYOUT`。調整頁的暫存值只存在該頁的 localStorage，正式站只讀 `bootLayout.ts`。
+- **可調參數**集中在 `src/components/boot/bootLayout.ts`（雷達直徑／上限／位移、環數、掃描秒數、外圈距離、點大小、字標字級與間距、chip 間距、最少顯示、進場倍率）。調整頁：dev server 下開 **`/design-tools/boot-tuner.html`**（不進正式 build），調好按「複製設定」貼回 `BOOT_LAYOUT`。調整頁的暫存值只存在該頁的 localStorage，正式站只讀 `bootLayout.ts`。
 - `scripts/perf` 的 `waitStable` 會等 `data-boot` 消失才算穩定。
 
 ---

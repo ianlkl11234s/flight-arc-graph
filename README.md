@@ -295,7 +295,7 @@ src/
 網站主體 UI 採 **A 塔台儀表 · 琥珀**（石墨底、琥珀只標「正在發生的事」、等寬字）。
 
 - 設計規範：[`docs/design-system/spec.md`](docs/design-system/spec.md)（token、元件、版面區域、UX 規則 R1–R13、禁止事項）
-- 活元件頁：dev server 下開 `/design-system.html`（暗／淡並排；不進正式 build）
+- 活元件頁：dev server 下開 `/design-tools/design-system.html`（暗／淡並排；不進正式 build）
 - 守門：`npm run design:guard`（寫死色碼 baseline 全 0、chrome 字級 ≥ 11、token TS/CSS 同值）、`npm run design:test`（純函式與網址狀態單元測試）
 - 資料色（軌跡配色、Atlas 色票等）集中在 `src/types/colorTheme.ts`、`src/types/dataColors.ts`，不屬 chrome
 

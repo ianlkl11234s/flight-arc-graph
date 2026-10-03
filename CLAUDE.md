@@ -39,6 +39,7 @@ npx tsc --noEmit
 - 使用 inline styles（非 CSS 檔案）
 - UI 一律用 `src/ui/` 元件與 `useTheme().tokens`，不寫死色碼／字級／圓角；資料色放 `src/types/dataColors.ts`
 - 改 UI 前先讀 `docs/design-system/spec.md`
+- 調參數／選方案／預覽用的 HTML 一律放 `design-tools/`（不放根目錄，見其 README）；已拍板的方案比較頁放 `docs/design/<主題>/`
 - commit 前 `npm run design:guard && npm run design:test`
 - 所有 UI 元件需支援 `isDarkTheme`（Light / Dark 主題）
 - 機場資料統一放在 `src/map/cameraPresets.ts`

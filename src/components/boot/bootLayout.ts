@@ -1,6 +1,6 @@
 /**
  * 開場雷達（BootScreen）的所有可調參數，集中一處。
- * 調整頁：dev server 下開 /boot-tuner.html，調好按「複製設定」把整段貼回這裡（取代 BOOT_LAYOUT）。
+ * 調整頁：dev server 下開 /design-tools/boot-tuner.html，調好按「複製設定」把整段貼回這裡（取代 BOOT_LAYOUT）。
  * 正式站只讀這裡的預設值，不讀 localStorage（調整頁的暫存值只屬於調整頁）。
  */
 

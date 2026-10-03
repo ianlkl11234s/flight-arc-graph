@@ -26,7 +26,7 @@ import { Button, Segmented, Slider, Toggle } from "../ui";
 import { mix } from "../ui/vars";
 
 /**
- * 開場雷達調整頁（dev only：/boot-tuner.html，不進正式 build）。
+ * 開場雷達調整頁（dev only：/design-tools/boot-tuner.html，不進正式 build）。
  * 左：真的 BootScreen 預覽（桌機 16:9／手機 390×844）；右：每個 bootLayout 參數一個滑桿。
  * 調好按「複製設定」→ 貼回對話，由我們更新 src/components/boot/bootLayout.ts 的 BOOT_LAYOUT。
  * 調整中的值存 localStorage（只屬於本頁；正式站只讀 bootLayout.ts 預設值）。
