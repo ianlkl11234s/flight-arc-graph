@@ -4,7 +4,8 @@ import { useTheme } from "../styles/ThemeContext";
 import { BLUR, FONT, LAYOUT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
 import { Button, Chip, Segmented, Select, Slider } from "../ui";
 import { THUMB_W } from "../ui/Slider";
-import { IconChevron, IconPause, IconPlay } from "../ui/icons";
+import { IconChevron, IconPause, IconPlay, IconPlus } from "../ui/icons";
+import { COMPARE_COLORS } from "../types/dataColors";
 import { mix, themeVars } from "../ui/vars";
 import {
   COLLAPSE_DELAY_MS,
@@ -60,6 +61,8 @@ const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 const COLLAPSED_W = 300;
 const EXPANDED_W = 640;
 const LEFT = LAYOUT.panelLeft + SPACE.s8;
+/** Compare 展開區最多直接顯示幾個日期 chip，其餘收成「+N」 */
+const MAX_COMPARE_CHIPS = 4;
 
 function formatDateLabel(dateStr: string): string {
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -144,6 +147,11 @@ export function Timeline(p: Props) {
   const fullDates = p.fullDates ?? [];
   const selectedDates = p.selectedDates ?? [];
   const isMultiDateMode = p.isMultiDateMode ?? false;
+
+  /** Compare 日期色：與 App compareColorMap 同一公式（依加入順序取 COMPARE_COLORS） */
+  const compareColor = (d: string) => COMPARE_COLORS[Math.max(0, selectedDates.indexOf(d)) % COMPARE_COLORS.length]!;
+  /** 已選日期依日期先後（= 播放與直方圖分段順序） */
+  const compareSorted = [...new Set(selectedDates)].sort();
 
   /* ── 月曆 ── */
   const calendarOpen = state.popupOpen;
@@ -374,17 +382,26 @@ export function Timeline(p: Props) {
               const hasData = availableSet.has(dateStr);
               const isFull = fullSet.has(dateStr);
               const isPartial = hasData && !isFull && fullDates.length > 0;
-              const isSelected = dateStr === p.selectedDate;
+              const isSelected = !isMultiDateMode && dateStr === p.selectedDate;
+              const inCompare = isMultiDateMode && selectedDates.includes(dateStr);
+              const cmpColor = inCompare ? compareColor(dateStr) : undefined;
               return (
                 <button
                   key={day}
                   type="button"
                   title={hasData ? dateTitle(dateStr) : undefined}
-                  aria-pressed={isSelected}
+                  aria-pressed={isMultiDateMode ? inCompare : isSelected}
                   aria-disabled={!hasData || undefined}
                   onClick={() => {
                     if (!hasData) {
                       setNoDataNotice(`${month}/${day} 沒有${p.subjectLabel ? ` ${p.subjectLabel} 的` : ""}資料`);
+                      return;
+                    }
+                    if (isMultiDateMode) {
+                      // Compare：點日期 = 加入／移除，月曆保持開著；移除最後一天會離開 Compare，順手關月曆
+                      setNoDataNotice(null);
+                      p.onToggleMultiDate?.(dateStr);
+                      if (inCompare && selectedDates.length <= 1) setCalendarOpen(false);
                       return;
                     }
                     p.onDateSelect?.(dateStr);
@@ -402,10 +419,11 @@ export function Timeline(p: Props) {
                     fontSize: SIZE.body,
                     border: 0,
                     borderRadius: RADIUS.base,
-                    background: isSelected ? tokens.accent : "transparent",
+                    background: isSelected ? tokens.accent : cmpColor ? mix(cmpColor, 26) : "transparent",
+                    boxShadow: cmpColor ? `inset 0 0 0 1px ${cmpColor}` : undefined,
                     color: isSelected ? tokens.accentInk : hasData ? tokens.fg1 : mix(tokens.fg3, 55),
-                    opacity: isPartial && !isSelected ? 0.55 : 1,
-                    fontWeight: isSelected ? 700 : 400,
+                    opacity: isPartial && !isSelected && !inCompare ? 0.55 : 1,
+                    fontWeight: isSelected || inCompare ? 700 : 400,
                     cursor: hasData ? "pointer" : "not-allowed",
                   }}
                 >
@@ -427,6 +445,11 @@ export function Timeline(p: Props) {
               );
             })}
           </div>
+          {isMultiDateMode && (
+            <div style={{ marginTop: SPACE.s6, maxWidth: 7 * 28 + 6 * SPACE.s2, fontSize: SIZE.minor, lineHeight: 1.4, color: tokens.fg3 }}>
+              點日期加入／移除比較 · 已選 {compareSorted.length} 天
+            </div>
+          )}
           {noDataNotice && (
             <div
               role="status"
@@ -447,28 +470,30 @@ export function Timeline(p: Props) {
 
       {expanded && (
         <>
-          {/* ── 日期列 ── */}
+          {/* ── 日期列：單日 = ◀ 日期 ▶ · 天數 · Compare；Compare = 開關 · 已選日期 chip · ＋ 加日期 ── */}
           <div style={{ display: "flex", alignItems: "center", gap: SPACE.s6, flexWrap: "wrap" }}>
-            <Button variant="ghost" ariaLabel="前一個有資料的日期" icon={<IconChevron direction="left" />} onClick={() => p.onDateShift(-1)} />
-            <Button
-              variant="ghost"
-              onClick={openCalendar}
-              disabled={!p.onDateSelect}
-              pressed={calendarOpen}
-              title="開月曆選日期"
-              width={92}
-              style={{ fontFamily: FONT.data, fontWeight: 600, color: tokens.fg1 }}
-            >
-              {formatDateLabel(p.selectedDate)}
-            </Button>
-            <Button variant="ghost" ariaLabel="後一個有資料的日期" icon={<IconChevron direction="right" />} onClick={() => p.onDateShift(1)} />
             {!isMultiDateMode && (
-              <Segmented<number>
-                ariaLabel="天數"
-                options={[1, 3, 7].map((n) => ({ value: n, label: `${n}d` }))}
-                value={p.rangeDays}
-                onChange={p.onRangeDaysChange}
-              />
+              <>
+                <Button variant="ghost" ariaLabel="前一個有資料的日期" icon={<IconChevron direction="left" />} onClick={() => p.onDateShift(-1)} />
+                <Button
+                  variant="ghost"
+                  onClick={openCalendar}
+                  disabled={!p.onDateSelect}
+                  pressed={calendarOpen}
+                  title="開月曆選日期"
+                  width={92}
+                  style={{ fontFamily: FONT.data, fontWeight: 600, color: tokens.fg1 }}
+                >
+                  {formatDateLabel(p.selectedDate)}
+                </Button>
+                <Button variant="ghost" ariaLabel="後一個有資料的日期" icon={<IconChevron direction="right" />} onClick={() => p.onDateShift(1)} />
+                <Segmented<number>
+                  ariaLabel="天數"
+                  options={[1, 3, 7].map((n) => ({ value: n, label: `${n}d` }))}
+                  value={p.rangeDays}
+                  onChange={p.onRangeDaysChange}
+                />
+              </>
             )}
             {availableDates.length > 1 && p.onToggleMultiDate && (
               <Button
@@ -477,8 +502,43 @@ export function Timeline(p: Props) {
                 onClick={isMultiDateMode ? p.onClearMultiDates : () => p.onToggleMultiDate?.(p.selectedDate)}
                 title={isMultiDateMode ? "關閉多日比較" : "多日比較"}
               >
-                {isMultiDateMode ? `Compare (${selectedDates.length})` : "Compare"}
+                {isMultiDateMode ? `Compare (${compareSorted.length})` : "Compare"}
               </Button>
+            )}
+            {isMultiDateMode && (
+              <>
+                {compareSorted.slice(0, MAX_COMPARE_CHIPS).map((d) => (
+                  <Chip
+                    key={d}
+                    title={dateTitle(d)}
+                    removeLabel={`移除 ${formatDateLabel(d)}`}
+                    label={
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: SPACE.s4 }}>
+                        <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: RADIUS.pill, background: compareColor(d), flex: "none" }} />
+                        {formatDateLabel(d)}
+                      </span>
+                    }
+                    onRemove={() => p.onToggleMultiDate?.(d)}
+                  />
+                ))}
+                {compareSorted.length > MAX_COMPARE_CHIPS && (
+                  <Chip
+                    label={`+${compareSorted.length - MAX_COMPARE_CHIPS}`}
+                    title={compareSorted.slice(MAX_COMPARE_CHIPS).map(formatDateLabel).join("、")}
+                    onClick={openCalendar}
+                  />
+                )}
+                <Button
+                  variant="ghost"
+                  icon={<IconPlus />}
+                  onClick={openCalendar}
+                  pressed={calendarOpen}
+                  disabled={!p.onDateSelect}
+                  title="開月曆加入／移除比較日期"
+                >
+                  加日期
+                </Button>
+              </>
             )}
             <span style={{ flex: 1 }} />
             <Select<number>
@@ -490,27 +550,6 @@ export function Timeline(p: Props) {
               onChange={(v) => { p.onSpeedChange(v); releaseFocus(); }}
             />
           </div>
-
-          {/* ── Compare 日期 ── */}
-          {isMultiDateMode && availableDates.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: SPACE.s4, maxHeight: 96, overflowY: "auto" }}>
-              {availableDates.map((d) => {
-                const isPartial = !fullSet.has(d) && fullDates.length > 0;
-                const active = selectedDates.includes(d);
-                return (
-                  // 部分資料的日期調暗（沿用舊 Compare 清單的視覺語言）
-                  <span key={d} style={{ opacity: isPartial && !active ? 0.55 : 1, display: "inline-flex" }}>
-                    <Chip
-                      label={formatDateLabel(d)}
-                      title={dateTitle(d)}
-                      selected={active}
-                      onClick={() => p.onToggleMultiDate?.(d)}
-                    />
-                  </span>
-                );
-              })}
-            </div>
-          )}
 
         </>
       )}
