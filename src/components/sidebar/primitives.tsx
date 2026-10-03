@@ -337,7 +337,7 @@ export function AirportRow({
             {info?.iata || iata || icao} / {icao}{status ? ` · ${status}` : ""}
           </div>
           {matchReason && (
-            <div style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, marginTop: SPACE.s2 }}>
+            <div style={{ fontSize: SIZE.eyebrow, color: tokens.fg3, marginTop: SPACE.s2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               符合：{matchReason}
             </div>
           )}
