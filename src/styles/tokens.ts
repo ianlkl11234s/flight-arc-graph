@@ -99,7 +99,7 @@ export const RADIUS = {
   pill: 99,
 } as const;
 
-/** z-index 六層（照 Pulse） */
+/** z-index 六層（照 Pulse）＋開場遮罩 */
 export const Z = {
   mapOverlay: 10,
   panel: 20,
@@ -107,6 +107,8 @@ export const Z = {
   popover: 30,
   modal: 40,
   toast: 50,
+  /** 開場遮罩（BootScreen）：唯一高於 toast 的一層，只在首次載入期間存在 */
+  boot: 60,
 } as const;
 
 /** 版面常數（px） */

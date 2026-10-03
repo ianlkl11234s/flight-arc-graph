@@ -1,0 +1,89 @@
+/*
+ * 開場（Boot）：雷達遮罩 + 主畫面元件進場。規格見 docs/design-system/spec.md「開場（Boot）」。
+ * 顏色全部來自 tokens（BootScreen 以 inline 設 --boot-*；進場光暈用 tokens.css 的 --accent），不寫色碼。
+ * 時間都乘上 --boot-k（bootLayout.enterScale，由 useBootPhase 寫到 <html>）。
+ */
+
+/* ── 遮罩 ── */
+.boot-screen { transition: opacity 0.45s ease; }
+.boot-screen--leaving { opacity: 0; pointer-events: none; }
+.boot-screen__stage { position: absolute; inset: 0; transition: transform 0.45s ease; }
+.boot-screen--leaving .boot-screen__stage { transform: scale(1.04); }
+.boot-screen__radar { animation: boot-fade-in 0.6s ease-out both; }
+.boot-screen__foot { animation: boot-fade-in 0.5s ease-out 0.2s both; }
+.boot-screen__ring {
+  display: block;
+  width: 9px;
+  height: 9px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--boot-track);
+  border-top-color: var(--boot-accent);
+  border-radius: 50%;
+  animation: boot-spin 0.9s linear infinite;
+}
+.boot-screen--still .boot-screen__radar,
+.boot-screen--still .boot-screen__foot,
+.boot-screen--still .boot-screen__ring { animation: none; }
+.boot-screen--still,
+.boot-screen--still .boot-screen__stage { transition: none; }
+.boot-screen--still.boot-screen--leaving .boot-screen__stage { transform: none; }
+
+@keyframes boot-spin { to { transform: rotate(360deg); } }
+@keyframes boot-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/*
+ * 進場：<html data-boot="wait|enter">。標了 data-boot-part 的元件在 wait 時藏在邊界外，
+ * enter 時帶回彈歸位。!important 只為蓋過元件 inline 的 transition（只在開場這一段生效，結束即移除 data-boot）。
+ *   rail 從左 · toolbar 從上 · timeline 從下 · caption 從下 · title 從上 · fade 只淡入（手機抽屜）
+ */
+html[data-boot] [data-boot-part] {
+  transition: transform calc(0.85s * var(--boot-k, 1)) cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+html[data-boot="wait"] [data-boot-part="rail"] { transform: translateX(-105%); }
+html[data-boot="wait"] [data-boot-part="toolbar"] { transform: translateY(calc(-100% - 64px)); }
+html[data-boot="wait"] [data-boot-part="title"] { transform: translateY(calc(-100% - 40px)); }
+html[data-boot="wait"] [data-boot-part="timeline"] { transform: translateY(calc(100% + 80px)); }
+html[data-boot="wait"] [data-boot-part="caption"] { transform: translateY(calc(100% + 160px)); }
+html[data-boot] [data-boot-part="fade"] { transition: opacity calc(0.6s * var(--boot-k, 1)) ease-out !important; }
+html[data-boot="wait"] [data-boot-part="fade"] { opacity: 0; }
+
+html[data-boot="enter"] [data-boot-part="toolbar"] { transition-delay: calc(0.12s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="timeline"] { transition-delay: calc(0.24s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="caption"] { transition-delay: calc(0.30s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="title"] { transition-delay: calc(0.36s * var(--boot-k, 1)) !important; }
+
+/* rail 圖示逐一放大（0.40–0.70s） */
+html[data-boot] [data-boot-part="rail"] > * {
+  transition: transform calc(0.4s * var(--boot-k, 1)) cubic-bezier(0.34, 1.8, 0.64, 1) !important;
+}
+html[data-boot="wait"] [data-boot-part="rail"] > * { transform: scale(0); }
+html[data-boot="enter"] [data-boot-part="rail"] > :nth-child(1) { transition-delay: calc(0.40s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="rail"] > :nth-child(2) { transition-delay: calc(0.45s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="rail"] > :nth-child(3) { transition-delay: calc(0.50s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="rail"] > :nth-child(4) { transition-delay: calc(0.55s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="rail"] > :nth-child(5) { transition-delay: calc(0.60s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="rail"] > :nth-child(6) { transition-delay: calc(0.64s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="rail"] > :nth-child(7) { transition-delay: calc(0.67s * var(--boot-k, 1)) !important; }
+html[data-boot="enter"] [data-boot-part="rail"] > :nth-child(n + 8) { transition-delay: calc(0.70s * var(--boot-k, 1)) !important; }
+
+/* 時間軸到位時閃一下 accent 光暈（像機關卡住） */
+html[data-boot="enter"] [data-boot-part="timeline"] {
+  animation: boot-latch calc(0.4s * var(--boot-k, 1)) ease-out calc(1.05s * var(--boot-k, 1));
+}
+@keyframes boot-latch {
+  0% { filter: drop-shadow(0 0 0 transparent); }
+  30% { filter: drop-shadow(0 0 6px var(--accent)); }
+  100% { filter: drop-shadow(0 0 0 transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-screen__radar, .boot-screen__foot, .boot-screen__ring { animation: none; }
+  .boot-screen--leaving .boot-screen__stage { transform: none; }
+  html[data-boot] [data-boot-part],
+  html[data-boot] [data-boot-part="rail"] > * {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
