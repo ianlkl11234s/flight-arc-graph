@@ -85,6 +85,8 @@ sh ab-run.sh <tag> s2                  # 效能 A/B
 
 ## 部署流程
 
+分支與發布規則見 [`docs/RELEASING.md`](docs/RELEASING.md)（日常開發在 develop，不直接 commit master）。
+
 ```bash
 # 1. 確認 build
 npm run typecheck
