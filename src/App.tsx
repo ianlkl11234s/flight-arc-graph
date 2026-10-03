@@ -9,6 +9,7 @@ import { useFlightData } from "./hooks/useFlightData";
 import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo, cameraForAirport } from "./map/cameraPresets";
+import { effectiveDates } from "./data/airportListStats";
 import { loadAirportMeta, type AirportMeta } from "./data/airportMeta";
 import { createFlightLayer, getGlStats, resetGlStats } from "./map/customLayer";
 import { notifyActivity } from "./map/repaintScheduler";
@@ -659,6 +660,10 @@ export default function App() {
     notifyActivity(mapRef.current);
   }, []);
   const timeline = useTimeline({ availableDates, preferredDate, onTick: handleTimelineTick });
+  const statDates = useMemo(
+    () => effectiveDates(timeline.selectedDate, timeline.rangeDays, timeline.selectedDates),
+    [timeline.selectedDate, timeline.rangeDays, timeline.selectedDates],
+  );
 
   // 切換機場時：若目前日期不在新機場的可用日期（availableDates）內，跳到該機場的 preferredDate。
   // 只在「機場改變」時觸發 —— 使用者手動點部分資料日期不會被蓋掉。
@@ -2374,6 +2379,7 @@ export default function App() {
               });
             }}
             selectedDate={timeline.selectedDate}
+            statDates={statDates}
             summaryFlights={finalFlights}
             rangeDays={timeline.rangeDays}
             statsAllFlights={allFlights}

@@ -4,6 +4,8 @@ import { useTheme } from "../../styles/ThemeContext";
 import { FONT, RADIUS, SIZE, SPACE } from "../../styles/tokens";
 import { themeVars } from "../../ui/vars";
 import { IconMinus, IconPlus } from "../../ui/icons";
+import { TRAJ } from "../../types/colorTheme";
+import type { ArrDepCount } from "../../data/airportListStats";
 
 /* ── Sub-components ──────────────────────────────────────── */
 
@@ -132,6 +134,35 @@ export function IconCamera() {
   );
 }
 
+/** 進／離數字欄寬（欄首與每列共用，讓兩者對齊） */
+export const STAT_COL_W = 38;
+
+const fmtStat = (n: number | null) => (n === null ? "—" : n.toLocaleString());
+
+/** 數字欄欄首：進（TRAJ 進場色）、離（TRAJ 離場色）。右側留出 ＋ 鈕的位置。 */
+export function AirportStatHeader() {
+  const { tokens, isDark } = useTheme();
+  const pal = isDark ? TRAJ.dark : TRAJ.light;
+  const cell = { width: STAT_COL_W, textAlign: "right" as const, flex: "none" as const };
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        display: "flex",
+        gap: SPACE.s8,
+        padding: `0 ${SPACE.s8 + 24 + SPACE.s4 + SPACE.s4}px ${SPACE.s2}px ${SPACE.s8}px`,
+        fontSize: SIZE.eyebrow,
+        fontFamily: FONT.data,
+        color: tokens.fg3,
+      }}
+    >
+      <span style={{ flex: 1 }} />
+      <span style={{ ...cell, color: pal.arr }}>進</span>
+      <span style={{ ...cell, color: pal.dep }}>離</span>
+    </div>
+  );
+}
+
 /* ── SetsPanel：機場列（R11：點擊＝開啟機場；＋／Shift+點＝加入組合） ───── */
 
 export function AirportRow({
@@ -142,6 +173,7 @@ export function AirportRow({
   inSet,
   coverage,
   matchReason,
+  stats,
   disabled = false,
   onOpen,
   onToggleSet,
@@ -155,13 +187,16 @@ export function AirportRow({
   inSet: boolean;
   coverage?: string;
   matchReason?: string;
+  /** 所選日期的進／離場數；傳入才顯示數字欄，null = 缺值顯示「—」（R9） */
+  stats?: ArrDepCount;
   disabled?: boolean;
   /** 單選並飛過去 */
   onOpen: () => void;
   /** 加入／移出組合 */
   onToggleSet: () => void;
 }) {
-  const { tokens } = useTheme();
+  const { tokens, isDark } = useTheme();
+  const pal = isDark ? TRAJ.dark : TRAJ.light;
   const info = getAirportInfo(icao);
   const label = info?.name ?? name;
   const highlighted = current || inSet;
@@ -220,6 +255,12 @@ export function AirportRow({
             </div>
           )}
         </div>
+        {stats && (
+          <>
+            <StatNum value={stats.arr} color={pal.arr} label="進場" />
+            <StatNum value={stats.dep} color={pal.dep} label="離場" />
+          </>
+        )}
       </button>
       <button
         type="button"
@@ -246,5 +287,25 @@ export function AirportRow({
         {inSet ? <IconMinus /> : <IconPlus />}
       </button>
     </div>
+  );
+}
+
+function StatNum({ value, color, label }: { value: number | null; color: string; label: string }) {
+  const { tokens } = useTheme();
+  return (
+    <span
+      aria-label={`${label} ${value === null ? "無資料" : value}`}
+      style={{
+        width: STAT_COL_W,
+        flex: "none",
+        textAlign: "right",
+        fontFamily: FONT.data,
+        fontVariantNumeric: "tabular-nums",
+        fontSize: SIZE.body,
+        color: value === null ? tokens.fg3 : color,
+      }}
+    >
+      {fmtStat(value)}
+    </span>
   );
 }

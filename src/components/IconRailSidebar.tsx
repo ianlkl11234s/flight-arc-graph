@@ -101,6 +101,8 @@ export interface IconRailSidebarProps {
   onSceneSelect: (scene: ScenePreset) => void;
   // 日期只在時間軸選（R12）；這裡只用來顯示「N 座無此日期」
   selectedDate: string | null;
+  /** 機場列表數字欄統計的日期（單日／連續 N 天／Compare 多日；見 airportListStats.effectiveDates） */
+  statDates: string[];
   // Flights data (for summary panel — already filtered by time window)
   summaryFlights: Flight[];
   /** 時間範圍天數（1d / 3d / 7d）影響顯示內容 */
@@ -389,6 +391,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onClearSet={props.onClearSet}
               onExitSetMode={props.onExitSetMode}
               onSceneSelect={props.onSceneSelect}
+              statDates={props.statDates}
             />
           )}
           {activePanel === "colors" && (
