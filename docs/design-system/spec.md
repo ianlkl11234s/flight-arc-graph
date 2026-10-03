@@ -155,6 +155,13 @@
 
 工具列「染色：高度（預設）｜起降」。判斷依據是選定機場（dest ∈ 選定 → 進場色，origin ∈ 選定 → 離場色），組合內互飛沿路漸層；region 範圍與多日 Compare 時不可選。光球與拖尾跟著起降色。完整規則見 [studio-design-system.md §7](../backlog/studio-design-system.md)；色票邏輯在 `src/data/depArrColors.ts`。
 
+### 多日 Compare（時間軸）
+
+語意：所選日期**依日期先後串成一條絕對時間軸**（`useTimeline` 視窗 = 最早所選日 00:00 → 最晚所選日 24:00，播放時鐘線性前進；軌跡依各日窗口篩選、每日一個比較色）。介面：
+- 展開區只列已選日期 chip（依日期先後、比較色點、×；最多 4 個，其餘 +N）＋「＋ 加日期」開時間軸既有月曆；Compare 模式下點月曆日期＝加入／移除（月曆不關，已選日期以比較色框標記）。◀ 日期 ▶ 與天數在 Compare 下隱藏。
+- 直方圖與滑桿：每個日期一段等寬區塊（不依絕對時間留白），段首標日期、段間細分隔線；滑桿位置與時刻用同一套換算（`src/ui/compareTimeline.ts`，純函式＋測試），兩者上下對齊。
+- 比較色與軌跡同一公式：`COMPARE_COLORS[依加入順序 index % 4]`。
+
 ### 機場列數字欄（進／離）
 
 資料取 manifest 每機場 `datesArr[date]`／`datesDep[date]`；多日（Nd、Compare）加總所選日期（`effectiveDates`）。**缺值不是 0（R9）**：舊 manifest 沒這兩欄、或所選日期沒資料 → 顯示「—」。「總」欄與總量排序用 `dates[date]`（或全期 `flights`），不用 arr + dep 相加（兩者不一定相等），顯示用 `getTotalOrNull`（缺值「—」）；缺值不論升降冪都排在有值（含 0）之後；樹狀分組時排序作用在每個分組內，搜尋結果套用同一套數字欄與排序。純函式與測試：`src/data/airportListStats.ts`、`scripts/design/tests/airportListStats.test.mjs`。

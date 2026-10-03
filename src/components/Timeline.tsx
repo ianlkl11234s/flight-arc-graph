@@ -6,6 +6,7 @@ import { Button, Chip, Segmented, Select, Slider } from "../ui";
 import { THUMB_W } from "../ui/Slider";
 import { IconChevron, IconPause, IconPlay, IconPlus } from "../ui/icons";
 import { COMPARE_COLORS } from "../types/dataColors";
+import { compareProgressToTime, compareSegmentStarts, compareTimeToProgress } from "../ui/compareTimeline";
 import { mix, themeVars } from "../ui/vars";
 import {
   COLLAPSE_DELAY_MS,
@@ -133,7 +134,8 @@ function useTimelineExpand() {
 
 /**
  * 時間軸膠囊（spec R4、R5）。收合：播放、時刻（台灣時間）、細進度條；
- * 展開：日期列（◀ 日期 ▶、月曆、天數、Compare）、每小時起降直方圖、Compare 日期、進度滑桿、速度。
+ * 展開：日期列（◀ 日期 ▶、月曆、天數、Compare／已選日期 chip）、每小時起降直方圖、進度滑桿、速度。
+ * Compare（多日）＝依日期先後串成一條絕對時間軸；直方圖與滑桿改成每個日期一段等寬區塊（ui/compareTimeline.ts）。
  * 外層容器負責定位（底邊 LAYOUT.mapBottomInset，與 dock 共用）。手機用 fixedExpanded：固定展開、撐滿寬、月曆往下彈。
  */
 export function Timeline(p: Props) {
@@ -240,6 +242,13 @@ export function Timeline(p: Props) {
   /* ── 直方圖 ── */
   const hasBins = expanded && p.hourBins.length > 0;
   const winSpan = Math.max(1, p.windowEnd - p.windowStart);
+  /** Compare：每個所選日期一段等寬（不依絕對時間留白）；滑桿位置同樣換算 */
+  const segStarts = isMultiDateMode ? compareSegmentStarts(selectedDates) : [];
+  const segMode = segStarts.length > 0;
+  const binLeft = (t: number) => (segMode ? compareTimeToProgress(t, segStarts) : (t - p.windowStart) / winSpan);
+  const binWidth = segMode ? 1 / (24 * segStarts.length) : 3600 / winSpan;
+  const progress = segMode ? compareTimeToProgress(p.currentTime, segStarts) : p.progress;
+  const onSlider = segMode ? (u: number) => p.onSeek(compareProgressToTime(u, segStarts)) : p.onSeekByProgress;
   /** 每格之間留 1px 縫（格寬 = 一小時的時間寬 − 縫） */
   const binGap = 1;
   const maxHalf = Math.max(1, ...p.hourBins.map((b) => Math.max(b.arr, b.dep)));
@@ -567,51 +576,93 @@ export function Timeline(p: Props) {
       >
           {/* ── 每小時起降直方圖：進場向上、離場向下；點擊跳到該小時 ──
             與進度滑桿同欄：左右各縮 THUMB_W/2（滑桿 thumb 中心在 3px + p×(W−6)），
-            每格依「時間」定位（t 的 x = (t−windowStart)/(windowEnd−windowStart)），Compare 不連續日期也與把手同 x。 */}
+            每格 x 與滑桿用同一套換算（binLeft／progress）：單日／Nd 依絕對時間；Compare 每個日期一段等寬，
+            段首標日期（比較色點），段與段之間一條細分隔線。 */}
         {hasBins && (
-          <div
-            role="group"
-            aria-label="每小時起降（進場向上、離場向下）"
-            style={{ gridColumn: 3, gridRow: 1, position: "relative", height: 34, margin: `0 ${THUMB_W / 2}px ${SPACE.s4}px` }}
-          >
-            {p.hourBins.map((b, i) => {
-              const cur = i === curIdx;
-              const color = cur ? tokens.accent : mix(tokens.fg2, isDark ? 45 : 50); // 圖表配色規則：目前用 accent，其餘中性灰階
-              const tw = new Date(b.start * 1000 + 8 * 3600_000);
-              const label = `${String(tw.getUTCMonth() + 1).padStart(2, "0")}/${String(tw.getUTCDate()).padStart(2, "0")} ${String(tw.getUTCHours()).padStart(2, "0")}:00 · 進場 ${b.arr} · 離場 ${b.dep}`;
-              return (
-                <button
-                  key={b.start}
-                  type="button"
-                  tabIndex={-1}
-                  title={label}
-                  aria-label={label}
-                  onClick={() => p.onSeek(b.start)}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    left: `${((b.start - p.windowStart) / winSpan) * 100}%`,
-                    width: `calc(${(3600 / winSpan) * 100}% - ${binGap}px)`,
-                    minWidth: 1,
-                    padding: 0,
-                    border: 0,
-                    background: "transparent",
-                    cursor: "pointer",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
-                  }}
-                >
-                  <span style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
-                    <span style={{ width: "100%", height: `${(b.arr / maxHalf) * 100}%`, background: color }} />
-                  </span>
-                  <span style={{ flex: 1, display: "flex", alignItems: "flex-start", width: "100%" }}>
-                    <span style={{ width: "100%", height: `${(b.dep / maxHalf) * 100}%`, background: color }} />
-                  </span>
-                </button>
-              );
-            })}
+          <div style={{ gridColumn: 3, gridRow: 1, margin: `0 ${THUMB_W / 2}px ${SPACE.s4}px`, display: "flex", flexDirection: "column", gap: SPACE.s2 }}>
+            {segMode && (
+              <div aria-hidden="true" style={{ position: "relative", height: 14 }}>
+                {segStarts.map((st, k) => {
+                  const d = compareSorted[k]!;
+                  return (
+                    <span
+                      key={st}
+                      style={{
+                        position: "absolute",
+                        left: `${(k / segStarts.length) * 100}%`,
+                        width: `${100 / segStarts.length}%`,
+                        top: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: SPACE.s4,
+                        paddingLeft: k > 0 ? SPACE.s4 : 0,
+                        boxSizing: "border-box",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        fontFamily: FONT.data,
+                        fontSize: SIZE.eyebrow,
+                        lineHeight: "14px",
+                        color: tokens.fg3,
+                      }}
+                    >
+                      <span style={{ width: 6, height: 6, borderRadius: RADIUS.pill, background: compareColor(d), flex: "none" }} />
+                      {formatDateLabel(d)}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <div
+              role="group"
+              aria-label="每小時起降（進場向上、離場向下）"
+              style={{ position: "relative", height: 34 }}
+            >
+              {segMode && segStarts.slice(1).map((st, i) => (
+                <span
+                  key={`sep${st}`}
+                  aria-hidden="true"
+                  style={{ position: "absolute", top: -SPACE.s2 - 14, bottom: 0, left: `${((i + 1) / segStarts.length) * 100}%`, width: 1, background: tokens.border }}
+                />
+              ))}
+              {p.hourBins.map((b, i) => {
+                const cur = i === curIdx;
+                const color = cur ? tokens.accent : mix(tokens.fg2, isDark ? 45 : 50); // 圖表配色規則：目前用 accent，其餘中性灰階
+                const tw = new Date(b.start * 1000 + 8 * 3600_000);
+                const label = `${String(tw.getUTCMonth() + 1).padStart(2, "0")}/${String(tw.getUTCDate()).padStart(2, "0")} ${String(tw.getUTCHours()).padStart(2, "0")}:00 · 進場 ${b.arr} · 離場 ${b.dep}`;
+                return (
+                  <button
+                    key={b.start}
+                    type="button"
+                    tabIndex={-1}
+                    title={label}
+                    aria-label={label}
+                    onClick={() => p.onSeek(b.start)}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      bottom: 0,
+                      left: `${binLeft(b.start) * 100}%`,
+                      width: `calc(${binWidth * 100}% - ${binGap}px)`,
+                      minWidth: 1,
+                      padding: 0,
+                      border: 0,
+                      background: "transparent",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                    }}
+                  >
+                    <span style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
+                      <span style={{ width: "100%", height: `${(b.arr / maxHalf) * 100}%`, background: color }} />
+                    </span>
+                    <span style={{ flex: 1, display: "flex", alignItems: "flex-start", width: "100%" }}>
+                      <span style={{ width: "100%", height: `${(b.dep / maxHalf) * 100}%`, background: color }} />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
         <div style={{ gridColumn: 1, gridRow: 2, display: "flex" }}>{playButton}</div>
@@ -627,8 +678,8 @@ export function Timeline(p: Props) {
               min={0}
               max={1}
               step={0.001}
-              value={p.progress}
-              onChange={p.onSeekByProgress}
+              value={progress}
+              onChange={onSlider}
             />
           </div>
         ) : (
@@ -642,7 +693,7 @@ export function Timeline(p: Props) {
                 left: 0,
                 top: 0,
                 bottom: 0,
-                width: `${Math.max(0, Math.min(1, p.progress)) * 100}%`,
+                width: `${Math.max(0, Math.min(1, progress)) * 100}%`,
                 background: tokens.accent,
               }}
             />
