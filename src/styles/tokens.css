@@ -30,14 +30,17 @@
   --z-popover: 30;
   --z-modal: 40;
   --z-toast: 50;
+  --z-boot: 60;
 
   --rail-width: 56px;
   --panel-width: 288px;
   --panel-width-wide: 360px;
+  --panel-width-list: 320px;
   --panel-left: 64px;
   --panel-top: 52px;
   --map-bottom-inset: 64px;
   --dock-width: 260px;
+  --left-bottom-reserve: 184px;
 }
 
 [data-theme="dark"] {
@@ -53,6 +56,7 @@
   --map-bg: #05070a;
   --danger: #ff6b6b;
   --rec: #e5484d;
+  --warn: #f59e0b;
   --accent-soft: rgba(242,169,59,.14);
 }
 
@@ -69,5 +73,6 @@
   --map-bg: #e8eaec;
   --danger: #c62828;
   --rec: #e5484d;
+  --warn: #f59e0b;
   --accent-soft: rgba(168,98,0,.12);
 }

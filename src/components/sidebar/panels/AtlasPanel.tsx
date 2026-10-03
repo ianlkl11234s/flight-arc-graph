@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { AirportManifestEntry } from "../../../data/flightLoader";
 import type { AtlasColorMode } from "../../../map/atlasGlowLayer";
+import { ATLAS_FLOW_GRADIENT, ATLAS_STATUS_META } from "../../../types/dataColors";
 import { useTheme } from "../../../styles/ThemeContext";
 import { FONT, RADIUS, SIZE, SPACE } from "../../../styles/tokens";
 import { Button, Section, Segmented, Slider } from "../../../ui";
@@ -43,12 +44,13 @@ export function AtlasPanel({
     return { complete, corePartial, partial };
   }, [airportCatalog]);
 
-  const legend = [
-    { color: "#3FB8A5", opacity: 0.85, label: "完整資料", desc: `整天完整捕捉（${stats.complete}）` },
-    { color: "#f1c40f", opacity: 0.7, label: "核心（部分）", desc: `主動抓但未滿整天（${stats.corePartial}）` },
-    { color: "#4C84B6", opacity: 0.5, label: "部分（附帶）", desc: `因航線連到而附帶（${stats.partial}）` },
-    { color: "#3E434A", opacity: 0.3, label: "僅規劃（未抓）", desc: "前 1000 目標、尚未抓" },
-  ];
+  const legendCount: Record<string, string> = {
+    complete: `整天完整捕捉（${stats.complete}）`,
+    "core-partial": `主動抓但未滿整天（${stats.corePartial}）`,
+    partial: `因航線連到而附帶（${stats.partial}）`,
+    planned: "前 1000 目標、尚未抓",
+  };
+  const legend = Object.entries(ATLAS_STATUS_META).map(([k, m]) => ({ ...m, desc: legendCount[k]! }));
 
   const { tokens } = useTheme();
   const note = { fontSize: SIZE.body, color: tokens.fg2, lineHeight: 1.6, fontFamily: FONT.ui } as const;
@@ -149,7 +151,7 @@ export function AtlasPanel({
                 height: 12,
                 borderRadius: RADIUS.base,
                 marginBottom: 5,
-                background: "linear-gradient(90deg, #ffffff 0%, #ff8c1a 50%, #ff1e1e 100%)",
+                background: ATLAS_FLOW_GRADIENT,
               }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: SIZE.minor, color: tokens.fg3 }}>

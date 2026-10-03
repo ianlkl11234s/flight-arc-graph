@@ -1,42 +1,26 @@
 import { getAirportInfo } from "../map/cameraPresets";
-import { FONT, SIZE } from "../styles/tokens";
+import { Select } from "../ui";
 
 interface Props {
   airports: string[];
   selected: string;
-  isDarkTheme?: boolean;
   onChange: (icao: string) => void;
 }
 
-const getStyle = (dark: boolean): React.CSSProperties => ({
-  background: dark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.85)",
-  color: dark ? "#fff" : "#333",
-  border: `1px solid ${dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
-  borderRadius: 4,
-  padding: "4px 8px",
-  fontSize: SIZE.title,
-  fontFamily: FONT.ui,
-  backdropFilter: "blur(8px)",
-  // 手機 header 內可收縮（機場全名過長時不把右側按鈕擠出畫面）
-  flex: "0 1 auto",
-  minWidth: 0,
-});
-
-export function AirportSelector({ airports, selected, isDarkTheme = true, onChange }: Props) {
+/** 機場下拉（選項 >3 → ui/Select）。手機 header 內可收縮：機場全名過長時不把右側按鈕擠出畫面。 */
+export function AirportSelector({ airports, selected, onChange }: Props) {
   return (
-    <select
-      value={selected}
-      onChange={(e) => onChange(e.target.value)}
-      style={getStyle(isDarkTheme)}
-    >
-      {airports.map((icao) => {
-        const info = getAirportInfo(icao);
-        return (
-          <option key={icao} value={icao}>
-            {info ? `${info.name} (${icao})` : icao}
-          </option>
-        );
-      })}
-    </select>
+    <div style={{ flex: "0 1 auto", minWidth: 0, display: "flex" }}>
+      <Select<string>
+        ariaLabel="機場"
+        fullWidth
+        options={airports.map((icao) => {
+          const info = getAirportInfo(icao);
+          return { value: icao, label: info ? `${info.name} (${icao})` : icao };
+        })}
+        value={selected}
+        onChange={onChange}
+      />
+    </div>
   );
 }

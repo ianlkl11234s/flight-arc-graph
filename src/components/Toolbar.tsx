@@ -1,8 +1,9 @@
+import { useEffect, useRef, useState } from "react";
 import type { DepArrFilter, RenderMode } from "../types";
 import type { TrajColorBy } from "../data/depArrColors";
 import { useTheme } from "../styles/ThemeContext";
 import { BLUR, FONT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
-import { Button, Segmented } from "../ui";
+import { Button, IconInfo, IconLink, Segmented } from "../ui";
 import { StyleSelector } from "./StyleSelector";
 
 interface ToolbarProps {
@@ -18,20 +19,37 @@ interface ToolbarProps {
   onMapStyleChange: (id: string) => void;
   onCapture: () => void;
   onInfo: () => void;
+  /** 複製目前畫面的連結（P6）；回傳是否成功 */
+  onCopyLink: () => Promise<boolean>;
 }
 
-function IconInfo() {
+/** 「複製連結」按鈕：按下後 1.5 秒顯示「已複製」／「複製失敗」，固定寬度（R10） */
+function CopyLinkButton({ onCopy }: { onCopy: () => Promise<boolean> }) {
+  const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  const handleClick = async () => {
+    const ok = await onCopy();
+    setStatus(ok ? "copied" : "failed");
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setStatus("idle"), 1500);
+  };
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
-      <circle cx="7" cy="7" r="5.8" />
-      <path d="M7 6.2v3.8" strokeLinecap="square" />
-      <circle cx="7" cy="4.2" r=".75" fill="currentColor" stroke="none" />
-    </svg>
+    <Button
+      variant="ghost"
+      icon={<IconLink />}
+      width={100}
+      onClick={handleClick}
+      title="複製目前畫面的連結（機場、日期、時刻、鏡頭…）"
+      aria-live="polite"
+    >
+      {status === "copied" ? "已複製" : status === "failed" ? "複製失敗" : "複製連結"}
+    </Button>
   );
 }
 
 /** 工具列高度（Segmented／Button 28 + padding 4×2 + border 1×2） */
-export const TOOLBAR_HEIGHT = 38;
+const TOOLBAR_HEIGHT = 38;
 /** 工具列下緣再空 8px：右上狀態條的 top */
 export const BELOW_TOOLBAR = SPACE.s16 + TOOLBAR_HEIGHT + SPACE.s8;
 
@@ -41,7 +59,7 @@ function Divider() {
 }
 
 /**
- * 右上唯一工具列（spec R3）：起降 ｜ 染色 ｜ 2D/3D · 底圖 ｜ 錄影 · 說明，固定順序、單排。
+ * 右上唯一工具列（spec R3）：起降 ｜ 染色 ｜ 2D/3D · 底圖 ｜ 錄影 · 複製連結 · 說明，固定順序、單排。
  * 染色：高度（預設）｜起降（§7）；沒有選定機場或 Compare 時「起降」disabled。
  */
 export function Toolbar(p: ToolbarProps) {
@@ -50,6 +68,7 @@ export function Toolbar(p: ToolbarProps) {
     <div
       role="toolbar"
       aria-label="工具列"
+      data-boot-part="toolbar"
       style={{
         position: "absolute",
         top: SPACE.s16,
@@ -119,6 +138,7 @@ export function Toolbar(p: ToolbarProps) {
       >
         錄影
       </Button>
+      <CopyLinkButton onCopy={p.onCopyLink} />
       <Button variant="ghost" icon={<IconInfo />} ariaLabel="說明" onClick={p.onInfo} />
     </div>
   );

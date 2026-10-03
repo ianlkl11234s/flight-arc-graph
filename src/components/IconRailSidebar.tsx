@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { DataSource, DisplayMode, Region, Scope, TrackMode, Flight, SavedAirportSet } from "../types";
 import type { ColorTheme } from "../types/colorTheme";
 import type { AirspaceSettings } from "../types/airspace";
@@ -15,7 +16,7 @@ import { Chip, Panel, PanelBody, PanelHeader, Section, Segmented } from "../ui";
 import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, IconRouteAnalysis, IconCamera, IconRadar } from "./sidebar/primitives";
 import type { ScenePreset } from "./sidebar/scenePresets";
 import { SettingsPanel } from "./sidebar/panels/SettingsPanel";
-import { SetsPanel } from "./sidebar/panels/SetsPanel";
+import { SetsPanel, loadSetsTab, type SetsTab } from "./sidebar/panels/SetsPanel";
 import { ColorThemePanel } from "./sidebar/panels/ColorThemePanel";
 import { SummaryPanel } from "./sidebar/panels/SummaryPanel";
 import { AtlasPanel } from "./sidebar/panels/AtlasPanel";
@@ -101,6 +102,8 @@ export interface IconRailSidebarProps {
   onSceneSelect: (scene: ScenePreset) => void;
   // 日期只在時間軸選（R12）；這裡只用來顯示「N 座無此日期」
   selectedDate: string | null;
+  /** 機場列表數字欄統計的日期（單日／連續 N 天／Compare 多日；見 airportListStats.effectiveDates） */
+  statDates: string[];
   // Flights data (for summary panel — already filtered by time window)
   summaryFlights: Flight[];
   /** 時間範圍天數（1d / 3d / 7d）影響顯示內容 */
@@ -189,10 +192,22 @@ const ATLAS_BADGE_KEYFRAMES = `
 
 /* ── Main Component ──────────────────────────────────────── */
 
+/**
+ * 左側面板最大高度：往上讓出左下圖說＋時間軸的「實際」高度（App／Timeline 用 ResizeObserver 寫入
+ * --fa-caption-h、--fa-timeline-h）；量到之前用 LAYOUT.leftBottomReserve 拆成的初始值。
+ */
+const CAPTION_H_INIT = 52;
+const LEFT_PANEL_MAX_HEIGHT =
+  `calc(100vh - ${LAYOUT.panelTop + LAYOUT.mapBottomInset + SPACE.s12 + SPACE.s8}px`
+  + ` - var(--fa-caption-h, ${CAPTION_H_INIT}px)`
+  + ` - var(--fa-timeline-h, ${LAYOUT.leftBottomReserve - CAPTION_H_INIT - SPACE.s12}px))`;
+
 export function IconRailSidebar(props: IconRailSidebarProps) {
   const { activePanel, onActivePanelChange: setActivePanel } = props;
   const { tokens } = useTheme();
   const activeWorkspace = getWorkspace(activePanel);
+  /** 機場面板目前分頁（機場分頁用較寬的 panelWidthList） */
+  const [setsTab, setSetsTab] = useState<SetsTab>(loadSetsTab);
   const activeSelection = props.airportSet ?? [props.selectedAirport];
   const selectedDate = props.selectedDate;
   const selectedAvailable = selectedDate
@@ -237,6 +252,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
 
       {/* Icon Rail (top icons) */}
       <div
+        data-boot-part="rail"
         style={{
           position: "absolute",
           left: 0,
@@ -335,8 +351,8 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
       {activePanel !== null && (
         <Panel
           ariaLabel={workspaceTitle}
-          width={activePanel === "stats" ? LAYOUT.panelWidthWide : LAYOUT.panelWidth}
-          maxHeight="70vh"
+          width={activePanel === "stats" ? LAYOUT.panelWidthWide : activePanel === "sets" && setsTab === "airports" ? LAYOUT.panelWidthList : LAYOUT.panelWidth}
+          maxHeight={LEFT_PANEL_MAX_HEIGHT}
           style={{ animation: "iconRailFadeIn 0.25s ease-out" }}
         >
           <PanelHeader
@@ -352,13 +368,11 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
                 ))}
               </div>
             )}
-            {(activeWorkspace === "selection" || activeWorkspace === "explore") && (
+            {/* 機場數與日期已在左下圖說；這裡只在有機場缺這天資料時提醒 */}
+            {(activeWorkspace === "selection" || activeWorkspace === "explore")
+              && selectedDate && selectedAvailable < activeSelection.length && (
               <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data, lineHeight: 1.45 }}>
-                {activeSelection.length} 座機場
-                {selectedDate ? ` · ${selectedDate}` : ""}
-                {selectedDate && selectedAvailable < activeSelection.length
-                  ? ` · ${activeSelection.length - selectedAvailable} 座無此日期`
-                  : ""}
+                {activeSelection.length - selectedAvailable}／{activeSelection.length} 座無 {selectedDate} 資料
               </div>
             )}
             {workspaceTabs.length > 1 && <Segmented<PanelId>
@@ -369,7 +383,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onChange={setActivePanel}
             />}
           </div>
-          <PanelBody style={activePanel === "stats" ? { padding: 0, gap: 0 } : undefined}>
+          <PanelBody style={activePanel === "stats" ? { padding: 0, gap: 0 } : activePanel === "sets" ? { overflowY: "hidden" } : undefined}>
           {activePanel === "settings" && <SettingsPanel {...props} />}
           {activePanel === "sets" && (
             <SetsPanel
@@ -388,6 +402,8 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               onClearSet={props.onClearSet}
               onExitSetMode={props.onExitSetMode}
               onSceneSelect={props.onSceneSelect}
+              statDates={props.statDates}
+              onTabChange={setSetsTab}
             />
           )}
           {activePanel === "colors" && (

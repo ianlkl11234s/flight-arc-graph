@@ -7,7 +7,7 @@ export type AtlasColorMode = "flow" | "completeness";
 
 export const ATLAS_GLOW_LAYER_ID = "atlas-glow-3d";
 
-/** 完整度離散色 — 與 circle 版（MapView）、popup（App.ATLAS_STATUS_META）、legend 同步 */
+/** 完整度離散色 — 與 circle 版（MapView）、popup（types/dataColors.ATLAS_STATUS_META）、legend 同步 */
 const STATUS_COLORS: Record<string, string> = {
   complete: "#3FB8A5",
   "core-partial": "#f1c40f",

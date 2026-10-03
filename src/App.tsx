@@ -9,6 +9,7 @@ import { useFlightData } from "./hooks/useFlightData";
 import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { CAMERA_PRESETS, getPresetByIcao, getAirportInfo, cameraForAirport } from "./map/cameraPresets";
+import { effectiveDates } from "./data/airportListStats";
 import { loadAirportMeta, type AirportMeta } from "./data/airportMeta";
 import { createFlightLayer, getGlStats, resetGlStats } from "./map/customLayer";
 import { notifyActivity } from "./map/repaintScheduler";
@@ -23,12 +24,12 @@ import { FlightInfoCard } from "./components/FlightInfoCard";
 import { filterByAirport } from "./data/flightLoader";
 import type { LodLevel } from "./data/flightLoader";
 import { timeToUnixTW } from "./utils/dateUtils";
-import { AirportSelector } from "./components/AirportSelector";
+import { buildSearch, decodeUrlState, encodeUrlState, type UrlState } from "./data/urlState";
+import { MobileHeader, MOBILE_HEADER_HEIGHT } from "./components/MobileHeader";
 import { FlightPicker } from "./components/FlightPicker";
-import { TimelineControls } from "./components/TimelineControls";
 import { Timeline, type HourBin } from "./components/Timeline";
-import { StyleSelector, getStyleUrl } from "./components/StyleSelector";
-import { MobileBottomSheet } from "./components/MobileBottomSheet";
+import { MAP_STYLES, getStyleUrl } from "./components/StyleSelector";
+import { MobileBottomSheet, SheetNote } from "./components/MobileBottomSheet";
 import { Toolbar } from "./components/Toolbar";
 import { Dock, DockItem } from "./components/Dock";
 import { LoadingStatus } from "./components/LoadingStatus";
@@ -42,6 +43,8 @@ import { computeBearing, getViewshedArcPoints, getViewshedRings } from "./map/vi
 import { CinemaBar } from "./components/CinemaBar";
 import { RecordingGuide } from "./components/RecordingGuide";
 import { COLOR_THEMES, DEFAULT_THEME_KEY } from "./types/colorTheme";
+import { useMeasuredCssVar } from "./ui/useMeasuredCssVar";
+import { ATLAS_POPUP as AP, ATLAS_STATUS_FALLBACK_COLOR, ATLAS_STATUS_META, CAPTURE_OVERLAY as CAP, COMPARE_COLORS, COMPASS } from "./types/dataColors";
 import { assignAirportColors, type AirportColorMode, type AirportAssignment } from "./types/airportColors";
 import { computeAnalysisColorMap, type AnalysisColorBy } from "./data/analysisColors";
 import { computeDepArrColoring, type TrajColorBy } from "./data/depArrColors";
@@ -51,8 +54,14 @@ import { initTerminatorLayer, removeTerminatorLayer } from "./map/terminatorOver
 import { setFrozenAnimTime } from "./three/animClock";
 import { ThemeProvider, useTheme } from "./styles/ThemeContext";
 import { FONT, LAYOUT, SIZE, SPACE, Z } from "./styles/tokens";
-import { Button, Caption, Segmented, SelectionRing, type CaptionMetaItem } from "./ui";
+import { IconClose } from "./ui/icons";
+import { Button, Caption, Segmented, SelectionRing, Select, Slider, type CaptionMetaItem } from "./ui";
 import { escLayerToClose, isEditableTarget } from "./ui/escStack";
+import { BootScreen } from "./components/boot/BootScreen";
+import { BOOT_LAYOUT } from "./components/boot/bootLayout";
+import { bootMaskVisible } from "./components/boot/bootSequence";
+import { bootRadarPoints } from "./components/boot/radar";
+import { useBootPhase } from "./components/boot/useBootPhase";
 import { ALL_OVERLAYS_CLOSED, overlaysOpen, overlaysToClose, type OverlayKey, type OverlayState } from "./ui/overlayMutex";
 
 // ── Atlas 機場點：點擊 popup ──
@@ -68,33 +77,27 @@ interface AtlasProps {
   capturedFlights: number | null;
   estDaily: number | null;
 }
-const ATLAS_STATUS_META: Record<string, { label: string; color: string }> = {
-  complete: { label: "完整資料", color: "#3FB8A5" },
-  "core-partial": { label: "核心（部分）", color: "#f1c40f" },
-  partial: { label: "部分（附帶）", color: "#4C84B6" },
-  planned: { label: "僅規劃（未抓）", color: "#3E434A" },
-};
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
   );
 }
 function buildAtlasPopupHtml(p: AtlasProps): string {
-  const st = ATLAS_STATUS_META[p.status] ?? { label: p.status, color: "#888" };
+  const st = ATLAS_STATUS_META[p.status] ?? { label: p.status, color: ATLAS_STATUS_FALLBACK_COLOR };
   const rankLine = p.rank
     ? `Top-1000 排名 #${p.rank}`
     : "非前 1000（被動觸及）";
   const capt =
     p.capturedFlights != null ? `${p.capturedFlights.toLocaleString()} 條` : "—";
   const est = p.estDaily != null ? `${p.estDaily} 班/日（估）` : "—";
-  return `<div style="font-family:system-ui,-apple-system,sans-serif;min-width:180px;color:#1a1a1a">
+  return `<div style="font-family:system-ui,-apple-system,sans-serif;min-width:180px;color:${AP.ink}">
     <div style="font-weight:700;font-size:${SIZE.title}px;margin-bottom:2px">${escapeHtml(p.name)}</div>
-    <div style="font-size:${SIZE.body}px;color:#666;margin-bottom:6px">${p.icao}${p.iata ? " / " + p.iata : ""}${p.country ? " · " + p.country : ""}${p.continent ? " " + p.continent : ""}</div>
+    <div style="font-size:${SIZE.body}px;color:${AP.dim};margin-bottom:6px">${p.icao}${p.iata ? " / " + p.iata : ""}${p.country ? " · " + p.country : ""}${p.continent ? " " + p.continent : ""}</div>
     <div style="display:inline-flex;align-items:center;gap:5px;font-size:${SIZE.sub}px;font-weight:600;margin-bottom:6px">
       <span style="width:9px;height:9px;border-radius:50%;background:${st.color};display:inline-block"></span>${st.label}
     </div>
-    <div style="font-size:${SIZE.sub}px;color:#333;line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
-    ${p.status !== "planned" ? `<div style="--pa-line:#3b82f6;--pa-soft:#eaf3ff;--pa-ink:#174ea6;display:flex;gap:6px;margin-top:8px">
+    <div style="font-size:${SIZE.sub}px;color:${AP.body};line-height:1.6">${rankLine}<br/>已抓軌跡：${capt}<br/>單日流量：${est}</div>
+    ${p.status !== "planned" ? `<div style="--pa-line:${AP.btnLine};--pa-soft:${AP.btnSoft};--pa-ink:${AP.btnInk};display:flex;gap:6px;margin-top:8px">
       <button type="button" data-atlas-open="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-ink);border-radius:2px;background:var(--pa-ink);color:var(--pa-soft);font:600 ${SIZE.body}px monospace;cursor:pointer">開啟機場</button>
       <button type="button" data-atlas-add="${escapeHtml(p.icao)}" style="flex:1;padding:6px 8px;border:1px solid var(--pa-line);border-radius:2px;background:var(--pa-soft);color:var(--pa-ink);font:600 ${SIZE.body}px monospace;cursor:pointer">加入組合</button>
     </div>` : ""}
@@ -108,6 +111,7 @@ function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: n
   const lng = `${Math.abs(cameraInfo.lng).toFixed(4)}°${cameraInfo.lng >= 0 ? "E" : "W"}`;
   return (
     <div
+      data-boot-part="title"
       style={{
         position: "absolute",
         left: LAYOUT.panelLeft + SPACE.s8,
@@ -120,7 +124,7 @@ function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: n
         whiteSpace: "nowrap",
       }}
     >
-      <span style={{ fontFamily: FONT.data, fontSize: SIZE.sub, fontWeight: 600, letterSpacing: ".18em", color: tokens.fg1 }}>
+      <span style={{ fontFamily: FONT.data, fontSize: SIZE.large, fontWeight: 700, letterSpacing: ".18em", lineHeight: 1.2, color: tokens.fg1 }}>
         FLIGHT ARC
       </span>
       <span
@@ -164,9 +168,8 @@ function OrientationOrb({
   const southLabelX = 22 + labelLength * Math.sin(bearingRad);
   const southLabelY = 22 + labelLength * Math.cos(bearingRad) + 1.8;
   const isUpright = Math.abs(bearing) < 1 && Math.abs(pitch) < 1;
-  const stroke = isDarkTheme ? "rgba(255,255,255,0.34)" : "rgba(20,30,45,0.35)";
-  const dim = isDarkTheme ? "rgba(255,255,255,0.18)" : "rgba(20,30,45,0.16)";
-  const text = isDarkTheme ? "rgba(255,255,255,0.82)" : "rgba(20,30,45,0.82)";
+  const C = isDarkTheme ? COMPASS.dark : COMPASS.light;
+  const { stroke, dim, text } = C;
 
   return (
     <button
@@ -180,13 +183,9 @@ function OrientationOrb({
         height: 52,
         padding: 3,
         borderRadius: "50%",
-        border: `1px solid ${isUpright ? "rgba(100,170,255,0.65)" : stroke}`,
-        background: isDarkTheme
-          ? "radial-gradient(circle at 34% 28%, rgba(100,170,255,0.16), rgba(0,0,0,0.55) 66%)"
-          : "radial-gradient(circle at 34% 28%, rgba(100,170,255,0.2), rgba(255,255,255,0.7) 66%)",
-        boxShadow: isDarkTheme
-          ? "0 5px 18px rgba(0,0,0,0.34), inset 0 0 12px rgba(100,170,255,0.08)"
-          : "0 5px 18px rgba(30,60,90,0.14), inset 0 0 12px rgba(100,170,255,0.12)",
+        border: `1px solid ${isUpright ? COMPASS.uprightBorder : stroke}`,
+        background: C.bg,
+        boxShadow: C.shadow,
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         cursor: "pointer",
@@ -200,12 +199,12 @@ function OrientationOrb({
         <circle cx="22" cy="22" r="18.5" fill="none" stroke={stroke} strokeWidth="1" />
         <ellipse cx="22" cy="22" rx="17" ry="6" fill="none" stroke={dim} strokeWidth="0.8" />
         <path d="M5 22h34" fill="none" stroke={dim} strokeWidth="0.65" strokeDasharray="1.5 2.5" />
-        <line x1={northX} y1={northY} x2={southX} y2={southY} stroke="rgba(100,170,255,0.72)" strokeWidth="1" />
-        <circle cx={northX} cy={northY} r="2.5" fill="#64aaff" />
-        <circle cx={southX} cy={southY} r="2" fill={isDarkTheme ? "rgba(255,255,255,0.58)" : "rgba(20,30,45,0.52)"} />
-        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill="#9acbff" fontSize={6 /* glyph */} fontFamily={FONT.ui} fontWeight="700">N</text>
+        <line x1={northX} y1={northY} x2={southX} y2={southY} stroke={COMPASS.northLine} strokeWidth="1" />
+        <circle cx={northX} cy={northY} r="2.5" fill={COMPASS.north} />
+        <circle cx={southX} cy={southY} r="2" fill={C.south} />
+        <text x={northLabelX} y={northLabelY} textAnchor="middle" fill={COMPASS.northLabel} fontSize={6 /* glyph */} fontFamily={FONT.ui} fontWeight="700">N</text>
         <text x={southLabelX} y={southLabelY} textAnchor="middle" fill={text} fontSize={5.5 /* glyph */} fontFamily={FONT.ui}>S</text>
-        <circle cx="22" cy="22" r="1.5" fill={isUpright ? "#64aaff" : text} />
+        <circle cx="22" cy="22" r="1.5" fill={isUpright ? COMPASS.north : text} />
       </svg>
     </button>
   );
@@ -255,6 +254,27 @@ const EXPLORE_OVERVIEW_CAMERA = {
   zoom: 2.5,
   pitch: 0,
   bearing: 0,
+};
+
+/** P6 網址套用序列讀的「最新」state 與 handler（每次 render 寫進 urlLiveRef） */
+type UrlLive = Pick<ReturnType<typeof useFlightData>, "loading" | "airportCatalog" | "hasFused" | "allFlights" | "selectedAirport"> & {
+  airportMeta: Record<string, AirportMeta>;
+  availableDates: string[];
+  dataSource: DataSource;
+  scope: Scope;
+  region: Region;
+  airportSet: string[] | null;
+  airspaceDate: string | undefined;
+  airspaceRangeDays: number;
+  airspaceSelectedDates: string[];
+  timeline: ReturnType<typeof useTimeline>;
+  depArrDisabledReason: string | null;
+  openAirport: (icao: string) => void;
+  applySavedSet: (set: SavedAirportSet) => void;
+  handleRegionSelect: (r: Region) => void;
+  handleScopeChange: (s: Scope) => void;
+  handleTrajColorByChange: (v: TrajColorBy) => void;
+  handleColorThemeChange: (key: string) => void;
 };
 
 export default function App() {
@@ -405,6 +425,9 @@ export default function App() {
   const [atlasColorMode, setAtlasColorMode] = useState<AtlasColorMode>("flow");
   const [atlasGlowSize, setAtlasGlowSize] = useState(1.6);
   const [cameraInfo, setCameraInfo] = useState({ lng: 0, lat: 0, zoom: 0, pitch: 0, bearing: 0 });
+  // 開場（spec「開場（Boot）」）：地圖 ready（handleMapReady）＋第一批航班載完或失敗 → 雷達遮罩收掉
+  const [bootMapReady, setBootMapReady] = useState(false);
+  const [bootDataSettled, setBootDataSettled] = useState(false);
   const { isMobile, isLandscape } = useIsMobile();
 
   // Phase 2-2：cameraInfo.zoom 變動時依 hysteresis band 重算 LOD 層（setLodOverride 期間暫停）。
@@ -638,6 +661,10 @@ export default function App() {
     notifyActivity(mapRef.current);
   }, []);
   const timeline = useTimeline({ availableDates, preferredDate, onTick: handleTimelineTick });
+  const statDates = useMemo(
+    () => effectiveDates(timeline.selectedDate, timeline.rangeDays, timeline.selectedDates),
+    [timeline.selectedDate, timeline.rangeDays, timeline.selectedDates],
+  );
 
   // 切換機場時：若目前日期不在新機場的可用日期（availableDates）內，跳到該機場的 preferredDate。
   // 只在「機場改變」時觸發 —— 使用者手動點部分資料日期不會被蓋掉。
@@ -660,8 +687,10 @@ export default function App() {
   const isRecording = recorder.recordingState === "recording";
   const isExporting = isRecording || recorder.recordingState === "hq";
 
-  // 手機狀態條位置：header（44）＋固定在其下的時間軸，取時間軸實際底邊 + 8（時間軸高度隨日期面板等變動）
+  // 手機狀態條／航班卡位置：header（44）＋固定在其下的時間軸，取時間軸實際底邊 + 8（時間軸高度隨日期面板等變動）
   const mobileTimelineRef = useRef<HTMLDivElement>(null);
+  // 桌面左下圖說的實際高度 → --fa-caption-h（左側面板 maxHeight 讓位用；時間軸自己寫 --fa-timeline-h）
+  const captionMeasureRef = useMeasuredCssVar("--fa-caption-h");
   const [mobileStatusTop, setMobileStatusTop] = useState(52);
   useEffect(() => {
     if (!isMobile || captureMode) return;
@@ -813,7 +842,6 @@ export default function App() {
       timeline.isMultiDateMode, timeline.dateWindowStarts, timeline.dateWindowEnds]);
 
   // Compare 模式：每個日期對應一個固定顏色，產生 fr24_id → hex Map
-  const COMPARE_COLORS = ["#4488ff", "#ff4444", "#f5a623", "#44cc88"];
   const compareColorMap = useMemo((): Map<string, string> | undefined => {
     if (!timeline.isMultiDateMode || timeline.dateWindowStarts.length === 0) return undefined;
     const map = new Map<string, string>();
@@ -1485,6 +1513,7 @@ export default function App() {
 
   const handleMapReady = (map: MapboxMap) => {
     mapRef.current = map;
+    setBootMapReady(true);
     addAirspaceLayer(map);
     addFlightLayer(map);
     addAtlasGlowLayer(map);
@@ -1767,6 +1796,157 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, availableDates.length]);
 
+  // ── P6 網址記住狀態：進站時套用一次（R8）────────────────────────────────
+  // 套用是跨多次 render 的序列（等目錄 → 選取對象 → 日期 → 等資料載完 → 其餘），
+  // 每一步都走既有 handler，不直接塞 state 繞過副作用。讀 state 一律經 urlLiveRef
+  // （每次 render 更新），不吃 effect closure —— loading 在 closure 裡會有一個 commit 的落差。
+  // 無參數進站：什麼都不做，只在首次載完後打開「寫回網址」開關。
+  const urlTargetRef = useRef<UrlState | null>(null);
+  if (urlTargetRef.current === null) urlTargetRef.current = decodeUrlState(window.location.search);
+  const urlLiveRef = useRef<UrlLive | null>(null);
+  const [urlWriteEnabled, setUrlWriteEnabled] = useState(false);
+  useEffect(() => {
+    const target = urlTargetRef.current ?? {};
+    let cancelled = false;
+    const live = () => urlLiveRef.current!;
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const waitFor = async (cond: () => boolean, timeoutMs: number) => {
+      const t0 = Date.now();
+      while (!cancelled && Date.now() - t0 < timeoutMs) {
+        if (cond()) return true;
+        await wait(100);
+      }
+      return false;
+    };
+    // 「載完且穩定」：loader 已拿到 timeline 的日期、loading 連續 4 次（~400ms）為 false
+    const waitSettled = async (timeoutMs: number) => {
+      let calm = 0;
+      return waitFor(() => {
+        const L = live();
+        const synced = L.availableDates.length > 0 && L.airspaceDate === L.timeline.selectedDate
+          && L.airspaceRangeDays === L.timeline.rangeDays
+          && L.airspaceSelectedDates.length === new Set(L.timeline.selectedDates).size;
+        calm = synced && !L.loading ? calm + 1 : 0;
+        return calm >= 4;
+      }, timeoutMs);
+    };
+
+    (async () => {
+      const hasTarget = Object.keys(target).length > 0;
+      if (hasTarget) {
+        // 1. 等機場目錄、機場 metadata（否則 preset 晚到會再飛一次）與地圖
+        await waitFor(() => {
+          const L = live();
+          return Object.keys(L.airportCatalog).length > 0 && Object.keys(L.airportMeta).length > 0 && mapRef.current !== null;
+        }, 30000);
+        if (cancelled) return;
+        const catalog = live().airportCatalog;
+        const regionKey = target.scope && (REGION_ORDER as string[]).includes(target.scope) ? target.scope as Region : null;
+
+        // 2. 選取對象（資料來源 → 組合 / 區域 / 單一機場）
+        if (target.dataSource === "airspace") {
+          await waitFor(() => live().hasFused, 10000);
+          if (live().hasFused) {
+            if (regionKey) live().handleRegionSelect(regionKey);
+            await wait(150);
+            // 空域快照 effect：範圍切 region、1d、飛到 region 視角
+            setDataSource("fused");
+          }
+        } else if (target.setId || target.setIcaos) {
+          const builtin = target.setId ? BUILTIN_SETS.find((s) => s.id === target.setId) : undefined;
+          const icaos = (builtin?.icaos ?? target.setIcaos ?? []).filter((i) => catalog[i]);
+          if (builtin && icaos.length === builtin.icaos.length) live().applySavedSet(builtin);
+          else if (icaos.length > 0) {
+            live().applySavedSet({ id: "url", name: "", shortName: "", icaos });
+            setSetName(null); // 自訂組合沒有名稱
+          }
+        } else if (regionKey) {
+          live().handleRegionSelect(regionKey);
+          await waitFor(() => live().region === regionKey, 2000);
+          live().handleScopeChange("region");
+        } else if (target.airport && catalog[target.airport] && target.airport !== live().selectedAirport) {
+          live().openAirport(target.airport);
+        }
+        // 讓 dataSource／機場改變的 effect 先跑完（它們會改 rangeDays／日期）
+        await wait(300);
+        if (cancelled) return;
+
+        // 3. 日期（只收這個選取對象有資料的日期；不合法就留在預設日）
+        const avail = live().availableDates;
+        const tl = live().timeline;
+        const cmp = (target.compare ?? []).filter((d) => avail.includes(d));
+        if (target.date && avail.includes(target.date) && target.date !== tl.selectedDate) tl.setSelectedDate(target.date);
+        if (cmp.length > 0) {
+          for (const d of cmp) tl.toggleMultiDate(d);
+        } else if (target.days && [1, 3, 7].includes(target.days) && target.days !== tl.rangeDays) {
+          tl.setRangeDays(target.days);
+        }
+        await wait(500);
+      }
+
+      // 4. 等資料載完（同時涵蓋「無參數進站」的首次載入與自動播放）
+      await waitSettled(90000);
+      if (cancelled) return;
+
+      if (hasTarget) {
+        // 5. 篩選、配色、染色
+        if (target.depArr) setDepArrFilter(target.depArr);
+        if (target.theme) live().handleColorThemeChange(target.theme);
+        if (target.colorBy === "deparr" && live().depArrDisabledReason === null) live().handleTrajColorByChange("deparr");
+
+        // 6. 播放時刻：有 t ＝ 暫停在該時刻（自動播放已在載完時觸發，這裡蓋掉）
+        if (target.time) {
+          const tl = live().timeline;
+          tl.pause();
+          tl.seek(tl.windowStart + target.time.dayOffset * 86400 + target.time.minutes * 60);
+        }
+
+        // 7. 鏡頭：在機場／組合／區域的預設飛行之後套用（先 stop 掉還在飛的動畫）
+        const map = mapRef.current;
+        if (target.camera && map) {
+          map.stop();
+          map.jumpTo({
+            center: [target.camera.lng, target.camera.lat],
+            zoom: target.camera.zoom,
+            pitch: target.camera.pitch,
+            bearing: target.camera.bearing,
+          });
+        }
+
+        // 8. 選取的航班：資料裡找得到才開航班卡
+        if (target.flight && live().allFlights.some((f) => f.fr24_id === target.flight)) {
+          setFlightCardId(target.flight);
+        }
+      }
+      setUrlWriteEnabled(true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // 寫回網址：套用序列完成後才開始（否則首載前的中間狀態會弄髒網址）。
+  // 鏡頭與其他狀態拆兩個 effect：播放中 currentTime 10 Hz 更新，若共用 debounce 鏡頭永遠寫不出去。
+  const urlBuildRef = useRef<() => string>(() => "");
+  const writeUrlNow = useCallback(() => {
+    const search = urlBuildRef.current();
+    if (search === window.location.search) return;
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${search}${window.location.hash}`);
+  }, []);
+  const urlTimeKey = timeline.playing ? -1 : timeline.currentTime;
+  useEffect(() => {
+    if (!urlWriteEnabled) return;
+    const id = setTimeout(writeUrlNow, 150);
+    return () => clearTimeout(id);
+  }, [
+    urlWriteEnabled, writeUrlNow, dataSource, scope, region, selectedAirport, airportSet, setName,
+    timeline.selectedDate, timeline.rangeDays, timeline.selectedDates, timeline.playing, urlTimeKey,
+    depArrFilter, trajColorBy, depArrDisabledReason, colorThemeKey, flightCardId, selectedFlightId, trackMode,
+  ]);
+  useEffect(() => {
+    if (!urlWriteEnabled) return;
+    const id = setTimeout(writeUrlNow, 500);
+    return () => clearTimeout(id);
+  }, [urlWriteEnabled, writeUrlNow, cameraInfo]);
+
   // ── 左下圖說內容 ──
   const captionCode = airportSet !== null
     ? setName ?? "自訂組合"
@@ -1803,6 +1983,116 @@ export default function App() {
       ? `${airspaceSelectedDates.length} 日`
       : `${airspaceDate ?? timeline.selectedDate}${airspaceRangeDays > 1 ? ` +${airspaceRangeDays - 1}d` : ""}`);
 
+  // ── 開場雷達 ──
+  // useFlightData 的 loading 初值為 true：第一次變 false（完成）或出現 loadError（失敗）即視為第一批已結束
+  useEffect(() => {
+    if (!bootDataSettled && (!loading || loadError !== null)) setBootDataSettled(true);
+  }, [bootDataSettled, loading, loadError]);
+  const boot = useBootPhase({ mapReady: bootMapReady, dataSettled: bootDataSettled }, BOOT_LAYOUT.minShowMs, BOOT_LAYOUT.enterScale);
+  const bootMask = bootMaskVisible(boot.phase);
+  const bootCenterIcao = airportSet?.[0] ?? selectedAirport;
+  const bootPoints = useMemo(
+    () => (bootMask ? bootRadarPoints(bootCenterIcao, airportMeta, BOOT_LAYOUT.radiusKm) : []),
+    [bootMask, bootCenterIcao, airportMeta],
+  );
+
+  // 範圍切換（設定面板）與 Region chip（探索面板）；網址套用（P6）也走這兩個
+  const handleScopeChange = (s: Scope) => {
+    setScope(s);
+    if (s === "airport") {
+      // 切回單一機場 scope → 退出組合模式
+      exitSetMode();
+    }
+    if (s === "region") {
+      const cam = REGION_CONFIG[region].regionCamera ?? REGION_CONFIG[region].camera;
+      mapRef.current?.flyTo({ ...cam, duration: 2000 });
+    }
+  };
+  const handleRegionSelect = (r: Region) => {
+    setRegion(r);
+    setScope("airport");
+    const cfg = REGION_CONFIG[r];
+    if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
+    // 日期：切機場後由「機場改變」effect 處理（目前日期不可用才跳 preferredDate）
+    // 飛到預設機場視角
+    mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
+  };
+
+  // P6 網址套用時讀「最新」的 state 與 handler（套用是跨多次 render 的非同步序列）
+  urlLiveRef.current = {
+    loading, airportCatalog, airportMeta, hasFused, availableDates,
+    dataSource, scope, region, selectedAirport, airportSet,
+    airspaceDate, airspaceRangeDays, airspaceSelectedDates, timeline,
+    depArrDisabledReason, allFlights,
+    openAirport, applySavedSet, handleRegionSelect, handleScopeChange,
+    handleTrajColorByChange, handleColorThemeChange,
+  };
+
+  // ── P6 網址記住狀態：狀態變動寫回網址（R8，只寫與預設不同的值）──
+  // 單機場模式的「預設鏡頭」= 機場 preset；組合（fitBounds）與區域沒有穩定參照，鏡頭一律寫。
+  const buildUrlSearch = (): string => {
+    const st: UrlState = {};
+    let defaultCamera: UrlState["camera"];
+    if (dataSource === "fused") {
+      st.dataSource = "airspace";
+      st.scope = region;
+    } else if (airportSet !== null && airportSet.length > 0) {
+      const builtin = BUILTIN_SETS.find((b) => b.shortName === setName
+        && b.icaos.length === airportSet.length && b.icaos.every((i) => airportSet.includes(i)));
+      if (builtin) st.setId = builtin.id;
+      else st.setIcaos = airportSet;
+    } else if (scope === "region" && airportSet === null) {
+      st.scope = region;
+    } else {
+      st.airport = selectedAirport;
+      defaultCamera = { lat: preset.center[1], lng: preset.center[0], zoom: preset.zoom, pitch: preset.pitch, bearing: preset.bearing };
+    }
+    st.date = timeline.selectedDate;
+    if (timeline.isMultiDateMode) st.compare = [...new Set(timeline.selectedDates)].sort();
+    else st.days = timeline.rangeDays;
+    st.depArr = depArrFilter;
+    if (depArrActive) st.colorBy = "deparr";
+    st.theme = colorThemeKey;
+    // 有 t ＝ 暫停在該時刻；播放中不寫（不每幀改網址）
+    if (!timeline.playing) {
+      const rel = Math.max(0, Math.floor(timeline.currentTime - timeline.windowStart));
+      st.time = { minutes: Math.floor((rel % 86400) / 60), dayOffset: Math.floor(rel / 86400) };
+    }
+    const map = mapRef.current;
+    if (map) {
+      const c = map.getCenter();
+      st.camera = { lat: c.lat, lng: c.lng, zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() };
+    }
+    const flight = trackMode === "single" && selectedFlightId ? selectedFlightId : flightCardId;
+    if (flight) st.flight = flight;
+    return buildSearch(encodeUrlState(st, { defaultCamera }));
+  };
+  urlBuildRef.current = buildUrlSearch;
+
+  // 工具列「複製連結」：當下現算（鏡頭 debounce 可能還沒寫回），同時更新網址列
+  const handleCopyLink = async (): Promise<boolean> => {
+    const search = buildUrlSearch();
+    const path = `${window.location.pathname}${search}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", path);
+    const url = `${window.location.origin}${path}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      return true;
+    } catch {
+      // clipboard API 不可用（非安全來源等）→ 退回 execCommand
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch { ok = false; }
+      ta.remove();
+      return ok;
+    }
+  };
+
   return (
     <ThemeProvider isDark={isDarkTheme}>
     <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
@@ -1835,7 +2125,7 @@ export default function App() {
                 zIndex: Z.panel,
                 pointerEvents: "none",
                 background:
-                  "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 80%, rgba(0,0,0,0.6) 100%)",
+                  CAP.vignette,
               }}
             />
           )}
@@ -1855,9 +2145,9 @@ export default function App() {
                   fontSize: isMobile ? 20 : 28,
                   fontFamily: FONT.ui,
                   fontWeight: 700,
-                  color: "#fff",
+                  color: CAP.title,
                   letterSpacing: isMobile ? 2 : 4,
-                  textShadow: "0 2px 12px rgba(0,0,0,0.6)",
+                  textShadow: CAP.titleShadow,
                 }}
               >
                 {airportSet !== null ? selectionTitle : regionTitle}
@@ -1867,10 +2157,10 @@ export default function App() {
                   fontSize: 18,
                   fontFamily: FONT.ui,
                   fontWeight: 600,
-                  color: "rgba(255,255,255,0.7)",
+                  color: CAP.code,
                   letterSpacing: 2,
                   marginTop: 6,
-                  textShadow: "0 1px 8px rgba(0,0,0,0.5)",
+                  textShadow: CAP.codeShadow,
                 }}
               >
                 {selectionCodeLabel}
@@ -1879,10 +2169,10 @@ export default function App() {
                 style={{
                   fontSize: 14,
                   fontFamily: FONT.ui,
-                  color: "rgba(255,255,255,0.4)",
+                  color: CAP.time,
                   letterSpacing: 1,
                   marginTop: 4,
-                  textShadow: "0 1px 6px rgba(0,0,0,0.5)",
+                  textShadow: CAP.softShadow,
                 }}
               >
                 {new Date(timeline.currentTime * 1000).toLocaleString("zh-TW", {
@@ -1899,38 +2189,24 @@ export default function App() {
                 style={{
                   fontSize: 14,
                   fontFamily: FONT.ui,
-                  color: "rgba(255,255,255,0.3)",
+                  color: CAP.coord,
                   letterSpacing: 1,
                   marginTop: 4,
-                  textShadow: "0 1px 6px rgba(0,0,0,0.5)",
+                  textShadow: CAP.softShadow,
                 }}
               >
                 {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
               </div>
+              {/* Trail 模式切換 — 放在標題欄內，座標行換行時也不會貼上來；錄製中隨標題一起隱藏 */}
+              <div style={{ marginTop: SPACE.s12, pointerEvents: "auto", display: "flex" }}>
+                <Button
+                  onClick={() => setTrailDisplay(d => d === "full" ? "progressive" : "full")}
+                  pressed={trailDisplay === "progressive"}
+                >
+                  Trail: {trailDisplay === "full" ? "Full" : "Progressive"}
+                </Button>
+              </div>
             </div>
-          )}
-          {/* Trail 模式切換 — 錄製中隱藏 */}
-          {!isExporting && (
-            <button
-              onClick={() => setTrailDisplay(d => d === "full" ? "progressive" : "full")}
-              style={{
-                position: "absolute",
-                top: isMobile ? 120 : 140,
-                left: isMobile ? 16 : 32,
-                zIndex: Z.toolbar,
-                padding: "5px 14px",
-                borderRadius: 16,
-                border: "1px solid rgba(255,255,255,0.2)",
-                background: trailDisplay === "progressive" ? "rgba(255,255,255,0.15)" : "rgba(60,60,60,0.4)",
-                color: trailDisplay === "progressive" ? "#fff" : "rgba(255,255,255,0.6)",
-                fontSize: SIZE.sub,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              Trail: {trailDisplay === "full" ? "Full" : "Progressive"}
-            </button>
           )}
           {/* 鏡頭控制列 — HTML overlay 不會被錄進影片 */}
           <CinemaBar
@@ -1974,42 +2250,16 @@ export default function App() {
             />
           {/* 退出按鈕 — 錄製中隱藏，避免誤按中斷 */}
           {!isExporting && (
-            <button
+            <Button
               onClick={() => setCaptureMode(false)}
-              style={isMobile ? {
-                position: "absolute",
-                top: 16,
-                right: 16,
-                zIndex: Z.toolbar,
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                background: "rgba(0,0,0,0.4)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "#fff",
-                fontSize: SIZE.large,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backdropFilter: "blur(8px)",
-              } : {
-                position: "absolute",
-                bottom: 32,
-                right: 32,
-                zIndex: Z.toolbar,
-                padding: "4px 12px",
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 4,
-                color: "rgba(255,255,255,0.4)",
-                fontSize: SIZE.body,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-              }}
+              ariaLabel="離開錄影"
+              icon={isMobile ? <IconClose size={14} /> : undefined}
+              style={isMobile
+                ? { position: "absolute", top: 16, right: 16, zIndex: Z.toolbar, width: 36, height: 36 }
+                : { position: "absolute", bottom: 32, right: 32, zIndex: Z.toolbar }}
             >
-              {isMobile ? "✕" : "ESC"}
-            </button>
+              {isMobile ? null : "ESC"}
+            </Button>
           )}
           {/* 攝影輔助框（HTML overlay，不會被錄進影片） */}
           <RecordingGuide visible={showGuide} showGrid={showGuideGrid} />
@@ -2018,44 +2268,14 @@ export default function App() {
             <div style={{
               position: "absolute",
               top: isMobile ? 16 : 32,
-              right: isMobile ? 16 : 32,
+              right: isMobile ? 16 + 36 + SPACE.s6 : 32, // 手機：讓出右上角的離開鈕
               zIndex: Z.toast,
               display: "flex",
-              gap: 6,
+              gap: SPACE.s6,
             }}>
-              <button
-                onClick={() => setShowGuide(g => !g)}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: 8,
-                  border: `1px solid ${showGuide ? "rgba(255,80,80,0.4)" : "rgba(255,255,255,0.15)"}`,
-                  background: showGuide ? "rgba(255,80,80,0.15)" : "rgba(255,255,255,0.08)",
-                  color: showGuide ? "rgba(255,80,80,0.8)" : "rgba(255,255,255,0.4)",
-                  fontSize: SIZE.body,
-                  fontFamily: FONT.ui,
-                  cursor: "pointer",
-                  backdropFilter: "blur(8px)",
-                }}
-              >
-                16:9
-              </button>
+              <Button pressed={showGuide} onClick={() => setShowGuide(g => !g)}>16:9</Button>
               {showGuide && (
-                <button
-                  onClick={() => setShowGuideGrid(g => !g)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 8,
-                    border: `1px solid ${showGuideGrid ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.15)"}`,
-                    background: showGuideGrid ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.08)",
-                    color: showGuideGrid ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)",
-                    fontSize: SIZE.body,
-                    fontFamily: FONT.ui,
-                    cursor: "pointer",
-                    backdropFilter: "blur(8px)",
-                  }}
-                >
-                  Grid
-                </button>
+                <Button pressed={showGuideGrid} onClick={() => setShowGuideGrid(g => !g)}>Grid</Button>
               )}
             </div>
           )}
@@ -2100,17 +2320,7 @@ export default function App() {
             timeWindow={timeWindow}
             pickableFlights={pickableFlights}
             selectedFlightId={selectedFlightId}
-            onScopeChange={(s) => {
-              setScope(s);
-              if (s === "airport") {
-                // 切回單一機場 scope → 退出組合模式
-                exitSetMode();
-              }
-              if (s === "region") {
-                const cam = REGION_CONFIG[region].regionCamera ?? REGION_CONFIG[region].camera;
-                mapRef.current?.flyTo({ ...cam, duration: 2000 });
-              }
-            }}
+            onScopeChange={handleScopeChange}
             onTrackModeChange={setTrackMode}
             onTimeWindowChange={setTimeWindow}
             onFlightSelect={setSelectedFlightId}
@@ -2172,6 +2382,7 @@ export default function App() {
               });
             }}
             selectedDate={timeline.selectedDate}
+            statDates={statDates}
             summaryFlights={finalFlights}
             rangeDays={timeline.rangeDays}
             statsAllFlights={allFlights}
@@ -2232,15 +2443,7 @@ export default function App() {
             hasFused={hasFused}
             onDataSourceChange={setDataSource}
             regions={REGION_ORDER.map((r) => ({ id: r, label: REGION_CONFIG[r].label }))}
-            onRegionSelect={(r) => {
-              setRegion(r);
-              setScope("airport");
-              const cfg = REGION_CONFIG[r];
-              if (cfg.defaultAirport) selectAirportSingle(cfg.defaultAirport);
-              // 日期：切機場後由「機場改變」effect 處理（目前日期不可用才跳 preferredDate）
-              // 飛到預設機場視角
-              mapRef.current?.flyTo({ ...cfg.camera, duration: 2000 });
-            }}
+            onRegionSelect={handleRegionSelect}
           />
 
           {/* 左下圖說：在看什麼（機場／組合、日期、班數、進離場）+ 進站引導（Q6） */}
@@ -2257,6 +2460,7 @@ export default function App() {
               pointerEvents: "none",
             }}
           >
+            <div data-boot-part="caption" ref={captionMeasureRef}>
             <Caption
               code={captionCode}
               name={captionName}
@@ -2279,7 +2483,9 @@ export default function App() {
               ) : undefined}
               style={{ maxWidth: 520 }}
             />
+            </div>
             {/* 時間軸膠囊（R4；底邊 = mapBottomInset，與 dock 共用，R5） */}
+            <div data-boot-part="timeline">
             <Timeline
               playing={timeline.playing}
               speed={timeline.speed}
@@ -2306,6 +2512,7 @@ export default function App() {
               onToggleMultiDate={timeline.toggleMultiDate}
               onClearMultiDates={timeline.clearMultiDates}
             />
+            </div>
           </div>
 
           {/* 左上：字標 + 相機 HUD */}
@@ -2371,6 +2578,7 @@ export default function App() {
             onMapStyleChange={setMapStyleId}
             onCapture={() => setCaptureMode(true)}
             onInfo={() => setShowInfo(true)}
+            onCopyLink={handleCopyLink}
           />
 
         </>
@@ -2380,109 +2588,32 @@ export default function App() {
       {!captureMode && isMobile && (
         <>
           {/* Compact Header */}
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 44,
-              zIndex: Z.mapOverlay,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "0 12px",
-              paddingTop: "env(safe-area-inset-top, 0px)",
-              background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-            }}
-          >
-            <AirportSelector
-              airports={airports}
-              selected={selectedAirport}
-              isDarkTheme={true}
-              onChange={selectAirportSingle}
-            />
-
-            <div style={{ flex: 1 }} />
-
-            <button
-              onClick={() => setShowInfo(true)}
-              style={{
-                minWidth: 36,
-                height: 36,
-                padding: "0 8px",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "#fff",
-                fontSize: SIZE.sub,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              Info
-            </button>
-
-            <button
-              onClick={() => setCaptureMode(true)}
-              style={{
-                height: 36,
-                padding: "0 10px",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "#fff",
-                fontSize: SIZE.sub,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-                letterSpacing: 1,
-              }}
-            >
-              Capture
-            </button>
-
-            <button
-              onClick={() => setRenderMode((m) => (m === "3d" ? "2d" : "3d"))}
-              style={{
-                height: 36,
-                padding: "0 10px",
-                borderRadius: 8,
-                background: renderMode === "3d"
-                  ? "rgba(80,140,255,0.25)"
-                  : "rgba(255,170,68,0.25)",
-                border: `1px solid ${renderMode === "3d" ? "rgba(80,140,255,0.5)" : "rgba(255,170,68,0.5)"}`,
-                color: "#fff",
-                fontSize: SIZE.sub,
-                fontFamily: FONT.ui,
-                cursor: "pointer",
-                letterSpacing: 1,
-              }}
-            >
-              {renderMode === "3d" ? "3D" : "2D"}
-            </button>
-          </div>
+          <MobileHeader
+            airports={airports}
+            selectedAirport={selectedAirport}
+            onAirportChange={selectAirportSingle}
+            renderMode={renderMode}
+            onRenderModeChange={setRenderMode}
+            onCapture={() => setCaptureMode(true)}
+            onInfo={() => setShowInfo(true)}
+            onCopyLink={handleCopyLink}
+          />
 
           {/* Timeline 固定在 header 下方 */}
           <div
             ref={mobileTimelineRef}
+            data-boot-part="toolbar"
             style={{
               position: "absolute",
-              top: 44,
+              top: `calc(${MOBILE_HEADER_HEIGHT}px + env(safe-area-inset-top, 0px))`,
               left: 0,
               right: 0,
               zIndex: Z.mapOverlay,
-              padding: "8px 12px",
-              background: "rgba(0,0,0,0.4)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
+              padding: `${SPACE.s8}px ${SPACE.s12}px`,
+              pointerEvents: "none",
             }}
           >
-            <TimelineControls
+            <Timeline
               playing={timeline.playing}
               speed={timeline.speed}
               progress={timeline.progress}
@@ -2496,11 +2627,13 @@ export default function App() {
               dateCounts={selectionDateCounts ?? airportDateCounts ?? undefined}
               selectedDates={timeline.selectedDates}
               isMultiDateMode={timeline.isMultiDateMode}
-              isDarkTheme={true}
-              isMobile={true}
+              subjectLabel={captionCode}
+              hourBins={hourBins}
+              fixedExpanded
               onToggle={timeline.toggle}
               onSpeedChange={timeline.setSpeed}
               onSeekByProgress={timeline.seekByProgress}
+              onSeek={timeline.seek}
               onDateShift={timeline.shiftDate}
               onDateSelect={timeline.setSelectedDate}
               onRangeDaysChange={timeline.setRangeDays}
@@ -2510,35 +2643,23 @@ export default function App() {
           </div>
 
           {/* Bottom Sheet */}
+          <div data-boot-part="fade">
           <MobileBottomSheet isLandscape={isLandscape}>
             {(level) => (
               <>
                 {/* half: FlightPicker + Stats */}
                 {(level === "half" || level === "full") && (
-                  <div style={{ marginTop: 12 }}>
-                    <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
-                      {(["trails", "status"] as const).map((mode) => (
-                        <button
-                          key={mode}
-                          onClick={() => setDisplayMode(mode)}
-                          style={{
-                            background: displayMode === mode
-                              ? "rgba(100,170,255,0.3)" : "rgba(0,0,0,0.6)",
-                            color: "#fff",
-                            border: `1px solid ${displayMode === mode
-                              ? "rgba(100,170,255,0.6)" : "rgba(255,255,255,0.2)"}`,
-                            borderRadius: 4,
-                            padding: "8px 12px",
-                            fontSize: SIZE.sub,
-                            cursor: "pointer",
-                            fontFamily: FONT.ui,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {mode === "trails" ? "Flight Trails" : "Live Status"}
-                        </button>
-                      ))}
-                      <span style={{ color: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center" }}>|</span>
+                  <div style={{ marginTop: SPACE.s4 }}>
+                    <div style={{ display: "flex", gap: SPACE.s6, marginBottom: SPACE.s8, flexWrap: "wrap" }}>
+                      <Segmented<DisplayMode>
+                        ariaLabel="顯示模式"
+                        options={[
+                          { value: "trails", label: "Flight Trails" },
+                          { value: "status", label: "Live Status" },
+                        ]}
+                        value={displayMode}
+                        onChange={setDisplayMode}
+                      />
                       <Segmented<DataSource>
                         ariaLabel="資料來源"
                         options={[
@@ -2564,66 +2685,52 @@ export default function App() {
                       scope={scope}
                       trackMode={trackMode}
                       selectedFlightId={selectedFlightId}
-                      isDarkTheme={true}
-                      isMobile={true}
                       onScopeChange={setScope}
                       onTrackModeChange={setTrackMode}
                       onFlightSelect={setSelectedFlightId}
                     />
-                    <div
-                      style={{
-                        marginTop: 8,
-                        color: "rgba(255,255,255,0.4)",
-                        fontSize: SIZE.body,
-                        fontFamily: FONT.ui,
-                      }}
-                    >
+                    <SheetNote>
                       {finalFlights.length} flights
                       {scope === "region" && ` (${REGION_CONFIG[region].label})`}
-                    </div>
+                    </SheetNote>
                   </div>
                 )}
 
                 {/* full: Sliders + StyleSelector */}
                 {level === "full" && (
-                  <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: SIZE.body, fontFamily: FONT.ui }}>Style</span>
-                      <StyleSelector
-                        selected={mapStyleId}
-                        isDarkTheme={true}
-                        onChange={setMapStyleId}
+                  <div style={{ marginTop: SPACE.s12, paddingBottom: SPACE.s12, display: "flex", flexDirection: "column", gap: SPACE.s12 }}>
+                    <Select<string>
+                      label="Style"
+                      ariaLabel="底圖"
+                      options={MAP_STYLES.map((m) => ({ value: m.id, label: m.name }))}
+                      value={mapStyleId}
+                      onChange={setMapStyleId}
+                    />
+                    {[
+                      { label: "Alt", fmt: (v: number) => `×${v.toFixed(1)}`, min: 1, max: 5, step: 0.5, value: altExaggeration, set: setAltExaggeration },
+                      { label: "Z", fmt: (v: number) => `+${v}m`, min: 0, max: 1000, step: 50, value: altOffset, set: setAltOffset },
+                      { label: "Opacity", fmt: (v: number) => v.toFixed(2), min: 0.02, max: 0.5, step: 0.02, value: staticOpacity, set: setStaticOpacity },
+                      { label: "Orb", fmt: (v: number) => (v * 100000).toFixed(1), min: 0.000001, max: 0.00001, step: 0.000001, value: orbScale, set: setOrbScale },
+                      { label: "APT", fmt: (v: number) => v.toFixed(2), min: 0, max: 0.3, step: 0.01, value: airportOpacity, set: setAirportOpacity },
+                      { label: "Glow", fmt: (v: number) => v.toFixed(1), min: 0, max: 2, step: 0.1, value: airportGlow, set: setAirportGlow },
+                    ].map((sl) => (
+                      <Slider
+                        key={sl.label}
+                        label={sl.label}
+                        format={sl.fmt}
+                        min={sl.min}
+                        max={sl.max}
+                        step={sl.step}
+                        value={sl.value}
+                        onChange={sl.set}
                       />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {[
-                        { label: `Alt ×${altExaggeration.toFixed(1)}`, min: 1, max: 5, step: 0.5, value: altExaggeration, set: setAltExaggeration },
-                        { label: `Z +${altOffset}m`, min: 0, max: 1000, step: 50, value: altOffset, set: setAltOffset },
-                        { label: `Opacity ${staticOpacity.toFixed(2)}`, min: 0.02, max: 0.5, step: 0.02, value: staticOpacity, set: setStaticOpacity },
-                        { label: `Orb ${(orbScale * 100000).toFixed(1)}`, min: 0.000001, max: 0.00001, step: 0.000001, value: orbScale, set: setOrbScale },
-                        { label: `APT ${airportOpacity.toFixed(2)}`, min: 0, max: 0.3, step: 0.01, value: airportOpacity, set: setAirportOpacity },
-                        { label: `Glow ${airportGlow.toFixed(1)}`, min: 0, max: 2, step: 0.1, value: airportGlow, set: setAirportGlow },
-                      ].map((s) => (
-                        <label key={s.label} style={{
-                          color: "rgba(255,255,255,0.6)",
-                          fontSize: SIZE.body,
-                          fontFamily: FONT.ui,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}>
-                          <span style={{ minWidth: 90 }}>{s.label}</span>
-                          <input type="range" min={s.min} max={s.max} step={s.step} value={s.value}
-                            onChange={(e) => s.set(Number(e.target.value))}
-                            style={{ flex: 1, height: 6, accentColor: "rgba(255,255,255,0.6)" }} />
-                        </label>
-                      ))}
-                    </div>
+                    ))}
                   </div>
                 )}
               </>
             )}
           </MobileBottomSheet>
+          </div>
         </>
       )}
 
@@ -2640,15 +2747,15 @@ export default function App() {
         top={captureMode ? CAPTURE_STATUS_TOP : isMobile ? mobileStatusTop : undefined}
         right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : isMobile ? MOBILE_STATUS_RIGHT : undefined}
         failOnly={captureMode}
-        hidden={captureMode && isExporting}
+        hidden={(captureMode && isExporting) || bootMask}
       />
 
       {/* ── 點擊處的選取圈（R1；固定在點擊位置，相機一動就收）── */}
       {!captureMode && selectionRing && cardFlight && <SelectionRing x={selectionRing.x} y={selectionRing.y} />}
 
-      {/* ── 手機版航班卡（取代舊游標 tooltip；版面不重排，固定在標頭下方右側）── */}
+      {/* ── 手機版航班卡（取代舊游標 tooltip；版面不重排，固定在時間軸底邊之下、與手機狀態條同一算法）── */}
       {!captureMode && isMobile && cardFlight && (
-        <div style={{ position: "absolute", top: 52, right: SPACE.s12, zIndex: Z.panel, maxWidth: `calc(100vw - ${SPACE.s12 * 2}px)` }}>
+        <div style={{ position: "absolute", top: mobileStatusTop, right: SPACE.s12, zIndex: Z.panel, maxWidth: `calc(100vw - ${SPACE.s12 * 2}px)` }}>
           <FlightInfoCard
             flight={cardFlight}
             currentTime={timeline.currentTime}
@@ -2662,6 +2769,17 @@ export default function App() {
 
       {/* ── Info Modal ── */}
       <InfoModal open={showInfo} onClose={() => setShowInfo(false)} isMobile={isMobile} />
+
+      {/* ── 開場雷達遮罩（蓋在地圖上；地圖在下面照常初始化）── */}
+      {bootMask && (
+        <BootScreen
+          phase={boot.phase === "loading" ? "loading" : boot.phase === "done" ? "done" : "leaving"}
+          label={captionCode}
+          points={bootPoints}
+          outcome={boot.timedOut ? "timeout" : loadError !== null ? "failed" : "ok"}
+          reducedMotion={boot.reducedMotion}
+        />
+      )}
 
     </div>
     </ThemeProvider>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { COLOR, FONT, SIZE, SPACE } from "../styles/tokens";
+import { COLOR, FONT, LAYOUT, SIZE, SPACE } from "../styles/tokens";
 import { useTheme } from "../styles/ThemeContext";
 import {
   Button,
@@ -22,6 +22,11 @@ import {
   Toggle,
 } from "../ui";
 import { Showcase } from "./Showcase";
+import { AirportColumnHeader, AirportRow, statColWidth, type AirportColumn } from "../components/sidebar/primitives";
+import { nextSort, type AirportSort } from "../data/airportListStats";
+import { BootScreen } from "../components/boot/BootScreen";
+import { bootRadarPoints } from "../components/boot/radar";
+import { BOOT_LAYOUT } from "../components/boot/bootLayout";
 
 /* ── 共用示範資料（真實語境） ── */
 
@@ -109,6 +114,73 @@ function PanelDemo() {
             <StatCard label="準點率" value={null} sub="未涵蓋" />
           </StatGrid>
         </Section>
+      </PanelBody>
+    </Panel>
+  );
+}
+
+function SetsPanelDemo() {
+  const [tab, setTab] = useState<"airports" | "sets" | "scenes">("airports");
+  const [sort, setSort] = useState<AirportSort>({ key: "tot", dir: "desc" });
+  // 2026-02-18 真實數字；NZAA 模擬舊 manifest（無進離欄）→ 「—」（R9）
+  const rows = [
+    { icao: "KATL", name: "亞特蘭大哈次菲爾德", tot: 1868, arr: 966 as number | null, dep: 904 as number | null },
+    { icao: "KORD", name: "芝加哥歐海爾", tot: 1913, arr: 866, dep: 1047 },
+    { icao: "RCTP", name: "臺灣桃園", tot: 651, arr: 352, dep: 299 },
+    { icao: "NZAA", name: "奧克蘭", tot: 210, arr: null, dep: null },
+  ].sort((a, b) => {
+    const sign = sort.dir === "desc" ? 1 : -1;
+    if (sort.key === "name") return -sign * a.name.localeCompare(b.name, "zh-Hant");
+    const va = a[sort.key] ?? -1;
+    const vb = b[sort.key] ?? -1;
+    if ((va < 0) !== (vb < 0)) return va < 0 ? 1 : -1; // 缺值固定殿後
+    return sign * (vb - va);
+  });
+  const colWidth = statColWidth(rows.flatMap((r) => [r.tot, r.arr, r.dep]));
+  return (
+    <Panel floating={false} ariaLabel="機場面板" width={tab === "airports" ? LAYOUT.panelWidthList : LAYOUT.panelWidth}>
+      <PanelHeader eyebrow="SELECTION · 機場" title="2026-02-18" />
+      <PanelBody>
+        <Segmented
+          fullWidth
+          ariaLabel="機場面板分頁"
+          options={[
+            { value: "airports" as const, label: "機場" },
+            { value: "sets" as const, label: "組合" },
+            { value: "scenes" as const, label: "場景" },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
+        {tab === "airports" ? (
+          <>
+            <AirportColumnHeader
+              sortKey={sort.key}
+              sortDir={sort.dir}
+              colWidth={colWidth}
+              onSort={(k: AirportColumn) => setSort(nextSort(sort, k))}
+            />
+            <div>
+              {rows.map((r) => (
+                <AirportRow
+                  key={r.icao}
+                  icao={r.icao}
+                  name={r.name}
+                  current={r.icao === "KATL"}
+                  inSet={false}
+                  stats={{ tot: r.tot, arr: r.arr, dep: r.dep }}
+                  colWidth={colWidth}
+                  onOpen={() => undefined}
+                  onToggleSet={() => undefined}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div style={{ fontSize: SIZE.minor }}>
+            {tab === "sets" ? "PRESETS · 預設組合與目前組合" : "SCENES · 場景預設"}
+          </div>
+        )}
       </PanelBody>
     </Panel>
   );
@@ -452,6 +524,17 @@ function TokenSwatches() {
   );
 }
 
+function BootDemo() {
+  const { tokens } = useTheme();
+  // 同步可得的 camera preset 座標（真實機場）；正式站另會用機場目錄
+  const points = bootRadarPoints("RCTP", {}, BOOT_LAYOUT.radiusKm);
+  return (
+    <div style={{ position: "relative", width: 420, height: 300, border: `1px solid ${tokens.border}`, overflow: "hidden" }}>
+      <BootScreen contained phase="loading" label="RCTP" points={points} />
+    </div>
+  );
+}
+
 /* ── Page ── */
 
 const SECTIONS = [
@@ -461,6 +544,7 @@ const SECTIONS = [
   { id: "section", name: "Section", note: "眉標 + 右延細線。collapsible 支援受控（open/onToggle）與非受控（defaultOpen）。", render: () => <SectionDemo /> },
   { id: "button", name: "Button", note: "高 28：primary / secondary / ghost / danger；pressed 輸出 aria-pressed；會換字的按鈕給固定 width（R10）。", render: () => <ButtonDemo /> },
   { id: "segmented", name: "Segmented", note: "選項 ≤3。選中 = accent 字 + accentSoft 底。disabledValues 相容 ToggleButtons。", render: () => <SegmentedDemo /> },
+  { id: "sets-panel", name: "機場面板（三分頁＋數字欄）", note: "Segmented 三分頁：機場｜組合｜場景。機場列右側兩欄數字：進場（TRAJ 進場色）、離場（TRAJ 離場色），欄首「進」「離」；缺值顯示「—」（R9，NZAA 範例）。排序列：總量／進場／離場／名稱。", render: () => <SetsPanelDemo /> },
   { id: "select", name: "Select", note: "選項 >3。原生 select + SVG chevron；支援數字值、placeholder、行內標籤。", render: () => <SelectDemo /> },
   { id: "toggle", name: "Toggle", note: "28×16 方角開關，開 = accent 底。", render: () => <ToggleDemo /> },
   { id: "slider", name: "Slider", note: "全站唯一滑桿：2px 軌 + 6×14 方形 thumb；標籤與數值同一行。range 模式為雙把手（取代 DurationRange）。", render: () => <SliderDemo /> },
@@ -470,6 +554,7 @@ const SECTIONS = [
   { id: "selection-ring", name: "SelectionRing", note: "點擊處的選取圈（R1）：固定在點擊位置，不吃滑鼠；相機移動或卡片關閉時由呼叫端移除。", render: () => <SelectionRingDemo /> },
   { id: "caption", name: "Caption", note: "左下圖說：機場碼 30px mono + 中文名、日期／班數／進離場；左側 2px 琥珀線。組合模式含退出鈕；面板收起時旁邊放引導入口（Q6）。", render: () => <CaptionDemo /> },
   { id: "status", name: "StatusBar", note: "單行載入狀態（外觀）。失敗與「這天沒資料」分開；顯示節奏（150ms / 600ms / 2s / 4s）P4 接。", render: () => <StatusDemo /> },
+  { id: "boot", name: "BootScreen", note: "開場雷達遮罩（contained 預覽）：環、掃描、RCTP 周邊真實機場點、字標與狀態 chip。尺寸參數在 bootLayout.ts；完整時序與參數調整見 /boot-tuner.html。", render: () => <BootDemo /> },
   { id: "modal", name: "Modal", note: "置中外殼、z modal、Esc 關閉（capture 階段攔截，R7 最上層）。上方為 inline 展示。", render: () => <ModalDemo /> },
 ];
 

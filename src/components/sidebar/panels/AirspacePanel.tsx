@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AIRSPACE_CATEGORIES, type AirspaceCategory, type AirspaceSettings } from "../../../types/airspace";
+import { MEDIAN_LINE_COLOR, rgbCss } from "../../../types/dataColors";
 import { useTheme } from "../../../styles/ThemeContext";
 import { SPACE } from "../../../styles/tokens";
 import { Section, Slider, Toggle } from "../../../ui";
@@ -24,7 +25,7 @@ export function AirspacePanel({
   const getSwatchColor = (cat: AirspaceCategory) => {
     const conf = AIRSPACE_CATEGORIES.find((c) => c.id === cat)!;
     const rgb = conf.colorDark;
-    return `rgb(${Math.round(rgb[0] * 255)}, ${Math.round(rgb[1] * 255)}, ${Math.round(rgb[2] * 255)})`;
+    return rgbCss(rgb);
   };
 
   const swatchLabel = (swatch: ReactNode, text: string) => (
@@ -80,7 +81,7 @@ export function AirspacePanel({
                 style={{
                   width: 18,
                   height: 2,
-                  background: settings.showMedianLine ? "#ffffff" : tokens.fg3,
+                  background: settings.showMedianLine ? MEDIAN_LINE_COLOR : tokens.fg3,
                   flexShrink: 0,
                 }}
               />,

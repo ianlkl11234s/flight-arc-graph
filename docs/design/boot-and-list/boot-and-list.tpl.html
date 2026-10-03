@@ -1,0 +1,351 @@
+<title>Flight Arc 開場與機場列表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Layout: reading column of three decision sections; each option is a live mock in the shipped A 塔台儀表·琥珀 skin (dark map), page shell follows viewer theme. */
+:root{
+  --bg:#f2f3f4; --fg:#121519; --muted:#59626b; --line:#d6dade; --card:#fff; --soft:#f7f8f9;
+  --accent:#a86200; --accent-soft:rgba(168,98,0,.1); --accent-ink:#fff8ee;
+  --sans:"IBM Plex Sans",-apple-system,"PingFang TC","Noto Sans TC",sans-serif;
+  --mono:"JetBrains Mono","PingFang TC","Noto Sans TC",monospace;
+  /* app skin: always dark map (shipped default) */
+  --m-bg:#05070a; --m-panel:rgba(11,13,15,.72); --m-border:rgba(214,222,230,.16); --m-fg1:#e7ebee; --m-fg2:#a2abb3; --m-fg3:#69727a; --m-ctl:rgba(255,255,255,.05); --m-acc:#f2a93b; --m-ink:#1a1206; --m-arr:#5fb4ff; --m-dep:#ff9b55;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b0d10; --fg:#e7ebee; --muted:#959ea7; --line:#262b31; --card:#12161a; --soft:#161b20; --accent:#f2a93b; --accent-soft:rgba(242,169,59,.12); --accent-ink:#1a1206; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b0d10; --fg:#e7ebee; --muted:#959ea7; --line:#262b31; --card:#12161a; --soft:#161b20; --accent:#f2a93b; --accent-soft:rgba(242,169,59,.12); --accent-ink:#1a1206; color-scheme:dark}
+
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--sans);font-size:15px;line-height:1.65}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:32px 140px;display:flex;flex-direction:column;gap:34px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:28px;line-height:1.25;margin:0;font-weight:600;text-wrap:balance}
+header{display:flex;flex-direction:column;gap:10px}
+header p{margin:0;color:var(--muted);max-width:70ch}
+section.q{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.q-h{display:flex;gap:14px;align-items:baseline}
+.qn{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:700;flex:none;border-left:2px solid var(--accent);padding-left:8px}
+h2{font-size:20px;margin:0;font-weight:600;line-height:1.35;text-wrap:balance}
+.ctx{font-size:14px;color:var(--muted);margin:0;max-width:78ch}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.opt{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:4px;background:var(--soft);min-width:0}
+.opt[data-on="1"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.opt-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.letter{font-family:var(--mono);font-weight:700;font-size:13px;width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--line);border-radius:2px;flex:none}
+.opt[data-on="1"] .letter{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.opt-t{font-weight:600}
+.rec{font-family:var(--mono);font-size:11px;color:var(--accent);border:1px solid currentColor;padding:0 6px;border-radius:2px}
+.opt p{margin:0;font-size:13.5px;color:var(--muted)}
+.pc{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:13px;margin:0}
+.pc dt{font-family:var(--mono);font-size:11px;padding-top:2px}
+.pc dt.g{color:#1d7a4a} .pc dt.b{color:#b3261a}
+:root[data-theme="dark"] .pc dt.g{color:#7be3a0} :root[data-theme="dark"] .pc dt.b{color:#ff8a7a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pc dt.g{color:#7be3a0} :root:not([data-theme="light"]) .pc dt.b{color:#ff8a7a}}
+.pc dd{margin:0}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13px;padding:6px 12px;border:1px solid var(--line);border-radius:2px;background:var(--card);color:var(--fg);cursor:pointer}
+.btn.pick{border-color:var(--accent);color:var(--accent)}
+.opt[data-on="1"] .btn.pick{background:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{display:flex;flex-direction:column;gap:4px}
+.note label{font-size:12px;color:var(--muted)}
+.note textarea{font:inherit;font-size:14px;min-height:38px;resize:vertical;padding:7px 10px;border:1px solid var(--line);border-radius:2px;background:var(--soft);color:var(--fg)}
+
+/* ── stage (loader demo), design size 800×500 scaled ── */
+.stage-wrap{position:relative;width:100%;max-width:100%;aspect-ratio:8/5;border-radius:2px;overflow:hidden;border:1px solid var(--line);background:var(--m-bg)}
+.stage{position:absolute;left:0;top:0;width:800px;height:500px;transform-origin:0 0;font-family:var(--mono);color:var(--m-fg1);overflow:hidden;background:var(--m-bg)}
+.stage canvas{position:absolute;inset:0;width:800px;height:500px}
+.loader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--m-bg);transition:opacity .45s ease,transform .45s ease;z-index:5}
+.stage[data-phase="out"] .loader,.stage[data-phase="enter"] .loader,.stage[data-phase="done"] .loader{opacity:0;transform:scale(1.04);pointer-events:none}
+.wm{font-size:30px;font-weight:700;letter-spacing:.32em;padding-left:.32em}
+.wm b{color:var(--m-acc);font-weight:700}
+.chip{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--m-fg2);border:1px solid var(--m-border);padding:5px 12px;border-radius:2px;background:var(--m-panel)}
+.ring{width:9px;height:9px;border:1.5px solid rgba(255,255,255,.15);border-top-color:var(--m-acc);border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-canvas{position:relative;width:420px;height:230px}
+.ld-canvas canvas{position:absolute;inset:0;width:420px;height:230px}
+/* approach lights */
+.lights{position:relative;width:420px;height:230px}
+.lights i{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff6dc;box-shadow:0 0 8px #ffd27a;opacity:.12}
+.lights .rw{position:absolute;left:300px;top:96px;width:110px;height:38px;border:1px solid var(--m-border);transform:skewX(-14deg)}
+.lights .rw::after{content:"05L";position:absolute;left:6px;top:11px;font-size:11px;color:var(--m-fg3)}
+/* split flap */
+.flap{display:flex;gap:3px}
+.flap span{display:inline-grid;place-items:center;width:30px;height:42px;background:#101317;border:1px solid var(--m-border);border-radius:2px;font-size:26px;font-weight:700;position:relative;color:var(--m-fg1)}
+.flap span::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.6)}
+.flap.sm span{width:18px;height:26px;font-size:14px}
+.flap.sm span.a{color:var(--m-acc)}
+/* chrome mock + entrance (Pulse M2 easing) */
+.ch{position:absolute;z-index:3}
+.ch-rail{left:0;top:0;bottom:0;width:38px;background:rgba(7,9,11,.8);border-right:1px solid var(--m-border);display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:12px}
+.ch-rail i{width:12px;height:12px;border:1.3px solid var(--m-fg3);border-radius:2px;display:block}
+.ch-rail i:first-child{border-color:var(--m-fg1);margin-bottom:6px}
+.ch-brand{left:52px;top:14px;font-size:15px;font-weight:700;letter-spacing:.18em}
+.ch-brand small{font-size:9.5px;font-weight:400;color:var(--m-fg3);letter-spacing:.04em;margin-left:10px}
+.ch-tb{right:12px;top:10px;display:flex;gap:4px;padding:3px;background:var(--m-panel);border:1px solid var(--m-border);border-radius:2px}
+.ch-tb span{font-size:10px;padding:3px 8px;color:var(--m-fg2)}
+.ch-tb span.on{color:var(--m-acc);background:rgba(242,169,59,.12)}
+.ch-cap{left:54px;bottom:62px;border-left:2px solid var(--m-acc);padding-left:9px}
+.ch-cap b{font-size:24px;font-weight:500;letter-spacing:.04em}
+.ch-cap small{display:block;font-size:10px;color:var(--m-fg2)}
+.ch-tl{left:52px;bottom:14px;width:210px;height:34px;display:flex;align-items:center;gap:8px;padding:0 8px;background:var(--m-panel);border:1px solid var(--m-border);border-radius:2px}
+.ch-tl i{width:18px;height:18px;background:var(--m-acc);border-radius:2px;display:block}
+.ch-tl em{font-style:normal;font-size:12px}
+.ch-tl u{flex:1;height:2px;background:rgba(255,255,255,.15);text-decoration:none;position:relative}
+.ch-tl u::after{content:"";position:absolute;left:0;top:0;bottom:0;width:30%;background:var(--m-acc)}
+.stage[data-phase="wait"] .ch-rail,.stage[data-phase="out"] .ch-rail{transform:translateX(-110%)}
+.stage[data-phase="wait"] .ch-tb,.stage[data-phase="out"] .ch-tb{transform:translateY(-160%)}
+.stage[data-phase="wait"] .ch-tl,.stage[data-phase="out"] .ch-tl{transform:translateY(220%)}
+.stage[data-phase="wait"] .ch-cap,.stage[data-phase="out"] .ch-cap{transform:translateY(260%)}
+.stage[data-phase="wait"] .ch-brand,.stage[data-phase="out"] .ch-brand{transform:translateY(-300%)}
+.stage[data-phase="wait"] .ch-rail i,.stage[data-phase="out"] .ch-rail i{transform:scale(0)}
+.stage[data-phase="enter"] .ch,.stage[data-phase="done"] .ch{transition:transform .85s cubic-bezier(.34,1.56,.64,1)}
+.stage[data-phase="enter"] .ch-rail i{transition:transform .4s cubic-bezier(.34,1.8,.64,1)}
+.stage[data-phase="enter"] .ch-tb{transition-delay:.12s}
+.stage[data-phase="enter"] .ch-tl{transition-delay:.24s;animation:latch .4s ease-out 1.05s}
+.stage[data-phase="enter"] .ch-cap{transition-delay:.3s}
+.stage[data-phase="enter"] .ch-brand{transition-delay:.36s}
+.stage[data-phase="enter"] .ch-rail i:nth-child(1){transition-delay:.40s}
+.stage[data-phase="enter"] .ch-rail i:nth-child(2){transition-delay:.45s}
+.stage[data-phase="enter"] .ch-rail i:nth-child(3){transition-delay:.50s}
+.stage[data-phase="enter"] .ch-rail i:nth-child(4){transition-delay:.55s}
+.stage[data-phase="enter"] .ch-rail i:nth-child(5){transition-delay:.60s}
+.stage[data-phase="enter"] .ch-rail i:nth-child(6){transition-delay:.65s}
+@keyframes latch{0%{box-shadow:0 0 0 transparent}30%{box-shadow:0 0 10px rgba(242,169,59,.6)}100%{box-shadow:0 0 0 transparent}}
+#q1opts{grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
+@media (max-width:520px){#q1opts{grid-template-columns:minmax(0,1fr)}}
+.tline{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+
+/* ── panel mocks (airport panel) ── */
+.pm{background:var(--m-bg);border:1px solid var(--line);border-radius:2px;padding:12px;display:flex;justify-content:center;min-height:100%}
+.panel{width:100%;max-width:300px;background:var(--m-panel);border:1px solid var(--m-border);border-radius:2px;color:var(--m-fg1);font-family:var(--mono);position:relative}
+.panel::before{content:"";position:absolute;left:-1px;top:-1px;width:8px;height:8px;border-left:1px solid var(--m-acc);border-top:1px solid var(--m-acc)}
+.ph{padding:9px 12px;border-bottom:1px solid var(--m-border)}
+.ph .e{font-size:11px;letter-spacing:.16em;color:var(--m-fg3)}
+.ph .t{font-size:15px;font-weight:500;margin-top:2px}
+.pb{padding:10px 12px;display:flex;flex-direction:column;gap:9px}
+.tabs{display:flex;border:1px solid var(--m-border);border-radius:2px;overflow:hidden}
+.tabs button{flex:1;font:inherit;font-size:12px;padding:5px 0;background:transparent;border:0;color:var(--m-fg2);cursor:pointer}
+.tabs button+button{border-left:1px solid var(--m-border)}
+.tabs button[aria-pressed="true"]{color:var(--m-acc);background:rgba(242,169,59,.12)}
+.ul-tabs{display:flex;gap:14px;border-bottom:1px solid var(--m-border)}
+.ul-tabs button{font:inherit;font-size:12.5px;background:transparent;border:0;color:var(--m-fg2);padding:4px 0 6px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.ul-tabs button[aria-pressed="true"]{color:var(--m-fg1);border-bottom-color:var(--m-acc)}
+.search{height:28px;display:flex;align-items:center;padding:0 9px;border:1px solid var(--m-border);border-radius:2px;background:var(--m-ctl);font-size:11.5px;color:var(--m-fg3)}
+.sh{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.14em;color:var(--m-fg3)}
+.sh::after{content:"";flex:1;height:1px;background:var(--m-border)}
+.sortbar{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--m-fg3);flex-wrap:wrap}
+.sortbar button{font:inherit;font-size:11px;background:transparent;border:1px solid var(--m-border);color:var(--m-fg2);padding:1px 6px;border-radius:2px;cursor:pointer}
+.sortbar button[aria-pressed="true"]{color:var(--m-acc);border-color:var(--m-acc)}
+.preset{display:flex;flex-direction:column;gap:1px;padding:5px 0 5px 9px;border-left:1px solid var(--m-border)}
+.preset b{font-weight:500;font-size:12.5px}
+.preset small{font-size:11px;color:var(--m-fg3)}
+.preset.on{border-left:2px solid var(--m-acc)}
+.list{display:flex;flex-direction:column}
+.ap{display:grid;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(214,222,230,.07);font-size:12px}
+.ap.cur{background:rgba(242,169,59,.08);box-shadow:inset 2px 0 0 var(--m-acc)}
+.ap .nm{min-width:0}
+.ap .nm b{display:block;font-weight:500;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap .nm small{font-size:11px;color:var(--m-fg3)}
+.ap .n{font-variant-numeric:tabular-nums;text-align:right;font-size:12px}
+.ap .n.arr{color:var(--m-arr)} .ap .n.dep{color:var(--m-dep)}
+.ap .plus{width:20px;height:20px;border:1px solid var(--m-border);border-radius:2px;display:grid;place-items:center;color:var(--m-fg2);font-size:13px}
+.colh{display:grid;gap:8px;font-size:11px;color:var(--m-fg3);padding:0 4px 2px}
+.bar2{height:5px;display:flex;border-radius:1px;overflow:hidden;background:rgba(255,255,255,.06)}
+.bar2 i{display:block;height:100%}
+.fly{display:grid;grid-template-columns:1fr 1px 1fr;align-items:center;gap:0;height:12px}
+.fly .l{justify-self:end;height:6px;background:var(--m-arr);border-radius:1px 0 0 1px}
+.fly .r{justify-self:start;height:6px;background:var(--m-dep);border-radius:0 1px 1px 0}
+.fly .c{width:1px;height:12px;background:var(--m-fg3)}
+.spark{width:56px;height:18px;display:block}
+.legend{display:flex;gap:10px;font-size:11px;color:var(--m-fg2)}
+.legend i{display:inline-block;width:10px;height:3px;margin-right:4px;vertical-align:middle}
+
+/* answer bar */
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:5}
+.bar-in{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.picks{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0;font-family:var(--mono);font-size:12px}
+.picks span{padding:3px 7px;border:1px solid var(--line);border-radius:2px;color:var(--muted)}
+.picks span.on{border-color:var(--accent);color:var(--fg)}
+.copy{font:inherit;font-weight:600;font-size:14px;padding:8px 16px;border-radius:2px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.status{font-size:13px;color:var(--muted)}
+.out{width:100%;font-family:var(--mono);font-size:12px;min-height:110px;padding:8px;border:1px solid var(--line);border-radius:2px;background:var(--soft);color:var(--fg)}
+@media (prefers-reduced-motion: reduce){.stage *{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Flight Arc · Studio</span>
+    <h1>開場動畫、機場面板與列表</h1>
+    <p>三題各有幾個方案，每個方案都是可以操作的示意。開場動畫的範例會自動播放，也可以按「重播」：先是約 2 秒的載入畫面，接著面板從四邊彈入（緩動與時序照 Mini Taiwan Pulse 的 M2 規格）。機場列表的數字是 2026-02-18 機場檔的真實起降數。選完按最下方的「複製答案」貼回對話。</p>
+  </header>
+
+  <section class="q" id="q1">
+    <div class="q-h"><span class="qn">Q1</span><h2>開場載入動畫</h2></div>
+    <p class="ctx">四個方案的載入時間都約 2 秒，結束時都會淡出放大 1.04，接著面板彈入：rail 從左、工具列從上、時間軸從下，圖說和字標最後到；rail 圖示逐一放大，時間軸到位時閃一下琥珀色。資料若 2 秒內還沒載完，載入畫面會留到載完為止。</p>
+    <div class="row-btns"><button class="btn" id="replayAll">▶ 四個一起重播</button></div>
+    <div class="opts" id="q1opts"></div>
+    <div class="note"><label for="n-q1">備註（可不填）</label><textarea id="n-q1" data-n="q1" rows="1"></textarea></div>
+  </section>
+
+  <section class="q" id="q2">
+    <div class="q-h"><span class="qn">Q2</span><h2>機場面板要怎麼分頁</h2></div>
+    <p class="ctx">現在機場面板把操作說明、搜尋、預設組合、場景預設、全部機場目錄放在同一個長捲軸裡。以下是三種分頁方式，分頁可以點。</p>
+    <div class="opts" id="q2opts"></div>
+    <div class="note"><label for="n-q2">備註（可不填）</label><textarea id="n-q2" data-n="q2" rows="1"></textarea></div>
+  </section>
+
+  <section class="q" id="q3">
+    <div class="q-h"><span class="qn">Q3</span><h2>機場列表要顯示哪些資訊</h2></div>
+    <p class="ctx">每列加上當天的進場、離場數，並可依總量、進場、離場或名稱排序，預設依總量由大到小。上方的排序按鈕可以點。進場藍、離場橘，和起降染色同色。</p>
+    <div class="opts" id="q3opts"></div>
+    <div class="note"><label for="n-q3">備註（可不填）</label><textarea id="n-q3" data-n="q3" rows="1"></textarea></div>
+  </section>
+
+  <section class="q" id="result" hidden>
+    <div class="q-h"><span class="qn">答案</span><h2>複製這段文字貼回對話</h2></div>
+    <textarea class="out" id="out" readonly aria-label="答案文字"></textarea>
+  </section>
+</div>
+
+<div class="bar"><div class="bar-in">
+  <div class="picks" id="picks"></div>
+  <span class="status" id="status" aria-live="polite"></span>
+  <button class="copy" id="copy">複製答案</button>
+</div></div>
+
+<script>
+const TR = __TRAILS__;   // RCTP 2026-02-18, 85 km: {a, p:[x_km,y_km,alt_100m,...]}
+const AP = __AIRPORTS__; // [{icao,arr,dep,h:[24]}]
+const META = {KATL:['ATL','Hartsfield-Jackson Atlanta Intl'],KORD:['ORD',"Chicago O'Hare Intl"],KDFW:['DFW','Dallas Fort Worth Intl'],KLAX:['LAX','Los Angeles Intl'],KDEN:['DEN','Denver Intl'],KSFO:['SFO','San Francisco Intl'],KJFK:['JFK','New York JFK'],KSEA:['SEA','Seattle-Tacoma Intl'],RCTP:['TPE','臺灣桃園國際機場'],RJTT:['HND','東京羽田機場'],RKSI:['ICN','仁川國際機場'],VHHH:['HKG','香港國際機場']};
+const GRAD=[[251,226,188],[255,200,128],[128,191,255]]; // COLOR_THEMES.default staticGradient
+const lerp=(t)=>{t=Math.max(0,Math.min(1,t));const s=t<.5?0:1,u=t<.5?t*2:(t-.5)*2;return GRAD[s].map((v,i)=>Math.round(v+(GRAD[s+1][i]-v)*u));};
+
+/* ── projection & trail drawing ── */
+function drawTrails(c,W,H,cx,cy,sc,progress=1,alpha=.22,lw=1){
+  c.globalCompositeOperation='lighter'; c.lineCap='round';
+  for(const f of TR){const p=f.p, n=p.length/3, m=Math.max(2,Math.floor(n*progress));
+    // draw from airport outward: arrivals reversed so they grow from runway
+    const idx=i=>f.a? (n-1-i):i;
+    for(let k=1;k<m;k++){const i0=idx(k-1),i1=idx(k);
+      const z=(p[i0*3+2]+p[i1*3+2])/2*100; const col=lerp(z/9000);
+      c.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},${alpha})`; c.lineWidth=lw;
+      c.beginPath(); c.moveTo(cx+p[i0*3]*sc, cy-p[i0*3+1]*sc*.62-p[i0*3+2]*100*sc*.0045); c.lineTo(cx+p[i1*3]*sc, cy-p[i1*3+1]*sc*.62-p[i1*3+2]*100*sc*.0045); c.stroke();}
+  }
+  c.globalCompositeOperation='source-over';
+}
+function mapCanvas(cv){const d=Math.min(2,devicePixelRatio||1); cv.width=800*d; cv.height=500*d; const c=cv.getContext('2d'); c.setTransform(d,0,0,d,0,0);
+  c.fillStyle='#05070a'; c.fillRect(0,0,800,500); drawTrails(c,800,500,470,270,3.1,1,.2,1); return c;}
+
+/* ── loader concepts ── */
+const LOADERS=[
+ {k:'A',t:'航跡繪出',rec:1,d:'桃機當天的真實軌跡從跑道往外長出來，光跡由暖白漸層到高空藍，和主畫面的夜空光軌同一套語言。',pro:'和作品本身最連貫，一開場就看到「軌跡」這個主角',con:'要先載入一小份示範軌跡（約 120 KB），否則沒東西畫',
+  build:(L)=>{L.innerHTML=`<div class="ld-canvas"><canvas></canvas></div><div class="wm">FLIGHT <b>ARC</b></div><div class="chip"><span class="ring"></span>載入軌跡 · RCTP</div>`;
+   const cv=L.querySelector('canvas'),d=Math.min(2,devicePixelRatio||1);cv.width=420*d;cv.height=230*d;const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);
+   return t=>{c.clearRect(0,0,420,230);drawTrails(c,420,230,215,128,1.7,Math.min(1,t/1700),.32,1.1);};}},
+ {k:'B',t:'進場燈',d:'夜間進場時看到的進場燈：一排燈由遠而近依序閃（俗稱 rabbit），最後點亮跑道，字標淡入。',pro:'飛航感最直接，畫面極簡、不用任何資料',con:'和機場主體的「軌跡」關聯較弱，比較像裝飾',
+  build:(L)=>{let h='';for(let i=0;i<14;i++){const x=20+i*20,y=150-i*4;h+=`<i style="left:${x}px;top:${y}px"></i>`;}
+   L.innerHTML=`<div class="lights">${h}<div class="rw"></div></div><div class="wm">FLIGHT <b>ARC</b></div><div class="chip"><span class="ring"></span>載入軌跡 · RCTP</div>`;
+   const ls=[...L.querySelectorAll('.lights i')];
+   return t=>{const step=Math.floor(t/90)%(ls.length+4);ls.forEach((e,i)=>{const on=i===step||i===step-1;e.style.opacity=t>1500?(.9):(on?1:.12);e.style.transform=on?'scale(1.6)':'scale(1)';});
+     L.querySelector('.rw').style.borderColor=t>1500?'rgba(242,169,59,.9)':'';};}},
+ {k:'C',t:'雷達掃描',d:'一道琥珀色掃描線轉一圈，掃過的位置亮起進離場航跡的端點，像塔台雷達幕找到飛機。',pro:'延續 A 塔台儀表的雷達意象；距離環也是主畫面會用到的元素',con:'掃描線轉一圈約 1.6 秒，節奏比較固定',
+  build:(L)=>{L.innerHTML=`<div class="ld-canvas"><canvas></canvas></div><div class="wm">FLIGHT <b>ARC</b></div><div class="chip"><span class="ring"></span>載入軌跡 · RCTP</div>`;
+   const cv=L.querySelector('canvas'),d=Math.min(2,devicePixelRatio||1);cv.width=420*d;cv.height=230*d;const c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);
+   const pts=TR.map(f=>{const p=f.p,i=f.a?0:(p.length/3-1);return {x:p[i*3],y:p[i*3+1],a:Math.atan2(-p[i*3+1],p[i*3])};});
+   return t=>{c.clearRect(0,0,420,230);const cx=210,cy=115,R=105,ang=(t/1600)*Math.PI*2-Math.PI/2;
+     c.strokeStyle='rgba(214,222,230,.14)';[35,70,105].forEach(r=>{c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();});
+     const g=c.createConicGradient?c.createConicGradient(ang-0.7,cx,cy):null;
+     if(g){g.addColorStop(0,'rgba(242,169,59,0)');g.addColorStop(.11,'rgba(242,169,59,.28)');g.addColorStop(.112,'rgba(242,169,59,0)');c.fillStyle=g;c.beginPath();c.arc(cx,cy,R,0,Math.PI*2);c.fill();}
+     c.strokeStyle='rgba(242,169,59,.9)';c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);c.stroke();
+     const swept=Math.min(Math.PI*2,(t/1600)*Math.PI*2);
+     for(const q of pts){let a=Math.atan2(q.y*-1,q.x)+Math.PI/2; if(a<0)a+=Math.PI*2; if(a<=swept){const age=Math.max(0,1-(swept-a)/3);c.fillStyle=`rgba(255,220,170,${.35+.6*age})`;c.beginPath();c.arc(cx+q.x*1.22,cy+q.y*1.22,1.6+age,0,Math.PI*2);c.fill();}}};}},
+ {k:'D',t:'航班看板',d:'機場出發看板的翻牌字：字母翻動後停在 FLIGHT ARC，第二排翻出機場與日期。',pro:'有機場的生活感，辨識度高、有記憶點',con:'翻牌是「航廈」的語言，和「天空軌跡」的作品氣質稍遠',
+  build:(L)=>{const W='FLIGHT ARC',S='RCTP 02-18';L.innerHTML=`<div class="flap">${[...W].map(()=>'<span></span>').join('')}</div><div class="flap sm">${[...S].map(ch=>`<span class="${/\d/.test(ch)?'':'a'}"></span>`).join('')}</div><div class="chip"><span class="ring"></span>載入軌跡 · RCTP</div>`;
+   const big=[...L.querySelectorAll('.flap:not(.sm) span')],sm=[...L.querySelectorAll('.flap.sm span')],AB='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-';
+   return t=>{big.forEach((e,i)=>{const stop=500+i*90;e.textContent=W[i]===' '?'':(t>stop?W[i]:AB[Math.floor((t/45+i*7))%AB.length]);});
+     sm.forEach((e,i)=>{const stop=1100+i*60;e.textContent=S[i]===' '?'':(t>stop?S[i]:AB[Math.floor((t/40+i*5))%AB.length]);});};}},
+];
+const chromeHTML=`<div class="ch ch-rail"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="ch ch-brand">FLIGHT ARC<small>25.0927°N 121.2281°E · z10.4</small></div><div class="ch ch-tb"><span class="on">全部</span><span>進場</span><span>離場</span><span>高度</span><span>3D</span></div><div class="ch ch-cap"><b>RCTP</b><small>2026-02-18 週三 · 651 班 · 進 352 · 離 299</small></div><div class="ch ch-tl"><i></i><em>07:35</em><u></u></div>`;
+function mountStage(host,L){
+  host.innerHTML=`<div class="stage-wrap"><div class="stage" data-phase="wait"><canvas></canvas>${chromeHTML}<div class="loader"></div></div></div><div class="row-btns" style="align-items:center"><button class="btn replay-btn">▶ 重播這個</button><span class="tline">0–2.0s 載入　2.0–2.45s 淡出　2.45–4.1s 面板彈入</span></div>`;
+  const wrap=host.querySelector('.stage-wrap'),st=host.querySelector('.stage');
+  const fit=()=>{st.style.transform=`scale(${wrap.clientWidth/800})`;}; fit(); new ResizeObserver(fit).observe(wrap);
+  mapCanvas(st.querySelector('canvas'));
+  const ld=st.querySelector('.loader'); let tick=L.build(ld), raf=0, t0=0, timers=[];
+  const run=()=>{cancelAnimationFrame(raf);timers.forEach(clearTimeout);timers=[];st.dataset.phase='wait';tick=L.build(ld);t0=performance.now();
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const loop=n=>{const t=n-t0;tick(t);if(t<2000)raf=requestAnimationFrame(loop);};
+    if(reduce){tick(2000);} else raf=requestAnimationFrame(loop);
+    timers.push(setTimeout(()=>{st.dataset.phase='out';},2000));
+    timers.push(setTimeout(()=>{st.dataset.phase='enter';},2450));
+    timers.push(setTimeout(()=>{st.dataset.phase='done';},4300));};
+  host.querySelector('.replay-btn').onclick=run; host._run=run;
+  const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&!host.dataset.played){host.dataset.played=1;run();}});},{threshold:.4}); io.observe(wrap); setTimeout(()=>{if(!host.dataset.played){host.dataset.played=1;run();}},1200);
+  // resting state if never played (thumbnail): show final frame
+  st.dataset.phase='done'; tick(2000);
+}
+
+/* ── Q2 tab structures ── */
+const PRESETS=[['EU + LHR 紐帶','7 座 · EGLL · LFPG · EHAM · EDDF …'],['TW 國際','3 座 · RCTP · RCKH · RCMQ'],['Taipei 機場群','2 座 · RCSS · RCTP'],['亞太樞紐','6 座 · RCTP · RJTT · RJAA · VHHH …'],['跨大西洋','4 座 · KJFK · KEWR · EGLL · LFPG']];
+const SCENES=[['台灣空中走廊','空域快照 · All TW · 1d'],['活躍中國境內班機','空域快照 · CN · 1d']];
+const presetHTML=()=>PRESETS.map((p,i)=>`<div class="preset ${i===2?'on':''}"><b>${p[0]}</b><small>${p[1]}</small></div>`).join('');
+const sceneHTML=()=>SCENES.map(p=>`<div class="preset"><b>${p[0]}</b><small>${p[1]}</small></div>`).join('');
+function miniList(n=4){return listRows('num',[...AP].sort((a,b)=>(b.arr+b.dep)-(a.arr+a.dep)).slice(0,n));}
+const TABS=[
+ {k:'A',t:'三個分頁：機場｜組合｜場景',rec:1,d:'搜尋和機場目錄在「機場」；預設組合和你自己加的組合在「組合」；場景預設獨立一頁。',pro:'每頁單純，預設組合有固定的家（你上次提的需求）',con:'場景預設用得少，獨立一頁有點空',
+  tabs:['機場','組合','場景'],body:[()=>`<div class="search">搜尋 ICAO、IATA、城市</div>${miniList()}`,()=>`<div class="sh">PRESETS · 預設組合</div>${presetHTML()}<div class="sh">我的組合</div><div class="preset"><b>RCTP + RJAA</b><small>2 座 · 目前</small></div>`,()=>`<div class="sh">SCENES · 場景預設</div>${sceneHTML()}`],style:'seg'},
+ {k:'B',t:'兩個分頁：機場｜組合與場景',d:'預設組合和場景預設放在同一頁，上下兩段。',pro:'分頁少，切換成本低',con:'第二頁比較長，要捲',
+  tabs:['機場','組合與場景'],body:[()=>`<div class="search">搜尋 ICAO、IATA、城市</div>${miniList()}`,()=>`<div class="sh">PRESETS · 預設組合</div>${presetHTML()}<div class="sh">SCENES · 場景預設</div>${sceneHTML()}`],style:'seg'},
+ {k:'C',t:'底線分頁＋搜尋常駐',d:'搜尋框固定在分頁上方，任何分頁都能搜；分頁用底線樣式，比較輕。',pro:'搜尋永遠在手邊；視覺最輕',con:'面板頂部多一層，列表可見高度少一點',
+  tabs:['機場','組合','場景'],body:[()=>miniList(),()=>`${presetHTML()}`,()=>sceneHTML()],style:'ul',searchTop:1},
+];
+function mountTabs(host,T){let cur=0;const draw=()=>{
+  const tabs=T.style==='ul'?`<div class="ul-tabs">${T.tabs.map((x,i)=>`<button aria-pressed="${i===cur}" data-i="${i}">${x}</button>`).join('')}</div>`:`<div class="tabs">${T.tabs.map((x,i)=>`<button aria-pressed="${i===cur}" data-i="${i}">${x}</button>`).join('')}</div>`;
+  host.innerHTML=`<div class="pm"><div class="panel"><div class="ph"><div class="e">SELECTION · 機場</div><div class="t">RCTP</div></div><div class="pb">${T.searchTop?'<div class="search">搜尋 ICAO、IATA、城市</div>':''}${tabs}${T.body[cur]()}</div></div></div>`;
+  host.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{cur=+b.dataset.i;draw();});};draw();}
+
+/* ── Q3 list designs ── */
+const SORTS=[['tot','總量'],['arr','進場'],['dep','離場'],['name','名稱']];
+function sortAP(k){const a=[...AP];if(k==='name')return a.sort((x,y)=>META[x.icao][0].localeCompare(META[y.icao][0]));const f=k==='tot'?(x=>x.arr+x.dep):(x=>x[k]);return a.sort((x,y)=>f(y)-f(x));}
+const MAXT=Math.max(...AP.map(a=>a.arr+a.dep)), MAXS=Math.max(...AP.map(a=>Math.max(a.arr,a.dep)));
+function spark(h){const m=Math.max(...h)||1;const pts=h.map((v,i)=>`${(i/23*56).toFixed(1)},${(17-v/m*15).toFixed(1)}`).join(' ');return `<svg class="spark" viewBox="0 0 56 18" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="#a2abb3" stroke-width="1.1"/></svg>`;}
+function listRows(style,rows){
+  const nm=a=>`<div class="nm"><b>${META[a.icao][1]}</b><small>${META[a.icao][0]} / ${a.icao}</small></div>`;
+  const cur=a=>a.icao==='KATL'?' cur':'';
+  if(style==='num') return `<div class="colh" style="grid-template-columns:1fr 38px 38px 20px"><span></span><span style="text-align:right">進</span><span style="text-align:right">離</span><span></span></div><div class="list">${rows.map(a=>`<div class="ap${cur(a)}" style="grid-template-columns:1fr 38px 38px 20px">${nm(a)}<span class="n arr">${a.arr}</span><span class="n dep">${a.dep}</span><span class="plus">+</span></div>`).join('')}</div>`;
+  if(style==='bar') return `<div class="list">${rows.map(a=>{const t=a.arr+a.dep;return `<div class="ap${cur(a)}" style="grid-template-columns:1fr 20px;row-gap:4px">${nm(a)}<span class="plus">+</span><div style="grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center"><div class="bar2" style="width:${(t/MAXT*100).toFixed(1)}%"><i style="width:${(a.arr/t*100).toFixed(1)}%;background:var(--m-arr)"></i><i style="flex:1;background:var(--m-dep)"></i></div><span class="n" style="font-size:11px;color:var(--m-fg2)"><span style="color:var(--m-arr)">${a.arr}</span> / <span style="color:var(--m-dep)">${a.dep}</span> · ${t}</span></div></div>`;}).join('')}</div>`;
+  if(style==='fly') return `<div class="colh" style="grid-template-columns:1fr 96px 20px"><span></span><span style="text-align:center">進 ◂ ▸ 離</span><span></span></div><div class="list">${rows.map(a=>`<div class="ap${cur(a)}" style="grid-template-columns:1fr 96px 20px">${nm(a)}<div><div class="fly"><span class="l" style="width:${(a.arr/MAXS*46).toFixed(1)}px"></span><span class="c"></span><span class="r" style="width:${(a.dep/MAXS*46).toFixed(1)}px"></span></div><div style="display:flex;justify-content:space-between;font-size:10.5px;font-variant-numeric:tabular-nums"><span style="color:var(--m-arr)">${a.arr}</span><span style="color:var(--m-dep)">${a.dep}</span></div></div><span class="plus">+</span></div>`).join('')}</div>`;
+  return `<div class="list">${rows.map(a=>`<div class="ap${cur(a)}" style="grid-template-columns:1fr 56px 44px 20px">${nm(a)}${spark(a.h)}<span class="n" style="line-height:1.3"><span style="color:var(--m-fg1)">${a.arr+a.dep}</span><br><small style="font-size:10.5px;color:var(--m-fg3)">${a.arr}/${a.dep}</small></span><span class="plus">+</span></div>`).join('')}</div>`;
+}
+const LISTS=[
+ {k:'A',t:'數字欄',rec:1,d:'名稱右邊兩欄數字：進場（藍）、離場（橘）。最乾淨，一眼可以比大小。',pro:'資訊密度高、好掃讀；字級 12px 也放得下',con:'看不出比例，只能讀數字',style:'num'},
+ {k:'B',t:'分段長條',d:'每列下方一條長條：長度＝總量，藍橘分段＝進離比例，旁邊附數字。',pro:'規模和進離比例同時看得到',con:'每列變成兩行，同一高度放的機場變少',style:'bar'},
+ {k:'C',t:'蝴蝶圖',d:'中線左邊是進場、右邊是離場，和時間軸直方圖「進場向上、離場向下」同一種對稱語言。',pro:'進離失衡一眼就看出來（例如 ORD 離場明顯多）',con:'欄寬要 96px，名稱會被截得比較多',style:'fly'},
+ {k:'D',t:'24 小時曲線',d:'每列一條 24 小時起降曲線，加總量與進/離數字。',pro:'看得出每座機場的尖峰時段，探索感最強',con:'曲線很小，資訊最密，掃讀最累',style:'spark'},
+];
+function mountList(host,Lx){let sk='tot';const draw=()=>{
+  host.innerHTML=`<div class="pm"><div class="panel"><div class="ph"><div class="e">SELECTION · 機場</div><div class="t">全部機場 · 2026-02-18</div></div><div class="pb"><div class="sortbar">排序 ${SORTS.map(([k,l])=>`<button aria-pressed="${k===sk}" data-s="${k}">${l}</button>`).join('')}</div><div class="legend"><span><i style="background:var(--m-arr)"></i>進場</span><span><i style="background:var(--m-dep)"></i>離場</span></div>${listRows(Lx.style,sortAP(sk).slice(0,8))}</div></div></div>`;
+  host.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{sk=b.dataset.s;draw();});};draw();}
+
+/* ── option cards + answers ── */
+const KEY='fa-boot-list-v1'; let state={}; try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}};
+const Q=[{id:'q1',t:'開場載入動畫',opts:LOADERS,mount:mountStage},{id:'q2',t:'機場面板分頁',opts:TABS,mount:mountTabs},{id:'q3',t:'機場列表資訊',opts:LISTS,mount:mountList}];
+Q.forEach(q=>{const box=document.getElementById(q.id+'opts');
+  box.innerHTML=q.opts.map(o=>`<div class="opt" data-q="${q.id}" data-k="${o.k}" data-on="${state[q.id]?.pick===o.k?1:0}"><div class="opt-h"><span class="letter">${o.k}</span><span class="opt-t">${o.t}</span>${o.rec?'<span class="rec">建議</span>':''}</div><div class="demo"></div><p>${o.d}</p><dl class="pc"><dt class="g">優</dt><dd>${o.pro}</dd><dt class="b">劣</dt><dd>${o.con}</dd></dl><div class="row-btns"><button class="btn pick" data-q="${q.id}" data-k="${o.k}">選這個</button></div></div>`).join('');
+  box.querySelectorAll('.opt').forEach((el,i)=>q.mount(el.querySelector('.demo'),q.opts[i]));
+  box.querySelectorAll('.btn.pick').forEach(b=>b.onclick=()=>{state[q.id]={...(state[q.id]||{}),pick:b.dataset.k};save();box.querySelectorAll('.opt').forEach(o=>o.dataset.on=o.dataset.k===b.dataset.k?1:0);summary();});
+});
+document.querySelectorAll('[data-n]').forEach(t=>{t.value=state[t.dataset.n]?.note||'';t.oninput=()=>{const q=t.dataset.n;state[q]={...(state[q]||{}),note:t.value};save();};});
+function summary(){document.getElementById('picks').innerHTML=Q.map((q,i)=>`<span class="${state[q.id]?.pick?'on':''}">Q${i+1} ${state[q.id]?.pick||'—'}</span>`).join('');}
+summary();
+document.getElementById('replayAll').onclick=()=>document.querySelectorAll('#q1opts .demo').forEach(h=>h._run&&h._run());
+document.getElementById('copy').onclick=()=>{
+  const lines=['Flight Arc 開場與列表回覆'];Q.forEach((q,i)=>{const s=state[q.id]||{},o=q.opts.find(x=>x.k===s.pick);lines.push(`Q${i+1} ${q.t}：${o?o.k+' '+o.t:'（未選）'}${s.note?'｜備註：'+s.note:''}`);});
+  const txt=lines.join('\n'),out=document.getElementById('out'),st=document.getElementById('status');out.value=txt;document.getElementById('result').hidden=false;
+  const fb=()=>{out.focus();out.select();st.textContent='已選取，請按複製';};
+  try{navigator.clipboard.writeText(txt).then(()=>st.textContent='已複製',fb);}catch(e){fb();}
+};
+</script>

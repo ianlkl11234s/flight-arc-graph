@@ -248,12 +248,19 @@ export interface AirportManifestEntry {
   dates?: Record<string, number>;
   /** 抓「滿」的日期（done ≥ 50 且完成度 ≥ 80%） */
   fullDates?: string[];
+  /** 與 dates 同 key：每日進場數（dest_icao == 該機場）；舊 manifest 無此欄 */
+  datesArr?: Record<string, number>;
+  /** 與 dates 同 key：每日離場數（origin_icao == 該機場）；舊 manifest 無此欄 */
+  datesDep?: Record<string, number>;
   /** 日期分片目錄；存在且涵蓋所選日期時優先讀取。 */
   dailyFiles?: Record<string, {
     path: string;
     flights: number;
     bytes: number;
     gzipBytes?: number;
+    /** 進場數 / 離場數（arr + dep 不一定等於 flights）；舊 manifest 無此欄 */
+    arr?: number;
+    dep?: number;
   }>;
 }
 

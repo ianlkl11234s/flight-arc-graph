@@ -3,6 +3,7 @@ import { TIPS_BY_CATEGORY } from "../data/tips";
 import { useTheme } from "../styles/ThemeContext";
 import { FONT, RADIUS, SIZE, SPACE } from "../styles/tokens";
 import { Chip, Modal, Segmented } from "../ui";
+import { INFO_ELEMENT_COLORS, INFO_SOURCE_COLORS } from "../types/dataColors";
 
 type BottomTab = "guide" | "about" | "profile";
 type GuidePage = "getting-started" | "feature-legend" | "data-sources" | "tips";
@@ -207,22 +208,22 @@ function FeatureLegendPage({ lang }: { lang: Lang }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <SectionTitle>{L ? "視覺元素" : "VISUAL ELEMENTS"}</SectionTitle>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <Card title={L ? "光軌 Light Trail" : "Light Trail"} accentColor="#64aaff">
+        <Card title={L ? "光軌 Light Trail" : "Light Trail"} accentColor={INFO_ELEMENT_COLORS.trail}>
           {L
             ? "彗尾漸層效果 — 飛機後方拖曳的發光軌跡，長度隨速度變化，顏色依高度著色（暖橘 → 冷藍）。"
             : "Comet-tail gradient effect — glowing trail behind the aircraft, length varies with speed, colored by altitude (warm orange → cool blue)."}
         </Card>
-        <Card title={L ? "光球 Flight Orb" : "Flight Orb"} accentColor="#ffcc00">
+        <Card title={L ? "光球 Flight Orb" : "Flight Orb"} accentColor={INFO_ELEMENT_COLORS.orb}>
           {L
             ? "呼吸動畫 — 飛機位置以發光球體標示，帶有脈動呼吸效果，大小可透過 Orb 參數調整。"
             : "Breathing animation — aircraft position marked with a glowing sphere with pulsating effect, size adjustable via the Orb parameter."}
         </Card>
-        <Card title={L ? "閃爍燈 Anti-collision" : "Anti-collision Light"} accentColor="#ff4444">
+        <Card title={L ? "閃爍燈 Anti-collision" : "Anti-collision Light"} accentColor={INFO_ELEMENT_COLORS.strobe}>
           {L
             ? "紅色防撞燈 — 模擬真實飛機的防撞閃光燈，週期性閃爍。"
             : "Red anti-collision light — simulates real aircraft anti-collision strobe, periodically flashing."}
         </Card>
-        <Card title={L ? "靜態軌跡 Static Trail" : "Static Trail"} accentColor="#8888ff">
+        <Card title={L ? "靜態軌跡 Static Trail" : "Static Trail"} accentColor={INFO_ELEMENT_COLORS.staticTrail}>
           {L
             ? "依高度著色的飛行路徑線 — 顯示完整歷史航跡，透明度可透過 Opacity 參數調整。"
             : "Altitude-colored flight path lines — shows complete historical trajectory, transparency adjustable via Opacity parameter."}
@@ -257,37 +258,37 @@ function DataSourcesPage({ lang }: { lang: Lang }) {
       name: { zh: "航線軌跡 — FlightRadar24 API", en: "Route Tracks — FlightRadar24 API" },
       source: "FR24 Explorer API",
       desc: { zh: "涵蓋台灣、日本、香港及世界各地 95+ 座機場的精細軌跡資料。透過 flight-summary/light 端點取得航班清單，再逐航班擷取詳細軌跡點（經緯度、高度、速度、時間戳）。支援按機場 lazy loading，軌跡細緻清晰。", en: "Detailed trajectory data covering 95+ airports across Taiwan, Japan, Hong Kong, and beyond. Flight lists retrieved via flight-summary/light endpoint, then per-flight track points (lat/lon, altitude, speed, timestamp) fetched. Supports per-airport lazy loading for efficient data delivery." },
-      color: "#64aaff",
+      color: INFO_SOURCE_COLORS.fr24,
     },
     {
       name: { zh: "空域快照 — OpenSky Network", en: "Airspace Scan — OpenSky Network" },
       source: "OpenSky / ADS-B",
       desc: { zh: "東亞附近空域的全覆蓋掃描 — 以 OpenSky Network 為主要資料來源，持續更新區域內所有飛機位置。涵蓋範圍完整（包含過境、軍機等），但軌跡由點連線構成，降落過程細節較粗。與航線軌跡互補使用。", en: "Full-coverage airspace scan across East Asia — primarily sourced from OpenSky Network, continuously tracking all aircraft in the region. Broader coverage (including overflights, military, etc.) but trails are point-connected and less detailed during descent. Complementary to Route Tracks." },
-      color: "#1ad9e5",
+      color: INFO_SOURCE_COLORS.opensky,
     },
     {
       name: { zh: "管制空域 — OpenAIP", en: "Controlled Airspace — OpenAIP" },
       source: "OpenAIP · CC BY-NC-SA 4.0",
       desc: { zh: "限航區、禁航區、危險區、管制區（TMA/CTR）與飛航情報區（FIR）的立體邊界 — 涵蓋美國、英國、法國、德國、義大利、西班牙、荷蘭、土耳其、日本、中國、泰國。資料由 OpenAIP 社群維護，以 CC BY-NC-SA 4.0 授權釋出（僅限非商業使用），實際條款以 openaip.net 公告為準。", en: "3D boundaries of restricted, prohibited, danger, and control areas (TMA/CTR) plus flight information regions (FIR) — covering the US, UK, France, Germany, Italy, Spain, Netherlands, Türkiye, Japan, China, and Thailand. Maintained by the OpenAIP community and released under CC BY-NC-SA 4.0 (non-commercial use only); refer to openaip.net for current terms." },
-      color: "#ff5977",
+      color: INFO_SOURCE_COLORS.openaip,
     },
     {
       name: { zh: "臺灣空域 — 民航局 eAIP", en: "Taiwan Airspace — CAA eAIP" },
       source: "交通部民航局 eAIP（ais.caa.gov.tw）",
       desc: { zh: "臺灣本島與周邊的限航區、禁航區、訓練空域與防空識別區（ADIZ）— 取自交通部民用航空局電子式飛航指南（eAIP）的 ENR 2.1／5.1／5.3／5.5 章節。本圖層僅供視覺化參考，不可作為飛航依據。", en: "Restricted, prohibited, and training areas plus the ADIZ around Taiwan — sourced from the Civil Aeronautics Administration (MOTC) electronic AIP, sections ENR 2.1/5.1/5.3/5.5. For visualization reference only; not for navigational use." },
-      color: "#ffbf40",
+      color: INFO_SOURCE_COLORS.caaEaip,
     },
     {
       name: { zh: "OpenStreetMap", en: "OpenStreetMap" },
       source: "OSM Overpass API",
       desc: { zh: "機場邊界多邊形 — 透過 Overpass API 擷取台灣、日本、香港等地機場的建築與跑道邊界，用於地圖上的機場區域渲染與光暈效果。", en: "Airport boundary polygons — retrieved via Overpass API for airports across Taiwan, Japan, Hong Kong, and more, used for airport area rendering and glow effects on the map." },
-      color: "#66bb6a",
+      color: INFO_SOURCE_COLORS.osm,
     },
     {
       name: { zh: "Mapbox GL JS", en: "Mapbox GL JS" },
       source: "Mapbox GL JS v3",
       desc: { zh: "向量地圖瓦片、3D 地形（terrain）、衛星影像。提供 6 種底圖樣式，支援 CustomLayer 嵌入 Three.js 場景。", en: "Vector map tiles, 3D terrain, satellite imagery. 6 map styles available, supports CustomLayer for embedding Three.js scenes." },
-      color: "#ab47bc",
+      color: INFO_SOURCE_COLORS.mapbox,
     },
   ];
 

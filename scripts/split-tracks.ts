@@ -22,7 +22,11 @@
  * manifest.airports 額外欄位（資料目錄，給前端日期選單 / 機場清單分層用）：
  *   - isCore:    是否為主動查詢機場（來源 scripts/core-airports.json，由 build-core-airports.ts 產生）
  *   - dates:     該機場每日（台灣時間 UTC+8）軌跡筆數 { "2026-02-18": 614, ... }
- *   - dailyFiles: 實際存在且與 canonical 資料一致的每日檔 metadata（可選，供新 loader 漸進採用）
+ *   - datesArr / datesDep: 與 dates 同 key 的每日進場數（dest_icao == 該機場）/ 離場數（origin_icao == 該機場）
+ *   - dailyFiles: 實際存在且與 canonical 資料一致的每日檔 metadata（可選，供新 loader 漸進採用）；
+ *                 每筆亦帶 arr / dep（同上定義）
+ *   arr/dep 與 flights 用同一份 fr24_id 去重結果計數。arr + dep 不一定等於 flights：
+ *   兩端都不是該機場的異常記錄兩邊都不算；origin == dest（繞場返航）兩邊都算。照實記錄。
  *   - fullDates: 抓「滿」的日期（core-airports.json 的 fullDates ∩ 實際有軌跡的日期）
  *
  * manifest.regionDates / manifest.regionFullDates：上述 dates/fullDates 依機場 getRegion()
@@ -209,6 +213,10 @@ interface AirportManifestEntry {
   isCore: boolean;
   dates: Record<string, number>;
   fullDates: string[];
+  /** 與 dates 同 key：每日進場數（dest_icao == 該機場） */
+  datesArr: Record<string, number>;
+  /** 與 dates 同 key：每日離場數（origin_icao == 該機場） */
+  datesDep: Record<string, number>;
   dailyFiles?: Record<string, DailyFileMetadata>;
 }
 
@@ -218,6 +226,10 @@ interface DailyFileMetadata {
   flights: number;
   bytes: number;
   gzipBytes?: number;
+  /** 進場數（dest_icao == 該機場），與 flights 同一份去重結果 */
+  arr: number;
+  /** 離場數（origin_icao == 該機場） */
+  dep: number;
 }
 
 function loadCoreAirports(): Map<string, string[]> {
@@ -253,6 +265,17 @@ function countDates(flights: Flight[]): Record<string, number> {
   return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 
+/** 單一機場一組航班的進/離場數（arr + dep 可能 ≠ flights.length，見檔頭說明） */
+function countDirections(icao: string, flights: Flight[]): { arr: number; dep: number } {
+  let arr = 0;
+  let dep = 0;
+  for (const f of flights) {
+    if (f.dest_icao === icao) arr++;
+    if (f.origin_icao === icao) dep++;
+  }
+  return { arr, dep };
+}
+
 function buildAirportEntry(
   icao: string,
   flights: Flight[],
@@ -264,12 +287,23 @@ function buildAirportEntry(
   const candidates = coreAirports.get(icao);
   // fullDates 取 candidates ∩ 實際有足量軌跡的日期（防「時刻表抓了、軌跡沒抓」誤標）
   const fullDates = (candidates ?? []).filter((d) => (dates[d] ?? 0) >= 50);
+  // 與 countDates 同一切日邏輯（groupFlightsByDate 也走 getFlightTwDate），key 集合與 dates 相同
+  const groups = groupFlightsByDate(flights);
+  const datesArr: Record<string, number> = {};
+  const datesDep: Record<string, number> = {};
+  for (const d of Object.keys(dates)) {
+    const { arr, dep } = countDirections(icao, groups.get(d) ?? []);
+    datesArr[d] = arr;
+    datesDep[d] = dep;
+  }
   const entry: AirportManifestEntry = {
     flights: flights.length,
     gzipBytes,
     isCore: coreAirports.has(icao),
     dates,
     fullDates,
+    datesArr,
+    datesDep,
   };
   if (dailyFiles && Object.keys(dailyFiles).length > 0) entry.dailyFiles = dailyFiles;
   return entry;
@@ -371,12 +405,13 @@ function groupFlightsByDate(flights: Flight[]): Map<string, Flight[]> {
   return groups;
 }
 
-function dailyMetadata(date: string, icao: string, jsonl: string, flights: number): DailyFileMetadata {
+function dailyMetadata(date: string, icao: string, jsonl: string, flights: Flight[]): DailyFileMetadata {
   return {
     path: `airports/${icao}/${date}.jsonl`,
-    flights,
+    flights: flights.length,
     bytes: Buffer.byteLength(jsonl),
     gzipBytes: gzipSync(jsonl).length,
+    ...countDirections(icao, flights),
   };
 }
 
@@ -389,7 +424,7 @@ function writeDailyShards(icao: string, flights: Flight[]): Record<string, Daily
     const sorted = [...group].sort((a, b) => a.dep_time - b.dep_time);
     const jsonl = sorted.map((flight) => JSON.stringify(flight)).join("\n") + "\n";
     writeFileSync(join(dailyDir, `${date}.jsonl`), jsonl);
-    metadata[date] = dailyMetadata(date, icao, jsonl, sorted.length);
+    metadata[date] = dailyMetadata(date, icao, jsonl, sorted);
   }
   return metadata;
 }
@@ -420,7 +455,7 @@ function readVerifiedDailyMetadata(icao: string, flights: Flight[]): Record<stri
     ) {
       return undefined;
     }
-    metadata[date] = dailyMetadata(date, icao, content, parsed.flights.length);
+    metadata[date] = dailyMetadata(date, icao, content, parsed.flights);
   }
   return metadata;
 }

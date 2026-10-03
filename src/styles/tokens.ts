@@ -20,6 +20,8 @@ export interface ColorTokens {
   danger: string;
   /** 語意色：錄影紅（兩色同） */
   rec: string;
+  /** 語意色：警示（空域限航提示等；兩色同） */
+  warn: string;
   /** accent 12–16% 透明，選中底 */
   accentSoft: string;
 }
@@ -38,6 +40,7 @@ export const COLOR: { dark: ColorTokens; light: ColorTokens } = {
     mapBg: "#05070a",
     danger: "#ff6b6b",
     rec: "#e5484d",
+    warn: "#f59e0b",
     accentSoft: "rgba(242,169,59,.14)",
   },
   light: {
@@ -53,6 +56,7 @@ export const COLOR: { dark: ColorTokens; light: ColorTokens } = {
     mapBg: "#e8eaec",
     danger: "#c62828",
     rec: "#e5484d",
+    warn: "#f59e0b",
     accentSoft: "rgba(168,98,0,.12)",
   },
 };
@@ -95,7 +99,7 @@ export const RADIUS = {
   pill: 99,
 } as const;
 
-/** z-index 六層（照 Pulse） */
+/** z-index 六層（照 Pulse）＋開場遮罩 */
 export const Z = {
   mapOverlay: 10,
   panel: 20,
@@ -103,6 +107,8 @@ export const Z = {
   popover: 30,
   modal: 40,
   toast: 50,
+  /** 開場遮罩（BootScreen）：唯一高於 toast 的一層，只在首次載入期間存在 */
+  boot: 60,
 } as const;
 
 /** 版面常數（px） */
@@ -111,10 +117,16 @@ export const LAYOUT = {
   panelWidth: 288,
   /** 寬面板（分析 › 統計：圖表 300 + 左右留白） */
   panelWidthWide: 360,
+  /** 機場面板「機場」分頁（名稱＋總／進／離三欄數字＋ ＋ 鈕） */
+  panelWidthList: 320,
   panelLeft: 64,
   panelTop: 52,
   mapBottomInset: 64,
   dockWidth: 260,
+  /**
+   * 左下圖說 + 時間軸（展開、單日）的高度初始值：左側面板 maxHeight 實際依 ResizeObserver 量到的
+   * --fa-caption-h／--fa-timeline-h 讓位（IconRailSidebar），量到之前才用這個值。
+   */
+  leftBottomReserve: 184,
 } as const;
 
-export const TOKENS = { COLOR, BLUR, FONT, SIZE, SPACE, RADIUS, Z, LAYOUT } as const;
