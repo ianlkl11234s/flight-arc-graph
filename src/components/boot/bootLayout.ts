@@ -3,7 +3,6 @@
  * 調整頁：dev server 下開 /boot-tuner.html，調好按「複製設定」把整段貼回這裡（取代 BOOT_LAYOUT）。
  * 正式站只讀這裡的預設值，不讀 localStorage（調整頁的暫存值只屬於調整頁）。
  */
-import { SIZE } from "../../styles/tokens";
 
 export interface BootLayout {
   /** 雷達直徑，佔畫面高度（vh） */
@@ -36,18 +35,18 @@ export interface BootLayout {
 }
 
 export const BOOT_LAYOUT: BootLayout = {
-  radarVh: 42,
-  radarMaxVw: 86,
+  radarVh: 20,
+  radarMaxVw: 70,
   offsetXVw: 0,
   offsetYVh: -9,
   rings: 3,
-  sweepS: 1.6,
-  radiusKm: 350,
-  dotPx: 2.4,
-  wordmarkPx: SIZE.caption,
+  sweepS: 2,
+  radiusKm: 340,
+  dotPx: 2.2,
+  wordmarkPx: 23,
   wordmarkGapPx: 28,
   wordmarkOffsetYPx: 0,
-  chipGapPx: 18,
+  chipGapPx: 21,
   minShowMs: 2000,
   enterScale: 1,
 };
