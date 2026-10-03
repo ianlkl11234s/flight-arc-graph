@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState, type CSSPropertie
 import { useTheme } from "../styles/ThemeContext";
 import { BLUR, FONT, LAYOUT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
 import { Button, Chip, Segmented, Select, Slider } from "../ui";
+import { THUMB_W } from "../ui/Slider";
 import { IconChevron, IconPause, IconPlay } from "../ui/icons";
 import { mix, themeVars } from "../ui/vars";
 import {
@@ -211,6 +212,10 @@ export function Timeline(p: Props) {
   };
 
   /* ── 直方圖 ── */
+  const hasBins = expanded && p.hourBins.length > 0;
+  const winSpan = Math.max(1, p.windowEnd - p.windowStart);
+  /** 每格之間留 1px 縫（格寬 = 一小時的時間寬 − 縫） */
+  const binGap = 1;
   const maxHalf = Math.max(1, ...p.hourBins.map((b) => Math.max(b.arr, b.dep)));
   const curIdx = p.hourBins.findIndex((b) => p.currentTime >= b.start && p.currentTime < b.start + 3600);
 
@@ -485,59 +490,74 @@ export function Timeline(p: Props) {
             </div>
           )}
 
-          {/* ── 每小時起降直方圖：進場向上、離場向下；點擊跳到該小時 ── */}
-          {p.hourBins.length > 0 && (
-            <div
-              role="group"
-              aria-label="每小時起降（進場向上、離場向下）"
-              style={{ display: "flex", alignItems: "stretch", gap: 1, height: 34 }}
-            >
-              {p.hourBins.map((b, i) => {
-                const cur = i === curIdx;
-                const color = cur ? tokens.accent : mix(tokens.fg2, isDark ? 45 : 50); // 圖表配色規則：目前用 accent，其餘中性灰階
-                const tw = new Date(b.start * 1000 + 8 * 3600_000);
-                const label = `${String(tw.getUTCMonth() + 1).padStart(2, "0")}/${String(tw.getUTCDate()).padStart(2, "0")} ${String(tw.getUTCHours()).padStart(2, "0")}:00 · 進場 ${b.arr} · 離場 ${b.dep}`;
-                return (
-                  <button
-                    key={b.start}
-                    type="button"
-                    tabIndex={-1}
-                    title={label}
-                    aria-label={label}
-                    onClick={() => p.onSeek(b.start)}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      padding: 0,
-                      border: 0,
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                    }}
-                  >
-                    <span style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
-                      <span style={{ width: "100%", height: `${(b.arr / maxHalf) * 100}%`, background: color }} />
-                    </span>
-                    <span style={{ flex: 1, display: "flex", alignItems: "flex-start", width: "100%" }}>
-                      <span style={{ width: "100%", height: `${(b.dep / maxHalf) * 100}%`, background: color }} />
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </>
       )}
 
-      {/* ── 主列：播放、時刻、進度 ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: SPACE.s8 + SPACE.s2, minWidth: 0 }}>
-        {playButton}
-        {clock}
+      {/* ── 主區：欄 = 播放 | 時刻 | 軌道 | 起訖；直方圖放軌道欄上一列，與滑桿同寬 ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "auto auto minmax(40px, 1fr)" + (expanded ? " auto" : ""),
+          gridAutoRows: "auto",
+          columnGap: SPACE.s8 + SPACE.s2,
+          alignItems: "center",
+          minWidth: 0,
+        }}
+      >
+          {/* ── 每小時起降直方圖：進場向上、離場向下；點擊跳到該小時 ──
+            與進度滑桿同欄：左右各縮 THUMB_W/2（滑桿 thumb 中心在 3px + p×(W−6)），
+            每格依「時間」定位（t 的 x = (t−windowStart)/(windowEnd−windowStart)），Compare 不連續日期也與把手同 x。 */}
+        {hasBins && (
+          <div
+            role="group"
+            aria-label="每小時起降（進場向上、離場向下）"
+            style={{ gridColumn: 3, gridRow: 1, position: "relative", height: 34, margin: `0 ${THUMB_W / 2}px ${SPACE.s4}px` }}
+          >
+            {p.hourBins.map((b, i) => {
+              const cur = i === curIdx;
+              const color = cur ? tokens.accent : mix(tokens.fg2, isDark ? 45 : 50); // 圖表配色規則：目前用 accent，其餘中性灰階
+              const tw = new Date(b.start * 1000 + 8 * 3600_000);
+              const label = `${String(tw.getUTCMonth() + 1).padStart(2, "0")}/${String(tw.getUTCDate()).padStart(2, "0")} ${String(tw.getUTCHours()).padStart(2, "0")}:00 · 進場 ${b.arr} · 離場 ${b.dep}`;
+              return (
+                <button
+                  key={b.start}
+                  type="button"
+                  tabIndex={-1}
+                  title={label}
+                  aria-label={label}
+                  onClick={() => p.onSeek(b.start)}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: 0,
+                    left: `${((b.start - p.windowStart) / winSpan) * 100}%`,
+                    width: `calc(${(3600 / winSpan) * 100}% - ${binGap}px)`,
+                    minWidth: 1,
+                    padding: 0,
+                    border: 0,
+                    background: "transparent",
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                  }}
+                >
+                  <span style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
+                    <span style={{ width: "100%", height: `${(b.arr / maxHalf) * 100}%`, background: color }} />
+                  </span>
+                  <span style={{ flex: 1, display: "flex", alignItems: "flex-start", width: "100%" }}>
+                    <span style={{ width: "100%", height: `${(b.dep / maxHalf) * 100}%`, background: color }} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <div style={{ gridColumn: 1, gridRow: 2, display: "flex" }}>{playButton}</div>
+        <div style={{ gridColumn: 2, gridRow: 2, display: "flex", alignItems: "baseline", gap: SPACE.s8 + SPACE.s2 }}>{clock}</div>
         {expanded ? (
           <div
-            style={{ flex: 1, minWidth: 40 }}
+            style={{ gridColumn: 3, gridRow: 2, minWidth: 0 }}
             onPointerDown={() => dispatch({ type: "dragStart" })}
           >
             <Slider
@@ -553,7 +573,7 @@ export function Timeline(p: Props) {
         ) : (
           <div
             aria-hidden="true"
-            style={{ flex: 1, minWidth: 40, height: 2, position: "relative", background: mix(tokens.fg1, 18) }}
+            style={{ gridColumn: 3, gridRow: 2, minWidth: 0, height: 2, position: "relative", background: mix(tokens.fg1, 18) }}
           >
             <span
               style={{
@@ -568,7 +588,7 @@ export function Timeline(p: Props) {
           </div>
         )}
         {expanded && (
-          <span style={{ fontFamily: FONT.data, fontSize: SIZE.minor, color: tokens.fg3, whiteSpace: "nowrap", flex: "none" }}>
+          <span style={{ fontFamily: FONT.data, fontSize: SIZE.minor, color: tokens.fg3, whiteSpace: "nowrap", gridColumn: 4, gridRow: 2 }}>
             {formatTime(p.windowStart)}–{formatTime(p.windowEnd)}
           </span>
         )}

@@ -36,7 +36,7 @@ export interface SliderRangeProps extends SliderCommon {
 
 export type SliderProps = SliderSingleProps | SliderRangeProps;
 
-const THUMB_W = 6;
+export const THUMB_W = 6;
 const HIT_H = 14;
 
 /** 全站唯一滑桿：2px 軌 + 6×14 方形 thumb；可單值或雙把手範圍（spec §5）。 */
