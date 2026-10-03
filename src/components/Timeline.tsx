@@ -6,6 +6,7 @@ import { Button, Chip, Segmented, Select, Slider } from "../ui";
 import { THUMB_W } from "../ui/Slider";
 import { IconChevron, IconPause, IconPlay, IconPlus } from "../ui/icons";
 import { COMPARE_COLORS } from "../types/dataColors";
+import { useMeasuredCssVar } from "../ui/useMeasuredCssVar";
 import { compareProgressToTime, compareSegmentStarts, compareTimeToProgress } from "../ui/compareTimeline";
 import { mix, themeVars } from "../ui/vars";
 import {
@@ -145,6 +146,15 @@ export function Timeline(p: Props) {
   const expanded = fixed || isExpanded(state);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const calendarRef = useRef<HTMLDivElement | null>(null);
+  // 桌面：把「展開時」的實際高度寫到 --fa-timeline-h，左側面板 maxHeight 依此讓位（Compare 展開時自動讓更多）。
+  // 收合時不寫、保留上次展開高度，面板不會跟著 hover 跳動。手機（fixed）不參與。
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
+  const measureRef = useMeasuredCssVar("--fa-timeline-h", { enabled: !fixed, shouldWrite: () => expandedRef.current });
+  const setRootRef = useCallback((el: HTMLDivElement | null) => {
+    rootRef.current = el;
+    measureRef(el);
+  }, [measureRef]);
   const availableDates = p.availableDates ?? [];
   const fullDates = p.fullDates ?? [];
   const selectedDates = p.selectedDates ?? [];
@@ -301,7 +311,7 @@ export function Timeline(p: Props) {
 
   return (
     <div
-      ref={rootRef}
+      ref={setRootRef}
       role="group"
       aria-label={expanded ? "時間軸" : "時間軸（滑鼠移入或按 Enter 展開）"}
       tabIndex={expanded ? -1 : 0}

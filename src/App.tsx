@@ -43,6 +43,7 @@ import { computeBearing, getViewshedArcPoints, getViewshedRings } from "./map/vi
 import { CinemaBar } from "./components/CinemaBar";
 import { RecordingGuide } from "./components/RecordingGuide";
 import { COLOR_THEMES, DEFAULT_THEME_KEY } from "./types/colorTheme";
+import { useMeasuredCssVar } from "./ui/useMeasuredCssVar";
 import { ATLAS_POPUP as AP, ATLAS_STATUS_FALLBACK_COLOR, ATLAS_STATUS_META, CAPTURE_OVERLAY as CAP, COMPARE_COLORS, COMPASS } from "./types/dataColors";
 import { assignAirportColors, type AirportColorMode, type AirportAssignment } from "./types/airportColors";
 import { computeAnalysisColorMap, type AnalysisColorBy } from "./data/analysisColors";
@@ -688,6 +689,8 @@ export default function App() {
 
   // 手機狀態條／航班卡位置：header（44）＋固定在其下的時間軸，取時間軸實際底邊 + 8（時間軸高度隨日期面板等變動）
   const mobileTimelineRef = useRef<HTMLDivElement>(null);
+  // 桌面左下圖說的實際高度 → --fa-caption-h（左側面板 maxHeight 讓位用；時間軸自己寫 --fa-timeline-h）
+  const captionMeasureRef = useMeasuredCssVar("--fa-caption-h");
   const [mobileStatusTop, setMobileStatusTop] = useState(52);
   useEffect(() => {
     if (!isMobile || captureMode) return;
@@ -2457,7 +2460,7 @@ export default function App() {
               pointerEvents: "none",
             }}
           >
-            <div data-boot-part="caption">
+            <div data-boot-part="caption" ref={captionMeasureRef}>
             <Caption
               code={captionCode}
               name={captionName}

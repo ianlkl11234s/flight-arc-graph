@@ -192,6 +192,16 @@ const ATLAS_BADGE_KEYFRAMES = `
 
 /* ── Main Component ──────────────────────────────────────── */
 
+/**
+ * 左側面板最大高度：往上讓出左下圖說＋時間軸的「實際」高度（App／Timeline 用 ResizeObserver 寫入
+ * --fa-caption-h、--fa-timeline-h）；量到之前用 LAYOUT.leftBottomReserve 拆成的初始值。
+ */
+const CAPTION_H_INIT = 52;
+const LEFT_PANEL_MAX_HEIGHT =
+  `calc(100vh - ${LAYOUT.panelTop + LAYOUT.mapBottomInset + SPACE.s12 + SPACE.s8}px`
+  + ` - var(--fa-caption-h, ${CAPTION_H_INIT}px)`
+  + ` - var(--fa-timeline-h, ${LAYOUT.leftBottomReserve - CAPTION_H_INIT - SPACE.s12}px))`;
+
 export function IconRailSidebar(props: IconRailSidebarProps) {
   const { activePanel, onActivePanelChange: setActivePanel } = props;
   const { tokens } = useTheme();
@@ -342,7 +352,7 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         <Panel
           ariaLabel={workspaceTitle}
           width={activePanel === "stats" ? LAYOUT.panelWidthWide : activePanel === "sets" && setsTab === "airports" ? LAYOUT.panelWidthList : LAYOUT.panelWidth}
-          maxHeight={`calc(100vh - ${LAYOUT.panelTop + LAYOUT.mapBottomInset + LAYOUT.leftBottomReserve + SPACE.s8}px)`}
+          maxHeight={LEFT_PANEL_MAX_HEIGHT}
           style={{ animation: "iconRailFadeIn 0.25s ease-out" }}
         >
           <PanelHeader

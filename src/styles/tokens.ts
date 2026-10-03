@@ -123,7 +123,10 @@ export const LAYOUT = {
   panelTop: 52,
   mapBottomInset: 64,
   dockWidth: 260,
-  /** 左下圖說 + 時間軸（展開，單日、無 Compare 清單）的高度；左側面板 maxHeight 往上讓出這一塊 */
+  /**
+   * 左下圖說 + 時間軸（展開、單日）的高度初始值：左側面板 maxHeight 實際依 ResizeObserver 量到的
+   * --fa-caption-h／--fa-timeline-h 讓位（IconRailSidebar），量到之前才用這個值。
+   */
   leftBottomReserve: 184,
 } as const;
 

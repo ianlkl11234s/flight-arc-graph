@@ -65,7 +65,7 @@
 | 右下 dock（260） | 點擊資訊卡（航班／空域／機場）+ 圖例；同時只一張卡 | `DockCard` |
 | 置中 | 說明視窗 | `Modal` |
 
-時間軸與 dock 底邊共用 `LAYOUT.mapBottomInset`。
+時間軸與 dock 底邊共用 `LAYOUT.mapBottomInset`。左側面板 maxHeight 往上讓出左下圖說＋時間軸的**實際**高度：Timeline（桌面）與圖說外層用 `useMeasuredCssVar`（ResizeObserver）寫 `--fa-timeline-h`、`--fa-caption-h` 到 `<html>`；時間軸只在展開時寫（收合保留上次展開高度，面板不隨 hover 跳動），Compare 展開變高時面板自動讓位；量到之前用 `LAYOUT.leftBottomReserve` 拆出的初始值。
 
 ---
 
