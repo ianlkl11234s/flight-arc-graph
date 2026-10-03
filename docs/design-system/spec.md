@@ -104,7 +104,7 @@
 | `FlightInfoCard`、`AirspaceInfoCard` | 點擊資訊卡（內容；外殼是 `DockCard`） |
 | `LoadingStatus` | 把載入狀態接到 `StatusBar` |
 | `IconRailSidebar` + `sidebar/panels/*` | 左 rail 與各面板（一個 panel 一檔） |
-| `sidebar/panels/SetsPanel` | 機場面板：頂部 `Segmented` 三分頁「機場｜組合｜場景」（選擇記 localStorage `fa-sets-tab`；套用預設組合後停在組合）。機場分頁（面板寬 `panelWidthList`）= 搜尋 + 可點擊欄首列「機場｜總｜進｜離」（`AirportColumnHeader`）+ 搜尋結果／洲／國家樹狀目錄。分頁、搜尋、欄首不捲動、直接坐在面板底色上（不另鋪底色），清單在下方自己捲動，所以欄首恆在清單頂端。點欄首＝依該欄排序：數字欄預設由大到小、名稱升冪，再點同一欄反向；目前排序欄 accent + 小箭頭（SVG），其他 fg3；狀態記 `fa-sets-sort`（`key:dir`，舊值只有 key 時視為該欄預設方向）。每列三欄數字（`AirportRow` 的 `stats`：總／進／離），欄寬依清單最大值位數固定（`statColWidth`）、右對齊、`FONT.data` + tabular-nums；樹狀縮排只加在名稱側，數字欄與欄首對齊。操作提示放在列的 `title`（點擊開啟並飛過去；Shift+點擊加入組合），＋ 鈕 aria-label／title「加入組合」。組合分頁 = 目前組合（成員 chip、清空、退出）+ 預設組合。場景分頁 = 場景預設 |
+| `sidebar/panels/SetsPanel` | 機場面板：頂部 `Segmented` 三分頁「機場｜組合｜場景」（選擇記 localStorage `fa-sets-tab`；套用預設組合後停在組合）。機場分頁（面板寬 `panelWidthList`）= 搜尋 + 可點擊欄首列「機場｜總｜進｜離」（`AirportColumnHeader`）+ 搜尋結果／洲／國家樹狀目錄。分頁、搜尋、欄首不捲動、直接坐在面板底色上（不另鋪底色），清單在下方自己捲動，所以欄首恆在清單頂端。點欄首＝依該欄排序：數字欄預設由大到小、名稱升冪，再點同一欄反向；目前排序欄 accent + 小箭頭（SVG），其他 fg3；狀態記 `fa-sets-sort`（`key:dir`，舊值只有 key 時視為該欄預設方向）。每列三欄數字（`AirportRow` 的 `stats`：總／進／離），欄寬依清單最大值位數固定（`statColWidth`）、右對齊、`FONT.data` + tabular-nums；數字一律中性色（總 `fg1`、進／離 `fg2`），資料色只出現在欄首「進」「離」字前的 6px 圓點（`TRAJ` 進場／離場色）當圖例；樹狀縮排只加在名稱側，數字欄與欄首對齊。操作提示放在列的 `title`（點擊開啟並飛過去；Shift+點擊加入組合），＋ 鈕 aria-label／title「加入組合」。組合分頁 = 目前組合（成員 chip、清空、退出）+ 預設組合。場景分頁 = 場景預設 |
 | `MobileHeader`、`MobileBottomSheet` | 手機版 chrome（只統一外觀，R11／Q8） |
 | `InfoModal` | 說明視窗內容（外殼是 `Modal`） |
 | `boot/BootScreen` | 首次載入的雷達遮罩（見下方「開場（Boot）」） |

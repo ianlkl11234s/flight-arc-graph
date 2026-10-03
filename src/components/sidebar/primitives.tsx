@@ -161,7 +161,7 @@ export type AirportColumn = "name" | "tot" | "arr" | "dep";
 
 /**
  * 機場列表欄首：機場｜總｜進｜離（＋ 欄不需欄首）。點欄首 = 依該欄排序（onSort），
- * 目前排序欄 accent + 小箭頭，其他 fg3。
+ * 目前排序欄 accent + 小箭頭，其他 fg3。進／離字前 6px 資料色圓點當圖例（TRAJ）。
  */
 export function AirportColumnHeader({
   sortKey,
@@ -174,12 +174,13 @@ export function AirportColumnHeader({
   colWidth: number;
   onSort: (key: AirportColumn) => void;
 }) {
-  const { tokens } = useTheme();
-  const cols: { key: AirportColumn; label: string; title: string }[] = [
+  const { tokens, isDark } = useTheme();
+  const pal = isDark ? TRAJ.dark : TRAJ.light;
+  const cols: { key: AirportColumn; label: string; title: string; dot?: string }[] = [
     { key: "name", label: "機場", title: "名稱" },
     { key: "tot", label: "總", title: "總量" },
-    { key: "arr", label: "進", title: "進場" },
-    { key: "dep", label: "離", title: "離場" },
+    { key: "arr", label: "進", title: "進場", dot: pal.arr },
+    { key: "dep", label: "離", title: "離場", dot: pal.dep },
   ];
   return (
     <div
@@ -230,6 +231,9 @@ export function AirportColumnHeader({
               whiteSpace: "nowrap",
             }}
           >
+            {c.dot && (
+              <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: RADIUS.pill, background: c.dot, marginRight: SPACE.s2, flex: "none" }} />
+            )}
             {c.label}
             <span aria-hidden="true" style={{ width: 8, display: "inline-flex", visibility: active ? "visible" : "hidden" }}>
               <IconChevron size={8} direction={sortDir === "asc" ? "up" : "down"} />
@@ -279,8 +283,7 @@ export function AirportRow({
   /** 加入／移出組合 */
   onToggleSet: () => void;
 }) {
-  const { tokens, isDark } = useTheme();
-  const pal = isDark ? TRAJ.dark : TRAJ.light;
+  const { tokens } = useTheme();
   const info = getAirportInfo(icao);
   const label = info?.name ?? name;
   const highlighted = current || inSet;
@@ -342,8 +345,8 @@ export function AirportRow({
         {stats && (
           <>
             <StatNum value={stats.tot} width={colWidth} color={tokens.fg1} label="總量" />
-            <StatNum value={stats.arr} width={colWidth} color={pal.arr} label="進場" />
-            <StatNum value={stats.dep} width={colWidth} color={pal.dep} label="離場" />
+            <StatNum value={stats.arr} width={colWidth} color={tokens.fg2} label="進場" />
+            <StatNum value={stats.dep} width={colWidth} color={tokens.fg2} label="離場" />
           </>
         )}
       </button>
