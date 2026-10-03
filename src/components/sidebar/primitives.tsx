@@ -246,7 +246,7 @@ export function AirportRow({
           <div style={{ fontSize: SIZE.body, color: highlighted ? tokens.fg1 : tokens.fg2, lineHeight: 1.3 }}>
             {label}
           </div>
-          <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data }}>
+          <div style={{ fontSize: SIZE.minor, color: tokens.fg3, fontFamily: FONT.data, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {info?.iata || iata || icao} / {icao}{status ? ` · ${status}` : ""}
           </div>
           {matchReason && (
