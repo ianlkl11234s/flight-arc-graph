@@ -233,12 +233,12 @@ T0-1～T0-5 已在本分支完成（T0-6 未做，收益 <0.5%）。同一 sessi
 
 - **量測工具修正**：CDP `JSHeapUsedSize` **看不到 TypedArray**（配 200 MB Float32Array → −1.9 MB）；`Runtime.getHeapUsage().backingStorageSize` +190.7 MB、renderer `phys_footprint` +186 MB。→ 之後一律看 `backingStorageSize` + footprint。
 - **各場景穩態（GC 後，renderer／GPU process／backingStorage）**：空白 64／299／0；S1 RCTP 304–334／1,005–1,066／72；S2 apac fit（L2）451–471／1,118／81；S2 拉近 z10.2（L0，255 萬點）**819**／1,214／329；world z3（L2，81,599 班）**999（峰值 1,678）**／1,105／233 MB。
-- **world 載入**：10.3 s 穩定、7 個 long task、**最長 1,529 ms**。
+- **world 載入**：10.3 s 穩定、7 個 long task、**最長 1,529 ms**。⚠️ 更正（2026-10-12 Gate D 複測）：Phase 0 原始數據其實有兩次 world，另一次最長 249 ms；1.5 s 是離群值，trace 歸因為 **React 19 dev build 才有的 `addObjectDiffToProperties`**（逐筆比對 81,599 筆 flights props），production 不存在。loader 主執行緒合計 ~942 ms 但分散在各 `reader.read()` 區塊，無單一 task >50 ms。HEAD 0d7ccfc 複測：prod 最長 251／240 ms、dev 239／239 ms → Gate D 已達標，2-3 不需升入 Phase 1。
 - **GPU process ~1 GB 主要是底圖＋地形＋DPR2 framebuffer**，軌跡增量約 50–200 MB（與估算相符）。
 - **T-A 切底圖（S2 apac L2，×11）**：renderer **+30.0 MB/次**、GPU **+27.9 MB/次**；每切一次多留 1 個 FlightScene、3 個 WebGLRenderer、3 個 `webglcontextlost` listener、1 個 move listener，完全線性（11 次後 FlightScene=12、WebGLRenderer=36）。**洩漏實測成立**；L0／world 的斜率未量，預期更大。
 - **T-G 換集合 ×12**：FlightScene／WebGLRenderer 實例恆為 1／3，**換集合本身無實例洩漏**；renderer 在 304–780 MB 間漂移、無線性階梯（推測 Mapbox tile cache／allocator，未驗證）。峰值 renderer 1,041 MB（RJTT）、GPU 1,354 MB。
 - **閒置**：S2 暫停 32 s 後 renderer／GPU 皆 0%（歸零）；world 暫停後 GPU 0% 但 **renderer 仍 4–6%**。
 
-**對路線圖的影響**：1-1 維持第一（實證）；world 穩態 999／峰值 1,678 MB 超過「<300／<500」門檻 → 2-2、2-3 不降級；world long task 1.5 s >1 s → **2-3（Worker 解析）升入 Phase 1**；1-3 要做（world 閒置 renderer 殘留）；GPU process 大頭不在軌跡 → 2-1 對 GPU 記憶體的效益在此機器相對有限，以 vertex 工作量與篩選重建時間為主要收益。
+**對路線圖的影響**：1-1 維持第一（實證）；world 穩態 999／峰值 1,678 MB 超過「<300／<500」門檻 → 2-2、2-3 不降級；~~world long task 1.5 s >1 s → 2-3 升入 Phase 1~~（已更正：dev-only 離群值，見上）；1-3 要做（world 閒置 renderer 殘留）；GPU process 大頭不在軌跡 → 2-1 對 GPU 記憶體的效益在此機器相對有限，以 vertex 工作量與篩選重建時間為主要收益。
 
 未量：L0／world 的 T-A 斜率、「播完一天」的 mercatorCache 成長、多次取中位數。
