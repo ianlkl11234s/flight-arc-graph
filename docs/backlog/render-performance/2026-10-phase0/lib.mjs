@@ -1,10 +1,15 @@
 // Phase 0 量測共用函式
-import { CDP, findPageTarget, evalJs, sleep } from '/Users/migu/Desktop/資料庫/gen_ai_try/ichef_工作用/GIS/plan-art/scripts/perf/cdplib.mjs';
+import { CDP, findPageTarget, evalJs, sleep } from '../../../../scripts/perf/cdplib.mjs';
 import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 export { sleep };
-export const S = '/private/tmp/claude-501/-Users-migu-Desktop-----gen-ai-try-ichef-----GIS-plan-art/9c6b9a1e-a891-40a0-a0ee-481be1fe94c0/scratchpad/phase0';
-export const PROFILE = S + '/chrome-profile';
+// 輸出目錄預設為本目錄；PHASE0_OUT 可覆寫（Phase 0 原始資料已進版控，複測請指到 scripts/perf/out/ 之類 gitignored 位置）
+export const S = process.env.PHASE0_OUT ? path.resolve(process.env.PHASE0_OUT) : HERE;
+export const PROFILE = path.resolve(HERE, '../../../../scripts/perf/out/phase0-profile');
+fs.mkdirSync(S + '/out', { recursive: true });
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 export const URL0 = 'http://localhost:5199/';
 
@@ -16,7 +21,7 @@ export function log(file, obj) {
 
 export function myChromePids() {
   const out = execFileSync('ps', ['-axo', 'pid=,args='], { encoding: 'utf8', maxBuffer: 1 << 26 });
-  return out.split('\n').filter(l => l.includes(PROFILE) || l.includes('chrome-profile') && l.includes('phase0')).map(l => +l.trim().split(/\s+/)[0]).filter(Boolean);
+  return out.split('\n').filter(l => l.includes(PROFILE)).map(l => +l.trim().split(/\s+/)[0]).filter(Boolean);
 }
 
 export function footprints(pids) {

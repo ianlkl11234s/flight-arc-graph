@@ -1187,6 +1187,8 @@ export default function App() {
   const airspaceSettingsRef = useRef(airspaceSettings);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
+  // handleMapReady 每次 style.load 都會跑；保存 move handler 以便重綁前先解除，避免 listener 累積
+  const cameraMoveHandlerRef = useRef<(() => void) | null>(null);
   const atlasPopupRef = useRef<mapboxgl.Popup | null>(null);
   const atlasGlowVisibleRef = useRef(atlasGlowVisible);
   const atlasColorModeRef = useRef(atlasColorMode);
@@ -1541,6 +1543,8 @@ export default function App() {
           : next,
       );
     };
+    if (cameraMoveHandlerRef.current) map.off("move", cameraMoveHandlerRef.current);
+    cameraMoveHandlerRef.current = updateCamera;
     map.on("move", updateCamera);
     updateCamera();
 

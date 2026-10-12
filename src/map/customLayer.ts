@@ -44,6 +44,26 @@ export function resetGlStats(): void {
   glBufferSubDataCalls = 0;
 }
 
+// 同一個 gl context 跨 style 切換會重用：只裝一次（WeakSet 去重）。
+// ⚠️ 必須定義在 module scope：若寫在 createFlightLayer 內，包裝函式的 closure 會把整個
+// createFlightLayer 的 context（含 FlightScene）掛在長壽的 gl 上，每切一次底圖洩漏一組 scene。
+const glCountersInstalled = new WeakSet<object>();
+function installGlCounters(gl: WebGLRenderingContext): void {
+  if (glCountersInstalled.has(gl)) return;
+  glCountersInstalled.add(gl);
+  const g = gl as unknown as Record<string, (...args: unknown[]) => unknown>;
+  const origBufferData = g["bufferData"]!.bind(gl);
+  g["bufferData"] = (...args: unknown[]) => {
+    glBufferDataCalls++;
+    return origBufferData(...args);
+  };
+  const origBufferSubData = g["bufferSubData"]!.bind(gl);
+  g["bufferSubData"] = (...args: unknown[]) => {
+    glBufferSubDataCalls++;
+    return origBufferSubData(...args);
+  };
+}
+
 export interface FlightLayerOptions {
   getCurrentTime: () => number;
   getFlights: () => Flight[];
@@ -106,19 +126,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       map = mapInstance;
       // DEV-only：THREE 的 WebGLRenderer 用同一個 gl context（見 flightScene.init 下方），
       // 在建立 renderer 前先掛上計數器，才不會漏算它初始化時發出的呼叫。
-      if (import.meta.env.DEV) {
-        const g = gl as unknown as Record<string, (...args: unknown[]) => unknown>;
-        const origBufferData = g["bufferData"]!.bind(gl);
-        g["bufferData"] = (...args: unknown[]) => {
-          glBufferDataCalls++;
-          return origBufferData(...args);
-        };
-        const origBufferSubData = g["bufferSubData"]!.bind(gl);
-        g["bufferSubData"] = (...args: unknown[]) => {
-          glBufferSubDataCalls++;
-          return origBufferSubData(...args);
-        };
-      }
+      if (import.meta.env.DEV) installGlCounters(gl);
       flightScene.init(gl);
       opts.onSceneReady?.(flightScene);
       // 三個 custom layer（flight-3d / atlas-glow-3d / airspace-aurora）一定同時
