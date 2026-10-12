@@ -1,0 +1,32 @@
+killed [
+  55414, 55459,
+  55460, 55461,
+  55495, 55506,
+  55765
+]
+00:25:57 2
+00:26:07 2
+00:26:17 2
+00:26:27 2
+00:26:37 2
+00:26:47 2
+00:26:57 2
+00:27:07 2
+00:27:17 2
+00:27:27 2
+00:27:37 2
+00:27:47 2
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                                     4198.
+Pages active:                                 343389.
+Pages inactive:                               336989.
+Pages speculative:                              5677.
+Pages throttled:                                   0.
+Pages wired down:                             174365.
+Pages purgeable:                                1493.
+"Translation faults":                       48452594.
+Pages copy-on-write:                         5254853.
+Pages zero filled:                          16114285.
+Pages reactivated:                          11093211.
+
+[exited with code 0]

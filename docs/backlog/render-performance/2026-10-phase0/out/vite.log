@@ -1,0 +1,9 @@
+
+> taiwan-flight-arc@3.2.0 dev
+> vite --port 5199 --strictPort
+
+
+  VITE v6.4.1  ready in 1717 ms
+
+  ➜  Local:   http://localhost:5199/
+  ➜  Network: use --host to expose

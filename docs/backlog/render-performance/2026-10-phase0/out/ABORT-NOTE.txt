@@ -1,0 +1,1 @@
+00:23 start pressure=1 swap 977/2048M; 00:25 after launching isolated Chrome (419MB total) pressure=2; stayed 2 for 12+ min after kill; swap grew 801M->2173M/3072M; top: claude x28 6.4GB, Arc renderers 2.4GB, vitest x2 0.5GB
