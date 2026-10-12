@@ -116,6 +116,14 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   const camScratch = { x: 0, y: 0, z: 0 };
   // repaint 節流器的 detach handle（style 切換會整批 remove+re-add 這個 layer）
   let detachScheduler: (() => void) | null = null;
+  // Phase 1-2：靜態桶上傳後已丟 CPU 陣列，context restore 時 three 無法重傳 → 丟掉從 TrackPath 重建。
+  // Mapbox _contextRestored 不經 custom layer onRemove/onAdd，故自己聽 map 事件
+  // （Mapbox 在 restore 處理內同步 fire，下一幀 render 由 rAF 排程，必在重建之前）。
+  const onContextRestored = () => {
+    flightScene.resetStaticForContextRestore();
+    lastVisibilityKey = ""; // ±12h：lastVisibleIds 已清，強制重套可見度
+    lastScanBucket = NaN;
+  };
 
   return {
     id: "flight-3d",
@@ -133,6 +141,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       // 存在，repaint 節流器的地圖互動監聽只在這裡掛一次即可，其他 layer 直接呼叫
       // notifyActivity / requestDecorativeRepaint。
       detachScheduler = attachRepaintScheduler(mapInstance);
+      mapInstance.on("webglcontextrestored", onContextRestored);
     },
 
     render(_gl, matrix, projection, projectionToMercatorMatrix, projectionToMercatorTransition) {
@@ -312,6 +321,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
     },
 
     onRemove() {
+      map?.off("webglcontextrestored", onContextRestored);
       detachScheduler?.();
       detachScheduler = null;
       flightScene.dispose();

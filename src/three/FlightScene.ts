@@ -64,14 +64,18 @@ function hashFlightId(id: string): number {
  */
 const INTERNAL_STATIC_ALPHA = 3.0;
 
+/**
+ * Phase 1-2：position／color／aEcef／aTRel 四個 attribute 建構完、上傳 GPU 後就不再寫，
+ * 其 CPU `.array` 會在「本桶寫滿後的第一次上傳」換成空陣列釋放（見 releaseImmutableOnUpload）。
+ * 所以 bucket 不另外持有這四個陣列的 reference，建構期間一律經 attr.array 存取。
+ * 只有 alphas（±12h 時間窗／起降標記會持續改寫）保留 CPU 陣列。
+ * 不變式：丟過 `.array` 的 attribute 不能再被上傳——context restore 時由
+ * resetStaticForContextRestore() 整批丟掉、從 TrackPath 重建（three 重建 GL buffer 會讀 array）。
+ */
 interface StaticBucket {
   mesh: THREE.LineSegments;
   geometry: THREE.BufferGeometry;
-  positions: Float32Array;
-  colors: Float32Array;
   alphas: Float32Array;
-  timestamps: Float32Array;
-  ecefs: Float32Array;
   posAttr: THREE.BufferAttribute;
   colAttr: THREE.BufferAttribute;
   alphaAttr: THREE.BufferAttribute;
@@ -85,6 +89,25 @@ interface StaticBucket {
   axis: { x: number; y: number; z: number };
   minDotAxis: number;
   culled: boolean;
+}
+
+const EMPTY_F32 = new Float32Array(0);
+const NOOP = () => {};
+
+/**
+ * Phase 1-2：掛在不可變 attribute 上的 upload callback（three 在 bufferData／bufferSubData 完成後呼叫）。
+ * 守門條件是「本桶已寫滿」而不是全域 staticBuildState 歸 null：
+ * - 多數桶在全域建構結束前就寫滿並上傳完，之後 version 不再變，只在結束那幀掛會永遠不觸發；
+ * - 被背面剔除／showTrails=false 的桶不會上傳，callback 要等它真正上傳（含最後一段 range）後才觸發，
+ *   保證丟掉的 `.array` 已完整進 GPU。progressive 期間每次 range 上傳只多一次整數比較。
+ * `count` 是建構時欄位，丟 array 後 drawRange 上限不受影響。
+ */
+function releaseImmutableOnUpload(attr: THREE.BufferAttribute, bucket: StaticBucket) {
+  attr.onUpload(() => {
+    if (bucket.writeVerts < bucket.totalVerts) return;
+    attr.array = EMPTY_F32;
+    attr.onUpload(NOOP);
+  });
 }
 
 /** update() 每幀重用的光軌頭部 scratch（避免每航班一次物件配置） */
@@ -594,11 +617,7 @@ export class FlightScene {
       const bucket: StaticBucket = {
         mesh,
         geometry,
-        positions,
-        colors,
         alphas,
-        timestamps,
-        ecefs,
         posAttr,
         colAttr,
         alphaAttr,
@@ -610,6 +629,7 @@ export class FlightScene {
         minDotAxis: 1,
         culled: false,
       };
+      for (const attr of [posAttr, colAttr, ecefAttr, trelAttr]) releaseImmutableOnUpload(attr, bucket);
       this.staticBuckets.push(bucket);
       this.staticBucketByKey.set(k, bucket);
     }
@@ -683,6 +703,11 @@ export class FlightScene {
       const grad = airportOverride || !this.depArrGradients ? undefined : this.depArrGradients.get(f.fr24_id);
       const gradFracs = grad ? this.gradientFractions(f.path) : null;
       const ax = bucket.axis.x, ay = bucket.axis.y, az = bucket.axis.z;
+      // 建構期間經 attr.array 存取（bucket 不持有這四個陣列，見 StaticBucket 註解）；本桶未寫滿前 array 不會被丟
+      const positions = bucket.posAttr.array as Float32Array;
+      const colors = bucket.colAttr.array as Float32Array;
+      const ecefs = bucket.ecefAttr.array as Float32Array;
+      const timestamps = bucket.trelAttr.array as Float32Array;
 
       for (let i = startPt; i < f.path.length - 1 && vertsThisFrame < limit; i++) {
         const aLat = f.path.lat(i), aLng = f.path.lng(i), aAlt = f.path.alt(i), aT = f.path.t(i);
@@ -692,51 +717,51 @@ export class FlightScene {
 
         const w = bucket.writeVerts;
         const o3 = w * 3;
-        bucket.positions[o3] = ma.x;
-        bucket.positions[o3 + 1] = ma.y;
-        bucket.positions[o3 + 2] = ma.z;
-        bucket.positions[o3 + 3] = mb.x;
-        bucket.positions[o3 + 4] = mb.y;
-        bucket.positions[o3 + 5] = mb.z;
+        positions[o3] = ma.x;
+        positions[o3 + 1] = ma.y;
+        positions[o3 + 2] = ma.z;
+        positions[o3 + 3] = mb.x;
+        positions[o3 + 4] = mb.y;
+        positions[o3 + 5] = mb.z;
 
         // 貼球 ECEF 預存（一次性 CPU 算，取代 shader 每幀 exp/atan/sin/cos）
-        mercatorToEcef(ma.x, ma.y, ma.z, bucket.ecefs, o3);
-        mercatorToEcef(mb.x, mb.y, mb.z, bucket.ecefs, o3 + 3);
+        mercatorToEcef(ma.x, ma.y, ma.z, ecefs, o3);
+        mercatorToEcef(mb.x, mb.y, mb.z, ecefs, o3 + 3);
         // 方向 cap 統計（culling 用）：頂點單位方向對桶軸的最小 dot
         for (let e = o3; e <= o3 + 3; e += 3) {
-          const ex = bucket.ecefs[e]!, ey = bucket.ecefs[e + 1]!, ez = bucket.ecefs[e + 2]!;
+          const ex = ecefs[e]!, ey = ecefs[e + 1]!, ez = ecefs[e + 2]!;
           const d = (ex * ax + ey * ay + ez * az) / Math.hypot(ex, ey, ez);
           if (d < bucket.minDotAxis) bucket.minDotAxis = d;
         }
 
         if (airportOverride) {
           const r = airportOverride.r, g = airportOverride.g, bl = airportOverride.b;
-          bucket.colors[o3] = r;
-          bucket.colors[o3 + 1] = g;
-          bucket.colors[o3 + 2] = bl;
-          bucket.colors[o3 + 3] = r;
-          bucket.colors[o3 + 4] = g;
-          bucket.colors[o3 + 5] = bl;
+          colors[o3] = r;
+          colors[o3 + 1] = g;
+          colors[o3 + 2] = bl;
+          colors[o3 + 3] = r;
+          colors[o3 + 4] = g;
+          colors[o3 + 5] = bl;
         } else if (grad) {
           const fa = gradFracs![i]!, fb = gradFracs![i + 1]!;
           const d = grad.dep, a = grad.arr;
-          bucket.colors[o3] = d.r + (a.r - d.r) * fa;
-          bucket.colors[o3 + 1] = d.g + (a.g - d.g) * fa;
-          bucket.colors[o3 + 2] = d.b + (a.b - d.b) * fa;
-          bucket.colors[o3 + 3] = d.r + (a.r - d.r) * fb;
-          bucket.colors[o3 + 4] = d.g + (a.g - d.g) * fb;
-          bucket.colors[o3 + 5] = d.b + (a.b - d.b) * fb;
+          colors[o3] = d.r + (a.r - d.r) * fa;
+          colors[o3 + 1] = d.g + (a.g - d.g) * fa;
+          colors[o3 + 2] = d.b + (a.b - d.b) * fa;
+          colors[o3 + 3] = d.r + (a.r - d.r) * fb;
+          colors[o3 + 4] = d.g + (a.g - d.g) * fb;
+          colors[o3 + 5] = d.b + (a.b - d.b) * fb;
         } else {
           let t = Math.min(Math.max(aAlt / MAX_ALT, 0), 1);
           let [cr, cg, cb] = lerpGradient(t);
-          bucket.colors[o3] = cr;
-          bucket.colors[o3 + 1] = cg;
-          bucket.colors[o3 + 2] = cb;
+          colors[o3] = cr;
+          colors[o3 + 1] = cg;
+          colors[o3 + 2] = cb;
           t = Math.min(Math.max(bAlt / MAX_ALT, 0), 1);
           [cr, cg, cb] = lerpGradient(t);
-          bucket.colors[o3 + 3] = cr;
-          bucket.colors[o3 + 4] = cg;
-          bucket.colors[o3 + 5] = cb;
+          colors[o3 + 3] = cr;
+          colors[o3 + 4] = cg;
+          colors[o3 + 5] = cb;
         }
 
         const visAlpha = grad ? INTERNAL_STATIC_ALPHA : 1.0;
@@ -744,8 +769,8 @@ export class FlightScene {
         bucket.alphas[w + 1] = visAlpha;
 
         // T0-5：存相對秒數（減 staticTimeBase），避免 float32 存絕對 unix 秒的 ulp=128s 誤差
-        bucket.timestamps[w] = aT - this.staticTimeBase;
-        bucket.timestamps[w + 1] = bT - this.staticTimeBase;
+        timestamps[w] = aT - this.staticTimeBase;
+        timestamps[w + 1] = bT - this.staticTimeBase;
 
         bucket.writeVerts += 2;
         vertsThisFrame += 2;
@@ -1165,6 +1190,23 @@ export class FlightScene {
     this.camera.projectionMatrix = this.matrixScratch;
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Phase 1-2：WebGL context restore 後呼叫（customLayer 的 map `webglcontextrestored`）。
+   * three 重建 GL buffer 會重讀 attribute.array，但靜態桶的不可變陣列已丟 → 整批丟掉，
+   * 下一幀 updateStaticTrails 從 TrackPath＋目前配色全量重建。
+   * BatchedTrails／InstancedOrbs 保有 CPU 陣列，由 three 自行重傳，不需處理。
+   */
+  resetStaticForContextRestore() {
+    this.removeStaticMeshes();
+    this.lastStaticKey = "";
+    this.lastStaticFlights = null;
+    this.staticBuildState = null;
+    this.staticRebuildPending = false;
+    this.staticFlightRanges.clear();
+    this.lastVisibleIds.clear();
+    this.trailEpoch++;
   }
 
   private removeStaticMeshes() {
