@@ -242,3 +242,17 @@ T0-1～T0-5 已在本分支完成（T0-6 未做，收益 <0.5%）。同一 sessi
 **對路線圖的影響**：1-1 維持第一（實證）；world 穩態 999／峰值 1,678 MB 超過「<300／<500」門檻 → 2-2、2-3 不降級；~~world long task 1.5 s >1 s → 2-3 升入 Phase 1~~（已更正：dev-only 離群值，見上）；1-3 要做（world 閒置 renderer 殘留）；GPU process 大頭不在軌跡 → 2-1 對 GPU 記憶體的效益在此機器相對有限，以 vertex 工作量與篩選重建時間為主要收益。
 
 未量：L0／world 的 T-A 斜率、「播完一天」的 mercatorCache 成長、多次取中位數。
+
+### 6. Phase 1 執行結果（2026-10-12，branch `perf/memory-p1`，未 push／merge）
+
+| 關卡 | commit | 結果 |
+|---|---|---|
+| A 切底圖洩漏（1-1） | `1f69006` | T-A ×11：renderer 斜率 +30 → −2~−3 MB/次；FlightScene 1→12 → 1→2 後恆定（+1 推測為 Mapbox 握著最後移除的 layer，未驗證）；另修 DEV gl 計數器 closure 洩漏 |
+| B 閒置 CPU（1-3） | `0d7ccfc` | world 播放 renderer 33% → 26%；暫停 45–75 s ≤0.2%。暫停後 0–30 s 約 8% 屬既定 30 s 裝飾重繪政策（未改），其後一次 V8 GC 尖峰 |
+| D 載入 long task（2-3） | `1946fad`（僅文件） | 已達標，不改 loader：prod 最長 240–251 ms；Phase 0 的 1.5 s 是 React dev-only 離群值 |
+| C 丟上傳後 CPU 陣列（1-2） | `045153a` | backingStorage world 209.5 → 120.7 MB、S2-L0 312.2 → 130.3 MB；renderer footprint world 775 → 687、S2-L0 824 → 622 MB；T-B restore 與 HEAD 交叉比對 maxDiff 0 |
+
+每關皆過 typecheck、design:guard/test、visual-check 6/6、summary-snapshot 相同。量測環境 memory pressure 1–2、其他 session 負載高。
+
+**已知未解**：S1 pitch 40 + ±12h 場景 context restore 後與 baseline 差 0.65–0.74%（HEAD 同樣，Mapbox 側殘差）；HEAD 本來就有 `WebGL: too many errors` 警告；2D 模式與「progressive 建構中途 context restore」只做路徑分析未實測。
+**下一步（待拍板）**：2-1 indexed GL_LINES（牽涉 light theme 混色順序，不自動做）→ 2-2 per-point store 取代 mercatorCache（依賴 2-1）。小項：日期前置過濾對非 2/18 日期可省 ~95% TrackPath 建構（world 2/18 只省 16%）。
