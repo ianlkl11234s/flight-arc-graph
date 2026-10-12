@@ -119,20 +119,15 @@ function computeTerminatorGeoJSON(unixSec: number): GeoJSON.FeatureCollection {
   };
 }
 
-let rafId: number | null = null;
+let rafId: ReturnType<typeof setTimeout> | null = null;
 let mapRef: MapboxMap | null = null;
 let getTimeFn: (() => number) | null = null;
 let lastUpdateTime = 0;
-let lastRafMs = 0;
 
-/** rAF loop — throttle 到 ~5fps，避免 setData 過頻 */
+/** 輪詢模擬時間，5 Hz setTimeout（不用 rAF：60 Hz 空喚醒 4/5 都是直接 return） */
 function tick() {
-  rafId = requestAnimationFrame(tick);
+  rafId = setTimeout(tick, 200);
   if (!getTimeFn || !mapRef) return;
-
-  const now = performance.now();
-  if (now - lastRafMs < 200) return; // ~5fps
-  lastRafMs = now;
 
   const t = getTimeFn();
   if (Math.abs(t - lastUpdateTime) < 5) return; // 至少 5 秒模擬時間才重算
@@ -184,9 +179,8 @@ export function initTerminatorLayer(
     beforeId,
   );
 
-  if (rafId) cancelAnimationFrame(rafId);
-  lastRafMs = 0;
-  rafId = requestAnimationFrame(tick);
+  if (rafId) clearTimeout(rafId);
+  rafId = setTimeout(tick, 200);
 }
 
 /**
@@ -194,7 +188,7 @@ export function initTerminatorLayer(
  */
 export function removeTerminatorLayer(map: MapboxMap): void {
   if (rafId) {
-    cancelAnimationFrame(rafId);
+    clearTimeout(rafId);
     rafId = null;
   }
   mapRef = null;

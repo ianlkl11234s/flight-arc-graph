@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Flight, DataSource, Region, Scope } from "../types";
 import {
-  filterByAirport,
-  getTimeRange,
   loadAirportFlights,
   loadAirportSelectionFlights,
   loadRegionFullFlights,
@@ -22,7 +20,6 @@ interface UseFlightDataReturn {
   airportCatalog: Record<string, AirportManifestEntry>;
   selectedAirport: string;
   setSelectedAirport: (icao: string) => void;
-  timeRange: { start: number; end: number };
   loading: boolean;
   loadingProgress: { loaded: number; label: string } | null;
   hasFused: boolean;
@@ -275,14 +272,6 @@ export function useFlightData(
   }, [dataSource, trackFlights, airspaceFlights]);
 
   const airports = allAirports;
-  const filteredFlights = filterByAirport(sourceFlights, selectedAirport);
-
-  const timeRange = filteredFlights.length
-    ? getTimeRange(filteredFlights)
-    : sourceFlights.length
-      ? getTimeRange(sourceFlights)
-      : { start: 0, end: 0 };
-
   const handleSetAirport = useCallback((icao: string) => {
     setSelectedAirport(icao);
   }, []);
@@ -297,7 +286,6 @@ export function useFlightData(
     airportCatalog,
     selectedAirport,
     setSelectedAirport: handleSetAirport,
-    timeRange,
     loading,
     loadingProgress,
     hasFused,

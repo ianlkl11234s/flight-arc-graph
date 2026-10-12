@@ -1670,10 +1670,19 @@ export default function App() {
     // pre-allocated arrays 避免每幀 GC
     let cachedArcPts: [number, number][] = [];
     let cachedRings: { arc: [number, number][]; alpha: number }[] = [];
+    // 暫停（模擬時間與所有輸入皆未變）時整幀跳過，避免 60 Hz 白算 + 白寫 buffer；
+    // 任一輸入變化（播放、seek、透明度/銳利度、底圖、scene 重建、航班集合）下一幀立即恢復
+    let lastKey: unknown[] | null = null;
 
     const tick = () => {
       const styleId = mapStyleIdRef.current;
       const isSat = styleId.includes("satellite");
+      const key = [timeRef.current, flightsRef.current, flightSceneRef.current, styleId, viewshedOpacityRef.current, viewshedSharpnessRef.current];
+      if (lastKey && key.every((v, i) => v === lastKey![i])) {
+        animId = requestAnimationFrame(tick);
+        return;
+      }
+      lastKey = key;
       const flight = flightsRef.current.find((f) => f.fr24_id === selectedFlightId);
       if (flight && flight.path.length > 0) {
         const t = timeRef.current;
