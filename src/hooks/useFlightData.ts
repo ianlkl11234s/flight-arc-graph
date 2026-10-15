@@ -10,7 +10,9 @@ import {
   getManifestAirports,
   getRegionDates,
   getRegionFullDates,
+  clearTrackCaches,
 } from "../data/flightLoader";
+import { decideLod, estimateL0Points, pointsToMB, trackPointBudget } from "../data/memoryBudget";
 import type { AirportManifestEntry, LodLevel } from "../data/flightLoader";
 
 interface UseFlightDataReturn {
@@ -30,6 +32,20 @@ interface UseFlightDataReturn {
   loadError: string | null;
   /** 重跑目前這份選擇的載入（狀態條「重試」） */
   retryLoad: () => void;
+  /** 記憶體預算狀態；null = 不適用（region scope／空域）或未超過 */
+  memoryBudget: MemoryBudgetStatus | null;
+  /** 超過上限時使用者按「仍要載入」 */
+  confirmMemoryBudget: () => void;
+}
+
+export interface MemoryBudgetStatus {
+  /** 已自動改用較粗的 LOD */
+  capped: boolean;
+  /** 連 L2 都超過上限，目前未載入、等使用者確認 */
+  blocked: boolean;
+  lod: LodLevel;
+  estMB: number;
+  budgetMB: number;
 }
 
 export function useFlightData(
@@ -66,6 +82,8 @@ export function useFlightData(
   // （首次載入還沒完成就因飛行中 zoom 換層而被 lod-only 載入取代時，畫面其實是空的）。
   const lastSuccessIdentityRef = useRef<string | null>(null);
   const currentLod: LodLevel = lod ?? "l0";
+  // 使用者已對這份選擇按過「仍要載入」（key 不含 lod：拉近拉遠不用重問）
+  const [budgetConfirmedKey, setBudgetConfirmedKey] = useState<string | null>(null);
 
   const requestedDates = useMemo(() => {
     if (selectedDates && selectedDates.length > 0) {
@@ -103,6 +121,19 @@ export function useFlightData(
     });
   }, []);
 
+  // 記憶體預算：只管 airport scope／airport set（region scope 讀精簡檔，碰不到上限）。
+  // airportCatalog 是 manifest 的 state 鏡像，manifest 到之前估 0 → 不設限。
+  const budgetKey = JSON.stringify([dataSource, scope, airportSelection, selectedAirport, requestedDates]);
+  const budget = useMemo(() => {
+    if (dataSource === "fused") return null;
+    const icaos = airportSelection ?? (scope === "airport" ? [selectedAirport] : null);
+    if (!icaos) return null;
+    return decideLod(currentLod, estimateL0Points(airportCatalog, icaos, requestedDates));
+  }, [dataSource, scope, airportSelection, selectedAirport, requestedDates, currentLod, airportCatalog]);
+  const effectiveLod: LodLevel = budget?.lod ?? currentLod;
+  const budgetBlocked = budget?.over === true && budgetConfirmedKey !== budgetKey;
+  const budgetCapped = budget !== null && (budget.capped || budget.over);
+
   // 載入 tracks：依 scope + region/airport 變化
   useEffect(() => {
     if (dataSource === "fused") return; // airspace 模式由另一個 effect 處理
@@ -112,7 +143,8 @@ export function useFlightData(
     // Phase 2-2：identity 不含 lod。同一份 identity 下只是換 LOD 層（zoom band 跨界）——
     // 背景載入新解析度，載完才整批換上；不先清空／不切 loading 徽章，避免換層閃爍與
     // 誤觸發「loading→false 自動播放」副作用（見 App.tsx 的 autoplay effect）。
-    const identity = JSON.stringify([dataSource, scope, region, airportSelection, selectedAirport, requestedDates, retryNonce]);
+    // budgetBlocked 進 identity：按「仍要載入」後要走完整載入（清空＋loading 徽章），不是 lod-only 背景換層
+    const identity = JSON.stringify([dataSource, scope, region, airportSelection, selectedAirport, requestedDates, retryNonce, budgetBlocked]);
     const isLodOnlyChange = lastLoadIdentityRef.current === identity;
     lastLoadIdentityRef.current = identity;
 
@@ -122,6 +154,15 @@ export function useFlightData(
       setTrackFlights([]);
       setLoadError(null);
     }
+
+    if (budgetBlocked) {
+      // 連 L2 都超過上限：不載入，等使用者確認（絕不少載航班）
+      setTrackFlights([]);
+      setLoadingProgress(null);
+      setLoading(false);
+      return;
+    }
+    if (budgetCapped) clearTrackCaches();
 
     // 從 manifest 取得預期總數
     const manifest = manifestRef.current;
@@ -192,13 +233,13 @@ export function useFlightData(
       loadAirportSelectionFlights(
         airportSelection,
         onProgress,
-        { dates: requestedDates, signal: controller.signal, lod: currentLod },
+        { dates: requestedDates, signal: controller.signal, lod: effectiveLod },
       ).then(finishLoad).catch(failLoad);
     } else if (scope === "airport") {
       loadAirportFlights(
         selectedAirport,
         onProgress,
-        { dates: requestedDates, signal: controller.signal, lod: currentLod },
+        { dates: requestedDates, signal: controller.signal, lod: effectiveLod },
       ).then(finishLoad).catch(failLoad);
     } else {
       // region scope：一律讀 regions/*.jsonl，lod 不適用（維持現況）。
@@ -210,7 +251,9 @@ export function useFlightData(
     }
 
     return () => controller.abort();
-  }, [dataSource, scope, region, selectedAirport, airportSelection, requestedDates, currentLod, retryNonce]);
+    // budgetCapped 只決定要不要清快取，不必觸發重載
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataSource, scope, region, selectedAirport, airportSelection, requestedDates, effectiveLod, retryNonce, budgetBlocked]);
 
   // 載入 airspace：依 selectedDate + rangeDays 按天載入
   useEffect(() => {
@@ -280,6 +323,18 @@ export function useFlightData(
     setRetryNonce((n) => n + 1);
   }, []);
 
+  const memoryBudget = useMemo((): MemoryBudgetStatus | null => {
+    if (!budget || !budgetCapped) return null;
+    return {
+      capped: budget.capped,
+      blocked: budgetBlocked,
+      lod: budget.lod,
+      estMB: pointsToMB(budget.estPoints),
+      budgetMB: pointsToMB(trackPointBudget()),
+    };
+  }, [budget, budgetCapped, budgetBlocked]);
+  const confirmMemoryBudget = useCallback(() => setBudgetConfirmedKey(budgetKey), [budgetKey]);
+
   return {
     allFlights: sourceFlights,
     airports,
@@ -294,5 +349,7 @@ export function useFlightData(
     regionFullDatesMap,
     loadError,
     retryLoad,
+    memoryBudget,
+    confirmMemoryBudget,
   };
 }

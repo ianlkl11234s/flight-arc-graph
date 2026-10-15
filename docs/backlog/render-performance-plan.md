@@ -283,3 +283,18 @@ T0-1～T0-5 已在本分支完成（T0-6 未做，收益 <0.5%）。同一 sessi
 - 既有問題未處理：forceRebuildStatic（換色／高度）後 ±12h 時間窗的 alpha 要等可見集合大小變動才重套。
 
 **下一步（待拍板）**：2-2 per-point store 取代 mercatorCache（現在可做，頂點已是每點一份）；2-3 記憶體預算＋Worker 解析。
+
+### 8. 2-3 記憶體預算（2026-10-15，分支 `perf/memory-budget`，疊在 indexed-static 之上，未 push/merge）
+
+做法（`src/data/memoryBudget.ts`）：載入前用 manifest 估點數（daily shard bytes ÷ 35；無 shard 用班數 × 600），上限 **400 萬點**（≈ 740 MB，以 185 B／點換算）。超過時：
+1. 清掉 airport／region 快取（`clearTrackCaches`）；
+2. 自動改用較粗的 LOD（L0 → L1 → L2，點數比 1／0.21／0.09），右上常駐「已降低軌跡解析度以控制記憶體」；
+3. 連 L2 都超過 → 不載入，右上「範圍過大，尚未載入（預估約 X MB）」＋「仍要載入」（以 L2 載入；同一份選擇拉近拉遠不再問）。
+
+只管 airport scope／airport set；region scope 讀精簡檔（全球所有日期約 150 萬點）碰不到上限。
+
+校準（apac set L2→L0 +228 萬點，warn 下）：JS typed array 42 B／點、renderer 115 B／點、GPU 71 B／點。估算：單機場誤差約 5%，組合多估約 16%（互飛航班算兩次）；LOD 檔涵蓋約 88% 的日期分檔，缺檔時退回 L0，那部分會低估。
+
+實測：RCTP L0 不觸發；KORD／LTFM／EGLL／KATL／KLAX 2/18 要求 L0（估 539 萬點）→ 自動 L1，估 113 萬實際 116 萬點；上限暫調 1 萬點測擋下 → 0 班＋提示，按確認後以 L2 載入、拉遠拉近不重問。visual-check 11/11、summary-snapshot 相同（現有場景都不觸發，apac L0 估 296 萬點）。目前資料要一次選約 85 座大機場（L0 約 4,470 萬點 ≈ 8 GB）才會走到「擋下」。
+
+**發現的舊問題（未修）**：同一份選擇在不同 LOD 層的航班數不完全相同（apac L0 3,798 班 vs L2 3,769 班；RCTP 651 vs 649），違反「換層不換航班」。自動降級會繼承這個差異；summary-snapshot 偶發差 1–2 班可能也是這個原因。

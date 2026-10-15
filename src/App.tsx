@@ -33,6 +33,8 @@ import { MobileBottomSheet, SheetNote } from "./components/MobileBottomSheet";
 import { Toolbar } from "./components/Toolbar";
 import { Dock, DockItem } from "./components/Dock";
 import { LoadingStatus } from "./components/LoadingStatus";
+import { BudgetNotice } from "./components/BudgetNotice";
+import { setTrackPointBudgetOverride } from "./data/memoryBudget";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
 import { IconRailSidebar, type ScenePreset, type PanelId } from "./components/IconRailSidebar";
@@ -311,6 +313,8 @@ export default function App() {
     regionFullDatesMap,
     loadError,
     retryLoad,
+    memoryBudget,
+    confirmMemoryBudget,
   } = useFlightData(
     dataSource,
     scope,
@@ -1164,6 +1168,8 @@ export default function App() {
 
 
   const flightsRef = useRef(finalFlights);
+  const memoryBudgetRef = useRef(memoryBudget);
+  memoryBudgetRef.current = memoryBudget;
   /** 2-1：靜態軌跡的頂點以載入的完整集合建，篩選只重寫 index（finalFlights 是 allFlights 的保序子集） */
   const baseFlightsRef = useRef(allFlights);
   // Phase 1-3：不再自己維護一份「每次 render 從 state 複製」的 ref（那會被 10 Hz
@@ -1274,6 +1280,10 @@ export default function App() {
       /** 視覺回歸用（篩選場景）：只篩航空公司（operating_as 三字碼）；空陣列 = 不篩 */
       setAirlineFilter: (codes: string[]) => setFlightFilters((prev) => ({ ...prev, airlines: new Set(codes) })),
       setDepArrFilter,
+      /** 記憶體預算驗收：暫時改軌跡點數上限（null 還原）；只影響之後的選擇變更 */
+      setTrackPointBudget: setTrackPointBudgetOverride,
+      getMemoryBudget: () => memoryBudgetRef.current,
+      confirmMemoryBudget,
       setTrackMode,
       setSelectedFlightId,
       /** 視覺回歸用：凍結所有 wall-clock 動畫（光球呼吸／閃爍、bloom、極光、CSS 動畫）到固定秒數；null 解除 */
@@ -2487,7 +2497,7 @@ export default function App() {
               code={captionCode}
               name={captionName}
               meta={captionMeta}
-              notice={!loading && !loadingProgress && !loadError && displayedFlights.length === 0 ? "此日期範圍無航班資料" : undefined}
+              notice={memoryBudget?.blocked ? "範圍過大，尚未載入" : !loading && !loadingProgress && !loadError && displayedFlights.length === 0 ? "此日期範圍無航班資料" : undefined}
               onExit={airportSet ? exitSetMode : undefined}
               exitLabel="退出組合模式"
               actions={railPanel === null ? (
@@ -2769,7 +2779,14 @@ export default function App() {
         top={captureMode ? CAPTURE_STATUS_TOP : isMobile ? mobileStatusTop : undefined}
         right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : isMobile ? MOBILE_STATUS_RIGHT : undefined}
         failOnly={captureMode}
-        hidden={(captureMode && isExporting) || bootMask}
+        hidden={(captureMode && isExporting) || bootMask || memoryBudget?.blocked === true}
+      />
+      <BudgetNotice
+        status={memoryBudget}
+        onConfirm={confirmMemoryBudget}
+        top={captureMode ? CAPTURE_STATUS_TOP : isMobile ? mobileStatusTop : undefined}
+        right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : isMobile ? MOBILE_STATUS_RIGHT : undefined}
+        hidden={captureMode || bootMask}
       />
 
       {/* ── 點擊處的選取圈（R1；固定在點擊位置，相機一動就收）── */}
