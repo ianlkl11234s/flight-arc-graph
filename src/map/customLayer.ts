@@ -67,6 +67,11 @@ function installGlCounters(gl: WebGLRenderingContext): void {
 export interface FlightLayerOptions {
   getCurrentTime: () => number;
   getFlights: () => Flight[];
+  /**
+   * 2-1：建靜態頂點用的完整集合（getFlights 必須是它的保序子集）。篩選只改 getFlights 時
+   * 靜態軌跡只重寫 index。未提供 = getFlights（每次篩選都全量重建，舊行為）。
+   */
+  getBaseFlights?: () => Flight[];
   getRenderMode: () => RenderMode;
   getAltExaggeration: () => number;
   getAltOffset: () => number;
@@ -95,6 +100,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   let lastDarkTheme = true;
   let lastShowTrails = true;
   let lastFlightsRef: Flight[] | null = null;
+  let lastBaseFlightsRef: Flight[] | null = null;
   let lastVisibilityKey = "";
   // ±12h 可見度掃描的 1 秒 bucket（事件化，避免每幀 O(N) 全掃）
   let lastScanBucket = NaN;
@@ -146,6 +152,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
 
     render(_gl, matrix, projection, projectionToMercatorMatrix, projectionToMercatorTransition) {
       const flights = opts.getFlights();
+      const baseFlights = opts.getBaseFlights?.() ?? flights;
       const time = opts.getCurrentTime();
       const mode = opts.getRenderMode();
       const altExag = opts.getAltExaggeration();
@@ -174,14 +181,17 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
         : `${flights.length}|${flights[0]!.fr24_id}|${flights[flights.length - 1]!.fr24_id}`;
       if (flights !== lastFlightsRef) {
         lastFlightsRef = flights;
-        lastVisibilityKey = ""; // 強制重新計算可見度
-        lastScanBucket = NaN;   // 新幾何：強制重掃可見集合
         timeIndex.build(flights);
         flightScene.invalidateMercatorCache();
       }
+      if (baseFlights !== lastBaseFlightsRef) {
+        lastBaseFlightsRef = baseFlights;
+        lastVisibilityKey = ""; // 強制重新計算可見度
+        lastScanBucket = NaN;   // 新幾何：強制重掃可見集合
+      }
 
       // 靜態軌跡（用完整航班集合建構幾何體）
-      flightScene.updateStaticTrails(flights, mode);
+      flightScene.updateStaticTrails(flights, mode, baseFlights);
 
       // ±12h 靜態軌跡可見度（在 render loop 中計算，不經過 React）
       const timeWindow = opts.getTimeWindow();
@@ -193,8 +203,9 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
           lastScanBucket = scanBucket;
           const tMin = time - VISIBILITY_WINDOW_SEC;
           const tMax = time + VISIBILITY_WINDOW_SEC;
+          // 2-1：在 base 上算（index 管篩選、alpha 只管時間窗），篩選變動不用重寫 alpha
           const visibleIds = new Set<string>();
-          for (const f of flights) {
+          for (const f of baseFlights) {
             if (f.path.length === 0) continue;
             const pathStart = f.path.t(0);
             const pathEnd = f.path.t(f.path.length - 1);
@@ -213,7 +224,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
         lastVisibilityKey = "all";
         lastScanBucket = NaN; // 重新開啟 timeWindow 時強制重掃
         const allIds = new Set<string>();
-        for (const f of flights) allIds.add(f.fr24_id);
+        for (const f of baseFlights) allIds.add(f.fr24_id);
         flightScene.updateStaticVisibility(allIds);
       }
 

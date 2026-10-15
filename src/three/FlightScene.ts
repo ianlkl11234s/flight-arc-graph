@@ -76,6 +76,15 @@ interface StaticBucket {
   mesh: THREE.LineSegments;
   geometry: THREE.BufferGeometry;
   alphas: Float32Array;
+  /**
+   * 2-1：indexed GL_LINES。頂點是「每航班每點一個」（不再每段兩端各存一份），
+   * 第 k 段 = (p+k, p+k+1)。index 只列出目前子集（篩航司／機型／離場…）的航班，
+   * 依 base 順序寫入（light theme 單桶 NormalBlending 的繪製順序與舊版全量重建一致）。
+   * 篩選變動只重寫 index（reindexStatic），不重建頂點。index 會持續改寫，CPU 陣列保留。
+   */
+  indices: Uint32Array;
+  indexAttr: THREE.BufferAttribute;
+  indexCount: number;
   posAttr: THREE.BufferAttribute;
   colAttr: THREE.BufferAttribute;
   alphaAttr: THREE.BufferAttribute;
@@ -224,11 +233,16 @@ export class FlightScene {
   private staticRebuildFirstRequestedAt = 0;
   private static readonly STATIC_REBUILD_DEBOUNCE_MS = 80;
   private static readonly STATIC_REBUILD_MAX_DELAY_MS = 300;
-  /** React 以 immutable array 傳入；用 reference 補足 key 只看首尾的盲點。 */
+  /** React 以 immutable array 傳入；用 reference 補足 key 只看首尾的盲點。這是 base（建頂點用的完整集合）。 */
   private lastStaticFlights: Flight[] | null = null;
+  /** 2-1：目前要畫的子集（updateStaticTrails 的 flights）；null = 整個 base 都畫 */
+  private staticSubset: Set<string> | null = null;
+  private lastSubsetFlights: Flight[] | null = null;
 
   // Per-vertex alpha 可見度控制（±12h）；start 為桶內 offset
   private staticFlightRanges = new Map<string, { bucket: StaticBucket; start: number; count: number }>();
+  /** 2-1：同一批 range 依建構順序（= base 順序）排列，reindexStatic 用；fr24_id 重複時 Map 只留最後一筆，這裡全留 */
+  private staticRangeList: Array<{ id: string; range: { bucket: StaticBucket; start: number; count: number } }> = [];
   private lastVisibleIds = new Set<string>();
   // T0-5：timestamps 存相對秒數的基準（flights 中最小 path[0][3]），避免 float32
   // 存絕對 unix 秒（1.77e9）時 ulp=128s 造成 progressive 模式跳格
@@ -492,10 +506,29 @@ export class FlightScene {
    * 漸進式建構：每幀處理一批頂點，產生逐步展開的動畫效果。
    * 幾何體用全量航班建構（按地理分桶），可見度用 per-vertex alpha 增量控制。
    */
-  updateStaticTrails(flights: Flight[], mode: RenderMode = "3d") {
+  /**
+   * @param flights 要畫的航班（篩選後）
+   * @param baseFlights 2-1：建頂點用的完整集合（flights 必須是它的保序子集）。篩選只改 flights 時
+   *   不重建頂點，只重寫 index。未提供 = flights 自己（舊行為）。
+   */
+  updateStaticTrails(flights: Flight[], mode: RenderMode = "3d", baseFlights: Flight[] = flights) {
     if (flights !== this.lastCapacityFlights) {
       this.lastCapacityFlights = flights;
       this.updateTrailCapacity(flights);
+    }
+
+    let subsetChanged = false;
+    if (flights !== this.lastSubsetFlights) {
+      this.lastSubsetFlights = flights;
+      subsetChanged = true;
+      // 保序子集且長度相同 = 同一集合，不用 Set
+      if (flights === baseFlights || flights.length === baseFlights.length) {
+        this.staticSubset = null;
+      } else {
+        const ids = new Set<string>();
+        for (const f of flights) ids.add(f.fr24_id);
+        this.staticSubset = ids;
+      }
     }
 
     if (mode === "2d") {
@@ -506,14 +539,15 @@ export class FlightScene {
       return;
     }
 
+    const base = baseFlights;
     const key =
-      flights.length === 0
+      base.length === 0
         ? ""
-        : `${flights.length}|${flights[0]!.fr24_id}|${flights[flights.length - 1]!.fr24_id}`;
+        : `${base.length}|${base[0]!.fr24_id}|${base[base.length - 1]!.fr24_id}`;
 
     if (this.staticRebuildPending) {
       // 新資料集合優先立即切換；只有同一批資料的外觀/座標變更才延遲合併。
-      if (key !== this.lastStaticKey || flights !== this.lastStaticFlights) {
+      if (key !== this.lastStaticKey || base !== this.lastStaticFlights) {
         this.staticRebuildPending = false;
       } else {
         const now = performance.now();
@@ -525,32 +559,39 @@ export class FlightScene {
       }
     }
 
-    if (this.staticBuildState && flights === this.staticBuildState.flights && key === this.lastStaticKey) {
+    if (this.staticBuildState && base === this.staticBuildState.flights && key === this.lastStaticKey) {
+      if (subsetChanged) this.reindexStatic();
       this.continueStaticBuild();
       return;
     }
 
-    if (flights === this.lastStaticFlights && key === this.lastStaticKey) return;
+    if (base === this.lastStaticFlights && key === this.lastStaticKey) {
+      if (subsetChanged) this.reindexStatic();
+      return;
+    }
     this.lastStaticKey = key;
-    this.lastStaticFlights = flights;
+    this.lastStaticFlights = base;
 
     this.removeStaticMeshes();
     this.staticBuildState = null;
     this.staticFlightRanges.clear();
+    this.staticRangeList = [];
     this.lastVisibleIds.clear();
 
-    if (flights.length === 0) return;
+    if (base.length === 0) return;
 
-    // 計數 pass：每桶頂點數（先算好才能一次配足桶 buffer）；
-    // 順便算 T0-5 的 staticTimeBase（flights 中最小 path[0][3]）
+    // 計數 pass：每桶頂點數（每點一個）與 index 數（每段兩個），先算好才能一次配足桶 buffer；
+    // 順便算 T0-5 的 staticTimeBase（base 中最小 path[0][3]）
     const bucketVertCounts = new Map<number, number>();
+    const bucketIndexCounts = new Map<number, number>();
     let totalVerts = 0;
     let minTimeBase = Infinity;
-    for (const f of flights) {
+    for (const f of base) {
       if (f.path.length < 2) continue;
-      const verts = (f.path.length - 1) * 2;
+      const verts = f.path.length;
       const k = this.bucketKeyForFlight(f);
       bucketVertCounts.set(k, (bucketVertCounts.get(k) ?? 0) + verts);
+      bucketIndexCounts.set(k, (bucketIndexCounts.get(k) ?? 0) + (verts - 1) * 2);
       totalVerts += verts;
       const t0 = f.path.t(0);
       if (t0 < minTimeBase) minTimeBase = t0;
@@ -599,8 +640,11 @@ export class FlightScene {
       const alphaAttr = new THREE.BufferAttribute(alphas, 1);
       const ecefAttr = new THREE.BufferAttribute(ecefs, 3);
       const trelAttr = new THREE.BufferAttribute(timestamps, 1);
+      const indices = new Uint32Array(bucketIndexCounts.get(k)!);
+      const indexAttr = new THREE.BufferAttribute(indices, 1);
 
       const geometry = new THREE.BufferGeometry();
+      geometry.setIndex(indexAttr);
       geometry.setAttribute("position", posAttr);
       geometry.setAttribute("color", colAttr);
       geometry.setAttribute("alpha", alphaAttr);
@@ -618,6 +662,9 @@ export class FlightScene {
         mesh,
         geometry,
         alphas,
+        indices,
+        indexAttr,
+        indexCount: 0,
         posAttr,
         colAttr,
         alphaAttr,
@@ -635,7 +682,7 @@ export class FlightScene {
     }
 
     this.staticBuildState = {
-      flights,
+      flights: base,
       flightIdx: 0,
       pointIdx: 0,
       totalVerts,
@@ -675,6 +722,7 @@ export class FlightScene {
     // T0-3：每桶記本幀最早的髒起點（= 進入本幀時的 writeVerts），frame 尾只上傳
     // [dirtyStart, writeVerts) range，取代整條 bufferSubData
     const dirtyStart = new Map<StaticBucket, number>();
+    const dirtyIndexStart = new Map<StaticBucket, number>();
 
     while (state.flightIdx < state.flights.length && vertsThisFrame < limit) {
       const f = state.flights[state.flightIdx]!;
@@ -688,15 +736,17 @@ export class FlightScene {
       const bucket = this.staticBucketByKey.get(this.bucketKeyForFlight(f))!;
       const startPt = state.pointIdx || 0;
       if (startPt === 0) {
-        this.staticFlightRanges.set(f.fr24_id, {
-          bucket,
-          start: bucket.writeVerts,
-          count: 0,
-        });
+        const r = { bucket, start: bucket.writeVerts, count: 0 };
+        this.staticFlightRanges.set(f.fr24_id, r);
+        this.staticRangeList.push({ id: f.fr24_id, range: r });
       }
 
       const bucketVertStart = bucket.writeVerts;
-      if (!dirtyStart.has(bucket)) dirtyStart.set(bucket, bucketVertStart);
+      if (!dirtyStart.has(bucket)) {
+        dirtyStart.set(bucket, bucketVertStart);
+        dirtyIndexStart.set(bucket, bucket.indexCount);
+      }
+      const inSubset = this.staticSubset === null || this.staticSubset.has(f.fr24_id);
       // 若此 flight 有指定顏色（per-airport 模式），整條 trail 使用平色，忽略 altitude gradient
       const airportOverride = this.perFlightColorMap?.get(f.fr24_id) ?? null;
       // 起降染色（§7）組合內互飛：沿路漸層（只在起降模式 depArrGradients 非 null 時才可能命中）
@@ -709,71 +759,58 @@ export class FlightScene {
       const ecefs = bucket.ecefAttr.array as Float32Array;
       const timestamps = bucket.trelAttr.array as Float32Array;
 
-      for (let i = startPt; i < f.path.length - 1 && vertsThisFrame < limit; i++) {
-        const aLat = f.path.lat(i), aLng = f.path.lng(i), aAlt = f.path.alt(i), aT = f.path.t(i);
-        const bLat = f.path.lat(i + 1), bLng = f.path.lng(i + 1), bAlt = f.path.alt(i + 1), bT = f.path.t(i + 1);
-        const ma = toMercator(aLat, aLng, aAlt);
-        const mb = toMercator(bLat, bLng, bAlt);
+      const indices = bucket.indices;
+      const n = f.path.length;
+
+      for (let i = startPt; i < n && vertsThisFrame < limit; i++) {
+        const alt = f.path.alt(i);
+        const m = toMercator(f.path.lat(i), f.path.lng(i), alt);
 
         const w = bucket.writeVerts;
         const o3 = w * 3;
-        positions[o3] = ma.x;
-        positions[o3 + 1] = ma.y;
-        positions[o3 + 2] = ma.z;
-        positions[o3 + 3] = mb.x;
-        positions[o3 + 4] = mb.y;
-        positions[o3 + 5] = mb.z;
+        positions[o3] = m.x;
+        positions[o3 + 1] = m.y;
+        positions[o3 + 2] = m.z;
 
         // 貼球 ECEF 預存（一次性 CPU 算，取代 shader 每幀 exp/atan/sin/cos）
-        mercatorToEcef(ma.x, ma.y, ma.z, ecefs, o3);
-        mercatorToEcef(mb.x, mb.y, mb.z, ecefs, o3 + 3);
+        mercatorToEcef(m.x, m.y, m.z, ecefs, o3);
         // 方向 cap 統計（culling 用）：頂點單位方向對桶軸的最小 dot
-        for (let e = o3; e <= o3 + 3; e += 3) {
-          const ex = ecefs[e]!, ey = ecefs[e + 1]!, ez = ecefs[e + 2]!;
-          const d = (ex * ax + ey * ay + ez * az) / Math.hypot(ex, ey, ez);
-          if (d < bucket.minDotAxis) bucket.minDotAxis = d;
-        }
+        const ex = ecefs[o3]!, ey = ecefs[o3 + 1]!, ez = ecefs[o3 + 2]!;
+        const d = (ex * ax + ey * ay + ez * az) / Math.hypot(ex, ey, ez);
+        if (d < bucket.minDotAxis) bucket.minDotAxis = d;
 
         if (airportOverride) {
-          const r = airportOverride.r, g = airportOverride.g, bl = airportOverride.b;
-          colors[o3] = r;
-          colors[o3 + 1] = g;
-          colors[o3 + 2] = bl;
-          colors[o3 + 3] = r;
-          colors[o3 + 4] = g;
-          colors[o3 + 5] = bl;
+          colors[o3] = airportOverride.r;
+          colors[o3 + 1] = airportOverride.g;
+          colors[o3 + 2] = airportOverride.b;
         } else if (grad) {
-          const fa = gradFracs![i]!, fb = gradFracs![i + 1]!;
-          const d = grad.dep, a = grad.arr;
-          colors[o3] = d.r + (a.r - d.r) * fa;
-          colors[o3 + 1] = d.g + (a.g - d.g) * fa;
-          colors[o3 + 2] = d.b + (a.b - d.b) * fa;
-          colors[o3 + 3] = d.r + (a.r - d.r) * fb;
-          colors[o3 + 4] = d.g + (a.g - d.g) * fb;
-          colors[o3 + 5] = d.b + (a.b - d.b) * fb;
+          const fr = gradFracs![i]!;
+          const dc = grad.dep, ac = grad.arr;
+          colors[o3] = dc.r + (ac.r - dc.r) * fr;
+          colors[o3 + 1] = dc.g + (ac.g - dc.g) * fr;
+          colors[o3 + 2] = dc.b + (ac.b - dc.b) * fr;
         } else {
-          let t = Math.min(Math.max(aAlt / MAX_ALT, 0), 1);
-          let [cr, cg, cb] = lerpGradient(t);
+          const t = Math.min(Math.max(alt / MAX_ALT, 0), 1);
+          const [cr, cg, cb] = lerpGradient(t);
           colors[o3] = cr;
           colors[o3 + 1] = cg;
           colors[o3 + 2] = cb;
-          t = Math.min(Math.max(bAlt / MAX_ALT, 0), 1);
-          [cr, cg, cb] = lerpGradient(t);
-          colors[o3 + 3] = cr;
-          colors[o3 + 4] = cg;
-          colors[o3 + 5] = cb;
         }
 
-        const visAlpha = grad ? INTERNAL_STATIC_ALPHA : 1.0;
-        bucket.alphas[w] = visAlpha;
-        bucket.alphas[w + 1] = visAlpha;
+        bucket.alphas[w] = grad ? INTERNAL_STATIC_ALPHA : 1.0;
 
         // T0-5：存相對秒數（減 staticTimeBase），避免 float32 存絕對 unix 秒的 ulp=128s 誤差
-        timestamps[w] = aT - this.staticTimeBase;
-        timestamps[w + 1] = bT - this.staticTimeBase;
+        timestamps[w] = f.path.t(i) - this.staticTimeBase;
 
-        bucket.writeVerts += 2;
-        vertsThisFrame += 2;
+        // 第 i-1 段 = (w-1, w)；子集外的航班頂點照寫（篩選放寬時只要補 index）
+        if (i > 0 && inSubset) {
+          indices[bucket.indexCount] = w - 1;
+          indices[bucket.indexCount + 1] = w;
+          bucket.indexCount += 2;
+        }
+
+        bucket.writeVerts += 1;
+        vertsThisFrame += 1;
         state.pointIdx = i + 1;
       }
 
@@ -782,7 +819,7 @@ export class FlightScene {
         range.count += (bucket.writeVerts - bucketVertStart);
       }
 
-      if (state.pointIdx >= f.path.length - 1) {
+      if (state.pointIdx >= f.path.length) {
         if (this.lastVisibleIds.size > 0 && !this.lastVisibleIds.has(f.fr24_id)) {
           const r = this.staticFlightRanges.get(f.fr24_id);
           if (r) {
@@ -809,7 +846,9 @@ export class FlightScene {
       this.applyStaticRange(b.ecefAttr, ds * 3, countV * 3);
       this.applyStaticRange(b.alphaAttr, ds, countV);
       this.applyStaticRange(b.trelAttr, ds, countV);
-      b.geometry.setDrawRange(0, b.writeVerts);
+      const di = dirtyIndexStart.get(b)!;
+      if (b.indexCount > di) this.applyStaticRange(b.indexAttr, di, b.indexCount - di);
+      b.geometry.setDrawRange(0, b.indexCount);
     }
 
     if (state.builtVerts >= state.totalVerts) {
@@ -822,6 +861,34 @@ export class FlightScene {
     attr.clearUpdateRanges();
     attr.addUpdateRange(start, count);
     attr.needsUpdate = true;
+  }
+
+  /**
+   * 2-1：子集變動（篩選）時只重寫 index，不碰頂點。依 staticRangeList（= base
+   * 順序）寫回，每桶整段 [0, indexCount) 上傳一次。建構中途也可呼叫：已寫入的點照 range.count
+   * 補 index，之後 continueStaticBuild 接著 append。
+   */
+  private reindexStatic() {
+    if (this.staticBuckets.length === 0) return;
+    for (const b of this.staticBuckets) b.indexCount = 0;
+    const subset = this.staticSubset;
+    for (const { id, range: r } of this.staticRangeList) {
+      if (subset !== null && !subset.has(id)) continue;
+      const b = r.bucket;
+      const idx = b.indices;
+      let c = b.indexCount;
+      const end = r.start + r.count;
+      for (let v = r.start + 1; v < end; v++) {
+        idx[c] = v - 1;
+        idx[c + 1] = v;
+        c += 2;
+      }
+      b.indexCount = c;
+    }
+    for (const b of this.staticBuckets) {
+      if (b.indexCount > 0) this.applyStaticRange(b.indexAttr, 0, b.indexCount);
+      b.geometry.setDrawRange(0, b.indexCount);
+    }
   }
 
   forceRebuildStatic() {
@@ -1205,6 +1272,7 @@ export class FlightScene {
     this.staticBuildState = null;
     this.staticRebuildPending = false;
     this.staticFlightRanges.clear();
+    this.staticRangeList = [];
     this.lastVisibleIds.clear();
     this.trailEpoch++;
   }
@@ -1240,6 +1308,7 @@ export class FlightScene {
     this.staticBuildState = null;
     this.staticRebuildPending = false;
     this.staticFlightRanges.clear();
+    this.staticRangeList = [];
     this.lastVisibleIds.clear();
   }
 

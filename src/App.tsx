@@ -1164,6 +1164,8 @@ export default function App() {
 
 
   const flightsRef = useRef(finalFlights);
+  /** 2-1：靜態軌跡的頂點以載入的完整集合建，篩選只重寫 index（finalFlights 是 allFlights 的保序子集） */
+  const baseFlightsRef = useRef(allFlights);
   // Phase 1-3：不再自己維護一份「每次 render 從 state 複製」的 ref（那會被 10 Hz
   // 節流拖慢），直接沿用 useTimeline 內部的 timeRef —— 同一個物件，rAF 每幀寫入，
   // custom layer / 錄影 overlay / 晨昏線 / viewshed track-single 都讀到最新值。
@@ -1195,6 +1197,7 @@ export default function App() {
   const atlasGlowSizeRef = useRef(atlasGlowSize);
 
   flightsRef.current = finalFlights;
+  baseFlightsRef.current = allFlights;
   renderModeRef.current = renderMode;
   altExagRef.current = altExaggeration;
   altOffsetRef.current = altOffset;
@@ -1483,6 +1486,7 @@ export default function App() {
     const layer = createFlightLayer({
       getCurrentTime: () => timeRef.current,
       getFlights: () => flightsRef.current,
+      getBaseFlights: () => baseFlightsRef.current,
       getRenderMode: () => renderModeRef.current,
       getAltExaggeration: () => altExagRef.current,
       getAltOffset: () => altOffsetRef.current,
