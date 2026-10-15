@@ -1268,6 +1268,11 @@ export default function App() {
       setMapStyle: setMapStyleId,
       setTrailDisplay,
       setTimeWindow,
+      /** 視覺回歸用（篩選場景）：只篩航空公司（operating_as 三字碼）；空陣列 = 不篩 */
+      setAirlineFilter: (codes: string[]) => setFlightFilters((prev) => ({ ...prev, airlines: new Set(codes) })),
+      setDepArrFilter,
+      setTrackMode,
+      setSelectedFlightId,
       /** 視覺回歸用：凍結所有 wall-clock 動畫（光球呼吸／閃爍、bloom、極光、CSS 動畫）到固定秒數；null 解除 */
       freezeAnimation: (t: number | null) => {
         setFrozenAnimTime(t);
