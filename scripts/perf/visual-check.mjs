@@ -310,6 +310,8 @@ try {
 } finally {
   // 全部跑完最後才解除凍結（best-effort，不因失敗而略過）
   try { await ev(`window.__flightArcDebug.freezeAnimation(null); 1`); } catch { /* ignore */ }
+  // 篩選場景留下的航司／離場／Track Single 一併清掉，免得接著跑 summary-snapshot 數字被篩過
+  try { await ev(`window.__flightArcDebug.setAirlineFilter&&(window.__flightArcDebug.setAirlineFilter([]), window.__flightArcDebug.setDepArrFilter('all'), window.__flightArcDebug.setTrackMode('stack'), window.__flightArcDebug.setSelectedFlightId(null)); 1`); } catch { /* ignore */ }
   cdp.close();
 }
 

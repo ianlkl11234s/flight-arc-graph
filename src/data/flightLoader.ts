@@ -179,6 +179,19 @@ function boundedSet(
 const airportCacheBudget: CacheBudget = { points: 0, pointsByKey: new Map() };
 const regionCacheBudget: CacheBudget = { points: 0, pointsByKey: new Map() };
 
+/**
+ * 記憶體預算（memoryBudget.ts）第一步：即將載入大範圍前清掉所有快取。
+ * 畫面上正在用的陣列由 React state 持有，不受影響；回頭看舊範圍時重新下載。
+ */
+export function clearTrackCaches(): void {
+  airportCache.clear();
+  regionCache.clear();
+  airportCacheBudget.points = 0;
+  airportCacheBudget.pointsByKey.clear();
+  regionCacheBudget.points = 0;
+  regionCacheBudget.pointsByKey.clear();
+}
+
 /** 命中時把 key 移到最近使用端（Map 以插入序為 LRU 序） */
 function lruTouch<V>(cache: Map<string, V>, key: string): V | undefined {
   const v = cache.get(key);
@@ -228,8 +241,13 @@ function datesKey(dates?: readonly string[]): string {
   return normalized.length > 0 ? normalized.join(",") : "all";
 }
 
-function flightDateTW(flight: Flight): string | null {
-  const timestamp = flight.dep_time || (flight.path.length > 0 ? flight.path.t(0) : undefined);
+/**
+ * 從原始 JSON 判斷台灣日期，與 preprocessFlight 後的 dep_time 推算一致
+ * （dep_time > 0 ? dep_time : path[0][3]）。先篩日期再建 TrackPath，
+ * 非目標日期的航班就不用付展開經度與 typed array 的成本。
+ */
+function rawFlightDateTW(flight: RawFlight): string | null {
+  const timestamp = flight.dep_time > 0 ? flight.dep_time : flight.path[0]?.[3];
   if (!timestamp || timestamp <= 1e9) return null;
   return new Date(timestamp * 1000 + 8 * 3600_000).toISOString().slice(0, 10);
 }
@@ -371,9 +389,9 @@ async function streamLoadJsonl(
       const trimmed = line.trim();
       if (!trimmed) continue;
       try {
-        const f = preprocessFlight(JSON.parse(trimmed) as RawFlight);
-        if (f.path.length > 0 && (requestedDates.size === 0 || requestedDates.has(flightDateTW(f) ?? ""))) {
-          flights.push(f);
+        const raw = JSON.parse(trimmed) as RawFlight;
+        if (raw.path.length > 0 && (requestedDates.size === 0 || requestedDates.has(rawFlightDateTW(raw) ?? ""))) {
+          flights.push(preprocessFlight(raw));
           sinceProgress++;
         }
       } catch {
@@ -390,8 +408,8 @@ async function streamLoadJsonl(
   // 處理剩餘 buffer
   if (buffer.trim()) {
     try {
-      const f = preprocessFlight(JSON.parse(buffer) as RawFlight);
-      if (f.path.length > 0 && (requestedDates.size === 0 || requestedDates.has(flightDateTW(f) ?? ""))) flights.push(f);
+      const raw = JSON.parse(buffer) as RawFlight;
+      if (raw.path.length > 0 && (requestedDates.size === 0 || requestedDates.has(rawFlightDateTW(raw) ?? ""))) flights.push(preprocessFlight(raw));
     } catch {
       // ignore
     }

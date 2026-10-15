@@ -71,6 +71,8 @@ function diffDeep(a, b, prefix = '') {
 
 let anyFail = false;
 try {
+  // 篩選場景（f*）會留下航司／離場篩選在同一個頁面；統計前一律清掉
+  await ev(`window.__flightArcDebug.setAirlineFilter&&(window.__flightArcDebug.setAirlineFilter([]), window.__flightArcDebug.setDepArrFilter('all'), window.__flightArcDebug.setTrackMode('stack'), window.__flightArcDebug.setSelectedFlightId(null)); 1`);
   for (const scene of scenes) {
     console.log(`\n=== ${scene.id} ===`);
     await runSteps(scene.steps);

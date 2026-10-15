@@ -44,9 +44,34 @@ export function resetGlStats(): void {
   glBufferSubDataCalls = 0;
 }
 
+// 同一個 gl context 跨 style 切換會重用：只裝一次（WeakSet 去重）。
+// ⚠️ 必須定義在 module scope：若寫在 createFlightLayer 內，包裝函式的 closure 會把整個
+// createFlightLayer 的 context（含 FlightScene）掛在長壽的 gl 上，每切一次底圖洩漏一組 scene。
+const glCountersInstalled = new WeakSet<object>();
+function installGlCounters(gl: WebGLRenderingContext): void {
+  if (glCountersInstalled.has(gl)) return;
+  glCountersInstalled.add(gl);
+  const g = gl as unknown as Record<string, (...args: unknown[]) => unknown>;
+  const origBufferData = g["bufferData"]!.bind(gl);
+  g["bufferData"] = (...args: unknown[]) => {
+    glBufferDataCalls++;
+    return origBufferData(...args);
+  };
+  const origBufferSubData = g["bufferSubData"]!.bind(gl);
+  g["bufferSubData"] = (...args: unknown[]) => {
+    glBufferSubDataCalls++;
+    return origBufferSubData(...args);
+  };
+}
+
 export interface FlightLayerOptions {
   getCurrentTime: () => number;
   getFlights: () => Flight[];
+  /**
+   * 2-1：建靜態頂點用的完整集合（getFlights 必須是它的保序子集）。篩選只改 getFlights 時
+   * 靜態軌跡只重寫 index。未提供 = getFlights（每次篩選都全量重建，舊行為）。
+   */
+  getBaseFlights?: () => Flight[];
   getRenderMode: () => RenderMode;
   getAltExaggeration: () => number;
   getAltOffset: () => number;
@@ -75,6 +100,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   let lastDarkTheme = true;
   let lastShowTrails = true;
   let lastFlightsRef: Flight[] | null = null;
+  let lastBaseFlightsRef: Flight[] | null = null;
   let lastVisibilityKey = "";
   // ±12h 可見度掃描的 1 秒 bucket（事件化，避免每幀 O(N) 全掃）
   let lastScanBucket = NaN;
@@ -96,6 +122,14 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   const camScratch = { x: 0, y: 0, z: 0 };
   // repaint 節流器的 detach handle（style 切換會整批 remove+re-add 這個 layer）
   let detachScheduler: (() => void) | null = null;
+  // Phase 1-2：靜態桶上傳後已丟 CPU 陣列，context restore 時 three 無法重傳 → 丟掉從 TrackPath 重建。
+  // Mapbox _contextRestored 不經 custom layer onRemove/onAdd，故自己聽 map 事件
+  // （Mapbox 在 restore 處理內同步 fire，下一幀 render 由 rAF 排程，必在重建之前）。
+  const onContextRestored = () => {
+    flightScene.resetStaticForContextRestore();
+    lastVisibilityKey = ""; // ±12h：lastVisibleIds 已清，強制重套可見度
+    lastScanBucket = NaN;
+  };
 
   return {
     id: "flight-3d",
@@ -106,29 +140,19 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       map = mapInstance;
       // DEV-only：THREE 的 WebGLRenderer 用同一個 gl context（見 flightScene.init 下方），
       // 在建立 renderer 前先掛上計數器，才不會漏算它初始化時發出的呼叫。
-      if (import.meta.env.DEV) {
-        const g = gl as unknown as Record<string, (...args: unknown[]) => unknown>;
-        const origBufferData = g["bufferData"]!.bind(gl);
-        g["bufferData"] = (...args: unknown[]) => {
-          glBufferDataCalls++;
-          return origBufferData(...args);
-        };
-        const origBufferSubData = g["bufferSubData"]!.bind(gl);
-        g["bufferSubData"] = (...args: unknown[]) => {
-          glBufferSubDataCalls++;
-          return origBufferSubData(...args);
-        };
-      }
+      if (import.meta.env.DEV) installGlCounters(gl);
       flightScene.init(gl);
       opts.onSceneReady?.(flightScene);
       // 三個 custom layer（flight-3d / atlas-glow-3d / airspace-aurora）一定同時
       // 存在，repaint 節流器的地圖互動監聽只在這裡掛一次即可，其他 layer 直接呼叫
       // notifyActivity / requestDecorativeRepaint。
       detachScheduler = attachRepaintScheduler(mapInstance);
+      mapInstance.on("webglcontextrestored", onContextRestored);
     },
 
     render(_gl, matrix, projection, projectionToMercatorMatrix, projectionToMercatorTransition) {
       const flights = opts.getFlights();
+      const baseFlights = opts.getBaseFlights?.() ?? flights;
       const time = opts.getCurrentTime();
       const mode = opts.getRenderMode();
       const altExag = opts.getAltExaggeration();
@@ -157,14 +181,17 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
         : `${flights.length}|${flights[0]!.fr24_id}|${flights[flights.length - 1]!.fr24_id}`;
       if (flights !== lastFlightsRef) {
         lastFlightsRef = flights;
-        lastVisibilityKey = ""; // 強制重新計算可見度
-        lastScanBucket = NaN;   // 新幾何：強制重掃可見集合
         timeIndex.build(flights);
         flightScene.invalidateMercatorCache();
       }
+      if (baseFlights !== lastBaseFlightsRef) {
+        lastBaseFlightsRef = baseFlights;
+        lastVisibilityKey = ""; // 強制重新計算可見度
+        lastScanBucket = NaN;   // 新幾何：強制重掃可見集合
+      }
 
       // 靜態軌跡（用完整航班集合建構幾何體）
-      flightScene.updateStaticTrails(flights, mode);
+      flightScene.updateStaticTrails(flights, mode, baseFlights);
 
       // ±12h 靜態軌跡可見度（在 render loop 中計算，不經過 React）
       const timeWindow = opts.getTimeWindow();
@@ -176,8 +203,9 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
           lastScanBucket = scanBucket;
           const tMin = time - VISIBILITY_WINDOW_SEC;
           const tMax = time + VISIBILITY_WINDOW_SEC;
+          // 2-1：在 base 上算（index 管篩選、alpha 只管時間窗），篩選變動不用重寫 alpha
           const visibleIds = new Set<string>();
-          for (const f of flights) {
+          for (const f of baseFlights) {
             if (f.path.length === 0) continue;
             const pathStart = f.path.t(0);
             const pathEnd = f.path.t(f.path.length - 1);
@@ -196,7 +224,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
         lastVisibilityKey = "all";
         lastScanBucket = NaN; // 重新開啟 timeWindow 時強制重掃
         const allIds = new Set<string>();
-        for (const f of flights) allIds.add(f.fr24_id);
+        for (const f of baseFlights) allIds.add(f.fr24_id);
         flightScene.updateStaticVisibility(allIds);
       }
 
@@ -304,6 +332,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
     },
 
     onRemove() {
+      map?.off("webglcontextrestored", onContextRestored);
       detachScheduler?.();
       detachScheduler = null;
       flightScene.dispose();

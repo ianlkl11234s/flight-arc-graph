@@ -399,6 +399,7 @@ export function createAirspaceLayer(opts: AirspaceLayerOptions): CustomLayerInte
       wallMat?.dispose();
       topLineMat?.dispose();
       bottomLineMat?.dispose();
+      renderer?.dispose();
       renderer = null;
       mapRef = null;
       built = false;

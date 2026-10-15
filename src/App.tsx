@@ -33,6 +33,8 @@ import { MobileBottomSheet, SheetNote } from "./components/MobileBottomSheet";
 import { Toolbar } from "./components/Toolbar";
 import { Dock, DockItem } from "./components/Dock";
 import { LoadingStatus } from "./components/LoadingStatus";
+import { BudgetNotice } from "./components/BudgetNotice";
+import { setTrackPointBudgetOverride } from "./data/memoryBudget";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
 import { IconRailSidebar, type ScenePreset, type PanelId } from "./components/IconRailSidebar";
@@ -311,6 +313,8 @@ export default function App() {
     regionFullDatesMap,
     loadError,
     retryLoad,
+    memoryBudget,
+    confirmMemoryBudget,
   } = useFlightData(
     dataSource,
     scope,
@@ -1164,6 +1168,10 @@ export default function App() {
 
 
   const flightsRef = useRef(finalFlights);
+  const memoryBudgetRef = useRef(memoryBudget);
+  memoryBudgetRef.current = memoryBudget;
+  /** 2-1：靜態軌跡的頂點以載入的完整集合建，篩選只重寫 index（finalFlights 是 allFlights 的保序子集） */
+  const baseFlightsRef = useRef(allFlights);
   // Phase 1-3：不再自己維護一份「每次 render 從 state 複製」的 ref（那會被 10 Hz
   // 節流拖慢），直接沿用 useTimeline 內部的 timeRef —— 同一個物件，rAF 每幀寫入，
   // custom layer / 錄影 overlay / 晨昏線 / viewshed track-single 都讀到最新值。
@@ -1187,12 +1195,15 @@ export default function App() {
   const airspaceSettingsRef = useRef(airspaceSettings);
   const flightSceneRef = useRef<FlightScene | null>(null);
   const clickBoundRef = useRef(false);
+  // handleMapReady 每次 style.load 都會跑；保存 move handler 以便重綁前先解除，避免 listener 累積
+  const cameraMoveHandlerRef = useRef<(() => void) | null>(null);
   const atlasPopupRef = useRef<mapboxgl.Popup | null>(null);
   const atlasGlowVisibleRef = useRef(atlasGlowVisible);
   const atlasColorModeRef = useRef(atlasColorMode);
   const atlasGlowSizeRef = useRef(atlasGlowSize);
 
   flightsRef.current = finalFlights;
+  baseFlightsRef.current = allFlights;
   renderModeRef.current = renderMode;
   altExagRef.current = altExaggeration;
   altOffsetRef.current = altOffset;
@@ -1266,6 +1277,15 @@ export default function App() {
       setMapStyle: setMapStyleId,
       setTrailDisplay,
       setTimeWindow,
+      /** 視覺回歸用（篩選場景）：只篩航空公司（operating_as 三字碼）；空陣列 = 不篩 */
+      setAirlineFilter: (codes: string[]) => setFlightFilters((prev) => ({ ...prev, airlines: new Set(codes) })),
+      setDepArrFilter,
+      /** 記憶體預算驗收：暫時改軌跡點數上限（null 還原）；只影響之後的選擇變更 */
+      setTrackPointBudget: setTrackPointBudgetOverride,
+      getMemoryBudget: () => memoryBudgetRef.current,
+      confirmMemoryBudget,
+      setTrackMode,
+      setSelectedFlightId,
       /** 視覺回歸用：凍結所有 wall-clock 動畫（光球呼吸／閃爍、bloom、極光、CSS 動畫）到固定秒數；null 解除 */
       freezeAnimation: (t: number | null) => {
         setFrozenAnimTime(t);
@@ -1476,6 +1496,7 @@ export default function App() {
     const layer = createFlightLayer({
       getCurrentTime: () => timeRef.current,
       getFlights: () => flightsRef.current,
+      getBaseFlights: () => baseFlightsRef.current,
       getRenderMode: () => renderModeRef.current,
       getAltExaggeration: () => altExagRef.current,
       getAltOffset: () => altOffsetRef.current,
@@ -1541,6 +1562,8 @@ export default function App() {
           : next,
       );
     };
+    if (cameraMoveHandlerRef.current) map.off("move", cameraMoveHandlerRef.current);
+    cameraMoveHandlerRef.current = updateCamera;
     map.on("move", updateCamera);
     updateCamera();
 
@@ -1666,10 +1689,19 @@ export default function App() {
     // pre-allocated arrays 避免每幀 GC
     let cachedArcPts: [number, number][] = [];
     let cachedRings: { arc: [number, number][]; alpha: number }[] = [];
+    // 暫停（模擬時間與所有輸入皆未變）時整幀跳過，避免 60 Hz 白算 + 白寫 buffer；
+    // 任一輸入變化（播放、seek、透明度/銳利度、底圖、scene 重建、航班集合）下一幀立即恢復
+    let lastKey: unknown[] | null = null;
 
     const tick = () => {
       const styleId = mapStyleIdRef.current;
       const isSat = styleId.includes("satellite");
+      const key = [timeRef.current, flightsRef.current, flightSceneRef.current, styleId, viewshedOpacityRef.current, viewshedSharpnessRef.current];
+      if (lastKey && key.every((v, i) => v === lastKey![i])) {
+        animId = requestAnimationFrame(tick);
+        return;
+      }
+      lastKey = key;
       const flight = flightsRef.current.find((f) => f.fr24_id === selectedFlightId);
       if (flight && flight.path.length > 0) {
         const t = timeRef.current;
@@ -2465,7 +2497,7 @@ export default function App() {
               code={captionCode}
               name={captionName}
               meta={captionMeta}
-              notice={!loading && !loadingProgress && !loadError && displayedFlights.length === 0 ? "此日期範圍無航班資料" : undefined}
+              notice={memoryBudget?.blocked ? "範圍過大，尚未載入" : !loading && !loadingProgress && !loadError && displayedFlights.length === 0 ? "此日期範圍無航班資料" : undefined}
               onExit={airportSet ? exitSetMode : undefined}
               exitLabel="退出組合模式"
               actions={railPanel === null ? (
@@ -2747,7 +2779,14 @@ export default function App() {
         top={captureMode ? CAPTURE_STATUS_TOP : isMobile ? mobileStatusTop : undefined}
         right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : isMobile ? MOBILE_STATUS_RIGHT : undefined}
         failOnly={captureMode}
-        hidden={(captureMode && isExporting) || bootMask}
+        hidden={(captureMode && isExporting) || bootMask || memoryBudget?.blocked === true}
+      />
+      <BudgetNotice
+        status={memoryBudget}
+        onConfirm={confirmMemoryBudget}
+        top={captureMode ? CAPTURE_STATUS_TOP : isMobile ? mobileStatusTop : undefined}
+        right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : isMobile ? MOBILE_STATUS_RIGHT : undefined}
+        hidden={captureMode || bootMask}
       />
 
       {/* ── 點擊處的選取圈（R1；固定在點擊位置，相機一動就收）── */}

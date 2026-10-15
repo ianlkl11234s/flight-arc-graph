@@ -173,3 +173,128 @@ T0-1～T0-5 已在本分支完成（T0-6 未做，收益 <0.5%）。同一 sessi
 - 視覺：同視角截圖逐像素 diff（dark theme T0-1 應為 0 差異）。
 - 錄影：即時錄製與 HQ 匯出各跑一次（T05-4）。
 - `npm run typecheck` 綠。
+
+---
+
+## 六、2026-10 記憶體方向（2026-10-04，三輪討論定案，尚未動程式）
+
+參與：Claude Opus 5.5（主持＋整合）、Fable 5.1、Codex（gpt-5.6-sol，reasoning high）。全程唯讀，未改 repo。
+原始紀錄：[`render-performance/2026-10-memory-rounds/`](render-performance/2026-10-memory-rounds/)（brief＝證據摘要、r1–r3＝兩方各輪全文）。
+
+### 0. 先講結論
+1. **重開機的直接機制很可能是整台機器 swap 耗盡**：量測當下（未開 Flight Arc）memory pressure=warn、swap 23.7/24 GB。Flight Arc 是最後一根稻草，不一定是唯一原因。
+2. **但 Flight Arc 確實有一個會累積的大洩漏**（兩個模型都各自讀碼驗證成立）：切底圖（dark/light/satellite…，以及關閉 Pure Black）時，Mapbox 因 `setSprite` 無法 diff 改走整個 style 重建，**不呼叫 custom layer 的 onRemove** → 舊 FlightScene／空域極光／atlas glow 的 three renderer 被 canvas 的 `webglcontextlost` listener 留住，CPU 陣列＋GPU buffer 都回收不了。world 單日每切一次估 ~300 MB、多機場 L0 估 ~530 MB，切幾次就是 GB 級。
+   - 錨點已親自核對：`MapView.tsx:349`（setStyle）、`:365`（`{diff:false}`）、`App.tsx:1473`（`getLayer("flight-3d")`）、`App.tsx:1544`（未解除的 `map.on("move")`）。
+   - 唯一既有的 runtime 旁證：`scripts/perf/README.md:92`「實測跑過 6 場景後 heap 到 1.9 GB」。visual-check 的 bootstrap 每次都走 light→dark，**9 月的 heap 數字是在洩漏存在下量的**，修完要重建基準。
+   - 「很多圖層」中空域圖層開啟本身的成本（p95 17.0 vs 9.3 ms）已另有規劃：`docs/backlog/global-airspace-plan.md`（先簡化幾何）。
+3. 方向不是換技術棧，而是 **「單一資料所有權＋共用幾何＋預算制」**：修洩漏 → 去掉重複持有 → indexed 幾何讓篩選不再全量重建 → 才視量測決定要不要做空間 tile。全部以零視覺差異為目標，有既有 visual-check / summary-snapshot 守門。
+
+### 1. 路線圖
+
+| Phase | 項目 | 改哪 | 零視覺 | 預估效益 | 量 |
+|---|---|---|---|---|---|
+| 0 | 量測前提（§2） | scripts/perf 擴充 | — | 決定 1/2/3 的優先序 | 小 |
+| 1-1 | setStyle 前明確 removeLayer 三層＋aurora 補 `renderer.dispose()`＋`map.on("move")` 對稱解除＋detachScheduler | MapView.tsx:349/365、airspaceAurora.ts:385-402、App.tsx:1544、repaintScheduler | 是 | 每切一次 W −~300 MB、A −~530 MB（且不再累積） | 小 |
+| 1-2 | 靜態桶上傳 GPU 後丟掉不可變 CPU 陣列（只留 alpha）＋context-restore handler 從 TrackPath 重建 | FlightScene.ts StaticBucket、customLayer | 是 | W −93 MB、A −160 MB | 中 |
+| 1-3 | 刪 10 Hz 白算（useFlightData.ts:278-284）；viewshed／terminator rAF 暫停不跑 | useFlightData、App.tsx:1724、terminatorOverlay.ts:130 | 是 | 閒置 CPU 歸零 | 小 |
+| 2-1 | 靜態軌跡改 **indexed GL_LINES**；篩航司/機型/track-single/日期窗只重寫 index（setDrawRange），不再全量重建；App 拆「基礎集／可見集」 | FlightScene、customLayer、App.tsx:978/1195/1615 | 是（值無損；light 單一保序 index） | GPU W 102→64 MB、A 176→104 MB；vertex −45%；篩選從 ~4 s 重建＋2× 峰值 → ~10 ms | 大 |
+| 2-2 | per-point store 取代 mercatorCache（光軌直接讀共用座標；1-2 丟掉的 position/ECEF 在此改為保留並升格為 store，不另存一份） | FlightScene.ts:981-1001、BatchedTrails | 本體同值 | W −85 MB、A −136 MB；seek 尖峰歸零 | 中 |
+| 2-3 | DatasetGeneration 原子交換＋記憶體預算（超額等待/提示，**絕不抽航班**）＋Worker 解析＋日期前置過濾（之後可升級 columnar binary） | flightLoader.ts:362-375、useFlightData.ts:119-127 | 是 | world 94 MB 解析離開主執行緒；換資料峰值 ≤ 1 集合＋1 LOD 層 | 中大 |
+| 2-4 | FlightScene 單例＋closure 狀態上提（同集合 re-add 零重建） | customLayer.ts:157-163、App.tsx:1615 | 是 | renderer churn 歸零 | 中 |
+| 3-1 | 5° 子格 AABB 視錐剔除（mercator 模式，dark only；light 不剔除保順序） | FlightScene | 是（保守剔除） | 多機場 L0 拉近時頂點工作 −75~90%；world globe ≈0 | 中 |
+| 3-2 | metadata／幾何分離 → 10° 空間 tile（PMTiles，含 L0/L1/L2） | split-tracks、flightLoader、useFlightData | 否（捲入視野時短暫 L2→L0） | 常駐記憶體只剩視野內 | 大 |
+
+**3-2 閘門**（Phase 2 後量，任一命中才做）：apac L0 或多日 world 穩態 renderer footprint >1 GB 或 GPU process 增量 >600 MB；最大集合首幀 >8 s；需求擴到 ≥7 日 world。
+
+已一致**不做**：ECEF 搬回 shader（GPU-bound 下會更慢）、mercatorCache 純 LRU（seek 尖峰）、篩選用 alpha=0 隱藏（vertex-bound 下頂點照跑）、再提地形/DPR/MSAA。
+
+### 2. Phase 0 量測（環境乾淨後才做）
+前提：重開機或關閒置程式，pressure level 回 normal、swap < 12 GB。
+- **先驗量測工具本身**：TypedArray 的 backing store 是 V8 external memory，`usedJSHeapSize`／`JSHeapUsedSize` 可能不含 → 分配 200 MB Float32Array 看數字動不動；改量 renderer 與 GPU process 的 `phys_footprint`（`footprint` / `vmmap --summary`；`ps rss` 會低估 Metal/IOSurface）。
+- 量：空 tab／world 穩態／播完一天／apac L0；style 切 10 次階梯；切 20 次機場組合峰值；world 載入 long task。
+- 判讀：階梯斜率≈0 → 1-1 降為衛生項；world 穩態 <300 MB 且峰值 <500 MB → 記憶體不是 Flight Arc 主因，2-2/2-3 降級；GPU busy 主導風扇 → 2-1、3-1 前移；載入 long task >1 s → 2-3 升入 Phase 1。
+
+### 3. 新增驗收（既有 visual-check / summary-snapshot / ab-run 之外）
+- T-A 切 style 階梯：light/dark ×10，每次 stable＋GC 後記 footprint、canvas `webglcontextlost` listener 數、`map._listeners.move.length`。通過：斜率 ≤10 MB/次、listener 數不變。
+- T-B context loss：`WEBGL_lose_context` lose→restore 後 visual 比對 pctOver8<0.15%、console 無 TypeError。
+- T-C 子集等價：篩航司 X 改前改後逐像素同、summary 同、篩選期間 bufferData=0。
+- T-D 上傳位元組：world indexed 後 ≤70 MB。
+- T-E 光軌等價：20 個 seek 時刻 orb 位置差 ≤1 ulp；新增 z15 場景。
+- T-F 剔除開關：cull on/off 逐像素 0 差。
+- T-G 換集合峰值：切 20 次組合，峰值 ≤ 穩態＋1 個集合。
+
+### 4. 未共識（小）
+- per-point store 的 xy 精度：Fable 主張 Float32（本體 bit-identical，只有 head/tail 插值 ≤2.4 m，z15 場景驗）；Codex 主張 Float64（world 多 ~15 MB，換精度與 restore 單一路徑）。建議：先 Float64（保守、符合「呈現不能錯」），z15 驗過再考慮收。
+- 2-1 前要不要做過渡的緊湊 cache：Fable 認為是丟棄工；只在 2-1 延誤時才做。
+
+### 5. Phase 0 實測結果（2026-10-12，warn 狀態下量測，絕對值僅供參考）
+
+環境：DPR 2、canvas 2938×1706、地形開、Chrome 154；量測期間 memory pressure 多為 2（warn），swap ~2.9/4 GB。每項皆重開乾淨 Chrome。腳本與原始數據：[`render-performance/2026-10-phase0/`](render-performance/2026-10-phase0/)（`run.mjs` 可重跑，Phase 1 完成後用同一套對照）。
+
+- **量測工具修正**：CDP `JSHeapUsedSize` **看不到 TypedArray**（配 200 MB Float32Array → −1.9 MB）；`Runtime.getHeapUsage().backingStorageSize` +190.7 MB、renderer `phys_footprint` +186 MB。→ 之後一律看 `backingStorageSize` + footprint。
+- **各場景穩態（GC 後，renderer／GPU process／backingStorage）**：空白 64／299／0；S1 RCTP 304–334／1,005–1,066／72；S2 apac fit（L2）451–471／1,118／81；S2 拉近 z10.2（L0，255 萬點）**819**／1,214／329；world z3（L2，81,599 班）**999（峰值 1,678）**／1,105／233 MB。
+- **world 載入**：10.3 s 穩定、7 個 long task、**最長 1,529 ms**。⚠️ 更正（2026-10-12 Gate D 複測）：Phase 0 原始數據其實有兩次 world，另一次最長 249 ms；1.5 s 是離群值，trace 歸因為 **React 19 dev build 才有的 `addObjectDiffToProperties`**（逐筆比對 81,599 筆 flights props），production 不存在。loader 主執行緒合計 ~942 ms 但分散在各 `reader.read()` 區塊，無單一 task >50 ms。HEAD 0d7ccfc 複測：prod 最長 251／240 ms、dev 239／239 ms → Gate D 已達標，2-3 不需升入 Phase 1。
+- **GPU process ~1 GB 主要是底圖＋地形＋DPR2 framebuffer**，軌跡增量約 50–200 MB（與估算相符）。
+- **T-A 切底圖（S2 apac L2，×11）**：renderer **+30.0 MB/次**、GPU **+27.9 MB/次**；每切一次多留 1 個 FlightScene、3 個 WebGLRenderer、3 個 `webglcontextlost` listener、1 個 move listener，完全線性（11 次後 FlightScene=12、WebGLRenderer=36）。**洩漏實測成立**；L0／world 的斜率未量，預期更大。
+- **T-G 換集合 ×12**：FlightScene／WebGLRenderer 實例恆為 1／3，**換集合本身無實例洩漏**；renderer 在 304–780 MB 間漂移、無線性階梯（推測 Mapbox tile cache／allocator，未驗證）。峰值 renderer 1,041 MB（RJTT）、GPU 1,354 MB。
+- **閒置**：S2 暫停 32 s 後 renderer／GPU 皆 0%（歸零）；world 暫停後 GPU 0% 但 **renderer 仍 4–6%**。
+
+**對路線圖的影響**：1-1 維持第一（實證）；world 穩態 999／峰值 1,678 MB 超過「<300／<500」門檻 → 2-2、2-3 不降級；~~world long task 1.5 s >1 s → 2-3 升入 Phase 1~~（已更正：dev-only 離群值，見上）；1-3 要做（world 閒置 renderer 殘留）；GPU process 大頭不在軌跡 → 2-1 對 GPU 記憶體的效益在此機器相對有限，以 vertex 工作量與篩選重建時間為主要收益。
+
+未量：L0／world 的 T-A 斜率、「播完一天」的 mercatorCache 成長、多次取中位數。
+
+### 6. Phase 1 執行結果（2026-10-12，branch `perf/memory-p1`，未 push／merge）
+
+| 關卡 | commit | 結果 |
+|---|---|---|
+| A 切底圖洩漏（1-1） | `1f69006` | T-A ×11：renderer 斜率 +30 → −2~−3 MB/次；FlightScene 1→12 → 1→2 後恆定（+1 推測為 Mapbox 握著最後移除的 layer，未驗證）；另修 DEV gl 計數器 closure 洩漏 |
+| B 閒置 CPU（1-3） | `0d7ccfc` | world 播放 renderer 33% → 26%；暫停 45–75 s ≤0.2%。暫停後 0–30 s 約 8% 屬既定 30 s 裝飾重繪政策（未改），其後一次 V8 GC 尖峰 |
+| D 載入 long task（2-3） | `1946fad`（僅文件） | 已達標，不改 loader：prod 最長 240–251 ms；Phase 0 的 1.5 s 是 React dev-only 離群值 |
+| C 丟上傳後 CPU 陣列（1-2） | `045153a` | backingStorage world 209.5 → 120.7 MB、S2-L0 312.2 → 130.3 MB；renderer footprint world 775 → 687、S2-L0 824 → 622 MB；T-B restore 與 HEAD 交叉比對 maxDiff 0 |
+
+每關皆過 typecheck、design:guard/test、visual-check 6/6、summary-snapshot 相同。量測環境 memory pressure 1–2、其他 session 負載高。
+
+**已知未解**：S1 pitch 40 + ±12h 場景 context restore 後與 baseline 差 0.65–0.74%（HEAD 同樣，Mapbox 側殘差）；HEAD 本來就有 `WebGL: too many errors` 警告；2D 模式與「progressive 建構中途 context restore」只做路徑分析未實測。
+**下一步（待拍板）**：2-1 indexed GL_LINES（牽涉 light theme 混色順序，不自動做）→ 2-2 per-point store 取代 mercatorCache（依賴 2-1）。小項：日期前置過濾對非 2/18 日期可省 ~95% TrackPath 建構（world 2/18 只省 16%）。
+
+### 7. Phase 2 第一批結果（2026-10-15，分支 `perf/memory-p2` → `perf/indexed-static`，未 push/merge）
+
+| 項目 | commit | 結果 |
+|---|---|---|
+| 日期前置過濾 | `02543de`（p2） | 串流載入先用原始 JSON 判台灣日期再建 TrackPath。world region 檔：非 2/18 日期跳過約 98% 建構、2/18 跳過 16%（JSON.parse 仍全量）。 |
+| 篩選守門場景 | `4aff35e`、`ebaaa3d`（p2） | visual-check 新增 f1–f4 五個篩選場景（航司 dark/light、離場 light、Track Single、apac 航司）；DEV 掛鉤補 4 個 setter；兩支工具開頭／結尾清篩選。 |
+| 2-1 indexed GL_LINES | `f37420e`（indexed-static） | 頂點每點一個＋Uint32 index；頂點以 allFlights 建，篩選只依 base 順序重寫 index；±12h alpha 改在 base 上算。 |
+
+2-1 實測（量測腳本 `scripts/perf/out/measure-filter.mjs`，gitignored）：
+
+| 指標 | 改前 | 改後 |
+|---|---|---|
+| world 靜態軌跡 GPU（屬性＋index） | 97.6 MB | 52.2＋8.9 = 61.1 MB（−37%） |
+| world 清除航司篩選到畫完 | 4,449 ms、bufferSubData 29,244 次 | 415 ms、112 次（剩約 300 ms long task 是 React 統計，改前也有） |
+| S2 清除篩選 | 601 ms | 48 ms |
+| S2 播放 perFrame.script | 4.72 ms | 4.19 ms（GPU 1.28 → 1.12 ms/幀，噪聲邊緣） |
+
+驗收：visual-check 11/11 PASS（f1–f4 改前改後逐像素 0，含 light）；summary-snapshot 相同；context restore、建構中 restore、建構中換子集、放寬再收回四種路徑最終畫面彼此 bit-identical（與 restore 前差 0.04%，落在地圖文字／道路，Mapbox 側）。
+
+**注意**：
+- 縮小篩選（全集 → 少數航司）本來就快，2-1 的收益在「放寬／清除篩選、離開 Track Single、切離場／進場」。
+- 機場分色／分析分色等 per-flight 色表模式下，篩選會改色表 → 仍走全量重建（舊行為，畫面不變）。
+- 新增成本：index 的 CPU 陣列保留（world 約 9 MB），因為篩選要改寫它。
+- 既有問題未處理：forceRebuildStatic（換色／高度）後 ±12h 時間窗的 alpha 要等可見集合大小變動才重套。
+
+**下一步（待拍板）**：2-2 per-point store 取代 mercatorCache（現在可做，頂點已是每點一份）；2-3 記憶體預算＋Worker 解析。
+
+### 8. 2-3 記憶體預算（2026-10-15，分支 `perf/memory-budget`，疊在 indexed-static 之上，未 push/merge）
+
+做法（`src/data/memoryBudget.ts`）：載入前用 manifest 估點數（daily shard bytes ÷ 35；無 shard 用班數 × 600），上限 **400 萬點**（≈ 740 MB，以 185 B／點換算）。超過時：
+1. 清掉 airport／region 快取（`clearTrackCaches`）；
+2. 自動改用較粗的 LOD（L0 → L1 → L2，點數比 1／0.21／0.09），右上常駐「已降低軌跡解析度以控制記憶體」；
+3. 連 L2 都超過 → 不載入，右上「範圍過大，尚未載入（預估約 X MB）」＋「仍要載入」（以 L2 載入；同一份選擇拉近拉遠不再問）。
+
+只管 airport scope／airport set；region scope 讀精簡檔（全球所有日期約 150 萬點）碰不到上限。
+
+校準（apac set L2→L0 +228 萬點，warn 下）：JS typed array 42 B／點、renderer 115 B／點、GPU 71 B／點。估算：單機場誤差約 5%，組合多估約 16%（互飛航班算兩次）；LOD 檔涵蓋約 88% 的日期分檔，缺檔時退回 L0，那部分會低估。
+
+實測：RCTP L0 不觸發；KORD／LTFM／EGLL／KATL／KLAX 2/18 要求 L0（估 539 萬點）→ 自動 L1，估 113 萬實際 116 萬點；上限暫調 1 萬點測擋下 → 0 班＋提示，按確認後以 L2 載入、拉遠拉近不重問。visual-check 11/11、summary-snapshot 相同（現有場景都不觸發，apac L0 估 296 萬點）。目前資料要一次選約 85 座大機場（L0 約 4,470 萬點 ≈ 8 GB）才會走到「擋下」。
+
+**發現的舊問題（未修）**：同一份選擇在不同 LOD 層的航班數不完全相同（apac L0 3,798 班 vs L2 3,769 班；RCTP 651 vs 649），違反「換層不換航班」。自動降級會繼承這個差異；summary-snapshot 偶發差 1–2 班可能也是這個原因。

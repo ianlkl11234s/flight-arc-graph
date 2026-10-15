@@ -222,6 +222,27 @@ function applyPureBlackTheme(map: mapboxgl.Map): void {
   }
 }
 
+/**
+ * setStyle 前先手動移除所有 custom layer（flight-3d / airspace-aurora / atlas-glow-3d）。
+ * 底圖 sprite 不同時 Mapbox 的 diff 失敗會走 _updateStyle，Style._remove() 不會呼叫
+ * custom layer 的 onRemove → FlightScene.dispose／detachScheduler 永不執行（每切一次
+ * 洩漏一組 WebGLRenderer + listener）。removeLayer 會走各 layer 自己的 onRemove。
+ * style.load 後 handleMapReady 會重新 addLayer。
+ */
+function removeCustomLayers(map: mapboxgl.Map) {
+  try {
+    // ⚠️ map.getStyle() 的 serialize 會略過 custom layer（實測），只能讀 Style 內部 _layers
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const layers = (map as any).style?._layers as Record<string, { type?: string }> | undefined;
+    if (!layers) return;
+    for (const id of Object.keys(layers)) {
+      if (layers[id]?.type === "custom" && map.getLayer(id)) map.removeLayer(id);
+    }
+  } catch {
+    // style 尚未載入完成時可能丟錯；此時也沒有已掛上的 custom layer
+  }
+}
+
 export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, gradientColorMap, onMapReady }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -346,6 +367,7 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
+    removeCustomLayers(map);
     map.setStyle(styleUrl);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleUrl]);
@@ -361,6 +383,7 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
       // ⚠️ styleUrl 與當前底圖相同時，預設 setStyle 走 diff 增量更新 → 移除自訂
       //    overlay 但「不觸發 style.load」→ 圖層全消失回不來。
       //    用 { diff: false } 強制完整 reload，確保 style.load 重建所有圖層。
+      removeCustomLayers(map);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       map.setStyle(styleUrl, { diff: false } as any);
     }
