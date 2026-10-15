@@ -256,3 +256,30 @@ T0-1～T0-5 已在本分支完成（T0-6 未做，收益 <0.5%）。同一 sessi
 
 **已知未解**：S1 pitch 40 + ±12h 場景 context restore 後與 baseline 差 0.65–0.74%（HEAD 同樣，Mapbox 側殘差）；HEAD 本來就有 `WebGL: too many errors` 警告；2D 模式與「progressive 建構中途 context restore」只做路徑分析未實測。
 **下一步（待拍板）**：2-1 indexed GL_LINES（牽涉 light theme 混色順序，不自動做）→ 2-2 per-point store 取代 mercatorCache（依賴 2-1）。小項：日期前置過濾對非 2/18 日期可省 ~95% TrackPath 建構（world 2/18 只省 16%）。
+
+### 7. Phase 2 第一批結果（2026-10-15，分支 `perf/memory-p2` → `perf/indexed-static`，未 push/merge）
+
+| 項目 | commit | 結果 |
+|---|---|---|
+| 日期前置過濾 | `02543de`（p2） | 串流載入先用原始 JSON 判台灣日期再建 TrackPath。world region 檔：非 2/18 日期跳過約 98% 建構、2/18 跳過 16%（JSON.parse 仍全量）。 |
+| 篩選守門場景 | `4aff35e`、`ebaaa3d`（p2） | visual-check 新增 f1–f4 五個篩選場景（航司 dark/light、離場 light、Track Single、apac 航司）；DEV 掛鉤補 4 個 setter；兩支工具開頭／結尾清篩選。 |
+| 2-1 indexed GL_LINES | `f37420e`（indexed-static） | 頂點每點一個＋Uint32 index；頂點以 allFlights 建，篩選只依 base 順序重寫 index；±12h alpha 改在 base 上算。 |
+
+2-1 實測（量測腳本 `scripts/perf/out/measure-filter.mjs`，gitignored）：
+
+| 指標 | 改前 | 改後 |
+|---|---|---|
+| world 靜態軌跡 GPU（屬性＋index） | 97.6 MB | 52.2＋8.9 = 61.1 MB（−37%） |
+| world 清除航司篩選到畫完 | 4,449 ms、bufferSubData 29,244 次 | 415 ms、112 次（剩約 300 ms long task 是 React 統計，改前也有） |
+| S2 清除篩選 | 601 ms | 48 ms |
+| S2 播放 perFrame.script | 4.72 ms | 4.19 ms（GPU 1.28 → 1.12 ms/幀，噪聲邊緣） |
+
+驗收：visual-check 11/11 PASS（f1–f4 改前改後逐像素 0，含 light）；summary-snapshot 相同；context restore、建構中 restore、建構中換子集、放寬再收回四種路徑最終畫面彼此 bit-identical（與 restore 前差 0.04%，落在地圖文字／道路，Mapbox 側）。
+
+**注意**：
+- 縮小篩選（全集 → 少數航司）本來就快，2-1 的收益在「放寬／清除篩選、離開 Track Single、切離場／進場」。
+- 機場分色／分析分色等 per-flight 色表模式下，篩選會改色表 → 仍走全量重建（舊行為，畫面不變）。
+- 新增成本：index 的 CPU 陣列保留（world 約 9 MB），因為篩選要改寫它。
+- 既有問題未處理：forceRebuildStatic（換色／高度）後 ±12h 時間窗的 alpha 要等可見集合大小變動才重套。
+
+**下一步（待拍板）**：2-2 per-point store 取代 mercatorCache（現在可做，頂點已是每點一份）；2-3 記憶體預算＋Worker 解析。
