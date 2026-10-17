@@ -11,6 +11,10 @@
  *   - 快照資料 → 用 icao24 合併同一架飛機的觀測點 → 生成軌跡
  *   - 超過 30 分鐘無觀測 → 切成不同航段
  *
+ * 環境變數（.env）：
+ *   COLLECTORS_API_KEY   data-collectors API 的 X-API-Key（必填）
+ *   COLLECTORS_API_BASE  API 網址（選填，預設 gis-data-collectors-v2）
+ *
  * 用法：
  *   tsx scripts/fuse-collector-data.ts              # 自動下載所有可用日期
  *   tsx scripts/fuse-collector-data.ts 2026-03-10   # 指定單一日期
@@ -19,9 +23,15 @@
 
 import "dotenv/config";
 
-const API_BASE = "https://gis-data-collectors.zeabur.app";
-const API_KEY =
-  "dcf23ef9fe5ea917417ea0d11823386ae3ea55c8dd35fb8589aec5a6b03e3a6b";
+const API_BASE =
+  process.env.COLLECTORS_API_BASE ?? "https://gis-data-collectors-v2.zeabur.app";
+const API_KEY = process.env.COLLECTORS_API_KEY ?? "";
+if (!API_KEY) {
+  console.error(
+    "COLLECTORS_API_KEY is not set. Add it to .env (same value as API_KEY in data-collectors).",
+  );
+  process.exit(1);
+}
 
 const SEGMENT_GAP_SEC = 30 * 60; // 30 分鐘無觀測 → 斷軌
 const FT_TO_M = 0.3048;
