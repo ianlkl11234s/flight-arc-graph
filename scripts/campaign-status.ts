@@ -21,6 +21,7 @@ const ROOT = resolve(__dirname, "..");
 const CAMPAIGN_FILE = resolve(ROOT, "scripts/campaign-top1000.json");
 const TOP1000_FILE = resolve(ROOT, "scripts/top1000-airports.json");
 const DONE_NDJSON = resolve(ROOT, "scripts/track-done.ndjson");
+const FAILED_NDJSON = resolve(ROOT, "scripts/track-failed.ndjson");
 const SESSIONS_NDJSON = resolve(ROOT, "scripts/fetch-sessions.ndjson");
 const FLIGHTS_DIR = resolve(ROOT, "scripts/flights");
 const MANIFEST_FILE = resolve(ROOT, "public/tracks/manifest.json");
@@ -66,6 +67,14 @@ if (existsSync(DONE_NDJSON)) {
     if (id) done.add(id);
   }
 }
+// track-failed：抓過但無軌跡／404（已計費、重抓無用），fetch-tracks 也會跳過
+const failed = new Set<string>();
+if (existsSync(FAILED_NDJSON)) {
+  for (const line of readFileSync(FAILED_NDJSON, "utf-8").split("\n")) {
+    const id = line.trim();
+    if (id) failed.add(id);
+  }
+}
 
 // 3) rank / 機場資訊 map（出發機場 → rank, iata, name）
 const rawTop = JSON.parse(readFileSync(TOP1000_FILE, "utf-8"));
@@ -88,6 +97,10 @@ const perAirport = new Map<
 >();
 let totalRemaining = 0;
 let scannedUnique = 0;
+// 與 fetch-tracks 口徑對齊：以下三類不算「剩餘」，另外列出
+let skippedOutWindow = 0; // 檔名是 UTC 日，起飛不在台北整日窗內
+let skippedNoIcao = 0; // 兩端 ICAO 皆空，無機場檔可寫
+let settledFailed = 0; // 抓過但無軌跡／404
 if (existsSync(FLIGHTS_DIR)) {
   for (const icao of readdirSync(FLIGHTS_DIR)) {
     const dir = join(FLIGHTS_DIR, icao);
@@ -97,7 +110,15 @@ if (existsSync(FLIGHTS_DIR)) {
     if (rank === undefined) continue;
     for (const file of readdirSync(dir)) {
       if (!file.endsWith(".json")) continue;
-      let payload: { flights?: { fr24_id: string }[] };
+      let payload: {
+        flights?: {
+          fr24_id: string;
+          datetime_takeoff?: string;
+          first_seen?: string;
+          orig_icao?: string | null;
+          dest_icao?: string | null;
+        }[];
+      };
       try {
         payload = JSON.parse(readFileSync(join(dir, file), "utf-8"));
       } catch {
@@ -108,6 +129,21 @@ if (existsSync(FLIGHTS_DIR)) {
         if (!id || seen.has(id)) continue;
         seen.add(id);
         scannedUnique++;
+        if (!done.has(id)) {
+          const dt = f.datetime_takeoff || f.first_seen || "";
+          if (camp.window && !(dt >= camp.window.from && dt < camp.window.to)) {
+            skippedOutWindow++;
+            continue;
+          }
+          if (!f.orig_icao && !f.dest_icao) {
+            skippedNoIcao++;
+            continue;
+          }
+          if (failed.has(id)) {
+            settledFailed++;
+            continue;
+          }
+        }
         if (rank !== undefined) {
           const rec = perAirport.get(icao) ?? { rank, total: 0, rem: 0 };
           rec.total++;
@@ -221,7 +257,10 @@ console.log(`目標日   : ${camp.date}（台北整日）`);
 console.log(
   `總進度   : ${fmt(doneNow)} / ${fmt(camp.target_total)} 條 (${pct}%)｜還剩 ${fmt(totalRemaining)} 條`,
 );
-console.log(`掃描基數 : ${fmt(scannedUnique)} 條不重複航班（前 1000 座起飛）\n`);
+console.log(`掃描基數 : ${fmt(scannedUnique)} 條不重複航班（前 1000 座起飛）`);
+console.log(
+  `不計入剩餘: 無軌跡/404 ${fmt(settledFailed)}｜兩端無 ICAO ${fmt(skippedNoIcao)}｜窗外 ${fmt(skippedOutWindow)}（皆不可抓，口徑同 fetch-tracks）\n`,
+);
 
 console.log(`各批剩餘（按出發機場 rank；實際 todo 以 --dry-run 為準）：`);
 for (const b of camp.batches) {
