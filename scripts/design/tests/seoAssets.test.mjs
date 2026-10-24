@@ -24,6 +24,7 @@ describe("SEO／AEO 靜態資產", () => {
       }
     }
     assert.ok(robots.includes(`Sitemap: ${ORIGIN}/sitemap.xml`));
+    assert.ok(robots.includes(`Sitemap: ${ORIGIN}/sitemap-airports.xml`));
   });
 
   it("sitemap.xml 列出首頁完整網址與 lastmod，且只放 canonical 網域", () => {
