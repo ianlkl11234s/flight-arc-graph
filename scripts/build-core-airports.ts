@@ -8,7 +8,8 @@
  *   - 每座 core 機場哪些台灣日期算「抓滿」(fullDates)
  *
  * fullDates 規則（與 docs/data-coverage.md 的「主力日期」同義）：
- *   該機場該日（台灣時間 UTC+8）已抓軌跡 done ≥ 50 筆，且 done/scheduled ≥ 80%
+ *   該機場該日（台灣時間 UTC+8）done/scheduled ≥ 80%，且 done ≥ min(50, 該機場單日最大班表量 × 50%)
+ *   （2026-10-24 前是固定 done ≥ 50，會把抓滿的小機場排除；相對門檻同時擋掉跨日溢出的零星日期）
  *
  * 之後 split-tracks.ts 讀本檔，把 isCore / fullDates 寫進 manifest.json。
  *
@@ -31,7 +32,8 @@ const FLIGHTS_DIR = join(__dirname, "flights");
 const TRACK_DONE = join(__dirname, "track-done.ndjson");
 const OUT_FILE = join(__dirname, "core-airports.json");
 
-const MIN_DONE = 50; // 該日最少軌跡數
+const MIN_DONE = 50; // 該日最少軌跡數上限
+const MIN_DONE_SHARE = 0.5; // 或該機場單日最大班表量的這個比例（取小者）
 const MIN_RATIO = 0.8; // 該日完成度（done/scheduled）
 
 interface ListedFlight {
@@ -165,16 +167,18 @@ function main() {
     const byDate = stats.get(icao) ?? new Map();
     const fullDates: string[] = [];
     const dateStats: Record<string, { scheduled: number; done: number }> = {};
+    const maxScheduled = Math.max(0, ...[...byDate.values()].map((s) => s.scheduled));
+    const minDone = Math.max(1, Math.min(MIN_DONE, Math.ceil(maxScheduled * MIN_DONE_SHARE)));
     for (const [date, s] of [...byDate.entries()].sort()) {
       dateStats[date] = s;
-      if (s.done >= MIN_DONE && s.done / s.scheduled >= MIN_RATIO) fullDates.push(date);
+      if (s.done >= minDone && s.done / s.scheduled >= MIN_RATIO) fullDates.push(date);
     }
     airports[icao] = { fullDates, dateStats };
   }
 
   const out = {
     generatedAt: new Date().toISOString(),
-    rule: `done >= ${MIN_DONE} && done/scheduled >= ${MIN_RATIO}（台灣時間切日）`,
+    rule: `done >= min(${MIN_DONE}, maxScheduled × ${MIN_DONE_SHARE}) && done/scheduled >= ${MIN_RATIO}（台灣時間切日）`,
     sourceSummary: {
       newFormatDedupedFlights: newFormatCount,
       legacyRawFlights: legacyCount,

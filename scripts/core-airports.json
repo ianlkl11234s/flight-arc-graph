@@ -1,18 +1,20 @@
 {
- "generatedAt": "2026-09-16T02:08:03.210Z",
- "rule": "done >= 50 && done/scheduled >= 0.8（台灣時間切日）",
+ "generatedAt": "2026-10-24T07:00:34.810Z",
+ "rule": "done >= min(50, maxScheduled × 0.5) && done/scheduled >= 0.8（台灣時間切日）",
  "sourceSummary": {
   "newFormatDedupedFlights": 100261,
   "legacyRawFlights": 187327,
   "dedupedFlights": 187327,
   "activeQueryAirports": 1164,
-  "doneTracks": 97622,
+  "doneTracks": 109730,
   "parsedNewFormatFiles": 2721,
   "skippedInvalidFiles": 0
  },
  "airports": {
   "AGGH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
@@ -25,7 +27,9 @@
    "dateStats": {}
   },
   "ANYN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
@@ -38,7 +42,9 @@
    "dateStats": {}
   },
   "AYBK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -55,20 +61,24 @@
    "dateStats": {}
   },
   "AYDU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 3
+     "done": 4
     }
    }
   },
   "AYGA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
-     "done": 6
+     "done": 21
     }
    }
   },
@@ -77,7 +87,9 @@
    "dateStats": {}
   },
   "AYGR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -86,11 +98,13 @@
    }
   },
   "AYHK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 3
+     "done": 6
     }
    }
   },
@@ -103,7 +117,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 1
+     "done": 2
     }
    }
   },
@@ -112,7 +126,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 1
+     "done": 5
     }
    }
   },
@@ -121,7 +135,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 69,
-     "done": 19
+     "done": 55
     }
    }
   },
@@ -139,7 +153,9 @@
    }
   },
   "AYNZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
@@ -159,11 +175,13 @@
    }
   },
   "AYTK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 9
+     "done": 12
     }
    }
   },
@@ -177,11 +195,13 @@
    }
   },
   "AYWD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -195,11 +215,13 @@
    }
   },
   "BGAA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 1
+     "done": 3
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -212,7 +234,9 @@
    "dateStats": {}
   },
   "BGGH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
@@ -221,11 +245,13 @@
    }
   },
   "BGJN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 2
+     "done": 4
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -234,11 +260,13 @@
    }
   },
   "BGKK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 1
+     "done": 2
     }
    }
   },
@@ -247,29 +275,35 @@
    "dateStats": {}
   },
   "BGQQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
   "BGSF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 7
+     "done": 13
     }
    }
   },
   "BGSS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 3
+     "done": 6
     }
    }
   },
@@ -278,20 +312,24 @@
    "dateStats": {}
   },
   "BIAR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 1
+     "done": 15
     }
    }
   },
   "BIEG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -300,20 +338,24 @@
    "dateStats": {}
   },
   "BIHN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
   "BIIS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -333,11 +375,13 @@
    }
   },
   "BIRK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
-     "done": 1
+     "done": 27
     }
    }
   },
@@ -767,11 +811,13 @@
    }
   },
   "CYYC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 362,
-     "done": 268
+     "done": 362
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -795,7 +841,9 @@
    }
   },
   "CYYT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
@@ -1142,12 +1190,14 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 1
     }
    }
   },
   "DAAS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
@@ -1156,29 +1206,35 @@
    }
   },
   "DABS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 2
-    }
-   }
-  },
-  "DAOF": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 5,
      "done": 3
     }
    }
   },
+  "DAOF": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 5,
+     "done": 5
+    }
+   }
+  },
   "DAOR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 2
+     "done": 4
     }
    }
   },
@@ -1191,12 +1247,14 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 5
+     "done": 7
     }
    }
   },
   "DAUE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -1205,11 +1263,13 @@
    }
   },
   "DAUG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 3
+     "done": 7
     }
    }
   },
@@ -1218,7 +1278,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 1
+     "done": 2
     }
    }
   },
@@ -1231,48 +1291,58 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 1
-    }
-   }
-  },
-  "DAUO": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 6,
-     "done": 3
-    }
-   }
-  },
-  "DAUT": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 4,
      "done": 2
     }
    }
   },
-  "DAUU": {
-   "fullDates": [],
+  "DAUO": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 6,
+     "done": 5
+    }
+   }
+  },
+  "DAUT": {
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 1
+     "done": 4
+    }
+   }
+  },
+  "DAUU": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 4,
+     "done": 4
     }
    }
   },
   "DAUZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
   "DFFD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 50,
@@ -1285,7 +1355,9 @@
    }
   },
   "DFOO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -1294,11 +1366,13 @@
    }
   },
   "DGAA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 101,
-     "done": 38
+     "done": 101
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -1395,20 +1469,24 @@
    "dateStats": {}
   },
   "DGTK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 0
+     "done": 23
     }
    }
   },
   "DIBK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -1426,29 +1504,35 @@
    "dateStats": {}
   },
   "DNAI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "DNAK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "DNAS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 0
+     "done": 10
     }
    }
   },
@@ -1457,11 +1541,13 @@
    "dateStats": {}
   },
   "DNBE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 0
+     "done": 12
     }
    }
   },
@@ -1474,101 +1560,123 @@
    "dateStats": {}
   },
   "DNCA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "DNEN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 1
+     "done": 16
     }
    }
   },
   "DNGO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
   "DNIB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
   "DNIL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
-    }
-   }
-  },
-  "DNIM": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 20,
-     "done": 0
-    }
-   }
-  },
-  "DNJO": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 3,
-     "done": 0
-    }
-   }
-  },
-  "DNKA": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 2,
-     "done": 0
-    }
-   }
-  },
-  "DNKN": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 32,
      "done": 7
     }
    }
   },
+  "DNIM": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 20,
+     "done": 20
+    }
+   }
+  },
+  "DNJO": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 3,
+     "done": 3
+    }
+   }
+  },
+  "DNKA": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 2,
+     "done": 2
+    }
+   }
+  },
+  "DNKN": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 32,
+     "done": 32
+    }
+   }
+  },
   "DNKT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
   "DNMA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 6
     }
    }
   },
@@ -1577,11 +1685,13 @@
    "dateStats": {}
   },
   "DNMM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 246,
-     "done": 47
+     "done": 246
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -1678,11 +1788,13 @@
    "dateStats": {}
   },
   "DNPO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
-     "done": 1
+     "done": 39
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -1691,34 +1803,42 @@
    }
   },
   "DNSO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "DNSU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 0
+     "done": 10
     }
    }
   },
   "DNYO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
   "DRRN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
@@ -1818,25 +1938,31 @@
    }
   },
   "DTTJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
-     "done": 23
+     "done": 25
     }
    }
   },
   "DTTX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 3
+     "done": 9
     }
    }
   },
   "DXXX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 40,
@@ -1845,11 +1971,13 @@
    }
   },
   "EBAW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 58,
-     "done": 7
+     "done": 58
     }
    }
   },
@@ -1858,7 +1986,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 504,
-     "done": 305
+     "done": 351
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -1962,11 +2090,13 @@
    }
   },
   "EBLG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 103,
-     "done": 77
+     "done": 103
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -2003,7 +2133,9 @@
    }
   },
   "EBOS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -2071,16 +2203,20 @@
    }
   },
   "EDDC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 34,
-     "done": 17
+     "done": 29
     }
    }
   },
   "EDDE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -2095,7 +2231,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 995,
-     "done": 992
+     "done": 993
     },
     "2026-02-19": {
      "scheduled": 20,
@@ -2631,7 +2767,7 @@
     },
     "2026-02-18": {
      "scheduled": 727,
-     "done": 724
+     "done": 726
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -2906,11 +3042,13 @@
    }
   },
   "EDDR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
-     "done": 1
+     "done": 11
     }
    }
   },
@@ -2973,7 +3111,9 @@
    }
   },
   "EDDW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -2981,7 +3121,7 @@
     },
     "2026-02-18": {
      "scheduled": 60,
-     "done": 33
+     "done": 60
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -2990,7 +3130,9 @@
    }
   },
   "EDFH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
@@ -2999,25 +3141,31 @@
    }
   },
   "EDFM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 44,
-     "done": 5
+     "done": 44
     }
    }
   },
   "EDHL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 5
+     "done": 18
     }
    }
   },
   "EDJA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 36,
@@ -3026,38 +3174,46 @@
    }
   },
   "EDLP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 5
+     "done": 8
     }
    }
   },
   "EDLV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 10
+     "done": 19
     }
    }
   },
   "EDLW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 12
+     "done": 43
     }
    }
   },
   "EDNY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 11
+     "done": 23
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -3066,7 +3222,9 @@
    }
   },
   "EDVK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 2,
@@ -3074,34 +3232,40 @@
     },
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "EDXW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
   "EEKA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "EEKE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
@@ -3110,29 +3274,35 @@
    "dateStats": {}
   },
   "EETN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 111,
-     "done": 30
+     "done": 111
     }
    }
   },
   "EETU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
+     "done": 7
     }
    }
   },
   "EFET": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 1
+     "done": 2
     }
    }
   },
@@ -3141,7 +3311,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 414,
-     "done": 171
+     "done": 306
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -3166,83 +3336,101 @@
    }
   },
   "EFIV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 2
+     "done": 13
     }
    }
   },
   "EFJO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "EFJY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 46,
-     "done": 0
+     "done": 46
     }
    }
   },
   "EFKE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "EFKI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
   "EFKK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
   "EFKS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "EFKT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 6
+     "done": 19
     }
    }
   },
   "EFKU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
-     "done": 3
+     "done": 17
     }
    }
   },
@@ -3251,29 +3439,35 @@
    "dateStats": {}
   },
   "EFMA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 0
+     "done": 12
     }
    }
   },
   "EFOU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
-     "done": 0
+     "done": 20
     }
    }
   },
   "EFPO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 0
+     "done": 23
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -3282,38 +3476,46 @@
    }
   },
   "EFSA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
-    }
-   }
-  },
-  "EFTP": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 19,
      "done": 3
     }
    }
   },
+  "EFTP": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 19,
+     "done": 19
+    }
+   }
+  },
   "EFTU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
-     "done": 2
+     "done": 16
     }
    }
   },
   "EFVA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 2
+     "done": 12
     }
    }
   },
@@ -3337,11 +3539,13 @@
    }
   },
   "EGAC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 70,
-     "done": 55
+     "done": 70
     }
    }
   },
@@ -3591,7 +3795,9 @@
    }
   },
   "EGGP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -3599,7 +3805,7 @@
     },
     "2026-02-18": {
      "scheduled": 90,
-     "done": 52
+     "done": 90
     }
    }
   },
@@ -3631,16 +3837,20 @@
    }
   },
   "EGJA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 6
     }
    }
   },
   "EGJB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 2,
@@ -3648,12 +3858,14 @@
     },
     "2026-02-18": {
      "scheduled": 42,
-     "done": 22
+     "done": 42
     }
    }
   },
   "EGJJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 4,
@@ -3661,7 +3873,7 @@
     },
     "2026-02-18": {
      "scheduled": 43,
-     "done": 25
+     "done": 43
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -3820,7 +4032,10 @@
    }
   },
   "EGLF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-17",
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 36,
@@ -3843,7 +4058,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1228,
-     "done": 1217
+     "done": 1221
     },
     "2026-02-19": {
      "scheduled": 31,
@@ -4104,7 +4319,10 @@
    }
   },
   "EGMC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-17",
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 44,
@@ -4121,7 +4339,9 @@
    }
   },
   "EGMD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-17"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 12,
@@ -4134,7 +4354,9 @@
    }
   },
   "EGNM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -4142,7 +4364,7 @@
     },
     "2026-02-18": {
      "scheduled": 59,
-     "done": 28
+     "done": 58
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -4238,11 +4460,13 @@
    }
   },
   "EGNX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 126,
-     "done": 72
+     "done": 126
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -4595,7 +4819,9 @@
    }
   },
   "EGYP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -4891,11 +5117,13 @@
    }
   },
   "EICK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 31
+     "done": 41
     }
    }
   },
@@ -4910,7 +5138,7 @@
     },
     "2026-02-18": {
      "scheduled": 516,
-     "done": 513
+     "done": 514
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -5007,7 +5235,9 @@
    }
   },
   "EINN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 3,
@@ -5015,7 +5245,7 @@
     },
     "2026-02-18": {
      "scheduled": 44,
-     "done": 32
+     "done": 44
     },
     "2026-03-13": {
      "scheduled": 2,
@@ -5024,11 +5254,13 @@
    }
   },
   "EKAH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 4
+     "done": 29
     },
     "2026-03-13": {
      "scheduled": 2,
@@ -5037,11 +5269,13 @@
    }
   },
   "EKBI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 75,
-     "done": 41
+     "done": 74
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -5054,7 +5288,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 596,
-     "done": 322
+     "done": 415
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -5143,47 +5377,57 @@
    }
   },
   "EKEB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 2
+     "done": 23
     }
    }
   },
   "EKKA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 1
+     "done": 4
     }
    }
   },
   "EKOD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 6
     }
    }
   },
   "EKRK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 51,
-     "done": 2
+     "done": 51
     }
    }
   },
   "EKRN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 0
+     "done": 13
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -5192,16 +5436,20 @@
    }
   },
   "EKSB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 1
+     "done": 9
     }
    }
   },
   "EKVG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
@@ -5269,29 +5517,35 @@
    }
   },
   "ENAN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
-     "done": 0
+     "done": 11
     }
    }
   },
   "ENAT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
-     "done": 4
+     "done": 20
     }
    }
   },
   "ENBN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 2
+     "done": 19
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -5300,38 +5554,46 @@
    }
   },
   "ENBR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 175,
-     "done": 52
+     "done": 174
     }
    }
   },
   "ENBS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "ENBV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "ENDU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
-     "done": 7
+     "done": 16
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -5340,11 +5602,13 @@
    }
   },
   "ENFL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
-     "done": 8
+     "done": 25
     }
    }
   },
@@ -5436,133 +5700,163 @@
    }
   },
   "ENHD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 10
+     "done": 23
     }
    }
   },
   "ENHF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 0
+     "done": 29
     }
    }
   },
   "ENHV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
-    }
-   }
-  },
-  "ENKB": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 19,
-     "done": 3
-    }
-   }
-  },
-  "ENKR": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 18,
      "done": 4
     }
    }
   },
+  "ENKB": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 19,
+     "done": 19
+    }
+   }
+  },
+  "ENKR": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 18,
+     "done": 17
+    }
+   }
+  },
   "ENLK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 8
     }
    }
   },
   "ENMH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "ENML": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 6
+     "done": 13
     }
    }
   },
   "ENMS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
-    }
-   }
-  },
-  "ENNA": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 4,
-     "done": 0
-    }
-   }
-  },
-  "ENOL": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 4,
      "done": 3
     }
    }
   },
+  "ENNA": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 4,
+     "done": 4
+    }
+   }
+  },
+  "ENOL": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 4,
+     "done": 4
+    }
+   }
+  },
   "ENOV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 14
+     "done": 19
     }
    }
   },
   "ENRA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
+     "done": 7
     }
    }
   },
   "ENRM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 6
     }
    }
   },
   "ENRO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -5571,34 +5865,42 @@
    }
   },
   "ENSB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 2
+     "done": 4
     }
    }
   },
   "ENSH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "ENSK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 8
     }
    }
   },
   "ENSO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -5607,56 +5909,68 @@
    }
   },
   "ENSR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
   "ENSS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "ENST": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 9
     }
    }
   },
   "ENVD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 0
+     "done": 15
     }
    }
   },
   "EPBY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 6
+     "done": 21
     }
    }
   },
   "EPGD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 89,
-     "done": 45
+     "done": 89
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -5740,11 +6054,13 @@
    }
   },
   "EPPO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 64,
-     "done": 33
+     "done": 64
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -5769,11 +6085,13 @@
    "dateStats": {}
   },
   "EPSY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -5889,11 +6207,13 @@
    }
   },
   "EPWR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 53,
-     "done": 39
+     "done": 53
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -5902,7 +6222,9 @@
    }
   },
   "EPZG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -5911,20 +6233,24 @@
    }
   },
   "ESDF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 0
+     "done": 12
     }
    }
   },
   "ESGG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 101,
-     "done": 49
+     "done": 99
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -5933,25 +6259,31 @@
    }
   },
   "ESGJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 3
+     "done": 15
     }
    }
   },
   "ESGT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 5
+     "done": 13
     }
    }
   },
   "ESKM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -5959,12 +6291,14 @@
     },
     "2026-02-18": {
      "scheduled": 12,
-     "done": 2
+     "done": 11
     }
    }
   },
   "ESKN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -5977,16 +6311,20 @@
    "dateStats": {}
   },
   "ESMQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 3
+     "done": 12
     }
    }
   },
   "ESMS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 40,
@@ -5995,47 +6333,57 @@
    }
   },
   "ESMT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 9
     }
    }
   },
   "ESMX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 2
+     "done": 6
     }
    }
   },
   "ESNG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "ESNK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 8
     }
    }
   },
   "ESNL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 0
+     "done": 20
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -6044,25 +6392,31 @@
    }
   },
   "ESNN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 6
     }
    }
   },
   "ESNO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "ESNQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
@@ -6071,16 +6425,20 @@
    }
   },
   "ESNS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 0
+     "done": 14
     }
    }
   },
   "ESNU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 31,
@@ -6089,38 +6447,46 @@
    }
   },
   "ESNV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "ESNX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 4
+     "done": 12
     }
    }
   },
   "ESNZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
-     "done": 6
+     "done": 23
     }
    }
   },
   "ESOE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 1
+     "done": 9
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -6129,11 +6495,13 @@
    }
   },
   "ESOK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
+     "done": 7
     }
    }
   },
@@ -6149,7 +6517,9 @@
    }
   },
   "ESPA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
@@ -6166,7 +6536,7 @@
     },
     "2026-02-18": {
      "scheduled": 472,
-     "done": 238
+     "done": 375
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -6223,25 +6593,31 @@
    }
   },
   "ESSB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 15
+     "done": 29
     }
    }
   },
   "ESSD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 0
+     "done": 7
     }
    }
   },
   "ESSL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
@@ -6250,25 +6626,31 @@
    }
   },
   "ESSP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 0
+     "done": 5
     }
    }
   },
   "ESST": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
   "ESSV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
@@ -6277,29 +6659,35 @@
    }
   },
   "ESTA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 4
+     "done": 22
     }
    }
   },
   "ETMN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 30,
-     "done": 2
+     "done": 30
     }
    }
   },
   "ETNL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 0
+     "done": 43
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -6308,11 +6696,13 @@
    }
   },
   "EVRA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 107,
-     "done": 47
+     "done": 107
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -6357,11 +6747,13 @@
    }
   },
   "EYVI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 91,
-     "done": 39
+     "done": 91
     },
     "2026-02-26": {
      "scheduled": 3,
@@ -6390,16 +6782,20 @@
    }
   },
   "FABL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 17
+     "done": 32
     }
    }
   },
   "FACT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -6407,7 +6803,7 @@
     },
     "2026-02-18": {
      "scheduled": 262,
-     "done": 149
+     "done": 259
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -6500,56 +6896,68 @@
    }
   },
   "FAEL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 12
+     "done": 22
     }
    }
   },
   "FAGG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 14
+     "done": 40
     }
    }
   },
   "FAHS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 8
+     "done": 14
     }
    }
   },
   "FAKM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 10
+     "done": 22
     }
    }
   },
   "FAKN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 13
+     "done": 23
     }
    }
   },
   "FALA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 95,
-     "done": 7
+     "done": 89
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -6677,11 +7085,13 @@
    }
   },
   "FAPE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 50,
-     "done": 26
+     "done": 50
     }
    }
   },
@@ -6694,25 +7104,31 @@
    "dateStats": {}
   },
   "FAPM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 8
+     "done": 14
     }
    }
   },
   "FAPP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 7
+     "done": 9
     }
    }
   },
   "FARB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -6721,34 +7137,42 @@
    }
   },
   "FASS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 5
+     "done": 10
     }
    }
   },
   "FASZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 4
+     "done": 7
     }
    }
   },
   "FAUP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
-     "done": 8
+     "done": 13
     }
    }
   },
   "FAUT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -6757,7 +7181,9 @@
    }
   },
   "FBKE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
@@ -6781,7 +7207,9 @@
    "dateStats": {}
   },
   "FBSK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
@@ -6794,7 +7222,9 @@
    }
   },
   "FCBB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
@@ -6803,7 +7233,9 @@
    }
   },
   "FCPP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -6812,7 +7244,9 @@
    }
   },
   "FDSK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
@@ -6821,7 +7255,9 @@
    }
   },
   "FEFF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -6830,7 +7266,9 @@
    }
   },
   "FGBT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
@@ -6839,7 +7277,9 @@
    }
   },
   "FGSL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
@@ -6848,11 +7288,13 @@
    }
   },
   "FHAW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
@@ -6861,11 +7303,13 @@
    "dateStats": {}
   },
   "FIMP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 73,
-     "done": 22
+     "done": 73
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -6958,11 +7402,13 @@
    }
   },
   "FIMR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 8
     }
    }
   },
@@ -6979,7 +7425,9 @@
    "dateStats": {}
   },
   "FMCH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -6992,7 +7440,9 @@
    "dateStats": {}
   },
   "FMCZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -7001,7 +7451,9 @@
    }
   },
   "FMMI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
@@ -7014,7 +7466,9 @@
    "dateStats": {}
   },
   "FMMT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -7027,16 +7481,20 @@
    "dateStats": {}
   },
   "FMNA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 2
+     "done": 3
     }
    }
   },
   "FMNM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -7045,11 +7503,13 @@
    }
   },
   "FMNN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 4
+     "done": 6
     }
    }
   },
@@ -7062,7 +7522,9 @@
    "dateStats": {}
   },
   "FMNS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7071,7 +7533,9 @@
    }
   },
   "FMSD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7084,7 +7548,9 @@
    "dateStats": {}
   },
   "FMST": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7097,20 +7563,24 @@
    "dateStats": {}
   },
   "FNCA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 0
+     "done": 4
     }
    }
   },
   "FNCT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -7143,25 +7613,31 @@
    "dateStats": {}
   },
   "FNSO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
   "FNUB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
   "FOGO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7170,7 +7646,9 @@
    }
   },
   "FOOG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
@@ -7183,7 +7661,9 @@
    "dateStats": {}
   },
   "FOOL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 31,
@@ -7196,7 +7676,9 @@
    }
   },
   "FOON": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7209,7 +7691,9 @@
    "dateStats": {}
   },
   "FPST": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -7218,7 +7702,9 @@
    }
   },
   "FQBR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
@@ -7227,7 +7713,9 @@
    }
   },
   "FQCH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7244,7 +7732,9 @@
    "dateStats": {}
   },
   "FQMA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 37,
@@ -7253,7 +7743,9 @@
    }
   },
   "FQNC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -7262,7 +7754,9 @@
    }
   },
   "FQNP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
@@ -7271,25 +7765,31 @@
    }
   },
   "FQPB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 6
+     "done": 13
     }
    }
   },
   "FQQL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 1
+     "done": 2
     }
    }
   },
   "FQTT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
@@ -7298,7 +7798,9 @@
    }
   },
   "FQVL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7307,11 +7809,13 @@
    }
   },
   "FSIA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 74,
-     "done": 13
+     "done": 74
     },
     "2026-02-25": {
      "scheduled": 4,
@@ -7384,11 +7888,13 @@
    }
   },
   "FSPP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 0
+     "done": 32
     }
    }
   },
@@ -7397,7 +7903,9 @@
    "dateStats": {}
   },
   "FVFA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
@@ -7410,7 +7918,9 @@
    "dateStats": {}
   },
   "FVJN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -7419,16 +7929,20 @@
    }
   },
   "FVKB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
   "FWCL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -7437,7 +7951,9 @@
    }
   },
   "FWKI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
@@ -7446,7 +7962,9 @@
    }
   },
   "FXMM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
@@ -7467,11 +7985,13 @@
    "dateStats": {}
   },
   "FYOG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
@@ -7484,7 +8004,9 @@
    "dateStats": {}
   },
   "FYWB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
@@ -7493,16 +8015,20 @@
    }
   },
   "FYWE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
-     "done": 4
+     "done": 27
     }
    }
   },
   "FYWH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -7519,7 +8045,9 @@
    }
   },
   "GABS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 28,
@@ -7536,7 +8064,9 @@
    "dateStats": {}
   },
   "GBYD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
@@ -7545,11 +8075,13 @@
    }
   },
   "GCFV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 132,
-     "done": 98
+     "done": 132
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7619,11 +8151,13 @@
    }
   },
   "GCXO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 207,
-     "done": 122
+     "done": 203
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -7636,7 +8170,9 @@
    }
   },
   "GFLL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
@@ -7645,7 +8181,9 @@
    }
   },
   "GGOV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7654,7 +8192,9 @@
    }
   },
   "GLRB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -7667,11 +8207,13 @@
    }
   },
   "GMAD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 74,
-     "done": 57
+     "done": 74
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7688,16 +8230,20 @@
    "dateStats": {}
   },
   "GMFF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 16
+     "done": 22
     }
    }
   },
   "GMFO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
@@ -7710,20 +8256,24 @@
    }
   },
   "GMMD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
-     "done": 0
+     "done": 1
     }
    }
   },
   "GMME": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 57,
-     "done": 37
+     "done": 57
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7740,7 +8290,9 @@
    }
   },
   "GMMH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -7753,7 +8305,9 @@
    }
   },
   "GMML": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
@@ -7865,11 +8419,13 @@
    }
   },
   "GMMW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 4
+     "done": 10
     }
    }
   },
@@ -7889,7 +8445,9 @@
    }
   },
   "GMMZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7898,7 +8456,9 @@
    }
   },
   "GMTN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -7907,11 +8467,13 @@
    }
   },
   "GOBD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 62,
-     "done": 41
+     "done": 62
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -7964,7 +8526,9 @@
    }
   },
   "GQNO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
@@ -7973,7 +8537,9 @@
    }
   },
   "GQPP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -7982,7 +8548,9 @@
    }
   },
   "GUCY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
@@ -8049,7 +8617,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 367,
-     "done": 355
+     "done": 365
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -8154,16 +8722,20 @@
    }
   },
   "HABD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
-     "done": 22
+     "done": 25
     }
    }
   },
   "HBBA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -8172,7 +8744,9 @@
    }
   },
   "HDAM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
@@ -8300,11 +8874,13 @@
    }
   },
   "HEGN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 174,
-     "done": 118
+     "done": 174
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8321,11 +8897,13 @@
    }
   },
   "HESH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 130,
-     "done": 80
+     "done": 130
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8334,7 +8912,9 @@
    }
   },
   "HJJJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
@@ -8343,11 +8923,13 @@
    }
   },
   "HKEL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 12
+     "done": 18
     }
    }
   },
@@ -8451,20 +9033,24 @@
    }
   },
   "HKKI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
-     "done": 16
+     "done": 21
     }
    }
   },
   "HTDA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 106,
-     "done": 28
+     "done": 106
     },
     "2026-02-25": {
      "scheduled": 1,
@@ -8521,11 +9107,13 @@
    }
   },
   "HTZA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 98,
-     "done": 16
+     "done": 98
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8586,11 +9174,13 @@
    }
   },
   "HUEN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 71,
-     "done": 33
+     "done": 71
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8679,11 +9269,13 @@
    }
   },
   "KABQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 239,
-     "done": 140
+     "done": 215
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -8703,11 +9295,13 @@
    }
   },
   "KAGS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 57,
-     "done": 29
+     "done": 57
     }
    }
   },
@@ -8718,7 +9312,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 109,
-     "done": 88
+     "done": 109
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -8733,7 +9327,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1889,
-     "done": 1870
+     "done": 1889
     },
     "2026-02-19": {
      "scheduled": 37,
@@ -8817,11 +9411,13 @@
    }
   },
   "KAVL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 127,
-     "done": 59
+     "done": 127
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -8836,7 +9432,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 183,
-     "done": 157
+     "done": 183
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -8845,11 +9441,13 @@
    }
   },
   "KBHM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 261,
-     "done": 128
+     "done": 245
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -8971,7 +9569,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 208,
-     "done": 55
+     "done": 157
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -9025,11 +9623,13 @@
    }
   },
   "KBZN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 136,
-     "done": 81
+     "done": 136
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -9038,11 +9638,13 @@
    }
   },
   "KCAE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 136,
-     "done": 81
+     "done": 136
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -9051,11 +9653,13 @@
    }
   },
   "KCHA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 103,
-     "done": 48
+     "done": 103
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -9219,7 +9823,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 881,
-     "done": 876
+     "done": 879
     },
     "2026-02-19": {
      "scheduled": 27,
@@ -9539,11 +10143,13 @@
    }
   },
   "KDSM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 112,
-     "done": 80
+     "done": 112
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -9567,11 +10173,13 @@
    }
   },
   "KECP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 111,
-     "done": 50
+     "done": 111
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -9586,7 +10194,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1013,
-     "done": 1010
+     "done": 1013
     },
     "2026-02-19": {
      "scheduled": 24,
@@ -9611,20 +10219,24 @@
    }
   },
   "KEYW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 95,
-     "done": 60
+     "done": 95
     }
    }
   },
   "KFAT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 105,
-     "done": 74
+     "done": 105
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -9654,7 +10266,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 135,
-     "done": 121
+     "done": 135
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -9663,11 +10275,13 @@
    }
   },
   "KGRR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 152,
-     "done": 112
+     "done": 150
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -9697,7 +10311,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 124,
-     "done": 102
+     "done": 124
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -9721,11 +10335,13 @@
    }
   },
   "KHPN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 236,
-     "done": 128
+     "done": 236
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -9734,11 +10350,13 @@
    }
   },
   "KHSV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 92,
-     "done": 72
+     "done": 92
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -10125,11 +10743,13 @@
    }
   },
   "KILM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 139,
-     "done": 63
+     "done": 139
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -10153,11 +10773,13 @@
    }
   },
   "KJAN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 61,
-     "done": 47
+     "done": 61
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -10187,7 +10809,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1128,
-     "done": 1120
+     "done": 1127
     },
     "2026-02-19": {
      "scheduled": 37,
@@ -10506,7 +11128,7 @@
     },
     "2026-02-18": {
      "scheduled": 1296,
-     "done": 1289
+     "done": 1296
     },
     "2026-02-19": {
      "scheduled": 50,
@@ -10809,7 +11431,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 973,
-     "done": 970
+     "done": 973
     },
     "2026-02-19": {
      "scheduled": 30,
@@ -10818,11 +11440,13 @@
    }
   },
   "KLGB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 283,
-     "done": 84
+     "done": 283
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -10964,7 +11588,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 189,
-     "done": 154
+     "done": 189
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -10973,11 +11597,13 @@
    }
   },
   "KMRY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 38,
-     "done": 33
+     "done": 38
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -10986,11 +11612,13 @@
    }
   },
   "KMSN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 154,
-     "done": 84
+     "done": 153
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -11029,11 +11657,13 @@
    }
   },
   "KMYR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 171,
-     "done": 58
+     "done": 171
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -11057,11 +11687,13 @@
    }
   },
   "KOKC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 191,
-     "done": 141
+     "done": 191
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -11070,11 +11702,13 @@
    }
   },
   "KOMA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 193,
-     "done": 147
+     "done": 193
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -12023,11 +12657,13 @@
    }
   },
   "KPNS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 244,
-     "done": 75
+     "done": 244
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -12057,7 +12693,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 120,
-     "done": 108
+     "done": 120
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -12066,11 +12702,13 @@
    }
   },
   "KPWM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 77,
-     "done": 53
+     "done": 77
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -12079,11 +12717,13 @@
    }
   },
   "KRDM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 201,
-     "done": 56
+     "done": 201
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -12107,11 +12747,13 @@
    }
   },
   "KRFD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 93,
-     "done": 63
+     "done": 93
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -12150,11 +12792,13 @@
    }
   },
   "KROC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 124,
-     "done": 80
+     "done": 108
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -12223,11 +12867,13 @@
    }
   },
   "KSBA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 80,
-     "done": 57
+     "done": 80
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -12247,11 +12893,13 @@
    }
   },
   "KSBP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 34
+     "done": 43
     }
    }
   },
@@ -12281,7 +12929,7 @@
     },
     "2026-02-18": {
      "scheduled": 991,
-     "done": 988
+     "done": 991
     },
     "2026-02-19": {
      "scheduled": 28,
@@ -12607,7 +13255,7 @@
     },
     "2026-02-18": {
      "scheduled": 916,
-     "done": 910
+     "done": 915
     },
     "2026-02-19": {
      "scheduled": 33,
@@ -12972,11 +13620,13 @@
    }
   },
   "KSRQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 276,
-     "done": 122
+     "done": 275
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -13006,7 +13656,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 94,
-     "done": 83
+     "done": 94
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -13015,11 +13665,13 @@
    }
   },
   "KTEB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 275,
-     "done": 135
+     "done": 275
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -13043,11 +13695,13 @@
    }
   },
   "KTUL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 146,
-     "done": 105
+     "done": 146
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -13056,11 +13710,13 @@
    }
   },
   "KTUS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 190,
-     "done": 114
+     "done": 181
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -13069,11 +13725,13 @@
    }
   },
   "KTYS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 231,
-     "done": 104
+     "done": 228
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -13088,7 +13746,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 98,
-     "done": 88
+     "done": 98
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -13097,11 +13755,13 @@
    }
   },
   "LATI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 85,
-     "done": 48
+     "done": 85
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -13166,7 +13826,9 @@
    "dateStats": {}
   },
   "LBPD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
@@ -13270,7 +13932,9 @@
    }
   },
   "LBWN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
@@ -13289,7 +13953,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 90,
-     "done": 72
+     "done": 90
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -13298,11 +13962,13 @@
    }
   },
   "LCLK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 116,
-     "done": 82
+     "done": 116
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -13395,16 +14061,20 @@
    }
   },
   "LDDU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 8
+     "done": 25
     }
    }
   },
   "LDPL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -13412,25 +14082,29 @@
     },
     "2026-02-18": {
      "scheduled": 21,
-     "done": 2
+     "done": 21
     }
    }
   },
   "LDRI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 3
+     "done": 7
     }
    }
   },
   "LDSP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 6
+     "done": 14
     }
    }
   },
@@ -13518,11 +14192,13 @@
    }
   },
   "LDZD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
-     "done": 1
+     "done": 16
     }
    }
   },
@@ -13565,7 +14241,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 721,
-     "done": 483
+     "done": 538
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -13662,20 +14338,24 @@
    }
   },
   "LECO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 18
+     "done": 29
     }
    }
   },
   "LEGE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 4
+     "done": 10
     }
    }
   },
@@ -13686,7 +14366,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1082,
-     "done": 1077
+     "done": 1080
     },
     "2026-02-19": {
      "scheduled": 24,
@@ -13806,11 +14486,13 @@
    }
   },
   "LEMI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 6
+     "done": 9
     }
    }
   },
@@ -13830,11 +14512,13 @@
    }
   },
   "LERS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 40,
-     "done": 2
+     "done": 40
     }
    }
   },
@@ -13858,11 +14542,13 @@
    }
   },
   "LEVX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 18
+     "done": 26
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -13886,11 +14572,13 @@
    }
   },
   "LFBD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 86,
-     "done": 67
+     "done": 86
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -13930,7 +14618,9 @@
    }
   },
   "LFKF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -14100,11 +14790,13 @@
    }
   },
   "LFMT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 111,
-     "done": 23
+     "done": 111
     }
    }
   },
@@ -14153,7 +14845,7 @@
     },
     "2026-02-18": {
      "scheduled": 1184,
-     "done": 1183
+     "done": 1184
     },
     "2026-02-19": {
      "scheduled": 19,
@@ -14441,7 +15133,9 @@
    }
   },
   "LFQQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
@@ -14454,11 +15148,13 @@
    }
   },
   "LFRS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 101,
-     "done": 77
+     "done": 101
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -14514,7 +15210,9 @@
    }
   },
   "LFST": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
@@ -14630,7 +15328,9 @@
    }
   },
   "LGIR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
@@ -14647,7 +15347,9 @@
    }
   },
   "LGKO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -14656,7 +15358,9 @@
    }
   },
   "LGKR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -14665,7 +15369,9 @@
    }
   },
   "LGKV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
@@ -14674,7 +15380,9 @@
    }
   },
   "LGRP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -14687,7 +15395,9 @@
    }
   },
   "LGSA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
@@ -14704,7 +15414,9 @@
    }
   },
   "LGSR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
@@ -14719,7 +15431,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 89,
-     "done": 72
+     "done": 89
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -14819,7 +15531,9 @@
    }
   },
   "LHDC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
@@ -14837,47 +15551,57 @@
    }
   },
   "LIBD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 79,
-     "done": 24
+     "done": 79
     }
    }
   },
   "LIBP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
-     "done": 2
+     "done": 21
     }
    }
   },
   "LIBR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 8
+     "done": 26
     }
    }
   },
   "LICA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 5
+     "done": 41
     }
    }
   },
   "LIEE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 51,
-     "done": 4
+     "done": 51
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -14886,11 +15610,13 @@
    }
   },
   "LIEO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
-     "done": 0
+     "done": 20
     }
    }
   },
@@ -14903,7 +15629,7 @@
     },
     "2026-02-18": {
      "scheduled": 568,
-     "done": 323
+     "done": 388
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -15164,7 +15890,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 236,
-     "done": 94
+     "done": 132
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -15241,20 +15967,24 @@
    }
   },
   "LIMF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 119,
-     "done": 33
+     "done": 117
     }
    }
   },
   "LIMJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 7
+     "done": 29
     }
    }
   },
@@ -15267,7 +15997,7 @@
     },
     "2026-02-18": {
      "scheduled": 348,
-     "done": 163
+     "done": 212
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -15315,11 +16045,13 @@
    }
   },
   "LIPH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 52,
-     "done": 23
+     "done": 52
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -15328,11 +16060,13 @@
    }
   },
   "LIPQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 3
+     "done": 15
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -15341,20 +16075,24 @@
    }
   },
   "LIPR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 0
+     "done": 26
     }
    }
   },
   "LIPX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 29
+     "done": 43
     }
    }
   },
@@ -15410,11 +16148,13 @@
    }
   },
   "LIRA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 118,
-     "done": 63
+     "done": 114
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -15431,7 +16171,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 625,
-     "done": 336
+     "done": 436
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -15650,20 +16390,24 @@
    }
   },
   "LIRZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 1
+     "done": 9
     }
    }
   },
   "LJLJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 62,
-     "done": 32
+     "done": 62
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -15720,7 +16464,9 @@
    "dateStats": {}
   },
   "LKMT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
@@ -15729,7 +16475,9 @@
    }
   },
   "LKPD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -15964,7 +16712,9 @@
    }
   },
   "LLER": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
@@ -15996,20 +16746,24 @@
    }
   },
   "LOWI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 68,
-     "done": 25
+     "done": 67
     }
    }
   },
   "LOWS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 76,
-     "done": 27
+     "done": 73
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -16050,7 +16804,7 @@
     },
     "2026-02-18": {
      "scheduled": 491,
-     "done": 356
+     "done": 383
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -16311,11 +17065,13 @@
    }
   },
   "LPFR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 79,
-     "done": 55
+     "done": 79
     },
     "2026-03-12": {
      "scheduled": 1,
@@ -16351,7 +17107,9 @@
    }
   },
   "LPPD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 31,
@@ -16399,7 +17157,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 565,
-     "done": 392
+     "done": 434
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -16504,11 +17262,13 @@
    }
   },
   "LRCL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 45,
-     "done": 34
+     "done": 45
     }
    }
   },
@@ -16719,7 +17479,7 @@
     },
     "2026-02-18": {
      "scheduled": 599,
-     "done": 425
+     "done": 461
     },
     "2026-02-19": {
      "scheduled": 12,
@@ -16894,11 +17654,13 @@
    }
   },
   "LTAJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 39
+     "done": 43
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -16907,11 +17669,13 @@
    }
   },
   "LTAU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 44,
-     "done": 41
+     "done": 44
     }
    }
   },
@@ -16945,7 +17709,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 65
+     "done": 81
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17011,7 +17775,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1221,
-     "done": 1217
+     "done": 1219
     },
     "2026-02-19": {
      "scheduled": 26,
@@ -17296,11 +18060,13 @@
    }
   },
   "LUKK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 77,
-     "done": 52
+     "done": 76
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -17468,16 +18234,20 @@
    }
   },
   "LYNI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 6
+     "done": 8
     }
    }
   },
   "LZIB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 35,
@@ -17498,11 +18268,13 @@
    }
   },
   "MDLR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
-     "done": 12
+     "done": 21
     }
    }
   },
@@ -17522,11 +18294,13 @@
    }
   },
   "MDSD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 119,
-     "done": 94
+     "done": 119
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -17535,11 +18309,13 @@
    }
   },
   "MDST": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 55,
-     "done": 41
+     "done": 53
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17548,11 +18324,13 @@
    }
   },
   "MGGT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 408,
-     "done": 83
+     "done": 375
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -17576,7 +18354,9 @@
    }
   },
   "MHPR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
@@ -17589,7 +18369,9 @@
    }
   },
   "MHRO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 24,
@@ -17608,7 +18390,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 61,
-     "done": 58
+     "done": 61
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -17647,11 +18429,13 @@
    }
   },
   "MMPR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 149,
-     "done": 108
+     "done": 149
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -17666,7 +18450,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 146,
-     "done": 118
+     "done": 145
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17690,7 +18474,9 @@
    }
   },
   "MNMG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 35,
@@ -17718,11 +18504,13 @@
    }
   },
   "MROC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 262,
-     "done": 118
+     "done": 254
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -17737,7 +18525,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 127,
-     "done": 104
+     "done": 127
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -17746,7 +18534,9 @@
    }
   },
   "MTCH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 46,
@@ -17759,7 +18549,9 @@
    }
   },
   "MTPP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 47,
@@ -17768,7 +18560,9 @@
    }
   },
   "MUCM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -17777,7 +18571,9 @@
    }
   },
   "MUCU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -17801,7 +18597,9 @@
    }
   },
   "MUHG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -17810,7 +18608,9 @@
    }
   },
   "MUSC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
@@ -17823,7 +18623,9 @@
    }
   },
   "MUVR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
@@ -17832,11 +18634,13 @@
    }
   },
   "MYGF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 34,
-     "done": 10
+     "done": 34
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -17845,11 +18649,13 @@
    }
   },
   "MYNN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 267,
-     "done": 132
+     "done": 267
     },
     "2026-02-19": {
      "scheduled": 9,
@@ -17858,16 +18664,20 @@
    }
   },
   "MYSM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 1
+     "done": 5
     }
    }
   },
   "NCRG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
@@ -17889,7 +18699,9 @@
    }
   },
   "NFTV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -17907,7 +18719,9 @@
    }
   },
   "NLWW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -17916,7 +18730,9 @@
    }
   },
   "NSFA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -17929,7 +18745,9 @@
    }
   },
   "NSTU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
@@ -17938,7 +18756,9 @@
    }
   },
   "NVVV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
@@ -17947,7 +18767,9 @@
    }
   },
   "NWWW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -18143,11 +18965,13 @@
    }
   },
   "NZCH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 281,
-     "done": 102
+     "done": 275
     },
     "2026-03-26": {
      "scheduled": 1,
@@ -18156,29 +18980,35 @@
    }
   },
   "NZQN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 122,
-     "done": 42
+     "done": 121
     }
    }
   },
   "NZWN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 189,
-     "done": 56
+     "done": 189
     }
    }
   },
   "OAHR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
-     "done": 1
+     "done": 4
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -18187,11 +19017,13 @@
    }
   },
   "OAKB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 35,
-     "done": 14
+     "done": 35
     },
     "2026-02-25": {
      "scheduled": 8,
@@ -18292,11 +19124,13 @@
    }
   },
   "OAKN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 1
+     "done": 2
     },
     "2026-03-08": {
      "scheduled": 1,
@@ -18313,11 +19147,13 @@
    }
   },
   "OAMS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 1
+     "done": 8
     }
    }
   },
@@ -18379,7 +19215,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 77
+     "done": 81
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -18436,7 +19272,9 @@
    }
   },
   "OEAH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -18457,11 +19295,13 @@
    }
   },
   "OEAO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
-     "done": 3
+     "done": 5
     },
     "2026-02-26": {
      "scheduled": 2,
@@ -18561,11 +19401,13 @@
    }
   },
   "OEHL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 17
+     "done": 20
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -18793,11 +19635,13 @@
    }
   },
   "OENN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-25"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
-     "done": 0
+     "done": 1
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -18830,7 +19674,9 @@
    }
   },
   "OEPA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -18954,11 +19800,13 @@
    }
   },
   "OERS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 3
+     "done": 6
     },
     "2026-02-26": {
      "scheduled": 1,
@@ -18991,11 +19839,13 @@
    }
   },
   "OESK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 10
+     "done": 12
     },
     "2026-02-26": {
      "scheduled": 2,
@@ -19004,11 +19854,13 @@
    }
   },
   "OETB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 46,
-     "done": 44
+     "done": 46
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -19061,11 +19913,13 @@
    }
   },
   "OEYN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 18
+     "done": 19
     },
     "2026-02-26": {
      "scheduled": 2,
@@ -19074,20 +19928,24 @@
    }
   },
   "OIAA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
   "OIAW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 2
+     "done": 10
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -19096,7 +19954,9 @@
    }
   },
   "OIBK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -19104,7 +19964,7 @@
     },
     "2026-02-18": {
      "scheduled": 28,
-     "done": 0
+     "done": 28
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -19117,11 +19977,13 @@
    }
   },
   "OIFM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 2
+     "done": 7
     },
     "2026-02-26": {
      "scheduled": 2,
@@ -19165,7 +20027,9 @@
    }
   },
   "OIII": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-17": {
      "scheduled": 1,
@@ -19173,7 +20037,7 @@
     },
     "2026-02-18": {
      "scheduled": 106,
-     "done": 5
+     "done": 98
     },
     "2026-02-26": {
      "scheduled": 1,
@@ -19182,20 +20046,24 @@
    }
   },
   "OIIP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 3
     }
    }
   },
   "OIKB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 2
+     "done": 14
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -19216,7 +20084,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 7
     },
     "2026-02-27": {
      "scheduled": 2,
@@ -19225,11 +20093,13 @@
    }
   },
   "OIKQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 9
     },
     "2026-02-27": {
      "scheduled": 1,
@@ -19242,11 +20112,13 @@
    "dateStats": {}
   },
   "OIMM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 31,
-     "done": 0
+     "done": 28
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -19263,11 +20135,13 @@
    }
   },
   "OISS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 3
+     "done": 18
     },
     "2026-02-25": {
      "scheduled": 3,
@@ -19284,11 +20158,13 @@
    }
   },
   "OITT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 4
+     "done": 6
     }
    }
   },
@@ -19297,7 +20173,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 0
+     "done": 2
     }
    }
   },
@@ -19401,7 +20277,9 @@
    }
   },
   "OJAM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
@@ -19422,7 +20300,9 @@
    }
   },
   "OJAQ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
@@ -19586,7 +20466,7 @@
     },
     "2026-02-18": {
      "scheduled": 291,
-     "done": 245
+     "done": 266
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -19783,11 +20663,13 @@
    }
   },
   "OMAL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 36,
-     "done": 2
+     "done": 36
     },
     "2026-03-07": {
      "scheduled": 2,
@@ -19821,7 +20703,7 @@
     },
     "2026-02-18": {
      "scheduled": 662,
-     "done": 533
+     "done": 616
     },
     "2026-02-19": {
      "scheduled": 12,
@@ -20229,11 +21111,13 @@
    }
   },
   "OMFJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 44,
-     "done": 6
+     "done": 44
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -20254,11 +21138,13 @@
    }
   },
   "OMRK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 19
+     "done": 32
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -20271,11 +21157,13 @@
    }
   },
   "OMSJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 305,
-     "done": 201
+     "done": 305
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -20391,11 +21279,13 @@
    }
   },
   "OOSH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 42,
-     "done": 0
+     "done": 42
     },
     "2026-05-06": {
      "scheduled": 1,
@@ -20404,11 +21294,15 @@
    }
   },
   "OPFA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18",
+    "2026-02-25",
+    "2026-04-05"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 3
+     "done": 7
     },
     "2026-02-25": {
      "scheduled": 4,
@@ -20822,11 +21716,13 @@
    }
   },
   "OPMT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
-     "done": 21
+     "done": 33
     },
     "2026-02-25": {
      "scheduled": 10,
@@ -20915,11 +21811,13 @@
    }
   },
   "OPPS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 10
+     "done": 23
     },
     "2026-02-25": {
      "scheduled": 4,
@@ -21012,11 +21910,13 @@
    }
   },
   "OPQT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 5
+     "done": 11
     },
     "2026-02-26": {
      "scheduled": 1,
@@ -21081,7 +21981,9 @@
    }
   },
   "OPSD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -21090,11 +21992,14 @@
    }
   },
   "OPST": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18",
+    "2026-02-25"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
-     "done": 7
+     "done": 16
     },
     "2026-02-25": {
      "scheduled": 10,
@@ -21183,11 +22088,13 @@
    "dateStats": {}
   },
   "ORBI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 85,
-     "done": 60
+     "done": 85
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -21290,7 +22197,9 @@
    }
   },
   "OYAA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
@@ -21614,7 +22523,9 @@
    }
   },
   "PGRO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
@@ -21623,11 +22534,13 @@
    }
   },
   "PGUM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 95,
-     "done": 45
+     "done": 95
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -21735,11 +22648,13 @@
    }
   },
   "PHOG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 253,
-     "done": 149
+     "done": 253
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -21748,7 +22663,9 @@
    }
   },
   "PKMJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -21757,7 +22674,9 @@
    }
   },
   "PLCH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -21766,7 +22685,9 @@
    }
   },
   "PTKK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -21775,7 +22696,9 @@
    }
   },
   "PTSA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -21784,7 +22707,9 @@
    }
   },
   "PTYA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -22153,7 +23078,16 @@
    }
   },
   "RCCM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-21",
+    "2026-02-22",
+    "2026-02-24",
+    "2026-07-09",
+    "2026-07-12"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
@@ -22466,7 +23400,9 @@
    }
   },
   "RCDC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-19"
+   ],
    "dateStats": {
     "2026-02-19": {
      "scheduled": 1,
@@ -22511,7 +23447,15 @@
    }
   },
   "RCFG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-21",
+    "2026-02-22",
+    "2026-02-23",
+    "2026-07-09"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
@@ -22832,7 +23776,15 @@
    }
   },
   "RCFN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-21",
+    "2026-02-22",
+    "2026-02-24",
+    "2026-07-09",
+    "2026-07-12"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
@@ -23177,7 +24129,17 @@
    }
   },
   "RCGI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-21",
+    "2026-02-22",
+    "2026-02-23",
+    "2026-02-24",
+    "2026-07-09",
+    "2026-07-12"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -23854,7 +24816,17 @@
    }
   },
   "RCKU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-21",
+    "2026-02-22",
+    "2026-02-23",
+    "2026-02-24",
+    "2026-07-09",
+    "2026-07-12"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
@@ -24208,7 +25180,13 @@
    }
   },
   "RCLY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-20",
+    "2026-02-21",
+    "2026-02-24",
+    "2026-07-09",
+    "2026-07-12"
+   ],
    "dateStats": {
     "2026-02-19": {
      "scheduled": 7,
@@ -24825,7 +25803,16 @@
    }
   },
   "RCMT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-21",
+    "2026-02-22",
+    "2026-02-23",
+    "2026-02-24",
+    "2026-07-09"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -25122,7 +26109,17 @@
    }
   },
   "RCNN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-21",
+    "2026-02-22",
+    "2026-02-23",
+    "2026-02-24",
+    "2026-07-09",
+    "2026-07-12"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
@@ -26207,7 +27204,7 @@
     },
     "2026-02-18": {
      "scheduled": 656,
-     "done": 651
+     "done": 653
     },
     "2026-02-19": {
      "scheduled": 420,
@@ -26629,7 +27626,11 @@
    }
   },
   "RCYU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-22"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -26946,7 +27947,7 @@
     },
     "2026-02-18": {
      "scheduled": 592,
-     "done": 589
+     "done": 590
     },
     "2026-02-19": {
      "scheduled": 51,
@@ -27243,7 +28244,9 @@
    }
   },
   "RJAF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -27252,7 +28255,9 @@
    }
   },
   "RJAH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
@@ -27267,7 +28272,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 464,
-     "done": 462
+     "done": 463
     },
     "2026-02-19": {
      "scheduled": 36,
@@ -27560,7 +28565,9 @@
    }
   },
   "RJBD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -27864,7 +28871,9 @@
    }
   },
   "RJBT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
@@ -27873,7 +28882,9 @@
    }
   },
   "RJCB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 42,
@@ -28181,11 +29192,13 @@
    }
   },
   "RJCH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 40,
-     "done": 36
+     "done": 38
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -28434,16 +29447,9 @@
    }
   },
   "RJCK": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 16,
-     "done": 14
-    }
-   }
-  },
-  "RJCM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
@@ -28451,17 +29457,32 @@
     }
    }
   },
+  "RJCM": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 16,
+     "done": 16
+    }
+   }
+  },
   "RJCO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
-     "done": 14
+     "done": 23
     }
    }
   },
   "RJCW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -28470,7 +29491,9 @@
    }
   },
   "RJDA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
@@ -28479,7 +29502,9 @@
    }
   },
   "RJDB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -28488,7 +29513,9 @@
    }
   },
   "RJDC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
@@ -28497,7 +29524,9 @@
    }
   },
   "RJEC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
@@ -28546,7 +29575,9 @@
    }
   },
   "RJFC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
@@ -28555,7 +29586,9 @@
    }
   },
   "RJFE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
@@ -28863,7 +29896,9 @@
    }
   },
   "RJFG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -29102,7 +30137,9 @@
    }
   },
   "RJFO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 49,
@@ -29187,7 +30224,9 @@
    }
   },
   "RJFR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
@@ -29216,7 +30255,9 @@
    }
   },
   "RJFS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -29962,7 +31003,9 @@
    }
   },
   "RJKA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 28,
@@ -29971,7 +31014,9 @@
    }
   },
   "RJKB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -29980,7 +31025,9 @@
    }
   },
   "RJKI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -29989,7 +31036,9 @@
    }
   },
   "RJKN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
@@ -30013,7 +31062,9 @@
    }
   },
   "RJNK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 25,
@@ -30306,7 +31357,9 @@
    }
   },
   "RJNO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -30315,7 +31368,9 @@
    }
   },
   "RJNS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 30,
@@ -30324,7 +31379,9 @@
    }
   },
   "RJNT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -30397,7 +31454,9 @@
    }
   },
   "RJNW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -30406,7 +31465,9 @@
    }
   },
   "RJOA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 49,
@@ -30615,7 +31676,9 @@
    }
   },
   "RJOB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 30,
@@ -30900,7 +31963,9 @@
    }
   },
   "RJOC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
@@ -30986,7 +32051,9 @@
    }
   },
   "RJOI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 28,
@@ -30995,7 +32062,9 @@
    }
   },
   "RJOK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
@@ -31250,7 +32319,9 @@
    }
   },
   "RJOR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
@@ -31259,7 +32330,9 @@
    }
   },
   "RJOS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 24,
@@ -31268,7 +32341,9 @@
    }
   },
   "RJOT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
@@ -31553,7 +32628,9 @@
    }
   },
   "RJOW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -31562,7 +32639,9 @@
    }
   },
   "RJSA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
@@ -31743,7 +32822,9 @@
    }
   },
   "RJSC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -31752,7 +32833,9 @@
    }
   },
   "RJSF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
@@ -31845,7 +32928,9 @@
    }
   },
   "RJSI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
@@ -31918,7 +33003,9 @@
    }
   },
   "RJSK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 31,
@@ -32011,7 +33098,9 @@
    }
   },
   "RJSM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -32020,7 +33109,9 @@
    }
   },
   "RJSN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 37,
@@ -32085,7 +33176,9 @@
    }
   },
   "RJSR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
@@ -32377,7 +33470,9 @@
    }
   },
   "RJSY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
@@ -32386,7 +33481,9 @@
    }
   },
   "RJTH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -32405,7 +33502,7 @@
     },
     "2026-02-18": {
      "scheduled": 1244,
-     "done": 1209
+     "done": 1210
     },
     "2026-02-19": {
      "scheduled": 28,
@@ -32750,7 +33847,9 @@
    "dateStats": {}
   },
   "RKJJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 36,
@@ -32759,7 +33858,9 @@
    }
   },
   "RKJY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
@@ -32768,7 +33869,9 @@
    }
   },
   "RKNY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -33381,7 +34484,7 @@
     },
     "2026-02-18": {
      "scheduled": 1187,
-     "done": 1181
+     "done": 1183
     },
     "2026-02-19": {
      "scheduled": 50,
@@ -35009,7 +36112,9 @@
    }
   },
   "ROKJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
@@ -35018,7 +36123,9 @@
    }
   },
   "ROMD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -35027,7 +36134,9 @@
    }
   },
   "ROMY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 49,
@@ -35036,7 +36145,9 @@
    }
   },
   "RORS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
@@ -35249,7 +36360,9 @@
    }
   },
   "RORY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -35258,7 +36371,9 @@
    }
   },
   "ROYN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -35267,7 +36382,9 @@
    }
   },
   "RPLB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
@@ -35575,7 +36692,9 @@
    }
   },
   "RPLI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 5,
@@ -35584,7 +36703,9 @@
    }
   },
   "RPLK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 24,
@@ -35916,7 +37037,9 @@
    }
   },
   "RPMR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
@@ -35925,7 +37048,9 @@
    }
   },
   "RPMY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 46,
@@ -35934,7 +37059,9 @@
    }
   },
   "RPMZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
@@ -35943,7 +37070,9 @@
    }
   },
   "RPVB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 46,
@@ -35967,7 +37096,9 @@
    }
   },
   "RPVK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -36271,7 +37402,9 @@
    }
   },
   "RPVP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 33,
@@ -36280,11 +37413,13 @@
    }
   },
   "SAAR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 27,
-     "done": 7
+     "done": 27
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36293,11 +37428,13 @@
    }
   },
   "SABE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 329,
-     "done": 37
+     "done": 329
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -36306,11 +37443,13 @@
    }
   },
   "SACO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 87,
-     "done": 13
+     "done": 87
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36319,11 +37458,13 @@
    }
   },
   "SAEZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 229,
-     "done": 89
+     "done": 229
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -36332,11 +37473,13 @@
    }
   },
   "SAME": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 61,
-     "done": 3
+     "done": 61
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36345,161 +37488,67 @@
    }
   },
   "SANT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 24,
-     "done": 0
+     "done": 24
     }
    }
   },
   "SARE": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
-     "done": 0
+     "done": 6
     }
    }
   },
   "SASA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 58,
-     "done": 3
+     "done": 58
     }
    }
   },
   "SASJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 11,
-     "done": 0
+     "done": 11
     }
    }
   },
   "SAVC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 0
-    }
-   }
-  },
-  "SAWC": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 21,
-     "done": 0
-    },
-    "2026-02-19": {
-     "scheduled": 1,
-     "done": 0
-    }
-   }
-  },
-  "SAWG": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 3,
-     "done": 0
-    }
-   }
-  },
-  "SAZN": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 29,
-     "done": 0
-    }
-   }
-  },
-  "SAZS": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 43,
-     "done": 0
-    }
-   }
-  },
-  "SBBE": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 81,
-     "done": 13
-    },
-    "2026-02-19": {
-     "scheduled": 4,
-     "done": 0
-    }
-   }
-  },
-  "SBBR": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 341,
-     "done": 40
-    }
-   }
-  },
-  "SBBV": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 18,
-     "done": 2
-    }
-   }
-  },
-  "SBCF": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 274,
-     "done": 30
-    },
-    "2026-02-19": {
-     "scheduled": 5,
-     "done": 0
-    }
-   }
-  },
-  "SBCT": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 140,
-     "done": 28
-    },
-    "2026-02-19": {
-     "scheduled": 1,
-     "done": 0
-    }
-   }
-  },
-  "SBCY": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 69,
      "done": 15
     }
    }
   },
-  "SBEG": {
-   "fullDates": [],
+  "SAWC": {
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
-     "scheduled": 81,
+     "scheduled": 21,
      "done": 21
     },
     "2026-02-19": {
@@ -36508,30 +37557,162 @@
     }
    }
   },
+  "SAWG": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 3,
+     "done": 3
+    }
+   }
+  },
+  "SAZN": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 29,
+     "done": 29
+    }
+   }
+  },
+  "SAZS": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 43,
+     "done": 43
+    }
+   }
+  },
+  "SBBE": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 81,
+     "done": 81
+    },
+    "2026-02-19": {
+     "scheduled": 4,
+     "done": 0
+    }
+   }
+  },
+  "SBBR": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 341,
+     "done": 339
+    }
+   }
+  },
+  "SBBV": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 18,
+     "done": 18
+    }
+   }
+  },
+  "SBCF": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 274,
+     "done": 273
+    },
+    "2026-02-19": {
+     "scheduled": 5,
+     "done": 0
+    }
+   }
+  },
+  "SBCT": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 140,
+     "done": 140
+    },
+    "2026-02-19": {
+     "scheduled": 1,
+     "done": 0
+    }
+   }
+  },
+  "SBCY": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 69,
+     "done": 69
+    }
+   }
+  },
+  "SBEG": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 81,
+     "done": 81
+    },
+    "2026-02-19": {
+     "scheduled": 1,
+     "done": 0
+    }
+   }
+  },
   "SBFI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 53,
-     "done": 16
+     "done": 53
     }
    }
   },
   "SBFL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 142,
-     "done": 20
+     "done": 142
     }
    }
   },
   "SBFZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 126,
-     "done": 24
+     "done": 126
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36540,11 +37721,13 @@
    }
   },
   "SBGL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 392,
-     "done": 66
+     "done": 392
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -36625,11 +37808,13 @@
    }
   },
   "SBGO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 137,
-     "done": 17
+     "done": 133
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36737,20 +37922,24 @@
    }
   },
   "SBJP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 12
+     "done": 41
     }
    }
   },
   "SBKP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 263,
-     "done": 18
+     "done": 263
     },
     "2026-02-19": {
      "scheduled": 5,
@@ -36759,11 +37948,13 @@
    }
   },
   "SBMO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 69,
-     "done": 21
+     "done": 69
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36772,11 +37963,13 @@
    }
   },
   "SBNF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 91,
-     "done": 11
+     "done": 91
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36785,11 +37978,13 @@
    }
   },
   "SBPA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 144,
-     "done": 32
+     "done": 144
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36798,11 +37993,13 @@
    }
   },
   "SBPS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 76,
-     "done": 12
+     "done": 76
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36811,29 +38008,35 @@
    }
   },
   "SBPV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 15,
-     "done": 2
+     "done": 15
     }
    }
   },
   "SBRB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 0
+     "done": 8
     }
    }
   },
   "SBRF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 223,
-     "done": 36
+     "done": 223
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36842,11 +38045,13 @@
    }
   },
   "SBRJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 221,
-     "done": 8
+     "done": 221
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -36855,11 +38060,13 @@
    }
   },
   "SBSG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 56,
-     "done": 15
+     "done": 56
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -36868,20 +38075,24 @@
    }
   },
   "SBSL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 38,
-     "done": 11
+     "done": 38
     }
    }
   },
   "SBSP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 580,
-     "done": 3
+     "done": 574
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -36890,11 +38101,13 @@
    }
   },
   "SBSV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 207,
-     "done": 28
+     "done": 207
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -36903,11 +38116,13 @@
    }
   },
   "SBVT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 133,
-     "done": 19
+     "done": 133
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -36916,11 +38131,13 @@
    }
   },
   "SCEL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 381,
-     "done": 100
+     "done": 381
     },
     "2026-02-19": {
      "scheduled": 8,
@@ -36944,7 +38161,9 @@
    }
   },
   "SGEN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -36953,7 +38172,9 @@
    }
   },
   "SGES": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
@@ -36977,7 +38198,9 @@
    }
   },
   "SLAL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 4,
@@ -36986,7 +38209,9 @@
    }
   },
   "SLCB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 35,
@@ -36995,7 +38220,9 @@
    }
   },
   "SLLP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
@@ -37004,7 +38231,9 @@
    }
   },
   "SLOR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -37013,7 +38242,9 @@
    }
   },
   "SLUY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -37033,7 +38264,9 @@
    }
   },
   "SMJP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
@@ -37042,7 +38275,9 @@
    }
   },
   "SOCA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
@@ -37051,29 +38286,35 @@
    }
   },
   "SPCL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
-     "done": 0
+     "done": 8
     }
    }
   },
   "SPHI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 2
+     "done": 16
     }
    }
   },
   "SPJC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 433,
-     "done": 133
+     "done": 430
     },
     "2026-02-19": {
      "scheduled": 10,
@@ -37082,29 +38323,35 @@
    }
   },
   "SPJL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 16,
-     "done": 0
+     "done": 16
     }
    }
   },
   "SPQT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 0
+     "done": 17
     }
    }
   },
   "SPQU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 35,
-     "done": 0
+     "done": 35
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37113,20 +38360,24 @@
    }
   },
   "SPRU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 29,
-     "done": 0
+     "done": 29
     }
    }
   },
   "SPZO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 77,
-     "done": 4
+     "done": 77
     }
    }
   },
@@ -37142,7 +38393,9 @@
    }
   },
   "SVBC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
@@ -37151,7 +38404,9 @@
    }
   },
   "SVBM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
@@ -37160,7 +38415,9 @@
    }
   },
   "SVMC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
@@ -37169,7 +38426,9 @@
    }
   },
   "SVMG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 38,
@@ -37189,7 +38448,9 @@
    }
   },
   "SVPR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
@@ -37198,7 +38459,9 @@
    }
   },
   "SVVA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
@@ -37211,16 +38474,20 @@
    }
   },
   "TBPB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 78,
-     "done": 48
+     "done": 78
     }
    }
   },
   "TGPY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
@@ -37248,7 +38515,9 @@
    }
   },
   "TKPK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 30,
@@ -37261,11 +38530,13 @@
    }
   },
   "TNCA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 80,
-     "done": 56
+     "done": 80
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -37274,7 +38545,9 @@
    }
   },
   "TNCB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
@@ -37287,11 +38560,13 @@
    }
   },
   "TNCM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 154,
-     "done": 57
+     "done": 154
     },
     "2026-02-19": {
      "scheduled": 4,
@@ -37300,7 +38575,9 @@
    }
   },
   "TRPG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -37320,7 +38597,9 @@
    }
   },
   "TVSA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 30,
@@ -37420,11 +38699,13 @@
    }
   },
   "UACC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 98,
-     "done": 63
+     "done": 98
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -37656,11 +38937,13 @@
    }
   },
   "UBBG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 3
+     "done": 6
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37669,20 +38952,24 @@
    }
   },
   "UBBN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
-     "done": 19
+     "done": 21
     }
    }
   },
   "UDYZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 65,
-     "done": 33
+     "done": 65
     },
     "2026-02-25": {
      "scheduled": 5,
@@ -37771,11 +39058,13 @@
    }
   },
   "UGKO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 18,
-     "done": 10
+     "done": 18
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37784,20 +39073,24 @@
    }
   },
   "UGSB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
-     "done": 7
+     "done": 8
     }
    }
   },
   "UGTB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 96,
-     "done": 72
+     "done": 96
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -37902,11 +39195,13 @@
    "dateStats": {}
   },
   "ULLI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 227,
-     "done": 112
+     "done": 227
     },
     "2026-02-25": {
      "scheduled": 6,
@@ -37967,11 +39262,13 @@
    }
   },
   "UTAA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 20
+     "done": 41
     },
     "2026-02-25": {
      "scheduled": 4,
@@ -38036,11 +39333,13 @@
    }
   },
   "UUDD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 130,
-     "done": 30
+     "done": 130
     },
     "2026-02-25": {
      "scheduled": 6,
@@ -38339,43 +39638,53 @@
    }
   },
   "UZFA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
-     "done": 5
-    }
-   }
-  },
-  "UZFN": {
-   "fullDates": [],
-   "dateStats": {
-    "2026-02-18": {
-     "scheduled": 15,
      "done": 7
     }
    }
   },
+  "UZFN": {
+   "fullDates": [
+    "2026-02-18"
+   ],
+   "dateStats": {
+    "2026-02-18": {
+     "scheduled": 15,
+     "done": 15
+    }
+   }
+  },
   "UZNN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 9
+     "done": 10
     }
    }
   },
   "UZNU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 14,
-     "done": 9
+     "done": 14
     }
    }
   },
   "UZSB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 8,
@@ -38789,20 +40098,24 @@
    }
   },
   "VABO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
-     "done": 28
+     "done": 39
     }
    }
   },
   "VABP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 45,
-     "done": 29
+     "done": 45
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38811,29 +40124,35 @@
    }
   },
   "VAHS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 22
+     "done": 26
     }
    }
   },
   "VAID": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 96,
-     "done": 61
+     "done": 96
     }
    }
   },
   "VANM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 46,
-     "done": 28
+     "done": 46
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38842,11 +40161,13 @@
    }
   },
   "VANP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 72,
-     "done": 50
+     "done": 72
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38855,11 +40176,13 @@
    }
   },
   "VAOZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 8
+     "done": 12
     },
     "2026-03-09": {
      "scheduled": 1,
@@ -38868,11 +40191,13 @@
    }
   },
   "VAPO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 184,
-     "done": 124
+     "done": 184
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -38957,7 +40282,9 @@
    }
   },
   "VASD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
@@ -39069,7 +40396,9 @@
    }
   },
   "VCCC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 13,
@@ -39078,7 +40407,9 @@
    }
   },
   "VCCJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -39087,7 +40418,9 @@
    }
   },
   "VCRI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -39102,16 +40435,18 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 55,
-     "done": 50
+     "done": 55
     }
    }
   },
   "VDSV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 12,
-     "done": 8
+     "done": 12
     }
    }
   },
@@ -39407,11 +40742,13 @@
    }
   },
   "VEBD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 78,
-     "done": 60
+     "done": 78
     },
     "2026-03-13": {
      "scheduled": 3,
@@ -39430,7 +40767,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 77,
-     "done": 67
+     "done": 77
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -39439,11 +40776,13 @@
    }
   },
   "VEBS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 88,
-     "done": 68
+     "done": 88
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -39583,11 +40922,13 @@
    }
   },
   "VEGT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 108,
-     "done": 78
+     "done": 108
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -39608,20 +40949,24 @@
    }
   },
   "VEIM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 28,
-     "done": 16
+     "done": 28
     }
    }
   },
   "VGEG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 50,
-     "done": 38
+     "done": 50
     },
     "2026-02-25": {
      "scheduled": 6,
@@ -39813,7 +41158,9 @@
    }
   },
   "VGSY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
@@ -39877,7 +41224,7 @@
     },
     "2026-02-18": {
      "scheduled": 944,
-     "done": 924
+     "done": 940
     },
     "2026-02-19": {
      "scheduled": 217,
@@ -40429,20 +41776,24 @@
    "dateStats": {}
   },
   "VIHX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 3,
-     "done": 2
+     "done": 3
     }
    }
   },
   "VIJP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 120,
-     "done": 80
+     "done": 120
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -40495,11 +41846,13 @@
    }
   },
   "VISR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 51,
-     "done": 39
+     "done": 50
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -40508,11 +41861,13 @@
    }
   },
   "VLVT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 51
+     "done": 81
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -40812,7 +42167,9 @@
    }
   },
   "VNBW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 23,
@@ -41067,20 +42424,24 @@
    }
   },
   "VOBZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 41,
-     "done": 33
+     "done": 41
     }
    }
   },
   "VOCB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 50,
-     "done": 43
+     "done": 50
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -41299,11 +42660,13 @@
    }
   },
   "VOGA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 90,
-     "done": 64
+     "done": 90
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -41312,11 +42675,13 @@
    }
   },
   "VOGO": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 90,
-     "done": 71
+     "done": 90
     },
     "2026-02-25": {
      "scheduled": 1,
@@ -41480,11 +42845,13 @@
    }
   },
   "VOML": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 53,
-     "done": 39
+     "done": 53
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -41660,7 +43027,9 @@
    }
   },
   "VOPB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 36,
@@ -41669,20 +43038,24 @@
    }
   },
   "VOTP": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 26,
-     "done": 22
+     "done": 26
     }
    }
   },
   "VOTR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 44,
-     "done": 37
+     "done": 44
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -41723,11 +43096,13 @@
    }
   },
   "VOTV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 82,
-     "done": 55
+     "done": 82
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -41816,11 +43191,13 @@
    }
   },
   "VOVZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 54,
-     "done": 39
+     "done": 54
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -41837,7 +43214,9 @@
    }
   },
   "VQPR": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
@@ -41862,7 +43241,9 @@
    }
   },
   "VRDA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1,
@@ -41871,7 +43252,9 @@
    }
   },
   "VRMG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 7,
@@ -41880,7 +43263,9 @@
    }
   },
   "VRMH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 9,
@@ -42301,7 +43686,7 @@
     },
     "2026-02-18": {
      "scheduled": 1119,
-     "done": 1116
+     "done": 1119
     },
     "2026-02-19": {
      "scheduled": 39,
@@ -42598,7 +43983,9 @@
    }
   },
   "VTBU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 21,
@@ -42906,7 +44293,9 @@
    }
   },
   "VTCT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 37,
@@ -42923,7 +44312,9 @@
    }
   },
   "VTSB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 30,
@@ -42936,11 +44327,13 @@
    }
   },
   "VTSF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 26
+     "done": 32
     }
    }
   },
@@ -43217,7 +44610,9 @@
    }
   },
   "VTUD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
@@ -43226,7 +44621,9 @@
    }
   },
   "VTUK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 36,
@@ -43235,7 +44632,9 @@
    }
   },
   "VTUU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 20,
@@ -43244,7 +44643,9 @@
    }
   },
   "VVCI": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 48,
@@ -43364,7 +44765,9 @@
    }
   },
   "VVCT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
@@ -44541,11 +45944,13 @@
    }
   },
   "VYMD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
-     "done": 5
+     "done": 10
     }
    }
   },
@@ -45195,11 +46600,13 @@
    }
   },
   "WBSB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 21
+     "done": 32
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -45637,7 +47044,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 126,
-     "done": 105
+     "done": 126
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -46248,11 +47655,13 @@
    }
   },
   "WMSA": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 70,
-     "done": 38
+     "done": 70
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -46281,7 +47690,9 @@
    }
   },
   "WPDL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 17,
@@ -46304,7 +47715,7 @@
     },
     "2026-02-18": {
      "scheduled": 1033,
-     "done": 1027
+     "done": 1031
     },
     "2026-02-19": {
      "scheduled": 31,
@@ -46856,56 +48267,68 @@
    }
   },
   "YBCG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 180,
-     "done": 78
+     "done": 178
     }
    }
   },
   "YBRM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 39,
-     "done": 0
+     "done": 39
     }
    }
   },
   "YBSU": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 95,
-     "done": 30
+     "done": 95
     }
    }
   },
   "YBWW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 156,
-     "done": 4
+     "done": 156
     }
    }
   },
   "YMAV": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 14
+     "done": 18
     }
    }
   },
   "YMHB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 71,
-     "done": 55
+     "done": 71
     }
    }
   },
@@ -47113,11 +48536,13 @@
    }
   },
   "YPAD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 246,
-     "done": 122
+     "done": 246
     },
     "2026-02-25": {
      "scheduled": 2,
@@ -47142,11 +48567,13 @@
    "dateStats": {}
   },
   "YPDN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 132,
-     "done": 27
+     "done": 129
     },
     "2026-02-28": {
      "scheduled": 1,
@@ -47159,20 +48586,24 @@
    }
   },
   "YPPD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 49,
-     "done": 0
+     "done": 49
     }
    }
   },
   "YPPH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 395,
-     "done": 160
+     "done": 395
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -47468,11 +48899,13 @@
    "dateStats": {}
   },
   "YWLM": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 25
+     "done": 43
     }
    }
   },
@@ -47483,7 +48916,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1162,
-     "done": 1142
+     "done": 1152
     },
     "2026-02-19": {
      "scheduled": 6,
@@ -47778,7 +49211,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 1056,
-     "done": 1007
+     "done": 1011
     },
     "2026-02-19": {
      "scheduled": 3,
@@ -47855,11 +49288,13 @@
    }
   },
   "ZBDS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 75,
-     "done": 48
+     "done": 70
     }
    }
   },
@@ -47868,7 +49303,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 230,
-     "done": 128
+     "done": 166
     }
    }
   },
@@ -47877,25 +49312,29 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 51,
-     "done": 17
+     "done": 22
     }
    }
   },
   "ZBOW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 43,
-     "done": 30
+     "done": 43
     }
    }
   },
   "ZBSJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 249,
-     "done": 160
+     "done": 241
     }
    }
   },
@@ -47911,16 +49350,20 @@
    }
   },
   "ZBYN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 296,
-     "done": 215
+     "done": 295
     }
    }
   },
   "ZGDY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 10,
@@ -48239,20 +49682,24 @@
    }
   },
   "ZGKL": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 124,
-     "done": 73
+     "done": 109
     }
    }
   },
   "ZGNN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 293,
-     "done": 208
+     "done": 286
     }
    }
   },
@@ -48268,11 +49715,13 @@
    }
   },
   "ZGSD": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 284,
-     "done": 211
+     "done": 284
     }
    }
   },
@@ -48867,11 +50316,13 @@
    }
   },
   "ZHEC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 22,
-     "done": 18
+     "done": 22
     },
     "2026-02-26": {
      "scheduled": 2,
@@ -49209,11 +50660,13 @@
    }
   },
   "ZHLY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 28,
-     "done": 17
+     "done": 27
     }
    }
   },
@@ -49256,7 +50709,9 @@
    }
   },
   "ZKPY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 2,
@@ -49274,11 +50729,13 @@
    }
   },
   "ZLIC": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 174,
-     "done": 121
+     "done": 145
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -49300,7 +50757,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 292,
-     "done": 174
+     "done": 222
     }
    }
   },
@@ -49336,11 +50793,13 @@
    }
   },
   "ZMCK": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 32,
-     "done": 17
+     "done": 30
     },
     "2026-02-19": {
      "scheduled": 2,
@@ -49353,7 +50812,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 237,
-     "done": 118
+     "done": 166
     }
    }
   },
@@ -50374,29 +51833,35 @@
    }
   },
   "ZSJN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 388,
-     "done": 284
+     "done": 384
     }
    }
   },
   "ZSLG": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 34,
-     "done": 27
+     "done": 33
     }
    }
   },
   "ZSNB": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 354,
-     "done": 261
+     "done": 330
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -50956,11 +52421,13 @@
    }
   },
   "ZSOF": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 292,
-     "done": 196
+     "done": 289
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -50979,7 +52446,7 @@
     },
     "2026-02-18": {
      "scheduled": 1544,
-     "done": 1529
+     "done": 1539
     },
     "2026-02-19": {
      "scheduled": 34,
@@ -51455,11 +52922,13 @@
    }
   },
   "ZSQZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 216,
-     "done": 148
+     "done": 216
     },
     "2026-04-27": {
      "scheduled": 1,
@@ -51468,11 +52937,13 @@
    }
   },
   "ZSSH": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 56,
-     "done": 36
+     "done": 55
     }
    }
   },
@@ -51483,7 +52954,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 772,
-     "done": 760
+     "done": 770
     },
     "2026-02-19": {
      "scheduled": 7,
@@ -51764,7 +53235,9 @@
    }
   },
   "ZSTX": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 6,
@@ -51779,52 +53252,62 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 210,
-     "done": 172
+     "done": 210
     }
    }
   },
   "ZSWZ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 280,
-     "done": 192
+     "done": 259
     }
    }
   },
   "ZSYN": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 52,
-     "done": 46
+     "done": 52
     }
    }
   },
   "ZSYT": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 163,
-     "done": 128
+     "done": 158
     }
    }
   },
   "ZSYW": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 79,
-     "done": 57
+     "done": 73
     }
    }
   },
   "ZSZS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 74,
-     "done": 39
+     "done": 66
     }
    }
   },
@@ -52092,11 +53575,13 @@
    }
   },
   "ZUGY": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 432,
-     "done": 244
+     "done": 421
     },
     "2026-02-19": {
      "scheduled": 1,
@@ -52105,11 +53590,13 @@
    }
   },
   "ZULS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 114,
-     "done": 86
+     "done": 97
     }
    }
   },
@@ -52444,7 +53931,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 81,
-     "done": 20
+     "done": 40
     }
    }
   },
@@ -52453,7 +53940,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 452,
-     "done": 236
+     "done": 344
     },
     "2026-02-27": {
      "scheduled": 1,
@@ -52466,11 +53953,13 @@
    }
   },
   "ZYBS": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 52,
-     "done": 47
+     "done": 52
     }
    }
   },
@@ -52505,7 +53994,7 @@
    "dateStats": {
     "2026-02-18": {
      "scheduled": 19,
-     "done": 9
+     "done": 11
     }
    }
   },
@@ -52532,11 +54021,13 @@
    }
   },
   "ZYYJ": {
-   "fullDates": [],
+   "fullDates": [
+    "2026-02-18"
+   ],
    "dateStats": {
     "2026-02-18": {
      "scheduled": 50,
-     "done": 44
+     "done": 50
     }
    }
   }

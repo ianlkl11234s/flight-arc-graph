@@ -264,7 +264,7 @@ export interface AirportManifestEntry {
   isCore?: boolean;
   /** 每日（台灣時間）軌跡筆數 { "2026-02-18": 614, ... } */
   dates?: Record<string, number>;
-  /** 抓「滿」的日期（done ≥ 50 且完成度 ≥ 80%） */
+  /** 抓「滿」的日期（完成度 ≥ 80%，且 done ≥ min(50, 單日最大班表量 × 50%)） */
   fullDates?: string[];
   /** 與 dates 同 key：每日進場數（dest_icao == 該機場）；舊 manifest 無此欄 */
   datesArr?: Record<string, number>;

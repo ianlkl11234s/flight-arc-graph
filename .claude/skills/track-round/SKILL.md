@@ -25,7 +25,8 @@ caffeinate -dims npx tsx scripts/fetch-tracks.ts --airports-file scripts/top1000
 #    ⚠️ macOS 睡眠 → caffeinate；背景長工約 30-70 分被環境回收，track-done 保證中斷零損失、可隨時續跑
 
 # 2. 補救網路 blip：track-failed 新增的 id → scripts/retry-targets.txt → retry-failed-tracks.ts
-# 3. 重建 manifest：NODE_OPTIONS="--max-old-space-size=12288" npx tsx scripts/split-tracks.ts
+# 3. 先重產「完整日期」判定：npx tsx scripts/build-core-airports.ts（漏了 → Atlas「完整資料」停在舊數字）
+#    再重建 manifest：NODE_OPTIONS="--max-old-space-size=12288" npx tsx scripts/split-tracks.ts
 # 4. 同步 README 覆蓋表 + data-fetching-status.md（campaign 進度不用手改，campaign-status 現算）
 # 5. 上傳：npm run s3:upload（→ Zeabur 端 sh /app/scripts/pull-from-s3.sh）
 # 6. commit scripts/fetch-sessions.ndjson + campaign-top1000.json（帳本進 git = 跨月審計）
@@ -90,6 +91,8 @@ npx tsx scripts/fetch-tracks.ts \
   剩下的才是真 404。
 
 ## Step 3: split-tracks（重建 region + manifest）
+
+> ⚠️ **先跑 `npx tsx scripts/build-core-airports.ts`**：manifest 的 `isCore`／`fullDates`（Atlas「完整資料」、Timeline 完整日期）讀的是 `scripts/core-airports.json`，不重產就停在上次的數字（2026-10-24 曾停在 9/16，Atlas 少算約 700 座）。
 
 ```bash
 # 完整跑（資料量大，預設 4GB heap 會 OOM，必加 NODE_OPTIONS）

@@ -286,7 +286,7 @@ function buildAirportEntry(
   const dates = countDates(flights);
   const candidates = coreAirports.get(icao);
   // fullDates 取 candidates ∩ 實際有足量軌跡的日期（防「時刻表抓了、軌跡沒抓」誤標）
-  const fullDates = (candidates ?? []).filter((d) => (dates[d] ?? 0) >= 50);
+  const fullDates = (candidates ?? []).filter((d) => (dates[d] ?? 0) > 0);
   // 與 countDates 同一切日邏輯（groupFlightsByDate 也走 getFlightTwDate），key 集合與 dates 相同
   const groups = groupFlightsByDate(flights);
   const datesArr: Record<string, number> = {};
