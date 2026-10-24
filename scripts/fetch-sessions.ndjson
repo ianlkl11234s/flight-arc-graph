@@ -14,3 +14,5 @@
 {"ts":"2026-09-15T12:40:26.760Z","label":"rank40-395","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"done","attempted":15,"ok":0,"empty":0,"failed":15,"requests":0,"credits_est":600,"done_total_after":82501}
 {"ts":"2026-09-15T12:41:54.216Z","label":"rank40-395","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"sigint","attempted":22,"ok":22,"empty":0,"failed":0,"requests":22,"credits_est":880,"done_total_after":82523}
 {"ts":"2026-09-16T00:55:27.438Z","label":"rank40-395","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"done","attempted":15282,"ok":15083,"empty":195,"failed":4,"requests":15282,"credits_est":611280,"done_total_after":97606}
+{"ts":"2026-10-23T17:19:22.050Z","label":"rank396-1000","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"done","attempted":12644,"ok":12100,"empty":535,"failed":9,"requests":12640,"credits_est":505760,"done_total_after":109722}
+{"ts":"2026-10-23T18:36:54.000Z","label":"probe-no-icao-5","date":"2026-02-17T16:00:00Z~2026-02-18T16:00:00Z","reason":"done","attempted":5,"ok":5,"empty":0,"failed":0,"requests":5,"credits_est":200,"done_total_after":109730}

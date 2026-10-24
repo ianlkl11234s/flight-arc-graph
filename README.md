@@ -146,13 +146,13 @@ Selection 面板上方的標題、已選機場 chips 與搜尋欄採 sticky 配�
 
 ## 軌跡資料量（Track Coverage）
 
-以下數字以 `public/tracks/manifest.json` 為準，最後重建時間為 **2026-09-16 02:08 UTC**：
+以下數字以 `public/tracks/manifest.json` 為準，最後重建時間為 **2026-10-23 18:11 UTC**（2026-10-24 同步）：
 
 | 指標 | 數量 |
 |------|-----:|
-| 可載入軌跡的機場 | 2,941 |
-| 去重後軌跡 | 97,511 |
-| Per-airport daily shards | 5,389 |
+| 可載入軌跡的機場 | 3,595 |
+| 去重後軌跡 | 109,619 |
+| Per-airport daily shards | 6,050 |
 | 涵蓋日期 | 52 日 |
 | 日期範圍 | 2026-02-17 ～ 2026-07-12 |
 
@@ -160,16 +160,16 @@ Selection 面板上方的標題、已選機場 chips 與搜尋欄採 sticky 配�
 
 | Region | 軌跡數 | 檔案大小 |
 |--------|-------:|---------:|
-| Other | 49,485 | 15.14 MiB |
-| US | 28,217 | 8.02 MiB |
-| CN | 14,166 | 3.04 MiB |
-| TW | 12,232 | 3.78 MiB |
-| JP | 5,635 | 1.67 MiB |
-| UK | 4,577 | 1.37 MiB |
-| KR | 2,829 | 0.83 MiB |
-| TH | 2,706 | 0.87 MiB |
-| HK | 1,896 | 0.62 MiB |
-| All | 97,511 | 約 27.59 MiB |
+| Other | 59,077 | 17.23 MiB |
+| US | 30,237 | 8.42 MiB |
+| CN | 15,080 | 3.18 MiB |
+| TW | 12,234 | 3.78 MiB |
+| JP | 5,646 | 1.68 MiB |
+| UK | 4,710 | 1.40 MiB |
+| KR | 2,831 | 0.83 MiB |
+| TH | 2,714 | 0.88 MiB |
+| HK | 1,912 | 0.63 MiB |
+| All | 109,619 | 約 30.20 MiB |
 
 Region 之間可能重疊，不可將各列相加當作全球唯一軌跡總數；唯一總數以 `All` 與 manifest 為準。
 
@@ -177,20 +177,20 @@ Region 之間可能重疊，不可將各列相加當作全球唯一軌跡總數�
 
 | 排名 | ICAO | 軌跡數 |
 |----:|------|-------:|
-| 1 | RCTP | 7,695 |
-| 2 | OMDB | 3,127 |
-| 3 | WSSS | 2,055 |
+| 1 | RCTP | 7,697 |
+| 2 | OMDB | 3,210 |
+| 3 | WSSS | 2,059 |
 | 4 | KORD | 2,009 |
-| 5 | KATL | 1,907 |
-| 6 | VHHH | 1,896 |
-| 7 | KLAX | 1,853 |
+| 5 | KATL | 1,926 |
+| 6 | VHHH | 1,912 |
+| 7 | KLAX | 1,860 |
 | 8 | RCKH | 1,806 |
-| 9 | ZSPD | 1,744 |
+| 9 | ZSPD | 1,754 |
 | 10 | ZGGG | 1,559 |
 | 11 | RCSS | 1,527 |
-| 12 | KDFW | 1,521 |
-| 13 | KSFO | 1,520 |
-| 14 | RKSI | 1,508 |
+| 12 | KSFO | 1,525 |
+| 13 | KDFW | 1,521 |
+| 14 | RKSI | 1,510 |
 | 15 | KDEN | 1,505 |
 
 抓取進度、下一輪目標與額度估算請見 [資料抓取狀態](docs/backlog/data-fetching-status.md)。每次重新抓取並執行 `split-tracks.ts` 後，這一節也必須依新 manifest 同步更新。
@@ -359,6 +359,8 @@ npm run s3:upload
 `fetch-flights.ts` 沒有相同的自動 dry-run 安全網。正式執行前應明確指定日期範圍，並先用小型 `--batch-size` 驗證；確認後再依額度規劃擴大批次。
 
 `npm run s3:upload` 會直接寫入遠端 object storage，且會重傳 manifest／region 檔案。執行前必須確認 S3 credentials、bucket、prefix、本機 manifest 與部署意圖；它不是一般開發驗證步驟。
+
+`npm run fuse:data`（`scripts/fuse-collector-data.ts`）從 data-collectors API 下載 FR24／OpenSky 快照並融合。需在 `.env` 設 `COLLECTORS_API_KEY`（向 data-collectors 維護者取得，勿寫進程式碼）；未設定會直接退出。
 
 航班清單與抓取進度檔多數位於 gitignore；Git tag 或 branch 不會自動備份這些檔案。需要保留抓取工作現場時，應另外備份 gitignored 資料或確認其仍存在於 volume／S3。
 

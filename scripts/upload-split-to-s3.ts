@@ -5,6 +5,8 @@
  *
  * **增量上傳**：對照 scripts/upload-state.json 的 mtime，只上傳本地檔案
  * 修改時間晚於上次上傳的檔案。manifest / regions / airspace manifest 永遠重傳。
+ * mtime 變了還會再比內容：本地 MD5 = S3 ETag 就跳過（split-tracks 完整版會重寫
+ * 所有 daily shard，內容沒變也會刷新 mtime；2026-10-24 曾因此多傳 3.4 GB）。
  *
  * Usage:
  *   npx tsx scripts/upload-split-to-s3.ts          # 增量
@@ -20,7 +22,12 @@ import {
 } from "fs";
 import { resolve, dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { createHash } from "crypto";
+import {
+  S3Client,
+  PutObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
 import "dotenv/config";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -62,6 +69,7 @@ const state = loadState();
 
 let uploaded = 0;
 let skipped = 0;
+let skippedSameContent = 0;
 let totalBytes = 0;
 
 async function rawUpload(localPath: string, s3Key: string) {
@@ -84,11 +92,33 @@ async function rawUpload(localPath: string, s3Key: string) {
   if (uploaded % 50 === 0) saveState(state);
 }
 
-/** 上傳前比對 mtime，未變動就跳過 */
+/** S3 上的 ETag 是否等於本地 MD5（單段 PutObject 的 ETag 即 MD5；multipart 帶 "-N" 不會相等） */
+async function sameAsRemote(localPath: string, s3Key: string): Promise<boolean> {
+  try {
+    const head = await s3.send(
+      new HeadObjectCommand({ Bucket: BUCKET, Key: s3Key }),
+    );
+    const etag = head.ETag?.replaceAll('"', "");
+    if (!etag) return false;
+    const md5 = createHash("md5").update(readFileSync(localPath)).digest("hex");
+    return etag === md5;
+  } catch {
+    return false; // 不存在（404）或 HEAD 失敗 → 照常上傳
+  }
+}
+
+/** 上傳前比對 mtime，未變動就跳過；mtime 變了但內容與 S3 相同也跳過 */
 async function uploadIfChanged(localPath: string, s3Key: string) {
   const mtime = statSync(localPath).mtimeMs;
   if (!FORCE && state[s3Key] && mtime <= state[s3Key]) {
     skipped++;
+    return;
+  }
+  if (!FORCE && (await sameAsRemote(localPath, s3Key))) {
+    state[s3Key] = mtime;
+    skipped++;
+    skippedSameContent++;
+    if (skippedSameContent % 200 === 0) saveState(state);
     return;
   }
   await rawUpload(localPath, s3Key);
@@ -213,7 +243,7 @@ async function main() {
   const mb = (totalBytes / 1024 / 1024).toFixed(1);
   console.log("\n✅ Done!");
   console.log(
-    `   uploaded=${uploaded} skipped=${skipped} | ${mb} MB | ${elapsed}s`,
+    `   uploaded=${uploaded} skipped=${skipped}（其中內容相同 ${skippedSameContent}）| ${mb} MB | ${elapsed}s`,
   );
   console.log(`   state: ${STATE_FILE}`);
 }

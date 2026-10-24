@@ -102,6 +102,8 @@ npx tsx scripts/split-tracks.ts --manifest-only
 - 掃 `airports/*.jsonl` 做 dedupe + 產生 `regions/*.jsonl` + `manifest.json`
 - `--manifest-only` 不重寫 region 檔（regions 沿用既有值）；有新增 region 機場時要跑完整版
 - ⚠️ **產出新 region 時**：`scripts/pull-from-s3.sh` 的 `for R in ...` 是 hardcode 清單，**必須同步加上新 region**，否則 Zeabur 拉不到（UK、CN 都曾漏加）
+- **LOD（L1/L2）只對「有新軌跡的機場 × 新日期」重產**：`split-tracks.ts --lod-only --airports <觸及機場> --dates <日期>`，再 `--lod-manifest-only`。省略 `--airports` 會重產全部機場（2026-10-24 因此多傳 0.7 GB）。觸及機場＝本輪新 fr24_id 的 orig/dest 聯集
+- 上傳程式已改成「mtime 變了再比 MD5 vs S3 ETag」，split 完整版重寫的未變 daily shard 不會重傳
 - 重建 manifest 後跑 `npx tsx scripts/build-airport-points.ts` 更新 `public/airport-points.geojson`（機場 metadata，Location 面板 + Atlas 星圖共用；讀 manifest.json，須在 split 之後）
 
 ## Step 3.5: 新機場 UI 三層同步（僅當這輪有「新」主動機場）
