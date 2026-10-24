@@ -16,6 +16,13 @@ describe("SEO／AEO 靜態資產", () => {
       assert.ok(robots.includes(`User-agent: ${bot}`), `缺 ${bot}`);
     }
     assert.ok(!/^Disallow: \/\s*$/m.test(robots), "不可整站 Disallow");
+    // 具名群組不繼承 *：每一組都要擋軌跡原始檔路徑
+    const groups = robots.split(/\n(?=User-agent: )/).filter((g) => g.startsWith("User-agent: "));
+    for (const g of groups) {
+      for (const path of ["/data/", "/tracks/", "/airspace/"]) {
+        assert.ok(g.includes(`Disallow: ${path}`), `${g.split("\n")[0]} 缺 Disallow: ${path}`);
+      }
+    }
     assert.ok(robots.includes(`Sitemap: ${ORIGIN}/sitemap.xml`));
   });
 
