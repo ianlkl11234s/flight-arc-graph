@@ -360,6 +360,8 @@ npm run s3:upload
 
 `npm run s3:upload` 會直接寫入遠端 object storage，且會重傳 manifest／region 檔案。執行前必須確認 S3 credentials、bucket、prefix、本機 manifest 與部署意圖；它不是一般開發驗證步驟。
 
+`npm run fuse:data`（`scripts/fuse-collector-data.ts`）從 data-collectors API 下載 FR24／OpenSky 快照並融合。需在 `.env` 設 `COLLECTORS_API_KEY`（向 data-collectors 維護者取得，勿寫進程式碼）；未設定會直接退出。
+
 航班清單與抓取進度檔多數位於 gitignore；Git tag 或 branch 不會自動備份這些檔案。需要保留抓取工作現場時，應另外備份 gitignored 資料或確認其仍存在於 volume／S3。
 
 ## 部署
