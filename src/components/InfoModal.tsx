@@ -435,7 +435,7 @@ function ProfilePage({ lang }: { lang: Lang }) {
       name: "Taiwan Flight Arc",
       desc: L ? "台灣航班弧線 3D 視覺化" : "Taiwan flight arc 3D visualization",
       screenshot: "./screenshots/taiwan-flight-arc.png",
-      site: "https://flight-arc.zeabur.app/",
+      site: "https://flight-arc.itsmigu.com/",
       github: "https://github.com/ianlkl11234s/flight-arc-graph",
     },
     {

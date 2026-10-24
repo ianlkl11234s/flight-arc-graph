@@ -1,0 +1,33 @@
+# Flight Arc
+
+> 以全球機場為入口，在 3D 地圖與地球上回放、組合與比較真實航班起降軌跡的免費互動網站。Flight Arc is a free interactive 3D map for exploring, combining and comparing real flight trajectories around airports worldwide.
+
+網站是純前端的互動地圖（需要 JavaScript 與 WebGL），頁面本身沒有逐筆航班的文字版；要引用內容請以下列說明與 GitHub 文件為準。作者：Migu（個人專案）。所有時間以台灣時間（UTC+8）顯示。
+
+## 網站
+
+- [Flight Arc 首頁](https://flight-arc.itsmigu.com/): 機場總覽星圖、航班回放、機場組合與日期比較
+- [GitHub 原始碼與說明](https://github.com/ianlkl11234s/flight-arc-graph): 功能清單、資料流程與 MIT 授權
+
+## 資料範圍（截至 2026-10-24，依正式站 tracks manifest，generatedAt 2026-10-24T07:00Z）
+
+- 不重複航班軌跡 109,619 筆；有軌跡檔的機場 3,595 座
+- 日期：2026-02-17 至 2026-07-12 之間的 52 個日期（不連續，依機場而異）；2026-02-18 涵蓋最廣（3,575 座機場有資料），台灣、日本、香港、韓國等主要機場另有多日資料
+- 台灣：17 座機場有軌跡（抓取清單 22 座，含民用、軍民合用、軍用；其餘 5 座沒有軌跡資料），含 2026-07-09 至 07-12 巴威颱風期間全時段起降
+- 其他地區：日本、韓國、香港、中國、泰國、新加坡、中東、歐洲、英國、美國；其餘機場多半只有 2026-02-18 單日資料
+- 未收錄的日期與機場不等於沒有航班，只是沒有抓取
+
+## 主要功能
+
+- 機場總覽（Atlas）：全球機場星圖，依資料完整度分級上色
+- 航班回放：時間軸播放、依高度或起降方向染色、點選單一航班追蹤
+- 機場組合（Selection）與日期比較（Compare）
+- 空域：管制空域立體邊界、東亞空域快照
+- Cinema Mode：鏡頭關鍵影格、環繞與 4K 錄影匯出
+
+## 資料來源與授權
+
+- 航班軌跡：FlightRadar24 API（Essential 方案）
+- 空域快照：OpenSky Network
+- 管制空域：OpenAIP（CC BY-NC-SA 4.0，僅限非商業使用）
+- 資料授權依各來源規定，與程式碼的 MIT License 無關

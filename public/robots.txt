@@ -1,0 +1,73 @@
+# Flight Arc — https://flight-arc.itsmigu.com
+# 歡迎搜尋引擎與 AI 助理的爬蟲讀取公開頁面。
+# /data/、/tracks/、/airspace/ 是數 GB 的軌跡原始檔（前端載入用），不給爬蟲抓，省流量；
+# 可被收錄的內容都在首頁靜態 HTML。
+# ⚠️ 具名 User-agent 群組不會繼承 * 的規則，所以每組都要重複 Disallow。
+User-agent: *
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+# AI 搜尋與助理爬蟲：明示允許
+User-agent: GPTBot
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /data/
+Disallow: /tracks/
+Disallow: /airspace/
+
+Sitemap: https://flight-arc.itsmigu.com/sitemap.xml
