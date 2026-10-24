@@ -71,3 +71,4 @@ Disallow: /tracks/
 Disallow: /airspace/
 
 Sitemap: https://flight-arc.itsmigu.com/sitemap.xml
+Sitemap: https://flight-arc.itsmigu.com/sitemap-airports.xml

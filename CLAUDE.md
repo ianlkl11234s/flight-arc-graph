@@ -9,11 +9,12 @@
 
 ## 🔄 抓完軌跡後的同步更新（必做）
 
-每次跑完 `fetch-tracks.ts` + `split-tracks.ts` 後，務必同步更新三處（數字一律以重建後的 `public/tracks/manifest.json` 為準）：
+每次跑完 `fetch-tracks.ts` + `split-tracks.ts` 後，務必同步更新四處（數字一律以重建後的 `public/tracks/manifest.json` 為準）：
 
 1. **README.md「軌跡資料量（Track Coverage）」表**（region 數、總筆數、Top 15、最後更新日）
 2. **`docs/backlog/data-fetching-status.md`**（狀態欄、移除已完成項、記接力點）
 3. **記憶 `project_fetch_resume_point.md`**（若有未抓完的接力點）
+4. **SEO 頁面數字**：`npx tsx scripts/seo/build-airport-pages-data.ts` 重產 `scripts/seo/airport-pages-data.json`（機場靜態頁 `/airports/<icao>/` 的資料，進 git）；首頁 `index.html` `#root` 靜態說明與 `public/llms.txt`「資料範圍」段的數字與「截至」日期一併更新
 
 完整抓取工作流（指令、額度、補救）→ `/track-round` skill（`.claude/skills/track-round/SKILL.md`）。
 

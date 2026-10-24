@@ -8,7 +8,7 @@
     "typecheck": "tsc -b",
     "design:guard": "node scripts/design/design-guard.mjs && node scripts/design/check-tokens-sync.mjs",
     "design:test": "node --import tsx --test 'scripts/design/tests/*.test.mjs'",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && tsx scripts/seo/generate-airport-pages.ts",
     "preview": "vite preview",
     "fetch:flights": "tsx scripts/fetch-flights.ts",
     "fetch:tracks": "tsx scripts/fetch-tracks.ts",
