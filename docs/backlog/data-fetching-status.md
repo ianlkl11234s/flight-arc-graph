@@ -28,6 +28,14 @@ npx tsx scripts/fetch-tracks.ts --group TW --from-time 2026-10-21T16:00:00Z --to
   2. 只做內部分析，或公開「彙總」（熱度圖／走廊密度）；不逐條公開、不顯示起降點附近軌跡。
 - **⚠️ 技術前提**：`fetch-tracks.ts` 會在抓取前跳過這類航班（記入 `scripts/track-skipped-no-icao.ndjson`），且 `writeFlightToJsonl` 沒有 ICAO 目標可寫。要抓需另寫抓取路徑，結果存到**不進 `public/tracks/`、不上傳 S3** 的內部目錄（例如 gitignored 的 `scripts/no-icao/`），再由彙總腳本產出公開用的熱度資料。試抓用的腳本當時放在 session scratchpad（已不保留），需重寫。
 
+**🔧 待修：「完整日期」（fullDates）會高估完整度（2026-10-25 寫桃機長文時發現，用戶同意要調整）**
+
+- **現況**：`scripts/build-core-airports.ts`（約 161–176 行）只看「航班清單上的航班抓到幾成軌跡」（done/scheduled ≥ 80% 且 done ≥ min(50, 單日最大班表量 × 50%)），**沒檢查清單本身漏了多少**。清單不全的日子照樣被標成完整。
+- **實例**：RCTP 2/19–2/24 被標成完整，但當天清單只有 379–486 架（2/25 起穩定 634–744 架），2/21 早上 8 點前完全沒有紀錄。清單為何缺仍未查（FR24 端缺資料，或當時查詢方式有問題，例如分頁 cursor）。
+- **修法方向（待定）**：判定加一條「當日清單量 ≥ 該機場典型日量 × X%」（典型日量可用該機場清單量的中位數）；不到就降為部分。改完重跑 `build-core-airports.ts` → `split-tracks.ts --manifest-only`，比對 Atlas「完整」座數與各機場日期選單的變化，並確認 Summary 數字不受影響。
+- **連帶**：機場頁 `/airports/<icao>/` 與長文引用的「完整日」也來自這裡，改完要重產 `scripts/seo/airport-pages-data.json`。
+- **另一個相關缺口（不是判定問題，是覆蓋範圍）**：RCTP 2/25–3/27 有清單、沒軌跡的 21,395 班（約 85 萬 credits）；這段每天只畫得出約 70–80 筆，且只有新加坡、美西、歐洲與中東樞紐航線。
+
 ### 📅 2026-10 週期成果（10/23–24，Batch 4＋5 合併）
 
 | 範圍 | 處理 | 成功 | 無軌跡 | 失敗 | credits |
