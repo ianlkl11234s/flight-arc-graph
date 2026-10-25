@@ -8,7 +8,7 @@
     "typecheck": "tsc -b",
     "design:guard": "node scripts/design/design-guard.mjs && node scripts/design/check-tokens-sync.mjs",
     "design:test": "node --import tsx --test 'scripts/design/tests/*.test.mjs'",
-    "build": "tsc -b && vite build && tsx scripts/seo/generate-airport-pages.ts",
+    "build": "tsc -b && vite build && tsx scripts/seo/generate-airport-pages.ts && tsx scripts/seo/generate-notes.ts",
     "preview": "vite preview",
     "fetch:flights": "tsx scripts/fetch-flights.ts",
     "fetch:tracks": "tsx scripts/fetch-tracks.ts",
@@ -23,6 +23,7 @@
     "@flightradar24/fr24sdk": "^0.1.1",
     "dotenv": "^17.3.1",
     "mapbox-gl": "^3.9.0",
+    "marked": "^18.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "three": "^0.172.0"

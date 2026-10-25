@@ -78,7 +78,7 @@ function MenuItem({
 
 /** ⋯ 選單：向下靠右、寬 190、點外面或 Esc 關閉（照 Pulse M1）。 */
 function MoreMenu({ renderMode, onRenderModeChange, onCopyLink }: Pick<Props, "renderMode" | "onRenderModeChange" | "onCopyLink">) {
-  const { tokens } = useTheme();
+  const { tokens, isDark } = useTheme();
   const [open, setOpen] = useState(false);
   const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -152,6 +152,10 @@ function MoreMenu({ renderMode, onRenderModeChange, onCopyLink }: Pick<Props, "r
             label={copy === "copied" ? "已複製" : copy === "failed" ? "複製失敗" : "複製連結"}
             onClick={handleCopy}
             aria-live="polite"
+          />
+          <MenuItem
+            label="長文"
+            onClick={() => window.location.assign(`/notes/?theme=${isDark ? "dark" : "light"}`)}
           />
         </div>
       )}

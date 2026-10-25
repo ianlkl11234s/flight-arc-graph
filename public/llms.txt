@@ -8,6 +8,7 @@
 
 - [Flight Arc 首頁](https://flight-arc.itsmigu.com/): 機場總覽星圖、航班回放、機場組合與日期比較
 - [機場總覽](https://flight-arc.itsmigu.com/airports/): 每座收錄航班較多的機場各有一頁靜態說明，列出航班數、日期範圍、主要往來機場、航空公司與機型，網址為 /airports/<小寫 ICAO>/（例如 /airports/rctp/）
+- [長文筆記](https://flight-arc.itsmigu.com/notes/): 用本站資料寫的航班故事與分析（例如颱風期間的停飛與疏散、桃園機場一天的起降節奏），每篇附資料範圍與方法
 - [GitHub 原始碼與說明](https://github.com/ianlkl11234s/flight-arc-graph): 功能清單、資料流程與 MIT 授權
 
 ## 資料範圍（截至 2026-10-24，依正式站 tracks manifest，generatedAt 2026-10-24T07:00Z）
