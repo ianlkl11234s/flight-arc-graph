@@ -25,6 +25,7 @@ describe("SEO／AEO 靜態資產", () => {
     }
     assert.ok(robots.includes(`Sitemap: ${ORIGIN}/sitemap.xml`));
     assert.ok(robots.includes(`Sitemap: ${ORIGIN}/sitemap-airports.xml`));
+    assert.ok(robots.includes(`Sitemap: ${ORIGIN}/sitemap-notes.xml`));
   });
 
   it("sitemap.xml 列出首頁完整網址與 lastmod，且只放 canonical 網域", () => {
@@ -73,6 +74,9 @@ describe("SEO／AEO 靜態資產", () => {
     assert.match(conf, /map \$uri \$spa_fallback \{[\s\S]*?default \/index\.html;[\s\S]*?@notfound;/);
     assert.match(conf, /location \/ \{\s*try_files \$uri \$uri\/ \$spa_fallback;/);
     assert.match(conf, /location @notfound \{\s*return 404;/);
+    // /notes/ 靜態長文：在 SPA fallback 之前、缺頁 404
+    assert.ok(conf.indexOf("location ^~ /notes/") < conf.indexOf("location / {"), "/notes/ 要在 SPA fallback 之前");
+    assert.match(conf, /location \^~ \/notes\/ \{[\s\S]*?try_files \$uri \$uri\/ =404;/);
     assert.match(conf, /^\s*charset utf-8;/m, "llms.txt 等中文文字檔要帶 charset");
   });
 });
