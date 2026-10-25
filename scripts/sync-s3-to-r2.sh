@@ -11,10 +11,17 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-set -a
-# shellcheck disable=SC1091
-source .env
-set +a
+# 不 source 整份 .env（FR24_API_TOKEN 含 `|`，bash 會當成管線執行並把片段印到錯誤訊息）；只取需要的 key，已在環境中的優先
+load_env() {
+  local key="$1" line
+  [ -n "${!key:-}" ] && return 0
+  line=$(/usr/bin/grep -E "^${key}=" .env | tail -1) || return 0
+  line="${line#*=}"; line="${line%\"}"; line="${line#\"}"
+  export "$key=$line"
+}
+for key in S3_ACCESS_KEY S3_SECRET_KEY S3_REGION R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_ENDPOINT_URL; do
+  load_env "$key"
+done
 
 : "${S3_ACCESS_KEY:?}" "${S3_SECRET_KEY:?}" "${R2_ACCESS_KEY_ID:?}" "${R2_SECRET_ACCESS_KEY:?}" "${R2_ENDPOINT_URL:?}"
 
