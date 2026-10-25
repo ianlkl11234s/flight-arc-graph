@@ -45,7 +45,7 @@ npx tsc --noEmit
 - 所有 UI 元件需支援 `isDarkTheme`（Light / Dark 主題）
 - 機場資料統一放在 `src/map/cameraPresets.ts`
 - 資料載入統一走 `src/data/flightLoader.ts`
-- 路徑 fallback 順序：`/data/` (Zeabur volume) → `/` (local public/) → S3
+- 路徑 fallback 順序：`/data/`（Zeabur volume；切到 Cloudflare 後是 R2 `flight-arc-data`）→ `/` (local public/) → S3
 - 即時動畫渲染用 Three.js（非 Mapbox GeoJSON source），避免 setData 瓶頸
 - ⚠️ **`Flight.path` 是 `TrackPath` 類別，不是陣列**（`src/types/trackPath.ts`，SoA typed array）。用 `p.lat(i)` / `p.lng(i)` / `p.alt(i)` / `p.t(i)` / `p.length` 存取；`p.at(i)` 會配置新陣列，**熱路徑不要用**。沒有 `.map()` / `for..of`
 - ⚠️ **要觸發重繪一律走 `src/map/repaintScheduler.ts`**，不要直接呼叫 `map.triggerRepaint()`：有事發生用 `notifyActivity(map)`，只是裝飾動畫（光球呼吸、極光 shimmer）用 `requestDecorativeRepaint(map)`。直接呼叫會繞過「暫停降頻 / 30 秒閒置停止」的節流
@@ -88,6 +88,10 @@ sh ab-run.sh <tag> s2                  # 效能 A/B
 ## 部署流程
 
 分支與發布規則見 [`docs/RELEASING.md`](docs/RELEASING.md)（日常開發在 develop，不直接 commit master）。
+
+> ⚠️ **Zeabur 2026-12 停運，正式站改搬 Cloudflare Workers**（`wrangler.jsonc`、`worker/index.ts`）：網頁走 Workers 靜態資產，`/data/*` 由 Worker 讀 R2 bucket `flight-arc-data`（鍵值＝S3 `flight-arc/` 底下的路徑）。切換完成前下方 Zeabur 流程仍有效；切換後：
+> - 部署：在乾淨 checkout `npm run build && npx wrangler deploy`（本機 `public/tracks/` 等大檔由 `public/.assetsignore` 排除，不會上傳）
+> - 資料：`npm run s3:upload` 之後跑 `bash scripts/sync-s3-to-r2.sh`，**不跑的話正式站的 manifest 不會更新**（取代 pull-from-s3.sh）
 
 ```bash
 # 1. 確認 build

@@ -28,7 +28,7 @@ caffeinate -dims npx tsx scripts/fetch-tracks.ts --airports-file scripts/top1000
 # 3. 先重產「完整日期」判定：npx tsx scripts/build-core-airports.ts（漏了 → Atlas「完整資料」停在舊數字）
 #    再重建 manifest：NODE_OPTIONS="--max-old-space-size=12288" npx tsx scripts/split-tracks.ts
 # 4. 同步 README 覆蓋表 + data-fetching-status.md（campaign 進度不用手改，campaign-status 現算）
-# 5. 上傳：npm run s3:upload（→ Zeabur 端 sh /app/scripts/pull-from-s3.sh）
+# 5. 上傳：npm run s3:upload（→ Zeabur 端 sh /app/scripts/pull-from-s3.sh；切到 Cloudflare 後改跑 bash scripts/sync-s3-to-r2.sh）
 # 6. commit scripts/fetch-sessions.ndjson + campaign-top1000.json（帳本進 git = 跨月審計）
 ```
 
@@ -135,6 +135,9 @@ npm run s3:upload
 
 # Zeabur 終端機執行（Alpine 容器無 bash 且 WORKDIR=/，須 sh + 絕對路徑）
 sh /app/scripts/pull-from-s3.sh
+
+# 切到 Cloudflare 後改跑這個（S3 → R2 flight-arc-data；不跑正式站看不到新資料）
+bash scripts/sync-s3-to-r2.sh
 ```
 
 軌跡資料**不進 git**，S3 路徑 `migu-gis-data-collector/flight-arc/`。

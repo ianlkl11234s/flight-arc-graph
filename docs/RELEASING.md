@@ -24,5 +24,5 @@
 4. 在發布 commit 打 annotated tag：`git tag -a vX.Y.Z -m "<標題>\n\n<重點>"`
 5. 推送 master 與 tag：`git push origin master vX.Y.Z`（逐一列名，不用 `--tags`）
 6. 建 GitHub Release：`gh release create vX.Y.Z --title "vX.Y.Z — <標題>" --notes "<重點>"`
-7. Zeabur 自動 build 部署；若有資料變動，再於 Zeabur 執行 `sh /app/scripts/pull-from-s3.sh`
+7. Zeabur 自動 build 部署；若有資料變動，再於 Zeabur 執行 `sh /app/scripts/pull-from-s3.sh`（Zeabur 2026-12 停運；切到 Cloudflare 後改為 `npx wrangler deploy`＋`bash scripts/sync-s3-to-r2.sh`，見 CLAUDE.md §部署流程）
 8. 把 master 合回 `develop`，使兩邊版號與 changelog 一致

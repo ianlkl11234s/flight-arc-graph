@@ -1,0 +1,3 @@
+# wrangler 部署時略過的路徑（本機 build 會把 gitignored 的大量資料從 public/ 帶進 dist/；這些改由 R2 經 /data/ 提供）
+tracks/
+airspace/days/
