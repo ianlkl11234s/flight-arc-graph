@@ -77,6 +77,8 @@ describe("SEO／AEO 靜態資產", () => {
     // /notes/ 靜態長文：在 SPA fallback 之前、缺頁 404
     assert.ok(conf.indexOf("location ^~ /notes/") < conf.indexOf("location / {"), "/notes/ 要在 SPA fallback 之前");
     assert.match(conf, /location \^~ \/notes\/ \{[\s\S]*?try_files \$uri \$uri\/ =404;/);
+    // 容器 listen 8080：轉址要用相對路徑，否則會帶出 http://…:8080
+    assert.match(conf, /location = \/notes \{\s*absolute_redirect off;/);
     assert.match(conf, /^\s*charset utf-8;/m, "llms.txt 等中文文字檔要帶 charset");
   });
 });
