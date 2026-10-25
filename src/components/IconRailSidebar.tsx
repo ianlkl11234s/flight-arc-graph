@@ -13,7 +13,7 @@ import type { AtlasColorMode } from "../map/atlasGlowLayer";
 import { useTheme } from "../styles/ThemeContext";
 import { FONT, LAYOUT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
 import { Chip, Panel, PanelBody, PanelHeader, Section, Segmented } from "../ui";
-import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, IconRouteAnalysis, IconCamera, IconRadar } from "./sidebar/primitives";
+import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, IconRouteAnalysis, IconCamera, IconRadar, IconBookOpen, RailLink } from "./sidebar/primitives";
 import type { ScenePreset } from "./sidebar/scenePresets";
 import { SettingsPanel } from "./sidebar/panels/SettingsPanel";
 import { SetsPanel, loadSetsTab, type SetsTab } from "./sidebar/panels/SetsPanel";
@@ -204,7 +204,7 @@ const LEFT_PANEL_MAX_HEIGHT =
 
 export function IconRailSidebar(props: IconRailSidebarProps) {
   const { activePanel, onActivePanelChange: setActivePanel } = props;
-  const { tokens } = useTheme();
+  const { tokens, isDark } = useTheme();
   const activeWorkspace = getWorkspace(activePanel);
   /** 機場面板目前分頁（機場分頁用較寬的 panelWidthList） */
   const [setsTab, setSetsTab] = useState<SetsTab>(loadSetsTab);
@@ -345,6 +345,20 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
         >
           <IconCamera />
         </RailIcon>
+
+        {/* Separator */}
+        <div
+          style={{
+            width: 28,
+            height: 1,
+            background: tokens.border,
+            margin: `${SPACE.s8}px 0`,
+          }}
+        />
+
+        <RailLink href={`/notes/?theme=${isDark ? "dark" : "light"}`} title="長文">
+          <IconBookOpen />
+        </RailLink>
       </div>
 
       {/* Floating Panel */}
