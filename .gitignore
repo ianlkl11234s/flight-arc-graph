@@ -46,3 +46,6 @@ exploration/
 .claude/settings.local.json
 .claude/.cache/
 docs/design/direction-showcase/out/
+
+# 機場靜態頁 build 產物（nginx map，Dockerfile 從 build stage 複製）
+build/

@@ -3,7 +3,60 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-    <title>Flight Arc</title>
+    <title>Flight Arc｜全球機場航班軌跡 3D 地圖</title>
+    <link rel="canonical" href="https://flight-arc.itsmigu.com/" />
+    <meta name="description" content="以全球機場為入口，在 3D 地圖與地球上回放、組合與比較真實航班的起降軌跡。Explore, combine and compare real flight trajectories around airports worldwide on a 3D map and globe." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Flight Arc｜全球機場航班軌跡 3D 地圖" />
+    <meta property="og:url" content="https://flight-arc.itsmigu.com/" />
+    <meta property="og:site_name" content="Flight Arc" />
+    <meta property="og:description" content="以全球機場為入口，在 3D 地圖與地球上回放、組合與比較真實航班的起降軌跡。Explore, combine and compare real flight trajectories around airports worldwide on a 3D map and globe." />
+    <meta property="og:locale" content="zh_TW" />
+    <meta property="og:image" content="https://flight-arc.itsmigu.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Flight Arc 地圖畫面：臺灣桃園國際機場 2026-02-18 的航班起降光軌" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://flight-arc.itsmigu.com/#website",
+            "url": "https://flight-arc.itsmigu.com/",
+            "name": "Flight Arc",
+            "alternateName": "全球機場航班軌跡 3D 地圖",
+            "description": "以全球機場為入口，在 3D 地圖上回放、組合與比較真實航班的起降軌跡。",
+            "inLanguage": "zh-Hant-TW",
+            "author": { "@id": "https://flight-arc.itsmigu.com/#author" }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://flight-arc.itsmigu.com/#app",
+            "name": "Flight Arc",
+            "url": "https://flight-arc.itsmigu.com/",
+            "description": "以 FlightRadar24 航班軌跡為主要資料，把全球機場的起降航線畫成 3D 光軌，可依機場、日期、時段回放，並比較多座機場與多個日期。",
+            "applicationCategory": "TravelApplication",
+            "operatingSystem": "Any (web browser)",
+            "browserRequirements": "Requires JavaScript and WebGL",
+            "inLanguage": ["zh-Hant-TW", "en"],
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "TWD" },
+            "license": "https://github.com/ianlkl11234s/flight-arc-graph/blob/master/LICENSE",
+            "sameAs": ["https://github.com/ianlkl11234s/flight-arc-graph"],
+            "author": { "@id": "https://flight-arc.itsmigu.com/#author" }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://flight-arc.itsmigu.com/#author",
+            "name": "Migu",
+            "url": "https://mini-taiwan-pulse.itsmigu.com/blog/about/",
+            "sameAs": ["https://github.com/ianlkl11234s"]
+          }
+        ]
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -14,7 +67,26 @@
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- 爬蟲與 AI 助理讀得到的靜態說明；React createRoot().render 掛載後會整段取代（不可改 hydrateRoot）。
+           畫面上隱藏（visually hidden，仍在 DOM 與無障礙樹），避免 JS 載入前先閃一整頁文字。
+           數字來源：正式站 /data/tracks/manifest.json（generatedAt 2026-10-24T07:00Z）；重抓軌跡後一併更新。 -->
+      <main style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0">
+        <h1>Flight Arc｜全球機場航班軌跡 3D 地圖</h1>
+        <p>Flight Arc 是一個免費的互動地圖網站：以全球機場為入口，把真實航班的起降軌跡畫成 3D 光軌，可依機場、日期與時段回放，也能把多座機場組合起來、比較不同日期。</p>
+        <p>截至 2026-10-24，網站收錄 3,500 多座機場、約 11 萬筆不重複航班的軌跡，日期集中在 2026 年 2 月至 7 月（不連續）；涵蓋台灣 17 座有軌跡的機場（抓取清單 22 座，其餘 5 座沒有軌跡資料），以及日本、韓國、香港、中國、泰國、新加坡、中東、歐洲與美國等地的機場。</p>
+        <ul>
+          <li>機場總覽：全球機場星圖，依資料完整度上色</li>
+          <li>航班回放：時間軸播放、依高度或起降染色、單一航班追蹤</li>
+          <li>機場組合與日期比較：例如颱風期間的停飛與疏散</li>
+          <li>空域：管制空域立體邊界與東亞空域快照</li>
+          <li>錄影：Cinema Mode 鏡頭運動與 4K 匯出</li>
+        </ul>
+        <p>資料來源：航班軌跡來自 FlightRadar24 API；空域快照來自 OpenSky Network；管制空域來自 OpenAIP（CC BY-NC-SA 4.0）。時間一律以台灣時間（UTC+8）顯示。</p>
+        <p>地圖載入中⋯⋯ <a href="https://github.com/ianlkl11234s/flight-arc-graph">GitHub</a> · <a href="https://mini-taiwan-pulse.itsmigu.com/blog/about/">作者 Migu</a></p>
+      </main>
+      <noscript><p style="position:absolute;inset:0;display:flex;justify-content:center;align-items:center;padding:24px;text-align:center;font-size:13px;line-height:1.7;color:#ffd54f;font-family:system-ui,-apple-system,'Noto Sans TC',sans-serif">此網站是互動式 3D 地圖，需要啟用 JavaScript 與 WebGL 才能使用。</p></noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

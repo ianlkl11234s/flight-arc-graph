@@ -1,12 +1,47 @@
-import { type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 import { getAirportInfo } from "../../map/cameraPresets";
 import { useTheme } from "../../styles/ThemeContext";
-import { FONT, RADIUS, SIZE, SPACE } from "../../styles/tokens";
+import { FONT, RADIUS, SIZE, SPACE, type ColorTokens } from "../../styles/tokens";
 import { themeVars } from "../../ui/vars";
 import { IconChevron, IconMinus, IconPlus } from "../../ui/icons";
 import { TRAJ } from "../../types/colorTheme";
 
 /* ── Sub-components ──────────────────────────────────────── */
+
+/** rail 按鈕共用外觀（RailIcon / RailLink 共用，確保兩者像素一致） */
+function railButtonStyle(tokens: ColorTokens, active: boolean): CSSProperties {
+  return {
+    ...themeVars(tokens),
+    position: "relative",
+    width: 44,
+    height: 44,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "none",
+    border: "none",
+    borderRadius: RADIUS.base,
+    cursor: "pointer",
+    color: active ? tokens.fg1 : tokens.fg3,
+    transition: "color 0.15s",
+  };
+}
+
+/** rail 上的站內頁面連結（真的 <a>：可中鍵開新分頁、爬蟲跟得到），外觀同 RailIcon 未啟用狀態。 */
+export function RailLink({ href, title, children }: { href: string; title: string; children: ReactNode }) {
+  const { tokens } = useTheme();
+  return (
+    <a
+      href={href}
+      title={title}
+      aria-label={title}
+      className="fa-focus fa-hover-fg"
+      style={railButtonStyle(tokens, false)}
+    >
+      {children}
+    </a>
+  );
+}
 
 export function RailIcon({
   active,
@@ -28,21 +63,7 @@ export function RailIcon({
       aria-pressed={active}
       onClick={onClick}
       className="fa-focus fa-hover-fg"
-      style={{
-        ...themeVars(tokens),
-        position: "relative",
-        width: 44,
-        height: 44,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "none",
-        border: "none",
-        borderRadius: RADIUS.base,
-        cursor: "pointer",
-        color: active ? tokens.fg1 : tokens.fg3,
-        transition: "color 0.15s",
-      }}
+      style={railButtonStyle(tokens, active)}
     >
       {active && (
         <span
@@ -129,6 +150,15 @@ export function IconCamera() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2z" />
       <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+export function IconBookOpen() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 6.5C10.3 5.2 8 4.5 4 4.5v13c4 0 6.3.7 8 2 1.7-1.3 4-2 8-2v-13c-4 0-6.3.7-8 2z" />
+      <path d="M12 6.5v13" />
     </svg>
   );
 }

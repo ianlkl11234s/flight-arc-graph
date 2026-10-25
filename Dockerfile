@@ -17,6 +17,8 @@ RUN npm run build
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
+# 機場靜態頁的大小寫對照（nginx.conf 的 map include；build 時由 generate-airport-pages.ts 產生）
+COPY --from=build /app/build/nginx/airports.map /etc/nginx/airports.map
 COPY scripts/oneoff/sync-s3-to-data.sh /app/scripts/sync-s3-to-data.sh
 COPY scripts/pull-from-s3.sh /app/scripts/pull-from-s3.sh
 

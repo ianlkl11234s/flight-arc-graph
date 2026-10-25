@@ -43,7 +43,7 @@ export const AIRLINE_DB: Record<string, AirlineInfo> = {
   EVA: { name: "EVA Air",             nameZh: "長榮航空",   country: "TW", brandColor: "#1e6f42", type: "fullservice" },
   MDA: { name: "Mandarin Airlines",   nameZh: "華信航空",   country: "TW", brandColor: "#80221c", type: "regional" },
   UIA: { name: "UNI Air",             nameZh: "立榮航空",   country: "TW", brandColor: "#cc6600", type: "regional" },
-  TGW: { name: "Tigerair Taiwan",     nameZh: "台灣虎航",   country: "TW", brandColor: "#fa5800", type: "lowcost" },
+  TTW: { name: "Tigerair Taiwan",     nameZh: "台灣虎航",   country: "TW", brandColor: "#fa5800", type: "lowcost" },
   SJX: { name: "Starlux Airlines",    nameZh: "星宇航空",   country: "TW", brandColor: "#5f42a3", type: "fullservice" },
 
   // ── 東亞 / 香港 / 澳門 ────────────────────────────
@@ -89,12 +89,13 @@ export const AIRLINE_DB: Record<string, AirlineInfo> = {
   CSC: { name: "Sichuan Airlines",    nameZh: "四川航空",   country: "CN", brandColor: "#c8102e", type: "fullservice" },
   CSH: { name: "Shanghai Airlines",   nameZh: "上海航空",   country: "CN", brandColor: "#0070c0", type: "fullservice" },
   TBA: { name: "Tibet Airlines",      nameZh: "西藏航空",   country: "CN", brandColor: "#c8102e", type: "fullservice" },
-  TTW: { name: "Tianjin Airlines",    nameZh: "天津航空",   country: "CN", brandColor: "#9d2235", type: "fullservice" },
+  GCR: { name: "Tianjin Airlines",    nameZh: "天津航空",   country: "CN", brandColor: "#9d2235", type: "fullservice" },
   CQH: { name: "Spring Airlines",     nameZh: "春秋航空",   country: "CN", brandColor: "#06aa49", type: "lowcost" },
 
   // ── 東南亞 ────────────────────────────────────────
   SIA: { name: "Singapore Airlines",  nameZh: "新加坡航空", country: "SG", brandColor: "#1d3770", type: "fullservice" },
-  SLK: { name: "Scoot",               nameZh: "酷航",       country: "SG", brandColor: "#f9d106", type: "lowcost" },
+  TGW: { name: "Scoot",               nameZh: "酷航",       country: "SG", brandColor: "#f9d106", type: "lowcost" },
+  SLK: { name: "SilkAir",             nameZh: "勝安航空",   country: "SG", brandColor: "#1d3770", type: "regional" },
   THA: { name: "Thai Airways",        nameZh: "泰國航空",   country: "TH", brandColor: "#7d0d75", type: "fullservice" },
   TAX: { name: "Thai AirAsia X",      nameZh: "泰國亞洲航空 X", country: "TH", brandColor: "#ed1b24", type: "lowcost" },
   AIQ: { name: "Thai AirAsia",        nameZh: "泰國亞洲航空", country: "TH", brandColor: "#ed1b24", type: "lowcost" },
