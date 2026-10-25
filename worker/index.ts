@@ -22,9 +22,10 @@ interface Env {
   };
 }
 
-// nginx 用 types 補的兩個 mime；R2 物件從 S3 複製過來時 content-type 不一定可靠，一律依副檔名覆寫
+// R2 物件從 S3 複製過來時 content-type 不一定可靠，一律依副檔名覆寫。
+// jsonl 刻意不用 application/x-ndjson：Cloudflare 不壓縮該型別（逐日檔約 16MB），前端只看網址不看 content-type
 const CONTENT_TYPES: Record<string, string> = {
-  jsonl: "application/x-ndjson",
+  jsonl: "application/json",
   geojson: "application/geo+json",
   json: "application/json",
   txt: "text/plain; charset=utf-8",
