@@ -1,0 +1,25 @@
+// Cloudflare Workers 部署設定（取代 Zeabur nginx；Zeabur 2026-12 停運）
+// - 網頁本體：dist/ 走 Workers 靜態資產
+// - /data/*：航跡與空域資料放 R2（bucket flight-arc-data，鍵值與 S3 flight-arc/ 前綴一致）
+// - /airports/*：Worker 先處理大寫 301，其餘交回靜態資產
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "flight-arc",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // 沒有前端路由（只用 query string），不存在的路徑回 404，避免 soft-404（同 nginx 原意）
+    "not_found_handling": "none",
+    // /notes/<slug>、/airports/<icao> 自動補結尾斜線（同 nginx 的 301）
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": ["/data/*", "/airports/*"]
+  },
+  // 正式網域：Cloudflare 會自動建立 DNS 紀錄並簽憑證（切換前要先刪掉指向 Zeabur 的 CNAME）
+  "routes": [{ "pattern": "flight-arc.itsmigu.com", "custom_domain": true }],
+  "r2_buckets": [
+    { "binding": "DATA", "bucket_name": "flight-arc-data" }
+  ],
+  "observability": { "enabled": true }
+}
