@@ -16,6 +16,8 @@
     "html_handling": "auto-trailing-slash",
     "run_worker_first": ["/data/*", "/airports/*"]
   },
+  // 正式網域：Cloudflare 會自動建立 DNS 紀錄並簽憑證（切換前要先刪掉指向 Zeabur 的 CNAME）
+  "routes": [{ "pattern": "flight-arc.itsmigu.com", "custom_domain": true }],
   "r2_buckets": [
     { "binding": "DATA", "bucket_name": "flight-arc-data" }
   ],
