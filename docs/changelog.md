@@ -4,6 +4,7 @@
 
 | 版號 | 日期 | 重點 |
 |---|---|---|
+| v3.5.3 | 2026-10-26 | 部署平台改為 Cloudflare Workers＋R2（Zeabur 停運） |
 | v3.5.2 | 2026-10-25 | 套件安全性更新（npm audit 60 → 1） |
 | v3.5.1 | 2026-10-25 | 修 /notes 轉址帶出內部 port 8080 |
 | v3.5.0 | 2026-10-25 | 搜尋引擎與 AI 可找到：機場靜態頁 717 頁、長文 /notes/ 首批兩篇 |
@@ -35,6 +36,18 @@
 | v0.1.0 | 2026-02-21 | 專案起點：航跡生成藝術、底圖切換、光球 |
 
 > 版號規則與發布流程見 [RELEASING.md](RELEASING.md)。v1.0.0／v2.0.0 為既有 tag；v0.1.0–v0.12.2、v2.1.0 起為補打的歷史版號。
+
+## v3.5.3 — 2026-10-26 — 部署平台改為 Cloudflare Workers＋R2
+
+### 變更
+
+- Zeabur 2026-12 停運，正式站改由 Cloudflare Workers 靜態資產提供；航跡與空域資料（`/data/*`）改放 R2 bucket `flight-arc-data`，前端路徑不變（PR #20）
+- `.jsonl` 經 Cloudflare 自動壓縮，逐日檔約 16MB → 5.4MB
+- 資料更新流程：`npm run s3:upload` 之後跑 `bash scripts/sync-s3-to-r2.sh`；部署改為 `npm run build && npx wrangler deploy`
+
+### 注意事項
+
+- 合併 master 不再自動部署正式站（GitHub Actions 自動部署待補）
 
 ## v3.5.2 — 2026-10-25 — 套件安全性更新
 
