@@ -28,7 +28,7 @@ caffeinate -dims npx tsx scripts/fetch-tracks.ts --airports-file scripts/top1000
 # 3. 先重產「完整日期」判定：npx tsx scripts/build-core-airports.ts（漏了 → Atlas「完整資料」停在舊數字）
 #    再重建 manifest：NODE_OPTIONS="--max-old-space-size=12288" npx tsx scripts/split-tracks.ts
 # 4. 同步 README 覆蓋表 + data-fetching-status.md（campaign 進度不用手改，campaign-status 現算）
-# 5. 上傳：npm run s3:upload（→ Zeabur 端 sh /app/scripts/pull-from-s3.sh；切到 Cloudflare 後改跑 bash scripts/sync-s3-to-r2.sh）
+# 5. 上傳：npm run s3:upload → bash scripts/sync-s3-to-r2.sh（S3 → R2，正式站才看得到）
 # 6. commit scripts/fetch-sessions.ndjson + campaign-top1000.json（帳本進 git = 跨月審計）
 ```
 
@@ -104,7 +104,7 @@ npx tsx scripts/split-tracks.ts --manifest-only
 
 - 掃 `airports/*.jsonl` 做 dedupe + 產生 `regions/*.jsonl` + `manifest.json`
 - `--manifest-only` 不重寫 region 檔（regions 沿用既有值）；有新增 region 機場時要跑完整版
-- ⚠️ **產出新 region 時**：`scripts/pull-from-s3.sh` 的 `for R in ...` 是 hardcode 清單，**必須同步加上新 region**，否則 Zeabur 拉不到（UK、CN 都曾漏加）
+- 產出新 region 時不用改同步清單：`sync-s3-to-r2.sh` 整個 `tracks/` 前綴複製（Zeabur 時代 `pull-from-s3.sh` 的 hardcode region 清單已不適用）
 - **LOD（L1/L2）只對「有新軌跡的機場 × 新日期」重產**：`split-tracks.ts --lod-only --airports <觸及機場> --dates <日期>`，再 `--lod-manifest-only`。省略 `--airports` 會重產全部機場（2026-10-24 因此多傳 0.7 GB）。觸及機場＝本輪新 fr24_id 的 orig/dest 聯集
 - 上傳程式已改成「mtime 變了再比 MD5 vs S3 ETag」，split 完整版重寫的未變 daily shard 不會重傳
 - 重建 manifest 後跑 `npx tsx scripts/build-airport-points.ts` 更新 `public/airport-points.geojson`（機場 metadata，Location 面板 + Atlas 星圖共用；讀 manifest.json，須在 split 之後）
@@ -127,16 +127,13 @@ npx tsx scripts/split-tracks.ts --manifest-only
 2. **`docs/backlog/data-fetching-status.md`** — 更新狀態欄、把完成項從接力點/目標清單移到「最近完成」、記新接力點
 3. **記憶 `project_fetch_resume_point.md`** — 若這輪沒抓完，記下接力指令
 
-## Step 5: 上傳 S3 + Zeabur 拉取
+## Step 5: 上傳 S3 + 同步 R2
 
 ```bash
 # 增量上傳（對照 scripts/upload-state.json 的 mtime；--force 全部重傳）
 npm run s3:upload
 
-# Zeabur 終端機執行（Alpine 容器無 bash 且 WORKDIR=/，須 sh + 絕對路徑）
-sh /app/scripts/pull-from-s3.sh
-
-# 切到 Cloudflare 後改跑這個（S3 → R2 flight-arc-data；不跑正式站看不到新資料）
+# S3 → R2 flight-arc-data（正式站讀 R2；不跑正式站看不到新資料）
 bash scripts/sync-s3-to-r2.sh
 ```
 
