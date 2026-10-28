@@ -1,0 +1,45 @@
+# master 有新 commit 就 build 並部署到 Cloudflare Workers（正式站 flight-arc.itsmigu.com）
+# 只部署網頁本體；航跡資料仍在本機跑 npm run s3:upload ＋ bash scripts/sync-s3-to-r2.sh
+# 需要 repo secrets：CLOUDFLARE_API_TOKEN（Edit Cloudflare Workers 權限）、VITE_MAPBOX_TOKEN
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# 連續 push 時只保留最新一次，避免舊版本晚完成蓋掉新版本
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Build
+        # 權杖沒設時 build 仍會成功、但地圖整個出不來，所以直接擋下
+        run: |
+          test -n "$VITE_MAPBOX_TOKEN" || { echo "::error::缺 secret VITE_MAPBOX_TOKEN"; exit 1; }
+          npm run build
+        env:
+          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+
+      - name: Deploy
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: d104f32eafd7b294ba1f74b731ffd1e0
