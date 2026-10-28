@@ -89,29 +89,12 @@ sh ab-run.sh <tag> s2                  # 效能 A/B
 
 分支與發布規則見 [`docs/RELEASING.md`](docs/RELEASING.md)（日常開發在 develop，不直接 commit master）。
 
-> ⚠️ **Zeabur 2026-12 停運，正式站改搬 Cloudflare Workers**（`wrangler.jsonc`、`worker/index.ts`）：網頁走 Workers 靜態資產，`/data/*` 由 Worker 讀 R2 bucket `flight-arc-data`（鍵值＝S3 `flight-arc/` 底下的路徑）。切換完成前下方 Zeabur 流程仍有效；切換後：
-> - 部署：在乾淨 checkout `npm run build && npx wrangler deploy`（本機 `public/tracks/` 等大檔由 `public/.assetsignore` 排除，不會上傳）
-> - 資料：`npm run s3:upload` 之後跑 `bash scripts/sync-s3-to-r2.sh`，**不跑的話正式站的 manifest 不會更新**（取代 pull-from-s3.sh）
+正式站 `flight-arc.itsmigu.com` 由 **Cloudflare Workers** 提供（2026-10-26 v3.5.3 起，取代 Zeabur）：網頁走 Workers 靜態資產（`wrangler.jsonc`），`/data/*` 由 `worker/index.ts` 讀 R2 bucket `flight-arc-data`（鍵值＝S3 `flight-arc/` 底下的路徑）。
 
-```bash
-# 1. 確認 build
-npm run typecheck
-
-# 2. Push 後 Zeabur 自動 build
-
-# 3. Zeabur 終端機拉資料（Alpine 容器無 bash 且 WORKDIR=/，須 sh + 絕對路徑）
-sh /app/scripts/pull-from-s3.sh            # 含 LOD（L1/L2），約多 1.2 GB
-sh /app/scripts/pull-from-s3.sh --no-lod   # 跳過 LOD：功能正常但拉遠時回落全解析度
-```
-
-也可以不進 Zeabur 終端機，用 CLI 直接跑（service id 見 `zeabur service list`）：
-```bash
-npx zeabur@latest service exec --id <service-id> -i=false -- \
-  sh -c "nohup sh /app/scripts/pull-from-s3.sh > /data/pull-$(date +%Y%m%d).log 2>&1 & echo started"
-```
-LOD 有 9,476 個小檔、逐檔 wget，全新拉約需 2 小時；用 `find /data/tracks/airports -name '*.l?.jsonl' | wc -l` 看進度。
-
-> ⚠️ Region 清單分散兩處 hardcode：`split-tracks.ts`（產出）與 `pull-from-s3.sh` 的 `for R in ...`（消費）。新增 region 時兩邊都要同步改（UK、CN 都曾漏加）。
+- **網頁**：合併進 `master` 後 GitHub Actions（`.github/workflows/deploy.yml`）自動 build＋`wrangler deploy`，約數分鐘生效；需要 repo secrets `CLOUDFLARE_API_TOKEN`、`VITE_MAPBOX_TOKEN`。也可在 Actions 頁手動 Run workflow 重新部署
+- **資料**：`npm run s3:upload` 之後跑 `bash scripts/sync-s3-to-r2.sh`（整個 `tracks/`、`airspace/` 前綴 S3 → R2，只傳新增與變動的檔），**不跑的話正式站的 manifest 不會更新**
+- 預覽網址 https://flight-arc.ianlk11234s.workers.dev 與正式站同一份部署
+- 手動部署（緊急用）：在 master 的乾淨 checkout `npm run build && npx wrangler deploy`（本機 `public/tracks/` 等大檔由 `public/.assetsignore` 排除）
 
 ## 時區
 
