@@ -6,7 +6,7 @@
 ## 🔖 下次接續（接力點 — 先讀這裡）
 
 > **狀態快照 @ 2026-10-31**：**✅ 颱風 10/22–25 台灣 22 座已抓完**（Top-1000 戰役 10/24 已 100%）。track-done 109,730 → **113,207**；manifest 不重複航班 109,619 → **113,096**；機場檔 3,595 → **3,596**；TW region 12,234 → **15,711**；Atlas 3,625 點（complete 1,033／core-partial 39／partial 2,465／planned 88）。
-> **⏳ 部署待辦**：本輪資料尚未上傳 S3／R2、未部署 → `npm run s3:upload` → `bash scripts/sync-s3-to-r2.sh`，之後驗收正式站 manifest（113,096／3,596）。
+> **✅ 已部署（2026-11-01，v3.6.0）**：S3 上傳 1,425 檔／2.4 GB → `sync-s3-to-r2.sh` → 正式站 manifest 113,096／3,596、RCTP 10/23 L0/L2 與 RCKH 10/25 L1 行數與本機一致；前端經 GitHub Actions 部署。⚠️ plan-art `.env` 沒有 R2 金鑰，本次借用 `data-collectors/.env` 的 `R2_*` 執行。
 > ✅ **下一步 A（颱風 10/22–25）已完成**（2026-10-31），結果見下方「📅 2026-10-31」。
 > 🔜 **下一步 B（無 ICAO，用戶已決定有餘額才抓）**：2,536 筆，見下方「待辦」。**本期估餘 ~7K credits（開抓前用戶報 dashboard 146,409，本輪花 ~154,863，待對帳），遠不足全量 ~101K** → 等 **11/20 計費週期重置**後再議；抓前仍需先查 FR24 API 條款、dry-run 報額度。
 > 💰 成本：時刻表 **3 credits/筆**、軌跡 **40 credits/筆**；估算一律以 FR24 dashboard 為準。計費週期每月 20 號重置。
@@ -55,7 +55,7 @@ npx tsx scripts/fetch-tracks.ts --group TW --from-time 2026-10-21T16:00:00Z --to
 - **結果**：track-done 109,730 → **113,207**；不重複航班 109,619 → **113,096**；機場檔 3,595 → **3,596**；TW region 12,234 → **15,711**；manifest 涵蓋日期 57 日（至 2026-10-25）
 - **LOD**：只重產觸及機場 × 10/21–10/25；`lod-files.txt` 3,596 座、12,956 檔、1,520 MB
 - **Atlas**（3,625 點）：complete 1,033／core-partial 39／partial 2,465／planned 88
-- **部署**：⏳ **待辦**——尚未上傳 S3／R2、未部署。步驟：`npm run s3:upload` → `bash scripts/sync-s3-to-r2.sh` →（前端 index.html／llms.txt／airport-pages-data 已隨本輪更新，需經 develop → master 流程部署）→ 驗收正式站 manifest
+- **部署**：✅ 2026-11-01 v3.6.0 上線（S3 → R2 → master 自動部署），正式站 manifest 已驗 113,096／3,596。
 - **接力點**：無（本輪完結）。下一步 B（無 ICAO）等 11/20 重置後再議
 
 ### 📅 2026-10 週期成果（10/23–24，Batch 4＋5 合併）
