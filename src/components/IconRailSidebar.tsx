@@ -13,10 +13,12 @@ import type { AtlasColorMode } from "../map/atlasGlowLayer";
 import { useTheme } from "../styles/ThemeContext";
 import { FONT, LAYOUT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
 import { Chip, Panel, PanelBody, PanelHeader, Section, Segmented } from "../ui";
-import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconLayers, IconRouteAnalysis, IconCamera, IconRadar, IconBookOpen, RailLink } from "./sidebar/primitives";
+import { RailIcon, IconPlaneMark, IconGlobeNetwork, IconPinPlus, IconFlag, IconLayers, IconRouteAnalysis, IconCamera, IconRadar, IconBookOpen, RailLink } from "./sidebar/primitives";
 import type { ScenePreset } from "./sidebar/scenePresets";
 import { SettingsPanel } from "./sidebar/panels/SettingsPanel";
 import { SetsPanel, loadSetsTab, type SetsTab } from "./sidebar/panels/SetsPanel";
+import { EventsPanel } from "./sidebar/panels/EventsPanel";
+import type { EventPreset } from "../map/events";
 import { ColorThemePanel } from "./sidebar/panels/ColorThemePanel";
 import { SummaryPanel } from "./sidebar/panels/SummaryPanel";
 import { AtlasPanel } from "./sidebar/panels/AtlasPanel";
@@ -25,12 +27,13 @@ export { SCENE_PRESETS, type ScenePreset } from "./sidebar/scenePresets";
 
 /* ── Types ───────────────────────────────────────────────── */
 
-export type PanelId = "settings" | "sets" | "colors" | "airspace" | "summary" | "analysis" | "stats" | "atlas";
-type WorkspaceId = "explore" | "selection" | "view" | "airspace" | "analyze";
+export type PanelId = "settings" | "sets" | "events" | "colors" | "airspace" | "summary" | "analysis" | "stats" | "atlas";
+type WorkspaceId = "explore" | "selection" | "events" | "view" | "airspace" | "analyze";
 
 const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
   explore: "atlas",
   selection: "sets",
+  events: "events",
   view: "settings",
   airspace: "airspace",
   analyze: "summary",
@@ -39,6 +42,7 @@ const WORKSPACE_DEFAULT_PANEL: Record<WorkspaceId, PanelId> = {
 function getWorkspace(panel: PanelId | null): WorkspaceId | null {
   if (panel === "atlas") return "explore";
   if (panel === "sets") return "selection";
+  if (panel === "events") return "events";
   if (panel === "settings" || panel === "colors") return "view";
   if (panel === "airspace") return "airspace";
   if (panel === "summary" || panel === "analysis" || panel === "stats") return "analyze";
@@ -142,6 +146,11 @@ export interface IconRailSidebarProps {
   onToggleAirportInSet: (icao: string) => void;
   onClearSet: () => void;
   onExitSetMode: () => void;
+  // 事件（rail「事件」面板）
+  events: EventPreset[];
+  /** 目前畫面對應的事件（範圍＋日期＋天數相符），沒有則 null */
+  activeEventId: string | null;
+  onApplyEvent: (ev: EventPreset) => void;
   // Deep Analysis (🔬)
   analysisFilteredFlights: Flight[];
   analysisPreFilterFlights: Flight[];
@@ -217,6 +226,8 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
     ? [{ id: "atlas", label: "地圖總覽" }]
     : activeWorkspace === "selection"
       ? [{ id: "sets", label: "機場" }]
+      : activeWorkspace === "events"
+        ? []
       : activeWorkspace === "view"
         ? [{ id: "settings", label: "顯示" }, { id: "colors", label: "色彩" }]
         : activeWorkspace === "airspace"
@@ -226,6 +237,8 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
     ? "探索機場"
     : activeWorkspace === "selection"
       ? props.setName ?? (props.airportSet ? "自訂機場組合" : props.selectedAirport)
+      : activeWorkspace === "events"
+        ? "事件"
       : activeWorkspace === "view"
         ? "呈現"
         : activeWorkspace === "airspace"
@@ -240,6 +253,8 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
     ? "EXPLORE · 探索"
     : activeWorkspace === "selection"
       ? "SELECTION · 機場"
+      : activeWorkspace === "events"
+        ? "EVENTS · 事件"
       : activeWorkspace === "view"
         ? "VIEW · 呈現"
         : activeWorkspace === "airspace"
@@ -312,6 +327,14 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
           title="選擇機場"
         >
           <IconPinPlus />
+        </RailIcon>
+
+        <RailIcon
+          active={activeWorkspace === "events"}
+          onClick={() => toggleWorkspace("events")}
+          title="事件"
+        >
+          <IconFlag />
         </RailIcon>
 
         <RailIcon
@@ -419,6 +442,9 @@ export function IconRailSidebar(props: IconRailSidebarProps) {
               statDates={props.statDates}
               onTabChange={setSetsTab}
             />
+          )}
+          {activePanel === "events" && (
+            <EventsPanel events={props.events} activeId={props.activeEventId} onApply={props.onApplyEvent} />
           )}
           {activePanel === "colors" && (
             <ColorThemePanel

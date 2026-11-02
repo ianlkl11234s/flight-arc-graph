@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl, { type Map as MapboxMap } from "mapbox-gl";
 import type { DepArrFilter, Scope, TrackMode, RenderMode, DisplayMode, DataSource, Region, TrailDisplay, SavedAirportSet } from "./types";
 import { computeFitBoundsForSet } from "./map/fitBoundsForSet";
+import { EVENT_PRESETS, type EventPreset } from "./map/events";
 import { BUILTIN_SETS } from "./map/savedSets";
 import type { FlightScene } from "./three/FlightScene";
 import { MapView, ATLAS_LAYER } from "./map/MapView";
@@ -39,6 +40,7 @@ import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } fr
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
 import { IconRailSidebar, type ScenePreset, type PanelId } from "./components/IconRailSidebar";
 import { InfoModal } from "./components/InfoModal";
+import { EventsPanel } from "./components/sidebar/panels/EventsPanel";
 import { useCinemaCamera } from "./hooks/useCinemaCamera";
 import { useCanvasRecorder } from "./hooks/useCanvasRecorder";
 import { computeBearing, getViewshedArcPoints, getViewshedRings } from "./map/viewshedOverlay";
@@ -1837,6 +1839,78 @@ export default function App() {
   if (urlTargetRef.current === null) urlTargetRef.current = decodeUrlState(window.location.search);
   const urlLiveRef = useRef<UrlLive | null>(null);
   const [urlWriteEnabled, setUrlWriteEnabled] = useState(false);
+  /**
+   * 套用「選取對象 → 日期 → 天數」：網址進站（下方序列第 2–3 步）與事件卡（EventsPanel）共用。
+   * 每一步走既有 handler、讀 state 經 urlLiveRef；isCancelled() 為 true 時中途停下。
+   */
+  const applySelectionTarget = useCallback(async (target: UrlState, isCancelled: () => boolean) => {
+    const live = () => urlLiveRef.current!;
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const waitFor = async (cond: () => boolean, timeoutMs: number) => {
+      const t0 = Date.now();
+      while (!isCancelled() && Date.now() - t0 < timeoutMs) {
+        if (cond()) return true;
+        await wait(100);
+      }
+      return false;
+    };
+    const catalog = live().airportCatalog;
+    const regionKey = target.scope && (REGION_ORDER as string[]).includes(target.scope) ? target.scope as Region : null;
+
+    // 2. 選取對象（資料來源 → 組合 / 區域 / 單一機場）
+    if (target.dataSource !== "airspace" && live().dataSource === "fused") {
+      // 從空域快照切回航線軌跡（切換 effect 會重設範圍與天數，先讓它跑完）
+      setDataSource("api");
+      await wait(300);
+      if (isCancelled()) return;
+    }
+    if (target.dataSource === "airspace") {
+      await waitFor(() => live().hasFused, 10000);
+      if (live().hasFused) {
+        if (regionKey) live().handleRegionSelect(regionKey);
+        await wait(150);
+        // 空域快照 effect：範圍切 region、1d、飛到 region 視角
+        setDataSource("fused");
+      }
+    } else if (target.setId || target.setIcaos) {
+      const builtin = target.setId ? BUILTIN_SETS.find((s) => s.id === target.setId) : undefined;
+      const icaos = (builtin?.icaos ?? target.setIcaos ?? []).filter((i) => catalog[i]);
+      if (builtin && icaos.length === builtin.icaos.length) live().applySavedSet(builtin);
+      else if (icaos.length > 0) {
+        live().applySavedSet({ id: "url", name: "", shortName: "", icaos });
+        setSetName(null); // 自訂組合沒有名稱
+      }
+    } else if (regionKey) {
+      const L = live();
+      if (L.scope === "region" && L.region === regionKey && L.airportSet === null) {
+        // 已在這個區域範圍：只飛回區域視角，不重選預設機場（避免多載一次單機場）
+        L.handleScopeChange("region");
+      } else {
+        L.handleRegionSelect(regionKey);
+        await waitFor(() => live().region === regionKey, 2000);
+        live().handleScopeChange("region");
+      }
+    } else if (target.airport && catalog[target.airport] && target.airport !== live().selectedAirport) {
+      live().openAirport(target.airport);
+    }
+    // 讓 dataSource／機場改變的 effect 先跑完（它們會改 rangeDays／日期）
+    await wait(300);
+    if (isCancelled()) return;
+
+    // 3. 日期（只收這個選取對象有資料的日期；不合法就留在預設日）
+    const avail = live().availableDates;
+    const tl = live().timeline;
+    const cmp = (target.compare ?? []).filter((d) => avail.includes(d));
+    if (cmp.length === 0 && tl.isMultiDateMode) tl.clearMultiDates();
+    if (target.date && avail.includes(target.date) && target.date !== tl.selectedDate) tl.setSelectedDate(target.date);
+    if (cmp.length > 0) {
+      for (const d of cmp) tl.toggleMultiDate(d);
+    } else if (target.days && target.days !== tl.rangeDays) {
+      // 天數已由 urlState 限制在 1–MAX_DAYS 的整數；不限 1/3/7（事件常是 4 天這類非預設長度）
+      tl.setRangeDays(target.days);
+    }
+    await wait(500);
+  }, []);
   useEffect(() => {
     const target = urlTargetRef.current ?? {};
     let cancelled = false;
@@ -1872,49 +1946,8 @@ export default function App() {
           return Object.keys(L.airportCatalog).length > 0 && Object.keys(L.airportMeta).length > 0 && mapRef.current !== null;
         }, 30000);
         if (cancelled) return;
-        const catalog = live().airportCatalog;
-        const regionKey = target.scope && (REGION_ORDER as string[]).includes(target.scope) ? target.scope as Region : null;
-
-        // 2. 選取對象（資料來源 → 組合 / 區域 / 單一機場）
-        if (target.dataSource === "airspace") {
-          await waitFor(() => live().hasFused, 10000);
-          if (live().hasFused) {
-            if (regionKey) live().handleRegionSelect(regionKey);
-            await wait(150);
-            // 空域快照 effect：範圍切 region、1d、飛到 region 視角
-            setDataSource("fused");
-          }
-        } else if (target.setId || target.setIcaos) {
-          const builtin = target.setId ? BUILTIN_SETS.find((s) => s.id === target.setId) : undefined;
-          const icaos = (builtin?.icaos ?? target.setIcaos ?? []).filter((i) => catalog[i]);
-          if (builtin && icaos.length === builtin.icaos.length) live().applySavedSet(builtin);
-          else if (icaos.length > 0) {
-            live().applySavedSet({ id: "url", name: "", shortName: "", icaos });
-            setSetName(null); // 自訂組合沒有名稱
-          }
-        } else if (regionKey) {
-          live().handleRegionSelect(regionKey);
-          await waitFor(() => live().region === regionKey, 2000);
-          live().handleScopeChange("region");
-        } else if (target.airport && catalog[target.airport] && target.airport !== live().selectedAirport) {
-          live().openAirport(target.airport);
-        }
-        // 讓 dataSource／機場改變的 effect 先跑完（它們會改 rangeDays／日期）
-        await wait(300);
-        if (cancelled) return;
-
-        // 3. 日期（只收這個選取對象有資料的日期；不合法就留在預設日）
-        const avail = live().availableDates;
-        const tl = live().timeline;
-        const cmp = (target.compare ?? []).filter((d) => avail.includes(d));
-        if (target.date && avail.includes(target.date) && target.date !== tl.selectedDate) tl.setSelectedDate(target.date);
-        if (cmp.length > 0) {
-          for (const d of cmp) tl.toggleMultiDate(d);
-        } else if (target.days && target.days !== tl.rangeDays) {
-          // 天數已由 urlState 限制在 1–MAX_DAYS 的整數；不限 1/3/7（事件常是 4 天這類非預設長度）
-          tl.setRangeDays(target.days);
-        }
-        await wait(500);
+        // 2–3. 選取對象、日期、天數
+        await applySelectionTarget(target, () => cancelled);
       }
 
       // 4. 等資料載完（同時涵蓋「無參數進站」的首次載入與自動播放）
@@ -1980,11 +2013,26 @@ export default function App() {
     return () => clearTimeout(id);
   }, [urlWriteEnabled, writeUrlNow, cameraInfo]);
 
+  // ── 事件（rail「事件」面板）：點卡片 = 區域範圍 + 首日 + 天數，走與網址進站同一條套用路徑 ──
+  const eventApplySeqRef = useRef(0);
+  const applyEvent = useCallback((ev: EventPreset) => {
+    const seq = ++eventApplySeqRef.current;
+    void applySelectionTarget({ scope: ev.region, date: ev.start, days: ev.days }, () => seq !== eventApplySeqRef.current);
+  }, [applySelectionTarget]);
+  // 目前畫面正好是某個事件（不存狀態，由範圍＋日期＋天數推得；網址進站也會亮）
+  const activeEvent = dataSource === "api" && scope === "region" && airportSet === null && !timeline.isMultiDateMode
+    ? EVENT_PRESETS.find((e) => e.region === region && e.start === timeline.selectedDate && e.days === timeline.rangeDays) ?? null
+    : null;
+
   // ── 左下圖說內容 ──
-  const captionCode = airportSet !== null
+  const captionCode = activeEvent
+    ? activeEvent.name
+    : airportSet !== null
     ? setName ?? "自訂組合"
     : scope === "region" ? REGION_CONFIG[region].label : selectedAirport;
-  const captionName = airportSet !== null
+  const captionName = activeEvent
+    ? activeEvent.scopeLabel
+    : airportSet !== null
     ? `${airportSet.length} 座機場`
     : scope === "region"
       ? regionTitle
@@ -2450,6 +2498,9 @@ export default function App() {
             airportSet={airportSet}
             setName={setName}
             savedSets={BUILTIN_SETS}
+            events={EVENT_PRESETS}
+            activeEventId={activeEvent?.id ?? null}
+            onApplyEvent={applyEvent}
             onApplySet={applySavedSet}
             onToggleAirportInSet={toggleAirportInSet}
             onClearSet={clearSet}
@@ -2732,6 +2783,7 @@ export default function App() {
                 {/* full: Sliders + StyleSelector */}
                 {level === "full" && (
                   <div style={{ marginTop: SPACE.s12, paddingBottom: SPACE.s12, display: "flex", flexDirection: "column", gap: SPACE.s12 }}>
+                    <EventsPanel title="EVENTS · 事件" compact events={EVENT_PRESETS} activeId={activeEvent?.id ?? null} onApply={applyEvent} />
                     <Select<string>
                       label="Style"
                       ariaLabel="底圖"
