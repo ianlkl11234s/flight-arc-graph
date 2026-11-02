@@ -8,7 +8,6 @@
 |---|---|---|
 | `design-system.html` | http://localhost:5199/design-tools/design-system.html | 活元件頁：`src/ui/` 所有元件暗／淡並排（規格見 `docs/design-system/spec.md`） |
 | `boot-tuner.html` | http://localhost:5199/design-tools/boot-tuner.html | 開場雷達調整頁：調好按「複製設定」貼回 `src/components/boot/bootLayout.ts` |
-| `event-entry-options.html` | 直接用瀏覽器開檔案即可 | 「事件」入口放哪裡的方案比較（靜態 mock）：已選 (a) rail「事件」圖示＋左側面板，實作見 `src/components/sidebar/panels/EventsPanel.tsx` |
 | `color-preview.html` | 直接用瀏覽器開檔案即可 | 2026-02 早期的軌跡配色預覽（靜態頁，歷史參考） |
 
 ## 規則
