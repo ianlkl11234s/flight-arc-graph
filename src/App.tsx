@@ -1910,7 +1910,8 @@ export default function App() {
         if (target.date && avail.includes(target.date) && target.date !== tl.selectedDate) tl.setSelectedDate(target.date);
         if (cmp.length > 0) {
           for (const d of cmp) tl.toggleMultiDate(d);
-        } else if (target.days && [1, 3, 7].includes(target.days) && target.days !== tl.rangeDays) {
+        } else if (target.days && target.days !== tl.rangeDays) {
+          // 天數已由 urlState 限制在 1–MAX_DAYS 的整數；不限 1/3/7（事件常是 4 天這類非預設長度）
           tl.setRangeDays(target.days);
         }
         await wait(500);
