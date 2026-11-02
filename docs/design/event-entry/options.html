@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flight Arc · 「事件」入口放哪裡（方案比較）</title>
+<!-- 選方案用的靜態 mock：不 import src/，直接用瀏覽器開檔即可。色彩／字級／間距照 src/styles/tokens.css 原值。 -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ── tokens：與 src/styles/tokens.css 同值 ── */
+:root{
+  --font-ui:"JetBrains Mono","PingFang TC","Noto Sans TC",monospace;
+  --font-data:"JetBrains Mono",ui-monospace,monospace;
+  --blur:10px;
+  --size-eyebrow:11px;--size-minor:11.5px;--size-body:12.5px;--size-sub:13px;--size-title:15px;--size-large:18px;--size-caption:30px;
+  --radius:2px;--radius-pill:99px;
+  --rail-width:56px;--panel-width:288px;--panel-left:64px;--panel-top:52px;--dock-width:260px;
+}
+[data-theme="dark"]{
+  --panel:rgba(11,13,15,.62);--border:rgba(214,222,230,.16);
+  --fg1:#e7ebee;--fg2:#a2abb3;--fg3:#69727a;--ctl:rgba(255,255,255,.05);
+  --accent:#f2a93b;--accent-ink:#1a1206;--rail:rgba(7,9,11,.8);--map-bg:#05070a;
+  --danger:#ff6b6b;--accent-soft:rgba(242,169,59,.14);
+  --page-bg:#0b0d10;
+}
+[data-theme="light"]{
+  --panel:rgba(248,249,250,.78);--border:rgba(18,24,30,.18);
+  --fg1:#10151a;--fg2:#4c555d;--fg3:#7d868e;--ctl:rgba(0,0,0,.04);
+  --accent:#a86200;--accent-ink:#fff8ee;--rail:rgba(240,242,244,.85);--map-bg:#e8eaec;
+  --danger:#c62828;--accent-soft:rgba(168,98,0,.12);
+  --page-bg:#f4f5f6;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--page-bg);color:var(--fg1);font-family:var(--font-ui);font-size:var(--size-body);line-height:1.5}
+.num{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:var(--size-eyebrow);letter-spacing:.18em;color:var(--fg3);text-transform:uppercase}
+
+/* ── 頁面外框 ── */
+.page{max-width:1480px;margin:0 auto;padding:24px 24px 64px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.top h1{font-size:var(--size-large);margin:4px 0 4px;font-weight:600}
+.top p{margin:0;color:var(--fg2);max-width:820px}
+.btn{height:28px;padding:0 12px;border:1px solid var(--border);background:var(--ctl);color:var(--fg1);font:inherit;border-radius:var(--radius);cursor:pointer}
+.tabs{display:flex;gap:2px;border:1px solid var(--border);border-radius:var(--radius);padding:2px;width:max-content;margin-bottom:16px}
+.tabs button{height:28px;padding:0 14px;border:0;background:transparent;color:var(--fg2);font:inherit;border-radius:var(--radius);cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--accent);background:var(--accent-soft)}
+.rec{display:inline-block;margin-left:6px;padding:0 6px;border:1px solid var(--border);border-radius:var(--radius);font-size:var(--size-eyebrow);color:var(--fg2);letter-spacing:.05em}
+.opt{display:none}
+.opt.on{display:block}
+.row{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+.cap{font-size:var(--size-minor);color:var(--fg3);margin:6px 0 0}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;margin:16px 0 0;max-width:1100px}
+.pc h3{font-size:var(--size-sub);margin:0 0 4px;font-weight:600}
+.pc ul{margin:0;padding-left:18px;color:var(--fg2)}
+.pc li{margin:2px 0}
+.pc .pro h3{color:var(--fg1)} .pc .con h3{color:var(--fg1)}
+.note{margin-top:12px;padding:8px 12px;border-left:2px solid var(--border);color:var(--fg2);font-size:var(--size-minor);max-width:1100px}
+table.cmp{border-collapse:collapse;margin-top:8px;font-size:var(--size-minor)}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--border);padding:6px 12px;text-align:left;vertical-align:top}
+table.cmp th{color:var(--fg3);font-weight:500}
+
+/* ── 縮放容器：內部用真實像素（1440×900／390×844），外層縮小 ── */
+.scaler{position:relative;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius)}
+.scaler > .frame{position:absolute;left:0;top:0;transform-origin:0 0}
+.frame{background:var(--map-bg);overflow:hidden;font-family:var(--font-ui);font-size:var(--size-body);color:var(--fg1)}
+.map-svg{position:absolute;inset:0;width:100%;height:100%}
+
+/* ── app chrome ── */
+.rail{position:absolute;left:0;top:0;width:56px;background:var(--rail);border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0 0 2px 0;display:flex;flex-direction:column;align-items:center;padding:36px 0 8px;z-index:20}
+.rail .logo{width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--fg1)}
+.rail .sep{width:28px;height:1px;background:var(--border);margin:8px 0}
+.ri{position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--fg3);margin:2px 0}
+.ri.active{color:var(--fg1)}
+.ri.active::before{content:"";position:absolute;left:-6px;top:10px;bottom:10px;width:2px;background:var(--accent)}
+.ri.new{outline:1px dashed var(--fg3);outline-offset:-2px}
+.ri .tip{position:absolute;left:46px;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:var(--size-minor);color:var(--fg2);background:var(--panel);border:1px solid var(--border);padding:2px 6px;border-radius:2px}
+.brand{position:absolute;left:72px;top:14px;font-family:var(--font-data);letter-spacing:.24em;font-size:var(--size-sub);color:var(--fg1)}
+.brand b{color:var(--accent);font-weight:500}
+.brand small{display:block;letter-spacing:.06em;font-size:var(--size-eyebrow);color:var(--fg3);margin-top:2px}
+.toolbar{position:absolute;right:16px;top:12px;display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:4px 6px;backdrop-filter:blur(var(--blur))}
+.toolbar span{font-size:var(--size-minor);color:var(--fg2);padding:2px 6px}
+.toolbar i{width:1px;height:16px;background:var(--border)}
+.panelbox{position:absolute;background:var(--panel);border:1px solid var(--border);border-radius:2px;backdrop-filter:blur(var(--blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--blur)) saturate(1.2)}
+.panelbox.ticks::before,.panelbox.ticks::after{content:"";position:absolute;width:8px;height:8px;opacity:.8;pointer-events:none}
+.panelbox.ticks::before{left:-1px;top:-1px;border-left:1px solid var(--accent);border-top:1px solid var(--accent)}
+.panelbox.ticks::after{right:-1px;bottom:-1px;border-right:1px solid var(--accent);border-bottom:1px solid var(--accent)}
+.lpanel{left:64px;top:52px;width:288px;z-index:20;padding:12px}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.ph .t{font-size:var(--size-title);font-weight:600;margin-top:2px}
+.xbtn{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--fg3)}
+.section{display:flex;align-items:center;gap:8px;margin:8px 0 6px}
+.section::after{content:"";flex:1;height:1px;background:var(--border);order:2}
+.section .cnt{order:3;font-family:var(--font-data);font-size:var(--size-minor);color:var(--fg3)}
+
+/* 事件卡（照 SetsPanel 場景列：左 2px 線 + body 標題 + minor 副標） */
+.ev{display:flex;gap:8px;padding:8px;border-radius:2px;border:1px solid transparent;margin-bottom:6px}
+.ev .bar{width:2px;align-self:stretch;background:var(--fg3);flex:none}
+.ev.sel{background:var(--accent-soft);border-color:var(--border)}
+.ev.sel .bar{background:var(--accent)}
+.ev .body{min-width:0;flex:1}
+.ev .name{font-size:var(--size-body);color:var(--fg1);font-weight:600}
+.ev .meta{font-size:var(--size-minor);color:var(--fg3)}
+.ev .quote{font-size:var(--size-minor);color:var(--fg2);margin:4px 0 6px;line-height:1.45}
+.ev .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:6px}
+.ev .links{display:flex;gap:10px;font-size:var(--size-minor)}
+.ev .links a{color:var(--fg2);text-decoration:none;border-bottom:1px solid var(--border)}
+.ev .links .muted{color:var(--fg3)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:30px}
+.spark .b{width:38px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.spark .b span{display:block;width:100%;background:var(--fg2);opacity:.75}
+.spark .b.low span{background:var(--fg3);opacity:.6;outline:1px dashed var(--fg2);outline-offset:1px}
+.spark-l{display:flex;gap:3px;font-family:var(--font-data);font-size:var(--size-eyebrow);color:var(--fg3)}
+.spark-l span{width:38px;white-space:nowrap;text-align:center}
+.spark-k{font-size:var(--size-eyebrow);color:var(--fg3)}
+.big{font-family:var(--font-data);font-variant-numeric:tabular-nums;font-size:var(--size-sub);color:var(--fg1)}
+
+/* caption + timeline + dock */
+.caption{position:absolute;left:64px;border-left:2px solid var(--accent);padding-left:10px;z-index:10}
+.caption .code{font-family:var(--font-data);font-size:var(--size-caption);line-height:1.1}
+.caption .m{font-size:var(--size-minor);color:var(--fg2)}
+.tl{position:absolute;left:64px;bottom:16px;z-index:10;padding:8px 10px;display:flex;flex-direction:column;gap:8px}
+.tl .main{display:flex;align-items:center;gap:10px}
+.play{width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--fg1)}
+.track{flex:1;height:2px;background:var(--border);position:relative}
+.track i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.daterow{display:flex;align-items:center;gap:6px}
+.gbtn{height:28px;min-width:28px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;color:var(--fg2);border-radius:2px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:2px;padding:1px}
+.seg span{height:24px;padding:0 8px;display:inline-flex;align-items:center;color:var(--fg2);font-family:var(--font-data);font-size:var(--size-minor)}
+.seg span.on{color:var(--accent);background:var(--accent-soft)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 8px;border:1px solid var(--border);border-radius:2px;font-size:var(--size-minor);color:var(--fg2);background:var(--ctl)}
+.hist{display:flex;align-items:flex-end;gap:2px;height:34px}
+.hist span{flex:1;background:var(--fg3);opacity:.55}
+.dock{position:absolute;right:16px;bottom:16px;width:260px;padding:10px 12px;z-index:10}
+.dock .kv{display:flex;justify-content:space-between;font-size:var(--size-minor);color:var(--fg2);margin:2px 0}
+.dock .kv b{font-family:var(--font-data);font-weight:400;color:var(--fg1)}
+.pbtn{display:inline-flex;align-items:center;height:28px;padding:0 12px;background:var(--accent);color:var(--accent-ink);border-radius:2px;font-size:var(--size-minor);font-weight:600}
+.sbtn{display:inline-flex;align-items:center;height:28px;padding:0 12px;background:var(--ctl);border:1px solid var(--border);color:var(--fg1);border-radius:2px;font-size:var(--size-minor)}
+
+/* (b) 月曆 + 事件括號 */
+.cal{position:absolute;z-index:30;padding:10px;width:252px}
+.cal .grid{display:grid;grid-template-columns:repeat(7,32px);row-gap:6px;column-gap:2px}
+.cal .grid div{height:28px;display:flex;align-items:center;justify-content:center;font-family:var(--font-data);font-size:var(--size-minor);color:var(--fg1);position:relative}
+.cal .grid .wd{color:var(--fg3);height:18px}
+.cal .grid .na{color:var(--fg3);opacity:.55}
+.cal .grid .selD{background:var(--accent);color:var(--accent-ink)}
+.cal .grid .ev1::after{content:"";position:absolute;left:-1px;right:-1px;bottom:-4px;height:2px;background:var(--fg2)}
+.cal .grid .evS::before{content:"";position:absolute;left:0;bottom:-4px;width:1px;height:8px;background:var(--fg2)}
+.cal .grid .evE::before{content:"";position:absolute;right:0;bottom:-4px;width:1px;height:8px;background:var(--fg2)}
+.cal .evlab{margin-top:8px;font-size:var(--size-minor);color:var(--fg2);display:flex;gap:6px;align-items:center}
+.callout{position:absolute;font-size:var(--size-minor);color:var(--fg2);border:1px dashed var(--fg3);padding:4px 8px;border-radius:2px;background:var(--panel);z-index:35}
+
+/* (c) 靜態頁 */
+.doc{position:absolute;inset:0;overflow:hidden;background:var(--page-bg);padding:40px 0}
+.doc .col{width:760px;margin:0 auto;font-family:var(--font-ui)}
+.doc .crumbs{font-size:var(--size-minor);color:var(--fg3)}
+.doc h1{font-size:26px;margin:12px 0 8px;font-weight:600}
+.doc .lead{color:var(--fg2);font-size:15px;line-height:1.7}
+.doc h2{font-size:18px;margin:28px 0 10px;font-weight:600}
+.doc .cta{display:inline-block;margin:8px 0;padding:8px 14px;background:var(--accent);color:var(--accent-ink);border-radius:2px;font-weight:600}
+.doc .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.doc .card{border:1px solid var(--border);border-radius:2px;padding:14px;background:var(--ctl)}
+.doc .card .name{font-weight:600;font-size:15px}
+.doc .card .meta{color:var(--fg3);font-size:var(--size-minor)}
+.doc .card p{color:var(--fg2);font-size:13px;margin:8px 0}
+.doc .card .links{display:flex;gap:14px;font-size:13px;margin-top:10px}
+.doc .card .links a{color:var(--fg1);text-decoration:none;border-bottom:1px solid var(--fg3)}
+.doc table{width:100%;border-collapse:collapse;font-size:13px;color:var(--fg2)}
+.doc td,.doc th{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}
+.doc .new{outline:1px dashed var(--fg3);outline-offset:8px}
+
+/* 手機 */
+.mhead{position:absolute;left:0;right:0;top:0;height:44px;display:flex;align-items:center;gap:8px;padding:0 8px;background:var(--rail);border-bottom:1px solid var(--border);z-index:25}
+.mhead .lbl{flex:1;height:32px;display:flex;align-items:center;padding:0 10px;border:1px solid var(--border);border-radius:2px;font-size:var(--size-body);white-space:nowrap;overflow:hidden}
+.sheet{position:absolute;left:0;right:0;bottom:0;height:420px;background:var(--panel);border-top:1px solid var(--border);backdrop-filter:blur(var(--blur));z-index:20;padding:0 12px}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--fg3);margin:8px auto 10px}
+.mtabs{display:flex;gap:2px;margin-bottom:8px;overflow:hidden}
+.mtabs span{height:28px;padding:0 10px;display:inline-flex;align-items:center;font-size:var(--size-minor);color:var(--fg2);border:1px solid var(--border);border-radius:2px;white-space:nowrap}
+.mtabs span.on{color:var(--accent);background:var(--accent-soft)}
+.mtl{position:absolute;left:8px;right:8px;bottom:428px;z-index:10;padding:6px 8px}
+</style>
+</head>
+<body>
+<div style="margin:16px 24px;padding:10px 14px;border:1px solid var(--accent, #d9a441);font:13px/1.6 'JetBrains Mono',monospace">
+  <b>決議紀錄（2026-11-02）</b>：選 (a) rail「事件」圖示＋左側面板；手機版放在抽屜全開的航班清單下方。實作見 <code>src/components/sidebar/panels/EventsPanel.tsx</code>、資料 <code>src/map/events.ts</code>。<br>
+  ⚠️ 本頁為當時的比較 mock：10 月颱風後來確認為「薔琵颱風」，卡片數字已統一為「每日軌跡 · 台北日期」（巴威 1,201／730／85／1,087＝3,103；薔琵 1,029／249／852／1,259＝3,389），以程式為準。
+</div>
+<div class="page">
+  <div class="top">
+    <div>
+      <div class="eyebrow">DESIGN TOOL · 方案比較</div>
+      <h1>「事件」入口要放在哪裡</h1>
+      <p>三個位置各畫一張 1440×900 的 app 畫面（縮小顯示）。事件內容是真資料；(a) 另附 390px 手機版。虛線框＝新增的東西。</p>
+    </div>
+    <button class="btn" id="themeBtn" type="button">切換淡色</button>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-t="a">(a) 側欄圖示＋面板<span class="rec">建議</span></button>
+    <button role="tab" aria-selected="false" data-t="b">(b) 時間軸標記</button>
+    <button role="tab" aria-selected="false" data-t="c">(c) 地圖外連結卡</button>
+    <button role="tab" aria-selected="false" data-t="s">總表</button>
+  </div>
+
+  <!-- ═════════ (a) ═════════ -->
+  <section class="opt on" id="opt-a">
+    <div class="row">
+      <div>
+        <div class="scaler" data-w="1440" data-h="900" data-s=".62"><div class="frame" style="width:1440px;height:900px">
+          <div data-slot="map"></div>
+          <div data-slot="rail" data-active="event" data-new="event"></div>
+          <div class="brand">FLIGHT <b>ARC</b><small class="num">25.08°N 121.23°E · 俯角 52°</small></div>
+          <div data-slot="toolbar"></div>
+
+          <div class="panelbox ticks lpanel">
+            <div class="ph">
+              <div><div class="eyebrow">EVENTS · 事件</div><div class="t">事件</div></div>
+              <div class="xbtn" data-slot="x"></div>
+            </div>
+            <div class="section"><span class="eyebrow">CURATED · 精選</span><span class="cnt">2</span></div>
+            <div data-slot="ev1" data-sel="1"></div>
+            <div data-slot="ev2"></div>
+            <div class="meta" style="font-size:var(--size-minor);color:var(--fg3);padding:2px 8px">點卡片：切到台灣 22 座、跳到事件首日、天數 7d</div>
+          </div>
+
+          <div class="caption" style="bottom:84px"><div class="code">巴威颱風</div><div class="m num">台灣 22 座 · 2026-07-09 – 07-12 · 4 天</div></div>
+          <div data-slot="tlc" data-date="07-09" data-n="7"></div>
+          <div data-slot="dock"></div>
+        </div></div>
+        <p class="cap">桌面 1440×900：rail「選擇機場」後新增「事件」圖示（虛線框），面板同時只開一個（R2 照舊）。</p>
+      </div>
+      <div>
+        <div class="scaler" data-w="390" data-h="844" data-s=".62"><div class="frame" style="width:390px;height:844px">
+          <div data-slot="map"></div>
+          <div class="mhead"><div class="lbl">巴威颱風 · 7/9–7/12</div><div class="xbtn" style="color:var(--fg2)">⋯</div></div>
+          <div class="panelbox mtl"><div class="tl" style="position:static;padding:0"><div class="main"><div class="play" data-slot="play"></div><span class="num" style="font-size:var(--size-minor)">07-09 06:40</span><div class="track"><i style="width:22%"></i></div></div></div></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <div class="mtabs"><span>探索</span><span>機場</span><span class="on" style="outline:1px dashed var(--fg3);outline-offset:-3px">事件</span><span>顯示</span><span>分析</span></div>
+            <div data-slot="ev1" data-sel="1" data-compact="1"></div>
+            <div data-slot="ev2" data-compact="1"></div>
+          </div>
+        </div></div>
+        <p class="cap">手機 390×844：抽屜 full（420）。分頁列為示意，需對照實際手機抽屜的入口結構。</p>
+      </div>
+    </div>
+    <div class="pc">
+      <div class="pro"><h3>優點</h3><ul>
+        <li>和「選擇機場 → 組合／場景」同一種互動：rail 開面板、點列套用；不新增浮層類型，R2 互斥照舊。</li>
+        <li>可發現性高：rail 常駐、有 tooltip；以後事件變多（5–20 個）清單可直接長，不擠別的元件。</li>
+        <li>手機自然對應到抽屜的一個分頁。</li>
+      </ul></div>
+      <div class="con"><h3>缺點</h3><ul>
+        <li>rail 多一顆（6 → 7 顆工作區圖示），只有 2 個事件時面板偏空。</li>
+        <li>維護：事件清單要一份資料檔（名稱、日期、範圍、數字、長文連結），數字更新要手動同步。</li>
+        <li>不做成 SetsPanel 第 4 分頁的原因：Segmented 規定 ≤3 選項（spec §5），第 4 頁要改 Select，會打掉現有三分頁。</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ═════════ (b) ═════════ -->
+  <section class="opt" id="opt-b">
+    <div class="scaler" data-w="1440" data-h="900" data-s=".75"><div class="frame" style="width:1440px;height:900px">
+      <div data-slot="map"></div>
+      <div data-slot="rail" data-active="pin"></div>
+      <div class="brand">FLIGHT <b>ARC</b><small class="num">25.08°N 121.23°E · 俯角 52°</small></div>
+      <div data-slot="toolbar"></div>
+
+      <div class="caption" style="bottom:210px"><div class="code">RCTP</div><div class="m num">桃園國際機場 · 2026-07-11</div></div>
+
+      <!-- 展開的時間軸 -->
+      <div class="panelbox tl" style="width:640px">
+        <div class="daterow">
+          <span class="gbtn" data-slot="chev-l"></span>
+          <span class="gbtn num" style="width:92px;color:var(--fg1);font-weight:600;background:var(--ctl)">2026-07-11</span>
+          <span class="gbtn" data-slot="chev-r"></span>
+          <span class="seg"><span class="on">1d</span><span>3d</span><span>7d</span></span>
+          <span class="chip" style="outline:1px dashed var(--fg3);outline-offset:2px"><span data-slot="flag-s"></span>巴威颱風 7/9–7/12</span>
+          <span style="flex:1"></span>
+          <span class="sbtn" style="height:24px">Compare</span>
+          <span class="chip num">1x</span>
+        </div>
+        <div style="display:grid;grid-template-columns:auto auto 1fr auto;gap:2px 10px;align-items:end">
+          <div></div><div></div>
+          <div class="hist" data-slot="hist"></div>
+          <div></div>
+          <div class="play" data-slot="play"></div>
+          <span class="num" style="font-size:var(--size-sub)">06:40</span>
+          <div class="track" style="align-self:center"><i style="width:28%"></i></div>
+          <span class="num" style="font-size:var(--size-minor);color:var(--fg3)">00:00–24:00</span>
+        </div>
+      </div>
+
+      <!-- 月曆（唯一一套，R12）上加事件括號 -->
+      <div class="panelbox cal" style="left:150px;bottom:150px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="gbtn" data-slot="chev-l"></span><span class="num" style="font-weight:600">2026-07</span><span class="gbtn" data-slot="chev-r"></span>
+        </div>
+        <div class="grid" data-slot="cal-jul"></div>
+        <div class="evlab" style="outline:1px dashed var(--fg3);outline-offset:3px"><span style="width:14px;height:2px;background:var(--fg2)"></span>7/9–7/12 巴威颱風 · 點括號看事件</div>
+      </div>
+      <div class="callout" style="left:420px;bottom:360px">10 月：同樣在 10/22–10/25 畫括號（翻到 2026-10 才看得到）</div>
+
+      <!-- 點括號或 chip → 右下 dock 卡（R1：資訊一律停 dock，不用游標 tooltip） -->
+      <div class="panelbox ticks dock" style="outline:1px dashed var(--fg3);outline-offset:3px">
+        <div style="display:flex;justify-content:space-between"><div><div class="eyebrow">EVENT · 事件</div><div style="font-size:var(--size-title);font-weight:600">巴威颱風</div></div><div class="xbtn" data-slot="x"></div></div>
+        <div style="font-size:var(--size-minor);color:var(--fg2);margin:6px 0">7/11 桃機 760 架次全數取消，史上首見的空白日</div>
+        <div class="kv"><span>期間</span><b>07-09 – 07-12 · 4 天</b></div>
+        <div class="kv"><span>範圍</span><b>台灣 22 座</b></div>
+        <div class="kv"><span>軌跡</span><b>3,103</b></div>
+        <div style="display:flex;gap:6px;margin-top:8px"><span class="pbtn">看整段 4 天</span><span class="sbtn">長文</span></div>
+      </div>
+    </div></div>
+    <p class="cap">時間軸展開＋月曆打開時的樣子。實際時間軸沒有「整排日期條」：日期是 ◀ 日期 ▶ ＋ 月曆，所以標記只能放在月曆格子（括號）與日期列的 chip（當前日期落在事件內才出現）。</p>
+    <div class="pc">
+      <div class="pro"><h3>優點</h3><ul>
+        <li>情境最貼：使用者正在翻日期時，剛好看到「這幾天有事」。</li>
+        <li>不佔 rail、不加面板；R12「只有一套月曆」可守住（括號畫在同一套月曆上）。</li>
+      </ul></div>
+      <div class="con"><h3>缺點</h3><ul>
+        <li>可發現性低：時間軸平常是 300px 膠囊（R4），月曆要點開、還要翻到 7 月或 10 月才看得到；從首頁進站的人幾乎碰不到。</li>
+        <li>互動一致性：hover 出說明會撞 R1（不用游標 tooltip），要改成「點擊 → 右下 dock 卡」，等於多一種 dock 卡（R2 要登記）。</li>
+        <li>維護：改到 Timeline（本來就是高頻改動區，現在也有別的分支在動）；Compare 模式下括號與比較色框會疊在一起。</li>
+        <li>手機：時間軸固定展開但很窄，月曆格子小，括號難點。</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ═════════ (c) ═════════ -->
+  <section class="opt" id="opt-c">
+    <div class="scaler" data-w="1440" data-h="900" data-s=".75"><div class="frame" style="width:1440px;height:900px">
+      <div class="doc"><div class="col">
+        <nav class="crumbs">Flight Arc › 機場總覽 › 臺灣桃園國際機場</nav>
+        <h1>臺灣桃園國際機場（TPE / RCTP）航班軌跡</h1>
+        <p class="lead">Flight Arc 收錄了臺灣桃園國際機場在多個日期的起降軌跡，可在 3D 地圖上回放。</p>
+        <span class="cta">在 3D 地圖上看臺灣桃園國際機場</span>
+
+        <div class="new">
+          <h2>事件</h2>
+          <div class="cards">
+            <div class="card">
+              <div class="name">巴威颱風</div>
+              <div class="meta num">2026-07-09 – 07-12 · 台灣 22 座機場 · 4 天</div>
+              <p>7/11 桃機 760 架次全數取消，史上首見的空白日。</p>
+              <div data-slot="spark-bavi"></div>
+              <div class="links"><a href="#">在地圖上看 →</a><a href="#">長文：巴威颱風</a></div>
+            </div>
+            <div class="card">
+              <div class="name">10 月颱風（名稱待確認）</div>
+              <div class="meta num">2026-10-22 – 10-25 · 台灣 22 座機場 · 4 天</div>
+              <p>10/23 起降僅 256 架次，接近空白日。</p>
+              <div data-slot="spark-oct"></div>
+              <div class="links"><a href="#">在地圖上看 →</a></div>
+            </div>
+          </div>
+        </div>
+
+        <h2>收錄統計</h2>
+        <table><tr><th>項目</th><th>數值</th></tr><tr><td>收錄日期</td><td class="num">—</td></tr><tr><td>航班數</td><td class="num">—</td></tr></table>
+      </div></div>
+    </div></div>
+    <p class="cap">機場靜態頁 /airports/rctp/ 加一段「事件」（虛線框）；首頁 #root 靜態說明、/notes/ 文末也可放同一組卡。地圖本身不改。統計表數字此處省略（—）。</p>
+    <div class="pc">
+      <div class="pro"><h3>優點</h3><ul>
+        <li>維護最輕：靜態頁產生器（scripts/seo/）加一段 HTML，不碰 App／Timeline，無互斥、無 Esc 行為要處理。</li>
+        <li>對 SEO 與外部分享友善：搜尋進來的人直接看到事件，點進去就是設定好的地圖網址。</li>
+      </ul></div>
+      <div class="con"><h3>缺點</h3><ul>
+        <li>已在地圖裡的使用者看不到；要回到靜態頁才有入口。</li>
+        <li>網址只能帶 d／n／a／set 等現有參數：n 只接受 1／3／7，n=7 才涵蓋 4 天；沒有「台灣 22 座」的單一參數就得靠 set 或 scope。</li>
+        <li>只放在機場頁時，22 座機場頁都要放，或只放主要幾座（取捨）。</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ═════════ 總表 ═════════ -->
+  <section class="opt" id="opt-s">
+    <table class="cmp">
+      <tr><th></th><th>(a) 側欄＋面板</th><th>(b) 時間軸標記</th><th>(c) 地圖外連結卡</th></tr>
+      <tr><td>可發現性</td><td>高（rail 常駐）</td><td>低（要展開＋開月曆＋翻月）</td><td>地圖外高、地圖內無</td></tr>
+      <tr><td>和現有互動一致</td><td>同 SetsPanel 場景列</td><td>要新 dock 卡；撞 R1 hover 風險</td><td>不影響地圖</td></tr>
+      <tr><td>維護成本</td><td>中（一個面板＋事件資料檔）</td><td>中高（改 Timeline／月曆）</td><td>低（SEO 產生器）</td></tr>
+      <tr><td>手機</td><td>抽屜一個分頁</td><td>月曆格小、難點</td><td>靜態頁本來就適配</td></tr>
+      <tr><td>事件變多時</td><td>清單可長</td><td>月曆格擁擠</td><td>卡片可長</td></tr>
+    </table>
+    <div class="note">(a) 與 (c) 不衝突：(a) 給地圖內的人，(c) 給搜尋／分享進站的人，資料可共用同一份事件清單。(b) 適合當 (a) 的補強（當前日期落在事件內時，日期列出現 chip），不建議當唯一入口。</div>
+  </section>
+
+  <div class="note" style="margin-top:20px">
+    資料：巴威颱風 3,103 為「軌跡」筆數，每日柱為 UTC 日（1,218／570／210／964）；10 月颱風 3,504 為「航班」筆數、每日柱為台灣時間起降數（1,129／256／858／1,261）。兩者口徑不同，正式上線前要統一。
+  </div>
+</div>
+
+<script>
+(function(){
+  const ICON = {
+    plane:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19 16 11l3.5-3.5c1.5-1.5 2-3.5 1-4.5s-3-.5-4.5 1L12.5 7.5 4.5 5.7 3 7.2l6.5 3.8L6 14.5 3.5 14l-1 1 3.5 2 2 3.5 1-1-.5-2.5 3.5-3.5 3.8 6.5Z"/></svg>',
+    globe:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3.5 9h17M3.5 15h17M12 3c2.4 2.5 3.5 5.5 3.5 9S14.4 18.5 12 21M12 3C9.6 5.5 8.5 8.5 8.5 12S9.6 18.5 12 21"/></svg>',
+    pin:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 10c0 4.2-5 8.4-5 8.4S7 14.2 7 10a5 5 0 0110 0z"/><circle cx="12" cy="10" r="1.6"/><path d="M18.5 16.5v5M16 19h5"/></svg>',
+    event:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2.5 4L16 12H5"/></svg>',
+    layers:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></svg>',
+    radar:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12 18.4 5.6"/></svg>',
+    route:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="2"/><circle cx="12" cy="7" r="2"/><circle cx="19" cy="14" r="2"/><path d="M6.2 15.4 10.8 8.6M13.7 8.2l3.6 4.6"/></svg>',
+    camera:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2z"/><circle cx="12" cy="13" r="4"/></svg>',
+    book:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.3 5.2 8 4.5 4 4.5v13c4 0 6.3.7 8 2 1.7-1.3 4-2 8-2v-13c-4 0-6.3.7-8 2z"/><path d="M12 6.5v13"/></svg>',
+    x:'<svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.5"><path d="M2 2l8 8M10 2l-8 8"/></svg>',
+    play:'<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1.5v9l8-4.5z"/></svg>',
+    chevL:'<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5 3 5l3.5 3.5"/></svg>',
+    chevR:'<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5 7 5 3.5 8.5"/></svg>',
+    flagS:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2.5 4L16 12H5"/></svg>'
+  };
+
+  const EVENTS = {
+    ev1:{name:'巴威颱風',range:'2026-07-09 – 07-12',meta:'台灣 22 座機場 · 4 天',
+      quote:'7/11 桃機 760 架次全數取消，史上首見的空白日',
+      days:['7/9','7/10','7/11','7/12'],vals:[1218,570,210,964],low:2,key:'UTC 日',
+      total:'3,103',unit:'筆軌跡',note:'/notes/typhoon-bavi-2026-07/'},
+    ev2:{name:'10 月颱風（名稱待確認）',range:'2026-10-22 – 10-25',meta:'台灣 22 座機場 · 4 天',
+      quote:'每日起降 1,129 → 256 → 858 → 1,261（10/23 空白日）',
+      days:['10/22','10/23','10/24','10/25'],vals:[1129,256,858,1261],low:1,key:'台灣時間',
+      total:'3,504',unit:'筆航班',note:null}
+  };
+
+  function spark(e){
+    const max=Math.max(...e.vals);
+    const bars=e.vals.map((v,i)=>`<div class="b${i===e.low?' low':''}" title="${e.days[i]}：${v.toLocaleString()}"><span style="height:${Math.max(6,v/max*100)}%"></span></div>`).join('');
+    return `<div><div class="spark">${bars}</div><div class="spark-l">${e.days.map(d=>`<span>${d}</span>`).join('')}</div><div class="spark-k">每日起降 · ${e.key}</div></div>`;
+  }
+  function card(id,sel,compact){
+    const e=EVENTS[id];
+    const links = e.note ? `<a href="${e.note}">長文 →</a>` : `<span class="muted">無長文</span>`;
+    return `<div class="ev${sel?' sel':''}"><span class="bar"></span><div class="body">
+      <div class="name">${e.name}</div>
+      <div class="meta num">${e.range} · ${e.meta}</div>
+      ${compact?'':`<div class="quote">「${e.quote}」</div>`}
+      <div class="foot">${spark(e)}<div style="text-align:right"><div class="big">${e.total}</div><div class="meta">${e.unit}</div><div class="links" style="justify-content:flex-end;margin-top:4px">${links}</div></div></div>
+    </div></div>`;
+  }
+  function rail(active,isNew){
+    const items=[['globe','探索地圖總覽'],['pin','選擇機場'],['event','事件'],['layers','顯示與色彩'],['radar','空域快照'],['route','分析航班'],['camera','擷取與錄製']]
+      .filter(([k])=>k!=='event'||isNew==='event');
+    const btn=([k,t])=>`<div class="ri${k===active?' active':''}${k===isNew?' new':''}" title="${t}">${ICON[k]}</div>`;
+    return `<div class="rail"><div class="logo">${ICON.plane}</div><div class="sep"></div>${items.map(btn).join('')}<div class="sep"></div><div class="ri" title="長文">${ICON.book}</div></div>`;
+  }
+  function map(){
+    // 地圖佔位：中性色淡弧線（軌跡不是本頁重點，不用琥珀）
+    let p='';
+    const cx=720,cy=470;
+    for(let i=0;i<46;i++){
+      const a=i*137.5*Math.PI/180, r=180+((i*53)%420);
+      const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r*.62;
+      const mx=(cx+x)/2+Math.sin(a)*60, my=(cy+y)/2-80-((i*17)%90);
+      p+=`<path d="M${cx} ${cy}Q${mx.toFixed(0)} ${my.toFixed(0)} ${x.toFixed(0)} ${y.toFixed(0)}"/>`;
+    }
+    return `<svg class="map-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="var(--fg3)" stroke-opacity=".35" stroke-width="1">${p}</g><circle cx="${cx}" cy="${cy}" r="4" fill="var(--fg2)"/></svg>`;
+  }
+  function tlCollapsed(date,n){
+    return `<div class="panelbox tl" style="width:300px"><div class="main"><div class="play">${ICON.play}</div><span class="num" style="font-size:var(--size-sub)">${date} 06:40</span><div class="track"><i style="width:8%"></i></div><span class="num" style="font-size:var(--size-minor);color:var(--fg3)">${n}d</span></div></div>`;
+  }
+  function dock(){
+    return `<div class="panelbox ticks dock"><div class="eyebrow">LEGEND · 圖例</div><div class="kv"><span>高度</span><b>0 – 12,000 m</b></div><div class="kv"><span>航班</span><b>—</b></div></div>`;
+  }
+  function hist(){
+    let s='';for(let h=0;h<24;h++){const v=h<6?8+h*3:h<10?40+h*5:h<20?70-((h*7)%25):30-(h-20)*5;s+=`<span style="height:${Math.max(4,v)}%"></span>`;}return s;
+  }
+  function calJul(){
+    // 2026-07-01 是週三
+    const wd=['日','一','二','三','四','五','六'].map(w=>`<div class="wd">${w}</div>`).join('');
+    let cells='';for(let i=0;i<3;i++)cells+='<div></div>';
+    for(let d=1;d<=31;d++){
+      const has=(d>=9&&d<=12);
+      let c=has?'':'na';
+      if(d>=9&&d<=12)c+=' ev1';
+      if(d===9)c+=' evS';
+      if(d===12)c+=' evE';
+      if(d===11)c+=' selD';
+      cells+=`<div class="${c.trim()}">${d}</div>`;
+    }
+    return wd+cells;
+  }
+
+  document.querySelectorAll('[data-slot]').forEach(el=>{
+    const s=el.dataset.slot;
+    if(s==='map') el.outerHTML=map();
+    else if(s==='rail') el.outerHTML=rail(el.dataset.active,el.dataset.new);
+    else if(s==='toolbar') el.outerHTML='<div class="toolbar"><span>起降</span><i></i><span>染色 高度</span><i></i><span>3D</span><span>底圖</span><i></i><span>錄影</span><span>複製連結</span><span>說明</span></div>';
+    else if(s==='ev1'||s==='ev2') el.outerHTML=card(s,el.dataset.sel==='1',el.dataset.compact==='1');
+    else if(s==='tlc') el.outerHTML=tlCollapsed(el.dataset.date,el.dataset.n);
+    else if(s==='dock') el.outerHTML=dock();
+    else if(s==='x') el.innerHTML=ICON.x;
+    else if(s==='play') el.innerHTML=ICON.play;
+    else if(s==='chev-l') el.innerHTML=ICON.chevL;
+    else if(s==='chev-r') el.innerHTML=ICON.chevR;
+    else if(s==='flag-s') el.outerHTML=ICON.flagS;
+    else if(s==='hist') el.innerHTML=hist();
+    else if(s==='cal-jul') el.innerHTML=calJul();
+    else if(s==='spark-bavi') el.innerHTML=spark(EVENTS.ev1);
+    else if(s==='spark-oct') el.innerHTML=spark(EVENTS.ev2);
+  });
+
+  // 縮放
+  document.querySelectorAll('.scaler').forEach(sc=>{
+    const w=+sc.dataset.w,h=+sc.dataset.h,k=+sc.dataset.s;
+    sc.style.width=(w*k)+'px';sc.style.height=(h*k)+'px';
+    sc.firstElementChild.style.transform=`scale(${k})`;
+  });
+
+  // 分頁
+  const tabs=document.querySelectorAll('.tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.setAttribute('aria-selected',String(x===b)));
+    document.querySelectorAll('.opt').forEach(o=>o.classList.toggle('on',o.id==='opt-'+b.dataset.t));
+  }));
+
+  // 明暗
+  const tb=document.getElementById('themeBtn');
+  tb.addEventListener('click',()=>{
+    const r=document.documentElement;
+    const next=r.dataset.theme==='dark'?'light':'dark';
+    r.dataset.theme=next;
+    tb.textContent=next==='dark'?'切換淡色':'切換暗色';
+  });
+})();
+</script>
+</body>
+</html>

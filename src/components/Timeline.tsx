@@ -17,6 +17,9 @@ import {
   isExpanded,
 } from "../ui/timelineExpand";
 
+/** 天數快捷鍵；網址或事件帶入其他天數（如 4d）時臨時加一格顯示 */
+const RANGE_PRESETS = [1, 3, 7];
+
 /** 每小時起降直方圖的一格（start = 該小時起點 unix 秒） */
 export interface HourBin {
   start: number;
@@ -508,7 +511,7 @@ export function Timeline(p: Props) {
                 <Button variant="ghost" ariaLabel="後一個有資料的日期" icon={<IconChevron direction="right" />} onClick={() => p.onDateShift(1)} />
                 <Segmented<number>
                   ariaLabel="天數"
-                  options={[1, 3, 7].map((n) => ({ value: n, label: `${n}d` }))}
+                  options={(RANGE_PRESETS.includes(p.rangeDays) ? RANGE_PRESETS : [...RANGE_PRESETS, p.rangeDays].sort((a, b) => a - b)).map((n) => ({ value: n, label: `${n}d` }))}
                   value={p.rangeDays}
                   onChange={p.onRangeDaysChange}
                 />
