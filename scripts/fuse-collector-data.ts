@@ -13,7 +13,7 @@
  *
  * 環境變數（.env）：
  *   COLLECTORS_API_KEY   data-collectors API 的 X-API-Key（必填）
- *   COLLECTORS_API_BASE  API 網址（選填，預設 gis-data-collectors-v2）
+ *   COLLECTORS_API_BASE  API 網址（必填；Zeabur 舊網址已停用，原始檔在 S3）
  *
  * 用法：
  *   tsx scripts/fuse-collector-data.ts              # 自動下載所有可用日期
@@ -23,8 +23,14 @@
 
 import "dotenv/config";
 
-const API_BASE =
-  process.env.COLLECTORS_API_BASE ?? "https://gis-data-collectors-v2.zeabur.app";
+// Zeabur 已停運（2026-12-31），collector 不再提供公開 API；原始歸檔在 S3（下次使用時改寫成直接讀 S3）。
+const API_BASE = process.env.COLLECTORS_API_BASE ?? "";
+if (!API_BASE) {
+  console.error(
+    "COLLECTORS_API_BASE is not set. The old Zeabur collector API is gone; point this at a reachable collector API, or rewrite this script to read the S3 archive.",
+  );
+  process.exit(1);
+}
 const API_KEY = process.env.COLLECTORS_API_KEY ?? "";
 if (!API_KEY) {
   console.error(
