@@ -428,7 +428,7 @@ function ProfilePage({ lang }: { lang: Lang }) {
       name: L ? "Mini-Taiwan 軌道運輸模擬" : "Mini-Taiwan Rail Simulation",
       desc: L ? "台灣軌道運輸即時模擬視覺化" : "Real-time Taiwan rail transit simulation",
       screenshot: "./screenshots/mini-taiwan.png",
-      site: "https://mini-taiwan-learning-project.zeabur.app/",
+      site: "https://mini-taiwan-learning-project.itsmigu.com/",
       github: "https://github.com/ianlkl11234s/mini-taiwan-learning-project",
     },
     {
@@ -442,14 +442,13 @@ function ProfilePage({ lang }: { lang: Lang }) {
       name: L ? "Taiwan Weather Timelapse 台灣氣象模擬" : "Taiwan Weather Timelapse",
       desc: L ? "台灣氣象時序動畫視覺化" : "Taiwan weather time-series animation",
       screenshot: "./screenshots/weather.png",
-      site: "https://taiwan-weather-timelapse.zeabur.app/",
       github: "https://github.com/ianlkl11234s/taiwan-weather-timelapse",
     },
     {
       name: "Mini Taiwan Pulse",
       desc: L ? "台灣交通與基礎設施多圖層即時視覺化 — 航班、船舶、鐵道、車站、燈塔、風場等" : "Multi-layer real-time visualization of Taiwan's transport & infrastructure — flights, ships, rail, stations, lighthouses, wind farms",
       screenshot: "./screenshots/all-layers-facilities.png",
-      site: "https://mini-taiwan-pulse.zeabur.app/",
+      site: "https://mini-taiwan-pulse.itsmigu.com/",
       github: "https://github.com/ianlkl11234s/mini-taiwan-pulse",
     },
     {
