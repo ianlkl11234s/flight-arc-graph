@@ -13,13 +13,13 @@
   "scanned_unique": 74651,
   "already_done_at_start": 9230,
   "existing_net_before": 44267,
-  "track_done_baseline": 97622,
-  "_baseline_note": "花費錨點 track-done 行數。2026-10-23 新週期 666,000 credits（Batch 4+5 合併上限 520K、餘額留颱風 10/22–25），baseline=97622。⚠️ 三欄必須一起改（baseline / manual_remaining / as_of）。⚠️ as_of 是「日」粒度，同一天二次重設會讓帳本重複計入。歷史：2026-09-15 baseline 82501 / 666,000；2026-08-21 baseline 82202 / 12,000；2026-08-20 baseline 66189 / 核准 666,000（三段實花 658,480）；2026-08-09 baseline 54644 / 467,280；2026-07-11 baseline 51541 / 44823",
+  "track_done_baseline": 113207,
+  "_baseline_note": "花費錨點 track-done 行數。2026-11-18 新週期 dashboard 666,882 credits（主軸 B 附帶 495 座 → A → D），baseline=113207。⚠️ 三欄必須一起改（baseline / manual_remaining / as_of）。⚠️ as_of 是「日」粒度，同一天二次重設會讓帳本重複計入。歷史：2026-10-23 baseline 97622 / 666,000；2026-09-15 baseline 82501 / 666,000；2026-08-21 baseline 82202 / 12,000；2026-08-20 baseline 66189 / 核准 666,000（三段實花 658,480）；2026-08-09 baseline 54644 / 467,280；2026-07-11 baseline 51541 / 44823",
   "_budget_note": "每次抓取花多少由用戶啟動時確認。manual_remaining = 本期用戶核准額度；用完或換月時，用戶給新數字後更新 manual_remaining / as_of（不自動算週期重置）",
   "budget": {
     "monthly_credits": 666000,
-    "manual_remaining": 666000,
-    "manual_remaining_as_of": "2026-10-23"
+    "manual_remaining": 666882,
+    "manual_remaining_as_of": "2026-11-18"
   },
   "batches": [
     {
