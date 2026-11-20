@@ -11,6 +11,7 @@
  *   --airports-file path             從 JSON 清單取機場（[{icao,rank}] 或 [ICAO]）
  *   --group NAME                     從 scripts/airport-groups.json 取 group（與 --airports union，如 TW）
  *   --rank A-B                       搭配 --airports-file，只取 rank 在 A~B 的機場（Top-1000 分批用）
+ *   --airline-only                   只抓有航司（operating_as／painted_as）的班機，排除通用航空
  *   --limit N                        最多處理 N 筆（測試用）
  *   --max-credits N                  本次最多花 ~N credits（= 上限 floor(N/40) 筆），吃滿自動停
  *   --dry-run                        只印 todo 數量 + UTC 日分桶 + 預估 credits，不打 API
@@ -543,6 +544,12 @@ async function main() {
         airportsFilter.has(f.orig_icao) || airportsFilter.has(f.dest_icao),
     );
     console.log(`機場篩選: ${[...airportsFilter].join(", ")}`);
+  }
+  // --airline-only：只留有航司（operating_as 或 painted_as）的班機，排除私人小飛機／直升機等通用航空
+  if (process.argv.includes("--airline-only")) {
+    const before = targets.length;
+    targets = targets.filter((f) => Boolean(f.operating_as || f.painted_as));
+    console.log(`航司篩選（--airline-only）: ${before} → ${targets.length} 筆`);
   }
   console.log(`目標航班: ${targets.length} 筆\n`);
 
