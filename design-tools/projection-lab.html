@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>Projection Lab — 投影預覽</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* 設計預覽頁（不進正式 build）：第 0 期，用來挑要帶進 app 的投影。 */
+  :root { --bg:#05070a; --panel:#0d1117; --line:#222b36; --text:#d6dde6; --dim:#7d8896; --amber:#ffb347; --cyan:#5fd4ff; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text);
+    font: 13px/1.5 -apple-system, "PingFang TC", "Noto Sans TC", sans-serif; }
+  #app { display:grid; grid-template-columns: 300px 1fr; grid-template-rows: 1fr 132px; height:100%; }
+  #side { grid-row: 1 / 3; background:var(--panel); border-right:1px solid var(--line); padding:14px; overflow:auto; }
+  #main { position:relative; min-width:0; min-height:0; }
+  #main canvas { position:absolute; inset:0; width:100%; height:100%; cursor:grab; }
+  #strip { display:flex; gap:8px; padding:8px; border-top:1px solid var(--line); overflow-x:auto; background:var(--panel); }
+  .thumb { flex:0 0 auto; width:150px; cursor:pointer; border:1px solid var(--line); border-radius:4px; overflow:hidden; background:var(--bg); }
+  .thumb.on { border-color:var(--amber); }
+  .thumb canvas { display:block; width:150px; height:92px; }
+  .thumb div { padding:2px 6px; font-size:11px; color:var(--dim); white-space:nowrap; }
+  .thumb.on div { color:var(--amber); }
+  h1 { font-size:15px; margin:0 0 2px; letter-spacing:.04em; }
+  h2 { font-size:11px; margin:16px 0 6px; color:var(--dim); letter-spacing:.12em; font-weight:600; }
+  .sub { color:var(--dim); font-size:12px; margin-bottom:8px; }
+  label { display:block; margin:6px 0 2px; color:var(--dim); font-size:12px; }
+  select, input[type=text], input[type=date] { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line);
+    border-radius:4px; padding:5px 6px; font:inherit; }
+  .row { display:flex; gap:6px; align-items:center; }
+  .row > * { flex:1; }
+  .chk { display:flex; align-items:center; gap:6px; margin:4px 0; color:var(--text); }
+  .chk input { margin:0; }
+  button { background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:4px; padding:5px 8px; font:inherit; cursor:pointer; }
+  button:hover { border-color:var(--amber); }
+  #desc { background:var(--bg); border:1px solid var(--line); border-radius:4px; padding:8px; font-size:12px; }
+  #desc b { color:var(--amber); }
+  #stat { color:var(--dim); font-size:12px; margin-top:8px; white-space:pre-line; }
+  #err { color:#ff7b72; font-size:12px; margin-top:6px; white-space:pre-line; }
+  .legend span { display:inline-block; width:18px; height:2px; vertical-align:middle; margin-right:4px; }
+  #hud { position:absolute; left:12px; bottom:10px; color:var(--dim); font-size:11px; pointer-events:none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <h1>Projection Lab</h1>
+    <div class="sub">同一批真實軌跡，換投影看長相</div>
+
+    <h2>資料</h2>
+    <label>機場（ICAO，同時是投影中心）</label>
+    <div class="row">
+      <select id="apSel">
+        <option value="RCTP">RCTP 桃園</option>
+        <option value="RJTT">RJTT 羽田</option>
+        <option value="WSSS">WSSS 樟宜</option>
+        <option value="OMDB">OMDB 杜拜</option>
+        <option value="EGLL">EGLL 希斯洛</option>
+        <option value="KJFK">KJFK 甘迺迪</option>
+      </select>
+      <input id="apTxt" type="text" placeholder="或輸入 ICAO" maxlength="4" />
+    </div>
+    <label>日期（台灣時間）</label>
+    <input id="date" type="date" value="2026-02-18" />
+    <div class="row" style="margin-top:8px"><button id="load">載入</button></div>
+    <div id="err"></div>
+
+    <h2>投影</h2>
+    <select id="proj"></select>
+    <div id="desc" style="margin-top:8px"></div>
+
+    <h2>圖層</h2>
+    <label class="chk"><input type="checkbox" id="cRings" checked />距離圈（每 2,000 km）</label>
+    <label class="chk"><input type="checkbox" id="cGrat" checked />經緯網（每 30°）</label>
+    <label class="chk"><input type="checkbox" id="cLand" checked />海岸線</label>
+    <label class="chk"><input type="checkbox" id="cDep" checked />出發</label>
+    <label class="chk"><input type="checkbox" id="cArr" checked />抵達</label>
+    <div class="legend" style="margin-top:6px;color:var(--dim);font-size:12px">
+      <span style="background:var(--amber)"></span>出發
+      <span style="background:var(--cyan)"></span>抵達
+    </div>
+
+    <div id="stat"></div>
+    <div class="sub" style="margin-top:14px">拖曳平移、滾輪縮放、雙擊重置。<br />下方縮圖可直接點選切換。</div>
+  </aside>
+  <div id="main"><canvas id="cv"></canvas><div id="hud"></div></div>
+  <div id="strip"></div>
+</div>
+
+<script type="module">
+const D2R = Math.PI / 180, PI = Math.PI, EARTH_KM = 6371;
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const COL = { amber: css("--amber"), cyan: css("--cyan"), line: css("--line"), dim: css("--dim"), bg: css("--bg") };
+
+// ── 投影定義 ────────────────────────────────────────────────
+// 方位投影：k(cosc, s) 回傳徑向倍率（s = sin c）；clip = 可畫的最大角距離（度）；R = 預設取景半徑
+// 世界投影：f(lam, phi) → [x, y]；lam 已扣掉中央經線；R = 半寬
+const EE_M = Math.sqrt(3) / 2;
+const PROJ = {
+  aeqd: { name: "方位等距", az: true, clip: 180, R: PI,
+    k: (cc, s) => (s > 1e-9 ? Math.atan2(s, cc) / s : 1),
+    desc: "<b>到中心的距離與方位都正確。</b>全世界塞進一個圓；對蹠點被拉成最外圈，越外側東西向越被拉長。從中心出發的大圓航線是直線。" },
+  laea: { name: "蘭伯特方位等積", az: true, clip: 180, R: 2,
+    k: (cc) => Math.sqrt(2 / (1 + Math.max(cc, -0.999999))),
+    desc: "<b>方位正確、面積正確。</b>距離往外逐漸被壓縮，外圈陸地變扁但大小可以互相比較。" },
+  stere: { name: "平射（方位正形）", az: true, clip: 120, R: 2 * Math.tan(60 * D2R),
+    k: (cc) => 2 / (1 + cc),
+    desc: "<b>方位正確、形狀（角度）正確。</b>遠處急遽放大，這裡只畫到 120°。圓在圖上仍是圓。" },
+  gnom: { name: "日晷（大圓全直線）", az: true, clip: 65, R: Math.tan(65 * D2R),
+    k: (cc) => 1 / cc,
+    desc: "<b>所有大圓都是直線</b>（不只是經過中心的）。代價是畫不到半個地球，這裡只畫到 65°。航線越直＝越貼近最短路徑。" },
+  ortho: { name: "正射（太空視角）", az: true, clip: 90, R: 1,
+    k: () => 1,
+    desc: "<b>從無限遠看地球。</b>只看得到半球，邊緣嚴重壓縮；也就是 globe 模式正對中心時的樣子。" },
+  merc: { name: "麥卡托（app 平面模式）", R: PI,
+    f: (l, p) => { const q = Math.max(-85 * D2R, Math.min(85 * D2R, p)); return [l, Math.log(Math.tan(PI / 4 + q / 2))]; },
+    desc: "<b>角度正確、恆向線是直線。</b>app 目前拉近後用的投影；高緯度面積嚴重放大，大圓航線彎向極區。" },
+  eqc: { name: "等距圓柱", R: PI, f: (l, p) => [l, p],
+    desc: "經緯度直接當 x、y。沒有保任何性質，但最好算。" },
+  eqearth: { name: "Equal Earth", R: 2.7066,
+    f: (l, p) => {
+      const A1 = 1.340264, A2 = -0.081106, A3 = 0.000893, A4 = 0.003796;
+      const t = Math.asin(EE_M * Math.sin(p)), t2 = t * t, t6 = t2 * t2 * t2;
+      return [l * Math.cos(t) / (EE_M * (A1 + 3 * A2 * t2 + t6 * (7 * A3 + 9 * A4 * t2))), t * (A1 + A2 * t2 + t6 * (A3 + A4 * t2))];
+    },
+    desc: "<b>面積正確</b>的世界地圖（Mapbox 內建）。適合比較各洲航線密度。" },
+  natearth: { name: "Natural Earth", R: 2.7356,
+    f: (l, p) => {
+      const p2 = p * p, p4 = p2 * p2;
+      return [l * (0.8707 - 0.131979 * p2 + p4 * (-0.013791 + p4 * (0.003971 * p2 - 0.001529 * p4))),
+              p * (1.007226 + p2 * (0.015085 + p4 * (-0.044475 + 0.028874 * p2 - 0.005916 * p4)))];
+    },
+    desc: "折衷投影（Mapbox 內建）：面積、形狀都不完全正確，但整體看起來最自然。" },
+  winkel: { name: "Winkel Tripel", R: 2.566,
+    f: (l, p) => {
+      const cp = Math.cos(p), a = Math.acos(cp * Math.cos(l / 2)), sinc = a < 1e-9 ? 1 : Math.sin(a) / a;
+      return [0.5 * (l * (2 / PI) + 2 * cp * Math.sin(l / 2) / sinc), 0.5 * (p + Math.sin(p) / sinc)];
+    },
+    desc: "折衷投影（Mapbox 內建），國家地理學會世界地圖用的那一種。" },
+};
+const ORDER = ["aeqd", "laea", "stere", "gnom", "ortho", "merc", "eqc", "eqearth", "natearth", "winkel"];
+
+// ── 幾何工具（全部用單位向量，換中心只要換基底）──────────────
+const uv = (latDeg, lngDeg) => { const p = latDeg * D2R, l = lngDeg * D2R, c = Math.cos(p); return [c * Math.cos(l), c * Math.sin(l), Math.sin(p)]; };
+
+/** 經緯度折線 → 沿大圓補點（每段 ≤ stepDeg）的單位向量陣列 Float32Array(n*3) */
+function densify(lls, stepDeg = 1.5) {
+  const out = [];
+  let prev = null;
+  for (const [lat, lng] of lls) {
+    const b = uv(lat, lng);
+    if (prev) {
+      const dot = Math.max(-1, Math.min(1, prev[0] * b[0] + prev[1] * b[1] + prev[2] * b[2]));
+      const n = Math.ceil(Math.acos(dot) / (stepDeg * D2R));
+      for (let i = 1; i < n; i++) {
+        const t = i / n, x = prev[0] + (b[0] - prev[0]) * t, y = prev[1] + (b[1] - prev[1]) * t, z = prev[2] + (b[2] - prev[2]) * t;
+        const m = Math.hypot(x, y, z) || 1;
+        out.push(x / m, y / m, z / m);
+      }
+    }
+    out.push(b[0], b[1], b[2]);
+    prev = b;
+  }
+  return new Float32Array(out);
+}
+
+/** 以 (lat0,lng0) 為中心的投影函式：(x,y,z) 單位向量 → 寫入 o[0..1]，回傳 false = 被裁掉 */
+function makeProjector(key, lat0, lng0) {
+  const P = PROJ[key];
+  if (P.az) {
+    const C = uv(lat0, lng0), l0 = lng0 * D2R, p0 = lat0 * D2R;
+    const E = [-Math.sin(l0), Math.cos(l0), 0];
+    const N = [-Math.sin(p0) * Math.cos(l0), -Math.sin(p0) * Math.sin(l0), Math.cos(p0)];
+    const minCos = Math.cos(P.clip * D2R) - 1e-9;
+    return (x, y, z, o) => {
+      const cc = x * C[0] + y * C[1] + z * C[2];
+      if (cc < minCos) return false;
+      const xe = x * E[0] + y * E[1] + z * E[2], yn = x * N[0] + y * N[1] + z * N[2];
+      const k = P.k(cc, Math.hypot(xe, yn));
+      o[0] = k * xe; o[1] = k * yn;
+      return true;
+    };
+  }
+  const l0 = lng0 * D2R;
+  return (x, y, z, o) => {
+    let l = Math.atan2(y, x) - l0;
+    if (l > PI) l -= 2 * PI; else if (l < -PI) l += 2 * PI;
+    const r = P.f(l, Math.asin(Math.max(-1, Math.min(1, z))));
+    o[0] = r[0]; o[1] = r[1];
+    return true;
+  };
+}
+
+// ── 狀態 ─────────────────────────────────────────────────────
+const S = { key: "aeqd", icao: "RCTP", lat0: 25.0777, lng0: 121.2328, zoom: 1, ox: 0, oy: 0,
+  flights: [], land: [], grat: [], rings: {}, airports: null };
+const $ = (id) => document.getElementById(id);
+
+// 經緯網（固定）
+for (let lng = -180; lng < 180; lng += 30) { const l = []; for (let lat = -90; lat <= 90; lat += 2) l.push([lat, lng]); S.grat.push(densify(l, 5)); }
+for (let lat = -60; lat <= 60; lat += 30) { const l = []; for (let lng = -180; lng <= 180; lng += 2) l.push([lat, lng]); S.grat.push(densify(l, 5)); }
+
+/** 距離圈：距中心 km 的小圓 */
+function ring(km, lat0, lng0) {
+  const c = km / EARTH_KM, p0 = lat0 * D2R, pts = [];
+  for (let b = 0; b <= 360; b += 2) {
+    const br = b * D2R;
+    const p = Math.asin(Math.sin(p0) * Math.cos(c) + Math.cos(p0) * Math.sin(c) * Math.cos(br));
+    const l = lng0 * D2R + Math.atan2(Math.sin(br) * Math.sin(c) * Math.cos(p0), Math.cos(c) - Math.sin(p0) * Math.sin(p));
+    pts.push([p / D2R, l / D2R]);
+  }
+  return densify(pts, 5);
+}
+
+// ── 繪製 ─────────────────────────────────────────────────────
+const tmp = [0, 0];
+function strokeLine(ctx, vs, proj, cx, cy, sc, jump) {
+  let pen = false, px = 0, py = 0;
+  for (let i = 0; i < vs.length; i += 3) {
+    if (!proj(vs[i], vs[i + 1], vs[i + 2], tmp)) { pen = false; continue; }
+    const x = tmp[0], y = tmp[1];
+    if (pen && Math.hypot(x - px, y - py) < jump) ctx.lineTo(cx + sc * x, cy - sc * y);
+    else ctx.moveTo(cx + sc * x, cy - sc * y);
+    pen = true; px = x; py = y;
+  }
+}
+
+function draw(ctx, W, H, key, view, thumb) {
+  const P = PROJ[key], proj = makeProjector(key, S.lat0, S.lng0);
+  const aspect = P.az ? 1 : 0.55; // 世界投影高約為寬的一半
+  const sc = Math.min(W / (2 * P.R), H / (2 * P.R * aspect)) * 0.94 * view.zoom;
+  const cx = W / 2 + view.ox, cy = H / 2 + view.oy;
+  const jump = P.R * 0.3; // 投影後跳太遠就斷線（換日線、對蹠點附近）
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = COL.bg; ctx.fillRect(0, 0, W, H);
+
+  if (P.az) { // 投影邊界
+    ctx.beginPath(); ctx.arc(cx, cy, sc * P.R, 0, 2 * PI);
+    ctx.strokeStyle = COL.line; ctx.lineWidth = 1; ctx.stroke();
+  }
+  if ($("cGrat").checked) {
+    ctx.beginPath(); for (const g of S.grat) strokeLine(ctx, g, proj, cx, cy, sc, jump);
+    ctx.strokeStyle = "rgba(125,136,150,0.16)"; ctx.lineWidth = 0.6; ctx.stroke();
+  }
+  if ($("cLand").checked) {
+    ctx.beginPath(); for (const g of S.land) strokeLine(ctx, g, proj, cx, cy, sc, jump);
+    ctx.strokeStyle = "rgba(214,221,230,0.42)"; ctx.lineWidth = thumb ? 0.5 : 0.8; ctx.stroke();
+  }
+  if ($("cRings").checked) {
+    ctx.font = "10px -apple-system, sans-serif"; ctx.fillStyle = COL.dim;
+    for (let km = 2000; km <= 20000; km += 2000) {
+      const r = S.rings[km];
+      if (!r) continue;
+      ctx.beginPath(); strokeLine(ctx, r, proj, cx, cy, sc, jump);
+      ctx.strokeStyle = km % 10000 === 0 ? "rgba(255,179,71,0.5)" : "rgba(255,179,71,0.2)";
+      ctx.lineWidth = 0.7; ctx.stroke();
+      if (!thumb) { // 標籤放在方位 135°（東南）那一點
+        const i = Math.round(r.length / 3 * (135 / 360)) * 3;
+        if (proj(r[i], r[i + 1], r[i + 2], tmp)) ctx.fillText((km / 1000) + "k km", cx + sc * tmp[0] + 3, cy - sc * tmp[1] - 3);
+      }
+    }
+  }
+
+  // 軌跡：加法混色，密集走廊會自己亮起來
+  ctx.globalCompositeOperation = "lighter";
+  ctx.lineWidth = thumb ? 0.4 : 0.9;
+  for (const [flag, id, color] of [[true, "cDep", "rgba(255,179,71,0.30)"], [false, "cArr", "rgba(95,212,255,0.26)"]]) {
+    if (!$(id).checked) continue;
+    ctx.beginPath();
+    for (const f of S.flights) if (f.dep === flag) strokeLine(ctx, f.vs, proj, cx, cy, sc, jump);
+    ctx.strokeStyle = color; ctx.stroke();
+  }
+  ctx.globalCompositeOperation = "source-over";
+
+  // 中心點
+  const c = uv(S.lat0, S.lng0);
+  if (proj(c[0], c[1], c[2], tmp)) {
+    ctx.beginPath(); ctx.arc(cx + sc * tmp[0], cy - sc * tmp[1], thumb ? 1.5 : 3, 0, 2 * PI);
+    ctx.fillStyle = "#fff"; ctx.fill();
+  }
+}
+
+const cv = $("cv"), mainCtx = cv.getContext("2d");
+let raf = 0;
+function redraw() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paintMain(); }); }
+function paintMain() {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== W * dpr || cv.height !== H * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
+  mainCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw(mainCtx, W, H, S.key, S, false);
+  $("hud").textContent = `${PROJ[S.key].name} · 中心 ${S.icao} (${S.lat0.toFixed(2)}, ${S.lng0.toFixed(2)}) · ×${S.zoom.toFixed(1)}`;
+}
+function paintThumbs() {
+  for (const el of document.querySelectorAll(".thumb")) {
+    const c = el.querySelector("canvas"), ctx = c.getContext("2d");
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    draw(ctx, 150, 92, el.dataset.key, { zoom: 1, ox: 0, oy: 0 }, true);
+    el.classList.toggle("on", el.dataset.key === S.key);
+  }
+}
+function setProj(key) {
+  S.key = key; S.zoom = 1; S.ox = 0; S.oy = 0;
+  $("proj").value = key; $("desc").innerHTML = PROJ[key].desc;
+  for (const el of document.querySelectorAll(".thumb")) el.classList.toggle("on", el.dataset.key === key);
+  redraw();
+}
+
+// ── UI ──────────────────────────────────────────────────────
+for (const k of ORDER) {
+  const o = document.createElement("option"); o.value = k; o.textContent = PROJ[k].name;
+  if (k === "merc") { const sep = document.createElement("option"); sep.disabled = true; sep.textContent = "── 世界投影（對照）──"; $("proj").append(sep); }
+  $("proj").append(o);
+  const t = document.createElement("div"); t.className = "thumb"; t.dataset.key = k;
+  t.innerHTML = `<canvas width="300" height="184"></canvas><div>${PROJ[k].name}</div>`;
+  t.onclick = () => setProj(k);
+  $("strip").append(t);
+}
+$("proj").onchange = (e) => setProj(e.target.value);
+for (const id of ["cRings", "cGrat", "cLand", "cDep", "cArr"]) $(id).onchange = () => { redraw(); paintThumbs(); };
+$("load").onclick = () => load();
+$("apSel").onchange = () => { $("apTxt").value = ""; load(); };
+$("apTxt").onkeydown = (e) => { if (e.key === "Enter") load(); };
+new ResizeObserver(redraw).observe(cv);
+
+let drag = null;
+cv.onpointerdown = (e) => { drag = { x: e.clientX, y: e.clientY, ox: S.ox, oy: S.oy }; cv.setPointerCapture(e.pointerId); cv.style.cursor = "grabbing"; };
+cv.onpointermove = (e) => { if (!drag) return; S.ox = drag.ox + e.clientX - drag.x; S.oy = drag.oy + e.clientY - drag.y; redraw(); };
+cv.onpointerup = () => { drag = null; cv.style.cursor = "grab"; };
+cv.ondblclick = () => { S.zoom = 1; S.ox = 0; S.oy = 0; redraw(); };
+cv.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const f = Math.exp(-e.deltaY * 0.0015), nz = Math.max(0.5, Math.min(60, S.zoom * f)), k = nz / S.zoom;
+  const r = cv.getBoundingClientRect(), mx = e.clientX - r.left - r.width / 2, my = e.clientY - r.top - r.height / 2;
+  S.ox = mx - (mx - S.ox) * k; S.oy = my - (my - S.oy) * k; S.zoom = nz; // 以游標為錨點縮放
+  redraw();
+}, { passive: false });
+
+// ── 載入 ─────────────────────────────────────────────────────
+async function load() {
+  const icao = ($("apTxt").value.trim() || $("apSel").value).toUpperCase(), date = $("date").value;
+  $("err").textContent = ""; $("stat").textContent = "載入中…";
+  try {
+    if (!S.airports) {
+      const gj = await (await fetch("/airport-points.geojson")).json();
+      S.airports = new Map(gj.features.map((f) => [f.properties.icao, f]));
+    }
+    const ap = S.airports.get(icao);
+    if (!ap) throw new Error(`找不到機場 ${icao}`);
+    const res = await fetch(`/tracks/airports/${icao}/${date}.l2.jsonl`);
+    const text = res.ok ? await res.text() : "";
+    if (!res.ok || text.trimStart().startsWith("<")) throw new Error(`${icao} 在 ${date} 沒有軌跡檔（本機 public/tracks/airports/${icao}/${date}.l2.jsonl）`);
+    const flights = [];
+    let pts = 0;
+    for (const line of text.split("\n")) {
+      if (!line) continue;
+      const f = JSON.parse(line);
+      if (!f.path || f.path.length < 2) continue;
+      const vs = densify(f.path); // path[i] = [lat, lng, alt(m), t]
+      pts += vs.length / 3;
+      flights.push({ dep: f.origin_icao === icao, vs });
+    }
+    S.flights = flights; S.icao = icao;
+    [S.lng0, S.lat0] = ap.geometry.coordinates;
+    S.rings = {}; for (let km = 2000; km <= 20000; km += 2000) S.rings[km] = ring(km, S.lat0, S.lng0);
+    const dep = flights.filter((f) => f.dep).length;
+    $("stat").textContent = `${ap.properties.nameZh || ap.properties.name}\n${date}　${flights.length} 班（出發 ${dep}／抵達 ${flights.length - dep}）\n補點後 ${pts.toLocaleString()} 個頂點（L2）`;
+    S.zoom = 1; S.ox = 0; S.oy = 0;
+    redraw(); paintThumbs();
+  } catch (err) {
+    $("stat").textContent = ""; $("err").textContent = String(err.message || err);
+  }
+}
+
+const land = await (await fetch("/design-tools/projection-lab/ne_110m_land.geojson")).json();
+for (const f of land.features) {
+  const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+  for (const poly of polys) for (const ringLL of poly) S.land.push(densify(ringLL.map(([lng, lat]) => [lat, lng]), 2));
+}
+setProj("aeqd");
+await load();
+</script>
+</body>
+</html>
