@@ -72,6 +72,8 @@ interface CinemaBarProps {
   onUpdateKeyframe: (id: string, updates: Partial<CameraKeyframe>) => void;
   onMoveKeyframe: (id: string, direction: -1 | 1) => void;
   onPreviewKeyframe: (id: string) => void;
+  /** 有關鍵幀是在別的投影／標準地圖下取的：停用播放與錄影 */
+  keyframeSpaceMismatch?: boolean;
   onPlaySequence: () => void;
   onStopSequence: () => void;
   sequenceProgress: number;
@@ -114,6 +116,7 @@ export function CinemaBar({
   onUpdateKeyframe,
   onMoveKeyframe,
   onPreviewKeyframe,
+  keyframeSpaceMismatch = false,
   onPlaySequence,
   onStopSequence,
   sequenceProgress,
@@ -261,7 +264,10 @@ export function CinemaBar({
               {/* 操作按鈕列 */}
               <div style={{ display: "flex", gap: SPACE.s6, alignItems: "center", flexWrap: "wrap" }}>
                 <Button onClick={onAddKeyframe}>+ Add KF</Button>
-                {keyframes.length >= 2 && (
+                {keyframes.length >= 1 && keyframeSpaceMismatch && (
+                  <span style={labelStyle}>有關鍵幀取自別的投影，請切回原本的投影，或在每一格按重取</span>
+                )}
+                {keyframes.length >= 2 && !keyframeSpaceMismatch && (
                   <>
                     <Button onClick={onPlaySequence} icon={<IconPlay />}>Play</Button>
                     {isRecording ? (
@@ -358,7 +364,7 @@ export function CinemaBar({
                         {seq.name}
                       </span>
                       <span style={{ ...labelStyle, fontSize: SIZE.minor }}>
-                        {seq.keyframes.length} KF
+                        {seq.keyframes[0]?.space ? `${seq.keyframes[0].space.replace("|", " ")} · ` : ""}{seq.keyframes.length} KF
                       </span>
                       <Button variant="ghost" onClick={() => { onLoadSequence(seq.id); setShowLoadList(false); }} style={{ height: 24 }}>
                         Load

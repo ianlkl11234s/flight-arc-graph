@@ -112,7 +112,13 @@ function buildAtlasPopupHtml(p: AtlasProps): string {
 }
 
 /** 左上字標 FLIGHT ARC + 相機 HUD（座標、zoom、俯角、方位）。 */
-function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: number; pitch: number; bearing: number } }) {
+const PLANE_NAMES: Record<PlaneKind, string> = { aeqd: "方位等距", laea: "方位等積", gnom: "日晷" };
+
+function Brand({ cameraInfo, planeLabel }: {
+  cameraInfo: { lng: number; lat: number; zoom: number; pitch: number; bearing: number };
+  /** 平面方位投影中：鏡頭座標沒有意義，改顯示投影名稱與中心 */
+  planeLabel?: string;
+}) {
   const { tokens } = useTheme();
   const lat = `${Math.abs(cameraInfo.lat).toFixed(4)}°${cameraInfo.lat >= 0 ? "N" : "S"}`;
   const lng = `${Math.abs(cameraInfo.lng).toFixed(4)}°${cameraInfo.lng >= 0 ? "E" : "W"}`;
@@ -145,7 +151,7 @@ function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: n
           pointerEvents: "auto",
         }}
       >
-        {lat} {lng} · z{cameraInfo.zoom.toFixed(1)} · 俯角 {cameraInfo.pitch}° · 方位 {cameraInfo.bearing}°
+        {planeLabel || `${lat} ${lng}`} · z{cameraInfo.zoom.toFixed(1)} · 俯角 {cameraInfo.pitch}° · 方位 {cameraInfo.bearing}°
       </span>
     </div>
   );
@@ -698,7 +704,12 @@ export default function App() {
       timeline.setSelectedDate(preferredDate);
     }
   }, [selectedAirport, airportSet, isAirportScope, availableDates, preferredDate, timeline]);
-  const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode });
+  // 平面方位投影下鏡頭座標是投影平面上的假經緯度：關鍵幀要記是在哪個投影取的，讀數改顯示投影名稱
+  const planeSpace = planeKind && planeAvailable ? `${planeKind}|${selectedAirport}` : "";
+  const planeHudLabel = planeKind && planeAvailable ? `${PLANE_NAMES[planeKind]} · 中心 ${selectedAirport}` : "";
+  const planeHudLabelRef = useRef(planeHudLabel);
+  planeHudLabelRef.current = planeHudLabel;
+  const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode, space: planeSpace });
   const recorder = useCanvasRecorder({ map: mapRef.current });
   const isRecording = recorder.recordingState === "recording";
   const isExporting = isRecording || recorder.recordingState === "hq";
@@ -743,7 +754,8 @@ export default function App() {
     let cameraLabel = "";
     if (map) {
       const c = map.getCenter();
-      cameraLabel = `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)} z${map.getZoom().toFixed(1)} pitch ${map.getPitch().toFixed(0)} bearing ${map.getBearing().toFixed(0)}`;
+      const where = planeHudLabelRef.current || `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`;
+      cameraLabel = `${where} z${map.getZoom().toFixed(1)} pitch ${map.getPitch().toFixed(0)} bearing ${map.getBearing().toFixed(0)}`;
     }
     return {
       regionTitle: overlayTitleRef.current,
@@ -2324,7 +2336,7 @@ export default function App() {
                   textShadow: CAP.softShadow,
                 }}
               >
-                {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
+                {planeHudLabel || `${cameraInfo.lat}, ${cameraInfo.lng}`} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
               </div>
               {/* Trail 模式切換 — 放在標題欄內，座標行換行時也不會貼上來；錄製中隨標題一起隱藏 */}
               <div style={{ marginTop: SPACE.s12, pointerEvents: "auto", display: "flex" }}>
@@ -2347,6 +2359,7 @@ export default function App() {
               orbitDirection={cinema.orbitDirection}
               onOrbitDirectionChange={cinema.setOrbitDirection}
               keyframes={cinema.keyframes}
+              keyframeSpaceMismatch={cinema.spaceMismatch}
               cinemaPhase={cinema.cinemaPhase}
               onAddKeyframe={cinema.addKeyframe}
               onRemoveKeyframe={cinema.removeKeyframe}
@@ -2653,7 +2666,7 @@ export default function App() {
           </div>
 
           {/* 左上：字標 + 相機 HUD */}
-          <Brand cameraInfo={cameraInfo} />
+          <Brand cameraInfo={cameraInfo} planeLabel={planeHudLabel} />
 
           {/* 右下 dock：方位球 + 點擊資訊卡（R1、R5） */}
           <Dock>
