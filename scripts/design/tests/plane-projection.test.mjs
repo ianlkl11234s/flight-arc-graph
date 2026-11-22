@@ -1,6 +1,7 @@
 // 平面方位投影數學（src/map/planeProjection.ts）
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   createPlaneProjector,
   greatCircleKm,
@@ -201,4 +202,34 @@ test("陸地填色（日晷）：整塊在 75° 外的陸塊不畫", () => {
   const antipode = [-RCTP[0], RCTP[1] - 180];
   const withCap = projectPolygons(p, [near, [rangeRing(10, 110, 300, 10).flat()], [rangeRing(...antipode, 1500, 5).flat()]]);
   assert.equal(withCap.length, 2);
+});
+
+test("陸地填色（真實海岸線）：等積投影下不論中心在哪，陸地都佔圓盤約 29%；沒有任何一塊蓋住整個圓盤", () => {
+  const land = JSON.parse(readFileSync(new URL("../../../public/basemap/ne_50m_land.json", import.meta.url), "utf8"));
+  const area = (ring) => {
+    let a = 0;
+    for (let i = 0; i < ring.length - 1; i++) {
+      const A = lngLatToMercator(...ring[i]), B = lngLatToMercator(...ring[i + 1]);
+      a += A.x * B.y - B.x * A.y;
+    }
+    return a / 2;
+  };
+  // 對蹠點在陸地上（SCEL、WIII）、南半球（YSSY）、高緯（ENGM、PANC）、台灣
+  const centers = { RCTP: [25.08, 121.23], SCEL: [-33.39, -70.79], WIII: [-6.13, 106.66], YSSY: [-33.95, 151.18], ENGM: [60.19, 11.1], PANC: [61.17, -150] };
+  for (const [name, c] of Object.entries(centers)) {
+    for (const kind of ["laea", "aeqd", "gnom"]) {
+      const p = createPlaneProjector(kind, ...c);
+      const disc = Math.PI * p.rimRadius ** 2;
+      let total = 0;
+      for (const poly of projectPolygons(p, land.polygons)) {
+        const a = poly.map(area);
+        const net = Math.abs(a[0]) - a.slice(1).reduce((sum, v) => sum + Math.abs(v), 0);
+        assert.ok(net >= 0 && net < 0.6 * disc, `${name} ${kind} 單一陸塊 ${(net / disc).toFixed(2)}`);
+        total += net;
+      }
+      // 等積投影保面積 → 陸地比例就是地球的陸地比例，和中心無關
+      if (kind === "laea") assert.ok(Math.abs(total / disc - 0.287) < 0.005, `${name} ${(total / disc).toFixed(3)}`);
+      else assert.ok(total / disc > 0.05 && total / disc < 0.6, `${name} ${kind} ${(total / disc).toFixed(3)}`);
+    }
+  }
 });

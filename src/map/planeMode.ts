@@ -496,8 +496,15 @@ function startMorph(map: MbMap, st: State, from: PlaneRadial) {
       notifyActivity(map);
       return;
     }
-    const proj = applyProjection(map, cfg, { from, t: easeInOut(x) });
-    if (land) syncCoarseLand(map, proj, land);
+    try {
+      const proj = applyProjection(map, cfg, { from, t: easeInOut(x) });
+      if (land) syncCoarseLand(map, proj, land);
+    } catch {
+      // 動畫中切了底圖：style 還在重載，加不了 source。放棄動畫，style.load 重套時直接定在終點
+      st.anim = null;
+      setPlaneProjection({ kind: cfg.kind, lat: cfg.lat, lng: cfg.lng });
+      return;
+    }
     notifyActivity(map);
     st.anim = requestAnimationFrame(frame);
   };
@@ -541,8 +548,10 @@ export function applyPlaneMode(map: MbMap, cfg: PlaneModeConfig, isDark: boolean
   if (map.getRenderWorldCopies()) map.setRenderWorldCopies(false);
   hideRealWorldLayers(map, st);
 
-  // style 重載後 source 全沒了 → 陸地要重灌
+  // style 重載後 source 全沒了 → 陸地要重灌；進行中的展開動畫也不接續，直接定在終點
+  const styleReloaded = prev !== null && !map.getSource(SRC.land);
   if (!map.getSource(SRC.land)) st.landKey = "";
+  if (styleReloaded) stopAnim(st);
   ensureLayers(map);
   applyPaint(map, cfg, isDark);
 
