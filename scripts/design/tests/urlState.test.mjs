@@ -34,6 +34,14 @@ describe("網址記住狀態（R8／P6）", () => {
     assert.equal(s, "?v=1&set=RCTP,RJAA&t=11:41");
   });
 
+  it("平面方位投影 proj：往返一致；不認得的值忽略", () => {
+    const state = { airport: "RJAA", date: "2026-02-19", plane: "aeqd" };
+    assert.deepEqual(roundTrip(state), state);
+    assert.equal(decodeUrlState("?proj=gnom").plane, "gnom");
+    assert.deepEqual(decodeUrlState("?proj=mercator"), {});
+    assert.deepEqual(decodeUrlState("?proj=__proto__"), {});
+  });
+
   it("預設值不寫：全部預設 → 空字串（不帶 ?、不寫 v）", () => {
     const q = encodeUrlState({
       airport: "RCTP", date: "2026-02-18", days: 1, depArr: "all", colorBy: "altitude",

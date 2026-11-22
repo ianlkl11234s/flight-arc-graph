@@ -63,6 +63,9 @@ export interface IconRailSidebarProps {
   planeKind: PlaneKind | null;
   planeAvailable: boolean;
   onPlaneKindChange: (v: PlaneKind | null) => void;
+  /** 平面投影自畫底圖（海岸線＋經緯網）亮度 0–1 */
+  planeBasemapOpacity: number;
+  onPlaneBasemapOpacityChange: (v: number) => void;
   mapStyleId: string;
   // Slider values
   altExaggeration: number;

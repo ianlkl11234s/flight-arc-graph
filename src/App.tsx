@@ -37,6 +37,7 @@ import { Toolbar } from "./components/Toolbar";
 import { Dock, DockItem } from "./components/Dock";
 import { LoadingStatus } from "./components/LoadingStatus";
 import { BudgetNotice } from "./components/BudgetNotice";
+import { PlaneNotice } from "./components/PlaneNotice";
 import { setTrackPointBudgetOverride } from "./data/memoryBudget";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
@@ -353,6 +354,7 @@ export default function App() {
   const [farView, setFarView] = useState(false);
   // 平面方位投影（null = 標準 mercator／globe）；只在單一機場檢視下生效，中心＝該機場
   const [planeKind, setPlaneKind] = useState<PlaneKind | null>(null);
+  const [planeBasemapOpacity, setPlaneBasemapOpacity] = useState(1);
   const [farViewBoost, setFarViewBoost] = useState(7.5);
   // Multi-condition filters（Deep Analysis 面板掌控；scene preset 也會寫入）
   const [flightFilters, setFlightFilters] = useState<FlightFilters>(EMPTY_FILTERS);
@@ -1977,6 +1979,7 @@ export default function App() {
         // 5. 篩選、配色、染色
         if (target.depArr) setDepArrFilter(target.depArr);
         if (target.theme) live().handleColorThemeChange(target.theme);
+        if (target.plane) setPlaneKind(target.plane);
         if (target.colorBy === "deparr" && live().depArrDisabledReason === null) live().handleTrajColorByChange("deparr");
 
         // 6. 播放時刻：有 t ＝ 暫停在該時刻（自動播放已在載完時觸發，這裡蓋掉）
@@ -2024,7 +2027,7 @@ export default function App() {
   }, [
     urlWriteEnabled, writeUrlNow, dataSource, scope, region, selectedAirport, airportSet, setName,
     timeline.selectedDate, timeline.rangeDays, timeline.selectedDates, timeline.playing, urlTimeKey,
-    depArrFilter, trajColorBy, depArrDisabledReason, colorThemeKey, flightCardId, selectedFlightId, trackMode,
+    depArrFilter, trajColorBy, depArrDisabledReason, colorThemeKey, flightCardId, selectedFlightId, trackMode, plane,
   ]);
   useEffect(() => {
     if (!urlWriteEnabled) return;
@@ -2157,6 +2160,7 @@ export default function App() {
     st.depArr = depArrFilter;
     if (depArrActive) st.colorBy = "deparr";
     st.theme = colorThemeKey;
+    if (plane) st.plane = plane.kind; // 暫停中（多機場檢視）不寫：連結開出來不會是投影畫面
     // 有 t ＝ 暫停在該時刻；播放中不寫（不每幀改網址）
     if (!timeline.playing) {
       const rel = Math.max(0, Math.floor(timeline.currentTime - timeline.windowStart));
@@ -2206,6 +2210,7 @@ export default function App() {
         styleUrl={styleUrl}
         pureBlack={mapStyleId === "black"}
         plane={plane}
+        planeBasemapOpacity={planeBasemapOpacity}
         flights={finalFlights}
         renderMode={renderMode}
         airportOpacity={airportOpacity}
@@ -2411,6 +2416,8 @@ export default function App() {
             planeKind={planeKind}
             planeAvailable={planeAvailable}
             onPlaneKindChange={handlePlaneKindChange}
+            planeBasemapOpacity={planeBasemapOpacity}
+            onPlaneBasemapOpacityChange={setPlaneBasemapOpacity}
             onDisplayModeChange={setDisplayMode}
             onAltExaggerationChange={setAltExaggeration}
             onAltOffsetChange={setAltOffset}
@@ -2861,6 +2868,13 @@ export default function App() {
         right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : isMobile ? MOBILE_STATUS_RIGHT : undefined}
         failOnly={captureMode}
         hidden={(captureMode && isExporting) || bootMask || memoryBudget?.blocked === true}
+      />
+      <PlaneNotice
+        show={planeKind !== null && !planeAvailable && !captureMode && !bootMask}
+        reason={dataSource === "fused" ? "空域資料" : atlasVisible ? "機場總覽" : airportSet !== null ? "多機場組合" : "區域檢視"}
+        onDisable={() => setPlaneKind(null)}
+        top={isMobile ? mobileStatusTop : undefined}
+        right={isMobile ? MOBILE_STATUS_RIGHT : undefined}
       />
       <BudgetNotice
         status={memoryBudget}

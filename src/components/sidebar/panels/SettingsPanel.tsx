@@ -109,6 +109,15 @@ export function SettingsPanel(props: IconRailSidebarProps) {
           onChange={(v) => props.onPlaneKindChange(v === "std" ? null : v)}
         />
         {props.planeKind && (
+          <Slider
+            label="底圖"
+            value={props.planeBasemapOpacity}
+            min={0} max={1} step={0.05}
+            format={(v) => `${Math.round(v * 100)}%`}
+            onChange={props.onPlaneBasemapOpacityChange}
+          />
+        )}
+        {props.planeKind && (
           <div style={{ color: tokens.fg2, fontSize: SIZE.minor, fontFamily: FONT.ui, lineHeight: 1.45 }}>
             {props.planeAvailable ? PLANE_HINTS[props.planeKind] : "方位投影以單一機場為中心；切回 This Airport 後生效。"}
           </div>

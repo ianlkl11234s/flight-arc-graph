@@ -15,6 +15,7 @@
  */
 import { BUILTIN_SETS } from "../map/savedSets";
 import { COLOR_THEMES, DEFAULT_THEME_KEY } from "../types/colorTheme";
+import { PLANE_KINDS, type PlaneKind } from "../map/planeProjection";
 
 export const URL_STATE_VERSION = 1;
 
@@ -53,6 +54,8 @@ export interface UrlState {
   colorBy?: "altitude" | "deparr";
   /** `th`：軌跡配色主題 key（COLOR_THEMES） */
   theme?: string;
+  /** `proj`：平面方位投影（不寫＝標準）；只在單一機場檢視生效 */
+  plane?: PlaneKind;
   /** `t`：暫停中的播放時刻（播放中不寫） */
   time?: UrlTime;
   /** `cam`：鏡頭 */
@@ -227,6 +230,8 @@ export function decodeUrlState(search: string): UrlState {
   if (cb === "deparr" || cb === "altitude") state.colorBy = cb;
   const th = get("th");
   if (th && Object.prototype.hasOwnProperty.call(COLOR_THEMES, th)) state.theme = th;
+  const proj = get("proj");
+  if (proj && (PLANE_KINDS as readonly string[]).includes(proj)) state.plane = proj as PlaneKind;
 
   const t = get("t");
   if (t) {
@@ -267,6 +272,7 @@ export function encodeUrlState(state: UrlState, opts: EncodeOptions = {}): URLSe
   if (state.depArr && state.depArr !== URL_DEFAULTS.depArr) q.set("f", state.depArr);
   if (state.colorBy && state.colorBy !== URL_DEFAULTS.colorBy) q.set("cb", state.colorBy);
   if (state.theme && state.theme !== URL_DEFAULTS.theme) q.set("th", state.theme);
+  if (state.plane) q.set("proj", state.plane);
   if (state.time) q.set("t", formatTime(state.time));
 
   if (state.camera && !(opts.defaultCamera && sameCamera(state.camera, opts.defaultCamera))) {

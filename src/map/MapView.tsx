@@ -3,7 +3,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { CameraPreset, Flight, RenderMode } from "../types";
 import { updateStaticTrails, setStaticTrailsOpacity, setStaticTrailsVisible, setStaticTrailsLineWidth } from "./staticTrails";
-import { applyPlaneMode, exitPlaneMode, isPlaneModeActive, planeFitCamera, type PlaneModeConfig } from "./planeMode";
+import { applyPlaneMode, exitPlaneMode, isPlaneModeActive, planeFitCamera, setPlaneBasemapOpacity, type PlaneModeConfig } from "./planeMode";
 
 interface MapViewProps {
   preset: CameraPreset;
@@ -23,6 +23,8 @@ interface MapViewProps {
   gradientColorMap?: Map<string, readonly [string, string]>;
   /** 平面方位投影模式（null/undefined = 標準）；見 map/planeMode.ts */
   plane?: PlaneModeConfig | null;
+  /** 平面投影自畫底圖（海岸線＋經緯網）的亮度 0–1 */
+  planeBasemapOpacity?: number;
   onMapReady?: (map: mapboxgl.Map) => void;
 }
 
@@ -246,7 +248,7 @@ function removeCustomLayers(map: mapboxgl.Map) {
   }
 }
 
-export function MapView({ preset, styleUrl, pureBlack = false, plane, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, gradientColorMap, onMapReady }: MapViewProps) {
+export function MapView({ preset, styleUrl, pureBlack = false, plane, planeBasemapOpacity = 1, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, gradientColorMap, onMapReady }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const readyRef = useRef(false);
@@ -422,6 +424,11 @@ export function MapView({ preset, styleUrl, pureBlack = false, plane, flights, r
       duration: 2000,
     });
   }, [preset]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map) setPlaneBasemapOpacity(map, planeBasemapOpacity);
+  }, [planeBasemapOpacity]);
 
   // 平面方位投影模式：進入／換中心／換投影種類／離開
   const planeKind = plane?.kind;

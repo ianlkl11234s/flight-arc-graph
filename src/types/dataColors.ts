@@ -94,8 +94,9 @@ export const CAPTURE_OVERLAY = {
 /** 平面方位投影模式的自畫底圖（海岸線／經緯網／距離圈）；疊在地圖上、依底圖明暗兩組 */
 export const PLANE_BASEMAP_COLORS = {
   dark: {
-    coast: "rgba(214,221,230,0.50)",
-    grat: "rgba(125,136,150,0.20)",
+    // 海岸線用偏藍的灰：深色主題下軌跡是白／暖色細線，同樣用白線會分不出來
+    coast: "rgba(96,140,184,0.62)",
+    grat: "rgba(96,140,184,0.20)",
     ring: "rgba(255,179,71,0.26)",
     ringMajor: "rgba(255,179,71,0.60)",
     rim: "rgba(214,221,230,0.35)",
@@ -104,8 +105,8 @@ export const PLANE_BASEMAP_COLORS = {
     halo: "#000000",
   },
   light: {
-    coast: "rgba(40,48,58,0.60)",
-    grat: "rgba(40,48,58,0.14)",
+    coast: "rgba(70,96,110,0.60)",
+    grat: "rgba(70,96,110,0.16)",
     ring: "rgba(176,108,10,0.32)",
     ringMajor: "rgba(176,108,10,0.70)",
     rim: "rgba(40,48,58,0.40)",

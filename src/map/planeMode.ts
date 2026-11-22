@@ -81,6 +81,20 @@ function loadCoast(): Promise<number[][]> {
   return coastPromise;
 }
 
+/** 自畫底圖（海岸線＋經緯網）的亮度倍率；1 = 預設。模式外也可先設，進入時套用 */
+let basemapOpacity = 1;
+export function setPlaneBasemapOpacity(map: MbMap, v: number) {
+  basemapOpacity = Math.max(0, Math.min(1, v));
+  if (!states.has(map)) return;
+  applyBasemapOpacity(map);
+  notifyActivity(map);
+}
+function applyBasemapOpacity(map: MbMap) {
+  for (const id of [LYR.coast, LYR.grat]) {
+    if (map.getLayer(id)) map.setPaintProperty(id, "line-opacity", basemapOpacity);
+  }
+}
+
 export function isPlaneModeActive(map: MbMap): boolean {
   return states.has(map);
 }
@@ -300,6 +314,7 @@ function syncBasemap(map: MbMap, st: State, cfg: PlaneModeConfig, isDark: boolea
   map.setPaintProperty(LYR.center, "circle-stroke-color", c.halo);
   map.setPaintProperty(LYR.centerLabel, "text-color", c.center);
   map.setPaintProperty(LYR.centerLabel, "text-halo-color", c.halo);
+  applyBasemapOpacity(map);
 }
 
 function removeBasemap(map: MbMap) {
