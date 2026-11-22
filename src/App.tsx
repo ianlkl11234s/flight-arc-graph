@@ -6,6 +6,8 @@ import { EVENT_PRESETS, type EventPreset } from "./map/events";
 import { BUILTIN_SETS } from "./map/savedSets";
 import type { FlightScene } from "./three/FlightScene";
 import { MapView, ATLAS_LAYER } from "./map/MapView";
+import type { PlaneKind } from "./map/planeProjection";
+import { DEFAULT_PLANE_OPTIONS, type PlaneLabel, type PlaneModeConfig, type PlaneOptions } from "./map/planeMode";
 import { useFlightData } from "./hooks/useFlightData";
 import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -35,6 +37,7 @@ import { Toolbar } from "./components/Toolbar";
 import { Dock, DockItem } from "./components/Dock";
 import { LoadingStatus } from "./components/LoadingStatus";
 import { BudgetNotice } from "./components/BudgetNotice";
+import { PlaneNotice } from "./components/PlaneNotice";
 import { setTrackPointBudgetOverride } from "./data/memoryBudget";
 import { AIRCRAFT_CATEGORIES, type AircraftCategory, type AircraftFilterKey } from "./data/aircraftCategories";
 import { type FlightFilters, EMPTY_FILTERS, applyFilters } from "./data/classify";
@@ -109,7 +112,13 @@ function buildAtlasPopupHtml(p: AtlasProps): string {
 }
 
 /** 左上字標 FLIGHT ARC + 相機 HUD（座標、zoom、俯角、方位）。 */
-function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: number; pitch: number; bearing: number } }) {
+const PLANE_NAMES: Record<PlaneKind, string> = { aeqd: "方位等距", laea: "方位等積", gnom: "日晷" };
+
+function Brand({ cameraInfo, planeLabel }: {
+  cameraInfo: { lng: number; lat: number; zoom: number; pitch: number; bearing: number };
+  /** 平面方位投影中：鏡頭座標沒有意義，改顯示投影名稱與中心 */
+  planeLabel?: string;
+}) {
   const { tokens } = useTheme();
   const lat = `${Math.abs(cameraInfo.lat).toFixed(4)}°${cameraInfo.lat >= 0 ? "N" : "S"}`;
   const lng = `${Math.abs(cameraInfo.lng).toFixed(4)}°${cameraInfo.lng >= 0 ? "E" : "W"}`;
@@ -142,7 +151,7 @@ function Brand({ cameraInfo }: { cameraInfo: { lng: number; lat: number; zoom: n
           pointerEvents: "auto",
         }}
       >
-        {lat} {lng} · z{cameraInfo.zoom.toFixed(1)} · 俯角 {cameraInfo.pitch}° · 方位 {cameraInfo.bearing}°
+        {planeLabel || `${lat} ${lng}`} · z{cameraInfo.zoom.toFixed(1)} · 俯角 {cameraInfo.pitch}° · 方位 {cameraInfo.bearing}°
       </span>
     </div>
   );
@@ -338,7 +347,7 @@ export default function App() {
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [mapStyleId, setMapStyleId] = useState("dark");
   const isDarkTheme = !["light", "streets"].includes(mapStyleId);
-  const [renderMode, setRenderMode] = useState<RenderMode>("3d");
+  const [renderModeState, setRenderMode] = useState<RenderMode>("3d");
   const [altExaggeration, setAltExaggeration] = useState(3);
   const [altOffset, setAltOffset] = useState(50);
   const [staticOpacity, setStaticOpacity] = useState(0.1);
@@ -349,6 +358,9 @@ export default function App() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
   // Far View 遠景增強：低 zoom 時光點按 zoom 反比補償放大 + 軌跡 alpha 加成
   const [farView, setFarView] = useState(false);
+  // 平面方位投影（null = 標準 mercator／globe）；只在單一機場檢視下生效，中心＝該機場
+  const [planeKind, setPlaneKind] = useState<PlaneKind | null>(null);
+  const [planeOptions, setPlaneOptions] = useState<PlaneOptions>(DEFAULT_PLANE_OPTIONS);
   const [farViewBoost, setFarViewBoost] = useState(7.5);
   // Multi-condition filters（Deep Analysis 面板掌控；scene preset 也會寫入）
   const [flightFilters, setFlightFilters] = useState<FlightFilters>(EMPTY_FILTERS);
@@ -419,6 +431,10 @@ export default function App() {
   const trackingRef = useRef(false);
   trackingRef.current = trackMode === "single" && selectedFlightId !== null;
   const [atlasVisible, setAtlasVisible] = useState(false);
+  // 平面方位投影：組合／區域／空域資料／機場總覽沒有單一中心點，這些情況下暫停（設定保留）
+  const planeAvailable = dataSource !== "fused" && airportSet === null && scope === "airport" && !atlasVisible;
+  // 平面投影只有 3D 軌跡（custom layer）會跟著投影；2D 的 Mapbox 原生軌跡留在真實經緯度、已被藏起來
+  const renderMode: RenderMode = planeKind !== null && planeAvailable ? "3d" : renderModeState;
   // 機場點按鈕是否曾被使用者啟用過（用來決定待按小紅點是否顯示，啟用一次後永久消失）
   const [atlasEverEnabled, setAtlasEverEnabled] = useState(() => {
     try {
@@ -688,7 +704,12 @@ export default function App() {
       timeline.setSelectedDate(preferredDate);
     }
   }, [selectedAirport, airportSet, isAirportScope, availableDates, preferredDate, timeline]);
-  const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode });
+  // 平面方位投影下鏡頭座標是投影平面上的假經緯度：關鍵幀要記是在哪個投影取的，讀數改顯示投影名稱
+  const planeSpace = planeKind && planeAvailable ? `${planeKind}|${selectedAirport}` : "";
+  const planeHudLabel = planeKind && planeAvailable ? `${PLANE_NAMES[planeKind]} · 中心 ${selectedAirport}` : "";
+  const planeHudLabelRef = useRef(planeHudLabel);
+  planeHudLabelRef.current = planeHudLabel;
+  const cinema = useCinemaCamera({ map: mapRef.current, active: captureMode, space: planeSpace });
   const recorder = useCanvasRecorder({ map: mapRef.current });
   const isRecording = recorder.recordingState === "recording";
   const isExporting = isRecording || recorder.recordingState === "hq";
@@ -733,7 +754,8 @@ export default function App() {
     let cameraLabel = "";
     if (map) {
       const c = map.getCenter();
-      cameraLabel = `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)} z${map.getZoom().toFixed(1)} pitch ${map.getPitch().toFixed(0)} bearing ${map.getBearing().toFixed(0)}`;
+      const where = planeHudLabelRef.current || `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`;
+      cameraLabel = `${where} z${map.getZoom().toFixed(1)} pitch ${map.getPitch().toFixed(0)} bearing ${map.getBearing().toFixed(0)}`;
     }
     return {
       regionTitle: overlayTitleRef.current,
@@ -1276,6 +1298,7 @@ export default function App() {
       setStaticOpacity,
       setDisplayMode,
       setFarView,
+      setPlaneKind: handlePlaneKindChange,
       setMapStyle: setMapStyleId,
       setTrailDisplay,
       setTimeWindow,
@@ -1455,6 +1478,33 @@ export default function App() {
   }, [showTerminator, isDarkTheme, mapStyleId]);
 
   const showTrails = displayMode === "trails";
+
+  const planeCenter = airportMeta[selectedAirport];
+  const planeLat = planeCenter?.lat;
+  const planeLng = planeCenter?.lng;
+  // 圓盤上標名字的機場：這批航班另一端班次最多的前 15 座
+  const planeDestinations = useMemo<PlaneLabel[]>(() => {
+    if (!planeKind || !planeAvailable) return [];
+    const counts = new Map<string, number>();
+    for (const f of finalFlights) {
+      const other = f.origin_icao === selectedAirport ? f.dest_icao : f.origin_icao;
+      if (other && other !== selectedAirport) counts.set(other, (counts.get(other) ?? 0) + 1);
+    }
+    const out: PlaneLabel[] = [];
+    for (const [icao, weight] of [...counts].sort((a, b) => b[1] - a[1])) {
+      const m = airportMeta[icao];
+      if (!m) continue;
+      out.push({ lat: m.lat, lng: m.lng, code: m.iata || icao, weight });
+      if (out.length >= 15) break;
+    }
+    return out;
+  }, [planeKind, planeAvailable, finalFlights, selectedAirport, airportMeta]);
+  const plane = useMemo<PlaneModeConfig | null>(
+    () => (planeKind && planeAvailable && planeLat !== undefined && planeLng !== undefined
+      ? { kind: planeKind, lat: planeLat, lng: planeLng, label: selectedAirport, options: planeOptions, destinations: planeDestinations }
+      : null),
+    [planeKind, planeAvailable, planeLat, planeLng, selectedAirport, planeOptions, planeDestinations],
+  );
 
   // 沒 preset 也沒座標時，保留上一個有效視角（不飛回桃園 CAMERA_PRESETS[0]）
   const lastPresetRef = useRef(CAMERA_PRESETS[0]!);
@@ -1958,6 +2008,7 @@ export default function App() {
         // 5. 篩選、配色、染色
         if (target.depArr) setDepArrFilter(target.depArr);
         if (target.theme) live().handleColorThemeChange(target.theme);
+        if (target.plane) setPlaneKind(target.plane);
         if (target.colorBy === "deparr" && live().depArrDisabledReason === null) live().handleTrajColorByChange("deparr");
 
         // 6. 播放時刻：有 t ＝ 暫停在該時刻（自動播放已在載完時觸發，這裡蓋掉）
@@ -2005,7 +2056,7 @@ export default function App() {
   }, [
     urlWriteEnabled, writeUrlNow, dataSource, scope, region, selectedAirport, airportSet, setName,
     timeline.selectedDate, timeline.rangeDays, timeline.selectedDates, timeline.playing, urlTimeKey,
-    depArrFilter, trajColorBy, depArrDisabledReason, colorThemeKey, flightCardId, selectedFlightId, trackMode,
+    depArrFilter, trajColorBy, depArrDisabledReason, colorThemeKey, flightCardId, selectedFlightId, trackMode, plane,
   ]);
   useEffect(() => {
     if (!urlWriteEnabled) return;
@@ -2078,6 +2129,12 @@ export default function App() {
   );
 
   // 範圍切換（設定面板）與 Region chip（探索面板）；網址套用（P6）也走這兩個
+  const handlePlaneKindChange = (v: PlaneKind | null) => {
+    setPlaneKind(v); // 鏡頭由 MapView 的 plane effect 處理（進入＝圓盤入鏡、離開＝回機場預設視角）
+  };
+
+  const handlePlaneOptionsChange = (patch: Partial<PlaneOptions>) => setPlaneOptions((prev) => ({ ...prev, ...patch }));
+
   const handleScopeChange = (s: Scope) => {
     setScope(s);
     if (s === "airport") {
@@ -2134,13 +2191,15 @@ export default function App() {
     st.depArr = depArrFilter;
     if (depArrActive) st.colorBy = "deparr";
     st.theme = colorThemeKey;
+    if (plane) st.plane = plane.kind; // 暫停中（多機場檢視）不寫：連結開出來不會是投影畫面
     // 有 t ＝ 暫停在該時刻；播放中不寫（不每幀改網址）
     if (!timeline.playing) {
       const rel = Math.max(0, Math.floor(timeline.currentTime - timeline.windowStart));
       st.time = { minutes: Math.floor((rel % 86400) / 60), dayOffset: Math.floor(rel / 86400) };
     }
     const map = mapRef.current;
-    if (map) {
+    // 平面投影模式的 center 是假經緯度，寫進網址會讓分享連結指到錯的地方
+    if (map && !plane) {
       const c = map.getCenter();
       st.camera = { lat: c.lat, lng: c.lng, zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() };
     }
@@ -2181,6 +2240,7 @@ export default function App() {
         preset={preset}
         styleUrl={styleUrl}
         pureBlack={mapStyleId === "black"}
+        plane={plane}
         flights={finalFlights}
         renderMode={renderMode}
         airportOpacity={airportOpacity}
@@ -2276,7 +2336,7 @@ export default function App() {
                   textShadow: CAP.softShadow,
                 }}
               >
-                {cameraInfo.lat}, {cameraInfo.lng} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
+                {planeHudLabel || `${cameraInfo.lat}, ${cameraInfo.lng}`} z{cameraInfo.zoom} pitch {cameraInfo.pitch} bearing {cameraInfo.bearing}
               </div>
               {/* Trail 模式切換 — 放在標題欄內，座標行換行時也不會貼上來；錄製中隨標題一起隱藏 */}
               <div style={{ marginTop: SPACE.s12, pointerEvents: "auto", display: "flex" }}>
@@ -2299,6 +2359,7 @@ export default function App() {
               orbitDirection={cinema.orbitDirection}
               onOrbitDirectionChange={cinema.setOrbitDirection}
               keyframes={cinema.keyframes}
+              keyframeSpaceMismatch={cinema.spaceMismatch}
               cinemaPhase={cinema.cinemaPhase}
               onAddKeyframe={cinema.addKeyframe}
               onRemoveKeyframe={cinema.removeKeyframe}
@@ -2383,6 +2444,11 @@ export default function App() {
             onFarViewChange={setFarView}
             farViewBoost={farViewBoost}
             onFarViewBoostChange={setFarViewBoost}
+            planeKind={planeKind}
+            planeAvailable={planeAvailable}
+            onPlaneKindChange={handlePlaneKindChange}
+            planeOptions={planeOptions}
+            onPlaneOptionsChange={handlePlaneOptionsChange}
             onDisplayModeChange={setDisplayMode}
             onAltExaggerationChange={setAltExaggeration}
             onAltOffsetChange={setAltOffset}
@@ -2600,7 +2666,7 @@ export default function App() {
           </div>
 
           {/* 左上：字標 + 相機 HUD */}
-          <Brand cameraInfo={cameraInfo} />
+          <Brand cameraInfo={cameraInfo} planeLabel={planeHudLabel} />
 
           {/* 右下 dock：方位球 + 點擊資訊卡（R1、R5） */}
           <Dock>
@@ -2833,6 +2899,13 @@ export default function App() {
         right={captureMode ? (isMobile ? SPACE.s16 : SPACE.s24 + SPACE.s8) : isMobile ? MOBILE_STATUS_RIGHT : undefined}
         failOnly={captureMode}
         hidden={(captureMode && isExporting) || bootMask || memoryBudget?.blocked === true}
+      />
+      <PlaneNotice
+        show={planeKind !== null && !planeAvailable && !captureMode && !bootMask}
+        reason={dataSource === "fused" ? "空域資料" : atlasVisible ? "機場總覽" : airportSet !== null ? "多機場組合" : "區域檢視"}
+        onDisable={() => setPlaneKind(null)}
+        top={isMobile ? mobileStatusTop : undefined}
+        right={isMobile ? MOBILE_STATUS_RIGHT : undefined}
       />
       <BudgetNotice
         status={memoryBudget}
