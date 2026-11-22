@@ -7,6 +7,7 @@ import {
   mercatorToLngLat,
   lngLatToMercator,
   projectLine,
+  projectPolygons,
   rangeRing,
   PLANE_UNIT,
   EARTH_RADIUS_KM,
@@ -141,4 +142,63 @@ test("projectLine：補點、日晷超出範圍會斷線", () => {
   assert.equal(g.length, 1);
   const last = g[0][g[0].length - 1];
   assert.ok(polar(lngLatToMercator(last[0], last[1])).r < gnom.rimRadius);
+});
+
+test("展開動畫：t=0 是正射（只有正面半球），t=1 等於目標投影，中間單調變大", () => {
+  const c = greatCircleKm(...RCTP, ...RJTT) / EARTH_RADIUS_KM;
+  const at = (t) => {
+    const p = createPlaneProjector("aeqd", ...RCTP, { from: "ortho", t });
+    const out = { x: 0, y: 0 };
+    p.project(...RJTT, out);
+    return { p, r: polar(out).r, az: polar(out).az };
+  };
+  const a = at(0), m = at(0.5), b = at(1);
+  assert.ok(Math.abs(a.r - Math.sin(c) * PLANE_UNIT) < 1e-9);
+  assert.equal(a.p.clipDeg, 90);
+  assert.ok(Math.abs(a.p.rimRadius - PLANE_UNIT) < 1e-12); // 正射圓盤半徑 = 1 個球半徑
+  assert.ok(Math.abs(b.r - c * PLANE_UNIT) < 1e-9);
+  assert.equal(b.p.clipDeg, 180);
+  assert.ok(a.r < m.r && m.r < b.r);
+  assert.equal(m.p.clipDeg, 135);
+  // 方位角全程不變
+  assert.ok(Math.abs(a.az - b.az) < 1e-6 && Math.abs(m.az - b.az) < 1e-6);
+  // 背面的點在 t=0 被夾在邊緣
+  const far = { x: 0, y: 0 };
+  assert.equal(a.p.project(...KLAX, far), false);
+  assert.ok(Math.abs(polar(far).r - a.p.rimRadius) < 1e-12);
+});
+
+test("陸地填色：一般陸塊照原樣；包住對蹠點的陸塊改成「圓盤挖洞」", () => {
+  const p = createPlaneProjector("aeqd", ...RCTP);
+  const flat = (ring) => ring.flat();
+  // rangeRing 繞行方向一致（都繞著自己的圓心順時針）→ 同一種繞行慣例
+  const islands = [[10, 100], [40, 140], [-20, 130], [50, 60]].map(([lat, lng]) => [flat(rangeRing(lat, lng, 400, 10))]);
+  const antipode = [-RCTP[0], RCTP[1] - 180];
+  const capAroundAntipode = [flat(rangeRing(...antipode, 1500, 5))];
+  const out = projectPolygons(p, [...islands, capAroundAntipode]);
+  assert.equal(out.length, 5);
+  for (const poly of out.slice(0, 4)) assert.equal(poly.length, 1);
+  const cap = out[4];
+  assert.equal(cap.length, 2, "外環＝圓盤邊界，原本的外環變成洞");
+  // 第一個環是圓盤邊界：每個點到圓心的距離都是 rimRadius
+  for (const [lng, lat] of cap[0]) assert.ok(Math.abs(polar(lngLatToMercator(lng, lat)).r - p.rimRadius) < 1e-9);
+  // 洞（原外環）距中心約 20015 − 1500 km 的位置，接近邊緣但在圓盤內
+  for (const [lng, lat] of cap[1]) {
+    const r = polar(lngLatToMercator(lng, lat)).r;
+    assert.ok(r < p.rimRadius && r > p.rimRadius * 0.9);
+  }
+  // 環都有閉合
+  for (const poly of out) for (const ring of poly) assert.deepEqual(ring[0], ring[ring.length - 1]);
+});
+
+test("陸地填色（日晷）：整塊在 75° 外的陸塊不畫", () => {
+  const p = createPlaneProjector("gnom", ...RCTP);
+  const near = [rangeRing(30, 125, 400, 10).flat()];
+  const far = [rangeRing(...KLAX, 400, 10).flat()];
+  const out = projectPolygons(p, [near, far, [rangeRing(10, 110, 300, 10).flat()]]);
+  assert.equal(out.length, 2);
+  // 包住對蹠點、又整塊在範圍外的陸塊：夾在邊緣後會繞一整圈（面積不是 0），也不能畫
+  const antipode = [-RCTP[0], RCTP[1] - 180];
+  const withCap = projectPolygons(p, [near, [rangeRing(10, 110, 300, 10).flat()], [rangeRing(...antipode, 1500, 5).flat()]]);
+  assert.equal(withCap.length, 2);
 });

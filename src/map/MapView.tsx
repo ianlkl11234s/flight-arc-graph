@@ -3,7 +3,8 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { CameraPreset, Flight, RenderMode } from "../types";
 import { updateStaticTrails, setStaticTrailsOpacity, setStaticTrailsVisible, setStaticTrailsLineWidth } from "./staticTrails";
-import { applyPlaneMode, exitPlaneMode, isPlaneModeActive, planeFitCamera, setPlaneBasemapOpacity, type PlaneModeConfig } from "./planeMode";
+import { applyPlaneMode, exitPlaneMode, isPlaneModeActive, planeFitCamera, PLANE_MORPH_MS, type PlaneModeConfig } from "./planeMode";
+import type { PlaneRadial } from "./planeProjection";
 
 interface MapViewProps {
   preset: CameraPreset;
@@ -23,8 +24,6 @@ interface MapViewProps {
   gradientColorMap?: Map<string, readonly [string, string]>;
   /** 平面方位投影模式（null/undefined = 標準）；見 map/planeMode.ts */
   plane?: PlaneModeConfig | null;
-  /** 平面投影自畫底圖（海岸線＋經緯網）的亮度 0–1 */
-  planeBasemapOpacity?: number;
   onMapReady?: (map: mapboxgl.Map) => void;
 }
 
@@ -248,7 +247,7 @@ function removeCustomLayers(map: mapboxgl.Map) {
   }
 }
 
-export function MapView({ preset, styleUrl, pureBlack = false, plane, planeBasemapOpacity = 1, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, gradientColorMap, onMapReady }: MapViewProps) {
+export function MapView({ preset, styleUrl, pureBlack = false, plane, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, gradientColorMap, onMapReady }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const readyRef = useRef(false);
@@ -281,7 +280,7 @@ export function MapView({ preset, styleUrl, pureBlack = false, plane, planeBasem
   const atlasVisibleRef = useRef(atlasVisible);
   atlasVisibleRef.current = atlasVisible;
 
-  const lastPlaneCenterRef = useRef("");
+  const lastPlaneRef = useRef<{ kind: PlaneRadial; center: string } | null>(null);
   const pureBlackRef = useRef(pureBlack);
   pureBlackRef.current = pureBlack;
   const planeRef = useRef<PlaneModeConfig | null>(plane ?? null);
@@ -425,11 +424,6 @@ export function MapView({ preset, styleUrl, pureBlack = false, plane, planeBasem
     });
   }, [preset]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map) setPlaneBasemapOpacity(map, planeBasemapOpacity);
-  }, [planeBasemapOpacity]);
-
   // 平面方位投影模式：進入／換中心／換投影種類／離開
   const planeKind = plane?.kind;
   const planeLat = plane?.lat;
@@ -451,13 +445,19 @@ export function MapView({ preset, styleUrl, pureBlack = false, plane, planeBasem
       return;
     }
     const run = () => {
-      const wasActive = isPlaneModeActive(map);
-      const centerBefore = wasActive ? lastPlaneCenterRef.current : "";
-      applyPlaneMode(map, cfg, isDarkThemeRef.current);
-      const center = `${cfg.kind}|${cfg.lat}|${cfg.lng}`;
-      lastPlaneCenterRef.current = center;
-      // 剛進入、換中心、換投影種類（圓盤大小不同）都重設成「整個圓盤入鏡」；主題切換不動鏡頭
-      if (center !== centerBefore) map.jumpTo(planeFitCamera(map, cfg));
+      const prev = isPlaneModeActive(map) ? lastPlaneRef.current : null;
+      lastPlaneRef.current = { kind: cfg.kind, center: `${cfg.lat}|${cfg.lng}` };
+      const center = `${cfg.lat}|${cfg.lng}`;
+      // 剛進入：從地球正面展開成圓盤；同一個中心換投影種類：兩種投影之間漸變；
+      // 換中心（換機場，資料也在重載）或只改選項：不做動畫
+      let animateFrom: PlaneRadial | undefined;
+      if (!prev) animateFrom = "ortho";
+      else if (prev.center === center && prev.kind !== cfg.kind) animateFrom = prev.kind;
+      applyPlaneMode(map, cfg, isDarkThemeRef.current, { animateFrom });
+      // 鏡頭一律對到「整個圓盤入鏡」：進入與換中心直接跳，換種類（圓盤大小不同）跟著動畫滑過去；
+      // 主題與選項變動不動鏡頭
+      if (!prev || prev.center !== center) map.jumpTo(planeFitCamera(map, cfg));
+      else if (prev.kind !== cfg.kind) map.easeTo({ ...planeFitCamera(map, cfg), duration: PLANE_MORPH_MS });
     };
     if (map.isStyleLoaded()) {
       run();
@@ -468,7 +468,7 @@ export function MapView({ preset, styleUrl, pureBlack = false, plane, planeBasem
     map.once("idle", run);
     return () => { map.off("idle", run); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planeKind, planeLat, planeLng, isDarkTheme]);
+  }, [planeKind, planeLat, planeLng, plane?.options, plane?.destinations, isDarkTheme]);
 
   // 2D/3D 渲染模式切換：更新軌跡資料，3D 模式由 zoom handler 控制透明度
   useEffect(() => {

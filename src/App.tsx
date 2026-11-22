@@ -7,7 +7,7 @@ import { BUILTIN_SETS } from "./map/savedSets";
 import type { FlightScene } from "./three/FlightScene";
 import { MapView, ATLAS_LAYER } from "./map/MapView";
 import type { PlaneKind } from "./map/planeProjection";
-import type { PlaneModeConfig } from "./map/planeMode";
+import { DEFAULT_PLANE_OPTIONS, type PlaneLabel, type PlaneModeConfig, type PlaneOptions } from "./map/planeMode";
 import { useFlightData } from "./hooks/useFlightData";
 import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -354,7 +354,7 @@ export default function App() {
   const [farView, setFarView] = useState(false);
   // 平面方位投影（null = 標準 mercator／globe）；只在單一機場檢視下生效，中心＝該機場
   const [planeKind, setPlaneKind] = useState<PlaneKind | null>(null);
-  const [planeBasemapOpacity, setPlaneBasemapOpacity] = useState(1);
+  const [planeOptions, setPlaneOptions] = useState<PlaneOptions>(DEFAULT_PLANE_OPTIONS);
   const [farViewBoost, setFarViewBoost] = useState(7.5);
   // Multi-condition filters（Deep Analysis 面板掌控；scene preset 也會寫入）
   const [flightFilters, setFlightFilters] = useState<FlightFilters>(EMPTY_FILTERS);
@@ -1470,11 +1470,28 @@ export default function App() {
   const planeCenter = airportMeta[selectedAirport];
   const planeLat = planeCenter?.lat;
   const planeLng = planeCenter?.lng;
+  // 圓盤上標名字的機場：這批航班另一端班次最多的前 15 座
+  const planeDestinations = useMemo<PlaneLabel[]>(() => {
+    if (!planeKind || !planeAvailable) return [];
+    const counts = new Map<string, number>();
+    for (const f of finalFlights) {
+      const other = f.origin_icao === selectedAirport ? f.dest_icao : f.origin_icao;
+      if (other && other !== selectedAirport) counts.set(other, (counts.get(other) ?? 0) + 1);
+    }
+    const out: PlaneLabel[] = [];
+    for (const [icao, weight] of [...counts].sort((a, b) => b[1] - a[1])) {
+      const m = airportMeta[icao];
+      if (!m) continue;
+      out.push({ lat: m.lat, lng: m.lng, code: m.iata || icao, weight });
+      if (out.length >= 15) break;
+    }
+    return out;
+  }, [planeKind, planeAvailable, finalFlights, selectedAirport, airportMeta]);
   const plane = useMemo<PlaneModeConfig | null>(
     () => (planeKind && planeAvailable && planeLat !== undefined && planeLng !== undefined
-      ? { kind: planeKind, lat: planeLat, lng: planeLng, label: selectedAirport }
+      ? { kind: planeKind, lat: planeLat, lng: planeLng, label: selectedAirport, options: planeOptions, destinations: planeDestinations }
       : null),
-    [planeKind, planeAvailable, planeLat, planeLng, selectedAirport],
+    [planeKind, planeAvailable, planeLat, planeLng, selectedAirport, planeOptions, planeDestinations],
   );
 
   // 沒 preset 也沒座標時，保留上一個有效視角（不飛回桃園 CAMERA_PRESETS[0]）
@@ -2104,6 +2121,8 @@ export default function App() {
     setPlaneKind(v); // 鏡頭由 MapView 的 plane effect 處理（進入＝圓盤入鏡、離開＝回機場預設視角）
   };
 
+  const handlePlaneOptionsChange = (patch: Partial<PlaneOptions>) => setPlaneOptions((prev) => ({ ...prev, ...patch }));
+
   const handleScopeChange = (s: Scope) => {
     setScope(s);
     if (s === "airport") {
@@ -2210,7 +2229,6 @@ export default function App() {
         styleUrl={styleUrl}
         pureBlack={mapStyleId === "black"}
         plane={plane}
-        planeBasemapOpacity={planeBasemapOpacity}
         flights={finalFlights}
         renderMode={renderMode}
         airportOpacity={airportOpacity}
@@ -2416,8 +2434,8 @@ export default function App() {
             planeKind={planeKind}
             planeAvailable={planeAvailable}
             onPlaneKindChange={handlePlaneKindChange}
-            planeBasemapOpacity={planeBasemapOpacity}
-            onPlaneBasemapOpacityChange={setPlaneBasemapOpacity}
+            planeOptions={planeOptions}
+            onPlaneOptionsChange={handlePlaneOptionsChange}
             onDisplayModeChange={setDisplayMode}
             onAltExaggerationChange={setAltExaggeration}
             onAltOffsetChange={setAltOffset}

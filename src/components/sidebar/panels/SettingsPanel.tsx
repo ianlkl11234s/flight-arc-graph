@@ -5,6 +5,7 @@ import { Section, Segmented, Select, Slider, Toggle } from "../../../ui";
 import { mix } from "../../../ui/vars";
 import type { IconRailSidebarProps } from "../../IconRailSidebar";
 import type { PlaneKind } from "../../../map/planeProjection";
+import { PLANE_RING_STEPS } from "../../../map/planeMode";
 
 const PLANE_HINTS: Record<PlaneKind, string> = {
   aeqd: "方位等距：到中心機場的距離與方位都正確，距離圈是正圓。",
@@ -109,13 +110,23 @@ export function SettingsPanel(props: IconRailSidebarProps) {
           onChange={(v) => props.onPlaneKindChange(v === "std" ? null : v)}
         />
         {props.planeKind && (
-          <Slider
-            label="底圖"
-            value={props.planeBasemapOpacity}
-            min={0} max={1} step={0.05}
-            format={(v) => `${Math.round(v * 100)}%`}
-            onChange={props.onPlaneBasemapOpacityChange}
-          />
+          <>
+            <Slider
+              label="底圖"
+              value={props.planeOptions.basemapOpacity}
+              min={0} max={1} step={0.05}
+              format={(v) => `${Math.round(v * 100)}%`}
+              onChange={(v) => props.onPlaneOptionsChange({ basemapOpacity: v })}
+            />
+            <Toggle label="陸地填色" checked={props.planeOptions.landFill} onChange={(v) => props.onPlaneOptionsChange({ landFill: v })} />
+            <Toggle label="目的地標籤" checked={props.planeOptions.destLabels} onChange={(v) => props.onPlaneOptionsChange({ destLabels: v })} />
+            <Segmented<string>
+              fullWidth
+              options={PLANE_RING_STEPS.map((km) => ({ value: String(km), label: `${km.toLocaleString("en-US")} km` }))}
+              value={String(props.planeOptions.ringStepKm)}
+              onChange={(v) => props.onPlaneOptionsChange({ ringStepKm: Number(v) })}
+            />
+          </>
         )}
         {props.planeKind && (
           <div style={{ color: tokens.fg2, fontSize: SIZE.minor, fontFamily: FONT.ui, lineHeight: 1.45 }}>

@@ -1,5 +1,5 @@
 import mapboxgl from "mapbox-gl";
-import { createPlaneProjector, PLANE_SCALE, type PlaneKind, type PlaneProjector, type PlanePoint } from "../map/planeProjection";
+import { createPlaneProjector, PLANE_SCALE, type PlaneKind, type PlaneMorph, type PlaneProjector, type PlanePoint } from "../map/planeProjection";
 
 /**
  * 高度放大倍率（可動態調整）
@@ -34,11 +34,12 @@ let planeProjector: PlaneProjector | null = null;
 let planeKey = "";
 const _planePt: PlanePoint = { x: 0, y: 0 };
 
-export function setPlaneProjection(cfg: { kind: PlaneKind; lat: number; lng: number } | null) {
-  const key = cfg ? `${cfg.kind}|${cfg.lat}|${cfg.lng}` : "";
+export function setPlaneProjection(cfg: { kind: PlaneKind; lat: number; lng: number; morph?: PlaneMorph } | null) {
+  // morph：展開動畫的中間狀態，每一幀簽章都不同 → 軌跡每幀重建
+  const key = cfg ? `${cfg.kind}|${cfg.lat}|${cfg.lng}|${cfg.morph ? `${cfg.morph.from}:${cfg.morph.t}` : ""}` : "";
   if (key === planeKey) return;
   planeKey = key;
-  planeProjector = cfg ? createPlaneProjector(cfg.kind, cfg.lat, cfg.lng) : null;
+  planeProjector = cfg ? createPlaneProjector(cfg.kind, cfg.lat, cfg.lng, cfg.morph) : null;
 }
 
 export function getPlaneProjector(): PlaneProjector | null {
