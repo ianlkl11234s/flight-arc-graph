@@ -432,18 +432,34 @@ export function MapView({ preset, styleUrl, pureBlack = false, plane, flights, r
     if (!map || !readyRef.current) return;
     const cfg = planeRef.current;
     if (!cfg) {
-      // 離開時不動鏡頭：由觸發離開的那個操作（切回標準、換範圍…）自己決定要飛去哪
-      if (isPlaneModeActive(map)) exitPlaneMode(map, () => setupTerrain(map));
+      if (isPlaneModeActive(map)) {
+        exitPlaneMode(map, () => setupTerrain(map));
+        // 平面模式的 center 是假經緯度，離開後沒有可沿用的位置。觸發離開的操作若已經在飛
+        //（套用組合、選事件…）就交給它；否則回到機場預設視角，不要停在 (0,0)。
+        if (!map.isEasing()) {
+          const p = presetRef.current;
+          map.jumpTo({ center: p.center, zoom: p.zoom, pitch: p.pitch, bearing: p.bearing });
+        }
+      }
       return;
     }
-    if (!map.isStyleLoaded()) return; // style 載入中：style.load 會補套
-    const wasActive = isPlaneModeActive(map);
-    const centerBefore = wasActive ? lastPlaneCenterRef.current : "";
-    applyPlaneMode(map, cfg, isDarkTheme);
-    const center = `${cfg.kind}|${cfg.lat}|${cfg.lng}`;
-    lastPlaneCenterRef.current = center;
-    // 剛進入、換中心、換投影種類（圓盤大小不同）都重設成「整個圓盤入鏡」；主題切換不動鏡頭
-    if (center !== centerBefore) map.jumpTo(planeFitCamera(map, cfg));
+    const run = () => {
+      const wasActive = isPlaneModeActive(map);
+      const centerBefore = wasActive ? lastPlaneCenterRef.current : "";
+      applyPlaneMode(map, cfg, isDarkThemeRef.current);
+      const center = `${cfg.kind}|${cfg.lat}|${cfg.lng}`;
+      lastPlaneCenterRef.current = center;
+      // 剛進入、換中心、換投影種類（圓盤大小不同）都重設成「整個圓盤入鏡」；主題切換不動鏡頭
+      if (center !== centerBefore) map.jumpTo(planeFitCamera(map, cfg));
+    };
+    if (map.isStyleLoaded()) {
+      run();
+      return;
+    }
+    // style 還在忙（剛離開模式、剛換底圖、source 載入中）：等 idle 再套，不然這次切換會靜默失效。
+    // 換底圖的情況 style.load 也會補套一次，applyPlaneMode 是冪等的。
+    map.once("idle", run);
+    return () => { map.off("idle", run); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planeKind, planeLat, planeLng, isDarkTheme]);
 

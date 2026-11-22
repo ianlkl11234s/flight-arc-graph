@@ -14,11 +14,13 @@ export type PlaneKind = "aeqd" | "laea" | "gnom";
 export const PLANE_KINDS: readonly PlaneKind[] = ["aeqd", "laea", "gnom"];
 
 /**
- * 平面相對於「赤道處 mercator」的縮放。0.6 → 方位等距的整個圓盤半徑 0.3，
- * 完整落在 mercator 方形內並留邊（拖曳、俯仰時不會撞到世界邊界）。
+ * 平面相對於「赤道處 mercator」的縮放。0.3 → 方位等距的整個圓盤半徑 0.15。
+ * 取這麼小是因為模式中要關 renderWorldCopies（軌跡 custom layer 只畫一份），而 Mapbox 在
+ * 關閉後會限制最小 zoom ＝「世界寬度填滿畫面寬度」；圓盤直徑 ≤ 0.36 個世界寬，
+ * 寬高比 2.5:1 以內的畫面在最小 zoom 下都還放得下整個圓盤。
  * 高度與公尺尺寸也乘同一個係數，中心點附近的水平／垂直比例才一致。
  */
-export const PLANE_SCALE = 0.6;
+export const PLANE_SCALE = 0.3;
 
 /** 球面 1 弧度在 mercator 世界座標的長度 */
 export const PLANE_UNIT = PLANE_SCALE / (2 * Math.PI);

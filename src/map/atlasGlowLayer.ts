@@ -1,4 +1,5 @@
 import type { CustomLayerInterface, Map as MapboxMap } from "mapbox-gl";
+import { getPlaneProjectionKey } from "../utils/coordinates";
 import { GlowPointsScene, type GlowPoint } from "../three/GlowPointsScene";
 import { notifyActivity, requestDecorativeRepaint } from "./repaintScheduler";
 
@@ -73,6 +74,7 @@ export function createAtlasGlowLayer(opts: AtlasGlowLayerOptions): CustomLayerIn
   let features: AtlasFeature[] | null = null;
   let dailyMax = 1;
   let lastMode: AtlasColorMode | null = null;
+  let lastPlaneKey = "";
 
   return {
     id: ATLAS_GLOW_LAYER_ID,
@@ -100,8 +102,12 @@ export function createAtlasGlowLayer(opts: AtlasGlowLayerOptions): CustomLayerIn
       if (!visible || !features) return;
 
       const mode = opts.getColorMode();
-      if (mode !== lastMode) {
+      // 座標在 setData 當下經 toMercator() 算好；平面投影的進出若和這次灌資料同一拍，
+      // 會留下錯的座標 → 投影簽章變了就重灌
+      const planeKey = getPlaneProjectionKey();
+      if (mode !== lastMode || planeKey !== lastPlaneKey) {
         lastMode = mode;
+        lastPlaneKey = planeKey;
         scene.setData(featuresToGlow(features, mode, dailyMax));
       }
       scene.setSizeMul(opts.getSizeMul?.() ?? 1);

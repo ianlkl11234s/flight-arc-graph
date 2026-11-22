@@ -340,7 +340,7 @@ export default function App() {
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [mapStyleId, setMapStyleId] = useState("dark");
   const isDarkTheme = !["light", "streets"].includes(mapStyleId);
-  const [renderMode, setRenderMode] = useState<RenderMode>("3d");
+  const [renderModeState, setRenderMode] = useState<RenderMode>("3d");
   const [altExaggeration, setAltExaggeration] = useState(3);
   const [altOffset, setAltOffset] = useState(50);
   const [staticOpacity, setStaticOpacity] = useState(0.1);
@@ -423,6 +423,10 @@ export default function App() {
   const trackingRef = useRef(false);
   trackingRef.current = trackMode === "single" && selectedFlightId !== null;
   const [atlasVisible, setAtlasVisible] = useState(false);
+  // 平面方位投影：組合／區域／空域資料／機場總覽沒有單一中心點，這些情況下暫停（設定保留）
+  const planeAvailable = dataSource !== "fused" && airportSet === null && scope === "airport" && !atlasVisible;
+  // 平面投影只有 3D 軌跡（custom layer）會跟著投影；2D 的 Mapbox 原生軌跡留在真實經緯度、已被藏起來
+  const renderMode: RenderMode = planeKind !== null && planeAvailable ? "3d" : renderModeState;
   // 機場點按鈕是否曾被使用者啟用過（用來決定待按小紅點是否顯示，啟用一次後永久消失）
   const [atlasEverEnabled, setAtlasEverEnabled] = useState(() => {
     try {
@@ -1461,8 +1465,6 @@ export default function App() {
 
   const showTrails = displayMode === "trails";
 
-  // 平面方位投影：組合／區域／空域資料／機場總覽沒有單一中心點，這些情況下暫停（設定保留）
-  const planeAvailable = dataSource !== "fused" && airportSet === null && scope === "airport" && !atlasVisible;
   const planeCenter = airportMeta[selectedAirport];
   const planeLat = planeCenter?.lat;
   const planeLng = planeCenter?.lng;
@@ -1472,8 +1474,6 @@ export default function App() {
       : null),
     [planeKind, planeAvailable, planeLat, planeLng, selectedAirport],
   );
-  const planeActiveRef = useRef(false);
-  planeActiveRef.current = plane !== null;
 
   // 沒 preset 也沒座標時，保留上一個有效視角（不飛回桃園 CAMERA_PRESETS[0]）
   const lastPresetRef = useRef(CAMERA_PRESETS[0]!);
@@ -2098,11 +2098,7 @@ export default function App() {
 
   // 範圍切換（設定面板）與 Region chip（探索面板）；網址套用（P6）也走這兩個
   const handlePlaneKindChange = (v: PlaneKind | null) => {
-    setPlaneKind(v);
-    // 切回標準：鏡頭直接回到機場預設視角（平面模式的 center 是假經緯度，沒有可沿用的位置）
-    if (v === null && planeActiveRef.current) {
-      mapRef.current?.jumpTo({ center: preset.center, zoom: preset.zoom, pitch: preset.pitch, bearing: preset.bearing });
-    }
+    setPlaneKind(v); // 鏡頭由 MapView 的 plane effect 處理（進入＝圓盤入鏡、離開＝回機場預設視角）
   };
 
   const handleScopeChange = (s: Scope) => {

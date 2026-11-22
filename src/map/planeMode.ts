@@ -334,6 +334,8 @@ export function applyPlaneMode(map: MbMap, cfg: PlaneModeConfig, isDark: boolean
   if (map.getProjection()?.name !== "mercator") map.setProjection("mercator");
   // 地形會把假經緯度上的線貼到「那個位置的真實地形」上
   if (map.getTerrain()) map.setTerrain(null);
+  // 軌跡 custom layer 只畫一份；畫面比世界寬時不要在左右重複底圖
+  if (map.getRenderWorldCopies()) map.setRenderWorldCopies(false);
   hideRealWorldLayers(map, st);
   setPlaneProjection({ kind: cfg.kind, lat: cfg.lat, lng: cfg.lng });
   syncBasemap(map, st, cfg, isDark);
@@ -352,7 +354,11 @@ export function exitPlaneMode(map: MbMap, restoreTerrain: () => void) {
     if (v === "visible" && map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
   }
   setPlaneProjection(null);
-  map.setProjection("globe");
+  // app 其他地方不設這個值（Mapbox 預設 true）。不能用進入時讀到的值還原：
+  // globe 低 zoom 下 getter 回 false，會把 false 當成原值存回去。
+  map.setRenderWorldCopies(true);
+  // 交還給底圖 style 自己的投影（dark／light 是 globe，satellite-v9 是 mercator），不能寫死
+  map.setProjection(null);
   restoreTerrain();
   notifyActivity(map);
 }

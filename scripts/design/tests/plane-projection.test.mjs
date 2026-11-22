@@ -101,7 +101,7 @@ test("日晷：任意大圓上的三點共線；超出範圍的點夾在邊緣�
 test("整個圓盤落在 mercator 方形內（留邊）", () => {
   for (const kind of ["aeqd", "laea", "gnom"]) {
     const p = createPlaneProjector(kind, ...RCTP);
-    assert.ok(p.rimRadius <= 0.4, `${kind} rim=${p.rimRadius}`);
+    assert.ok(p.rimRadius <= 0.18, `${kind} rim=${p.rimRadius}`); // 寬高比 2.5:1 的畫面也放得下
   }
   // 方位等距的對蹠點附近也不會跑出邊界
   const out = { x: 0, y: 0 };
