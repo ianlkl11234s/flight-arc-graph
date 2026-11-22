@@ -6,6 +6,8 @@ import { EVENT_PRESETS, type EventPreset } from "./map/events";
 import { BUILTIN_SETS } from "./map/savedSets";
 import type { FlightScene } from "./three/FlightScene";
 import { MapView, ATLAS_LAYER } from "./map/MapView";
+import type { PlaneKind } from "./map/planeProjection";
+import type { PlaneModeConfig } from "./map/planeMode";
 import { useFlightData } from "./hooks/useFlightData";
 import { useTimeline } from "./hooks/useTimeline";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -349,6 +351,8 @@ export default function App() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>("trails");
   // Far View 遠景增強：低 zoom 時光點按 zoom 反比補償放大 + 軌跡 alpha 加成
   const [farView, setFarView] = useState(false);
+  // 平面方位投影（null = 標準 mercator／globe）；只在單一機場檢視下生效，中心＝該機場
+  const [planeKind, setPlaneKind] = useState<PlaneKind | null>(null);
   const [farViewBoost, setFarViewBoost] = useState(7.5);
   // Multi-condition filters（Deep Analysis 面板掌控；scene preset 也會寫入）
   const [flightFilters, setFlightFilters] = useState<FlightFilters>(EMPTY_FILTERS);
@@ -1276,6 +1280,7 @@ export default function App() {
       setStaticOpacity,
       setDisplayMode,
       setFarView,
+      setPlaneKind: handlePlaneKindChange,
       setMapStyle: setMapStyleId,
       setTrailDisplay,
       setTimeWindow,
@@ -1455,6 +1460,20 @@ export default function App() {
   }, [showTerminator, isDarkTheme, mapStyleId]);
 
   const showTrails = displayMode === "trails";
+
+  // 平面方位投影：組合／區域／空域資料／機場總覽沒有單一中心點，這些情況下暫停（設定保留）
+  const planeAvailable = dataSource !== "fused" && airportSet === null && scope === "airport" && !atlasVisible;
+  const planeCenter = airportMeta[selectedAirport];
+  const planeLat = planeCenter?.lat;
+  const planeLng = planeCenter?.lng;
+  const plane = useMemo<PlaneModeConfig | null>(
+    () => (planeKind && planeAvailable && planeLat !== undefined && planeLng !== undefined
+      ? { kind: planeKind, lat: planeLat, lng: planeLng, label: selectedAirport }
+      : null),
+    [planeKind, planeAvailable, planeLat, planeLng, selectedAirport],
+  );
+  const planeActiveRef = useRef(false);
+  planeActiveRef.current = plane !== null;
 
   // 沒 preset 也沒座標時，保留上一個有效視角（不飛回桃園 CAMERA_PRESETS[0]）
   const lastPresetRef = useRef(CAMERA_PRESETS[0]!);
@@ -2078,6 +2097,14 @@ export default function App() {
   );
 
   // 範圍切換（設定面板）與 Region chip（探索面板）；網址套用（P6）也走這兩個
+  const handlePlaneKindChange = (v: PlaneKind | null) => {
+    setPlaneKind(v);
+    // 切回標準：鏡頭直接回到機場預設視角（平面模式的 center 是假經緯度，沒有可沿用的位置）
+    if (v === null && planeActiveRef.current) {
+      mapRef.current?.jumpTo({ center: preset.center, zoom: preset.zoom, pitch: preset.pitch, bearing: preset.bearing });
+    }
+  };
+
   const handleScopeChange = (s: Scope) => {
     setScope(s);
     if (s === "airport") {
@@ -2140,7 +2167,8 @@ export default function App() {
       st.time = { minutes: Math.floor((rel % 86400) / 60), dayOffset: Math.floor(rel / 86400) };
     }
     const map = mapRef.current;
-    if (map) {
+    // 平面投影模式的 center 是假經緯度，寫進網址會讓分享連結指到錯的地方
+    if (map && !plane) {
       const c = map.getCenter();
       st.camera = { lat: c.lat, lng: c.lng, zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() };
     }
@@ -2181,6 +2209,7 @@ export default function App() {
         preset={preset}
         styleUrl={styleUrl}
         pureBlack={mapStyleId === "black"}
+        plane={plane}
         flights={finalFlights}
         renderMode={renderMode}
         airportOpacity={airportOpacity}
@@ -2383,6 +2412,9 @@ export default function App() {
             onFarViewChange={setFarView}
             farViewBoost={farViewBoost}
             onFarViewBoostChange={setFarViewBoost}
+            planeKind={planeKind}
+            planeAvailable={planeAvailable}
+            onPlaneKindChange={handlePlaneKindChange}
             onDisplayModeChange={setDisplayMode}
             onAltExaggerationChange={setAltExaggeration}
             onAltOffsetChange={setAltOffset}

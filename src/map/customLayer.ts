@@ -4,7 +4,7 @@ import * as THREE from "three";
 import type { Flight, RenderMode } from "../types";
 import { FlightScene } from "../three/FlightScene";
 import { mercatorToGlobe, type GlobeResolved } from "../three/shaders/globeProject";
-import { setAltExaggeration, getAltExaggeration, setAltOffset, getAltOffset } from "../utils/coordinates";
+import { setAltExaggeration, getAltExaggeration, setAltOffset, getAltOffset, getPlaneProjectionKey } from "../utils/coordinates";
 import { FlightTimeIndex } from "../utils/flightIndex";
 import { attachRepaintScheduler, notifyActivity, requestDecorativeRepaint } from "./repaintScheduler";
 
@@ -97,6 +97,7 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
   let map: MapboxMap | null = null;
   let lastAltExag = getAltExaggeration();
   let lastAltOffset = getAltOffset();
+  let lastPlaneKey = getPlaneProjectionKey();
   let lastDarkTheme = true;
   let lastShowTrails = true;
   let lastFlightsRef: Flight[] | null = null;
@@ -168,9 +169,12 @@ export function createFlightLayer(opts: FlightLayerOptions): CustomLayerInterfac
       // 高度參數變更
       setAltExaggeration(altExag);
       setAltOffset(altOff);
-      if (altExag !== lastAltExag || altOff !== lastAltOffset) {
+      // 平面方位投影切換（或換中心）也是「座標基準變了」，走同一條失效路徑
+      const planeKey = getPlaneProjectionKey();
+      if (altExag !== lastAltExag || altOff !== lastAltOffset || planeKey !== lastPlaneKey) {
         lastAltExag = altExag;
         lastAltOffset = altOff;
+        lastPlaneKey = planeKey;
         flightScene.invalidateMercatorCache();
         flightScene.forceRebuildStatic();
       }

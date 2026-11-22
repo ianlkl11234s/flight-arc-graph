@@ -4,6 +4,13 @@ import { FONT, RADIUS, SIZE, SPACE } from "../../../styles/tokens";
 import { Section, Segmented, Select, Slider, Toggle } from "../../../ui";
 import { mix } from "../../../ui/vars";
 import type { IconRailSidebarProps } from "../../IconRailSidebar";
+import type { PlaneKind } from "../../../map/planeProjection";
+
+const PLANE_HINTS: Record<PlaneKind, string> = {
+  aeqd: "方位等距：到中心機場的距離與方位都正確，距離圈是正圓。",
+  laea: "方位等積：方位正確、面積正確，外圈被壓扁。",
+  gnom: "日晷：所有大圓航線都是直線；只畫得到 75° 以內，更遠的軌跡停在邊緣。",
+};
 
 export function SettingsPanel(props: IconRailSidebarProps) {
   const { tokens } = useTheme();
@@ -85,6 +92,26 @@ export function SettingsPanel(props: IconRailSidebarProps) {
             format={(v) => `×${v.toFixed(1)}`}
             onChange={props.onFarViewBoostChange}
           />
+        )}
+      </Section>
+
+      {/* 平面方位投影：以目前機場為中心重畫整張圖（軌跡跟著變形） */}
+      <Section title="PROJECTION · 投影">
+        <Segmented<PlaneKind | "std">
+          fullWidth
+          options={[
+            { value: "std", label: "標準" },
+            { value: "aeqd", label: "等距" },
+            { value: "laea", label: "等積" },
+            { value: "gnom", label: "日晷" },
+          ]}
+          value={props.planeKind ?? "std"}
+          onChange={(v) => props.onPlaneKindChange(v === "std" ? null : v)}
+        />
+        {props.planeKind && (
+          <div style={{ color: tokens.fg2, fontSize: SIZE.minor, fontFamily: FONT.ui, lineHeight: 1.45 }}>
+            {props.planeAvailable ? PLANE_HINTS[props.planeKind] : "方位投影以單一機場為中心；切回 This Airport 後生效。"}
+          </div>
         )}
       </Section>
 
