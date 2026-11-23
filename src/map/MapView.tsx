@@ -3,6 +3,8 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { CameraPreset, Flight, RenderMode } from "../types";
 import { updateStaticTrails, setStaticTrailsOpacity, setStaticTrailsVisible, setStaticTrailsLineWidth } from "./staticTrails";
+import { applyPlaneMode, exitPlaneMode, isPlaneModeActive, planeFitCamera, PLANE_MORPH_MS, type PlaneModeConfig } from "./planeMode";
+import type { PlaneRadial } from "./planeProjection";
 
 interface MapViewProps {
   preset: CameraPreset;
@@ -20,6 +22,8 @@ interface MapViewProps {
   compareColorMap?: Map<string, string>;
   /** 起降染色組合內互飛：fr24_id → [起點離場色, 終點進場色]（2D 分段漸層）；高度模式為 undefined */
   gradientColorMap?: Map<string, readonly [string, string]>;
+  /** 平面方位投影模式（null/undefined = 標準）；見 map/planeMode.ts */
+  plane?: PlaneModeConfig | null;
   onMapReady?: (map: mapboxgl.Map) => void;
 }
 
@@ -243,7 +247,7 @@ function removeCustomLayers(map: mapboxgl.Map) {
   }
 }
 
-export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, gradientColorMap, onMapReady }: MapViewProps) {
+export function MapView({ preset, styleUrl, pureBlack = false, plane, flights, renderMode, airportOpacity, airportGlow, trailLineWidth = 1, isDarkTheme = true, showTrails = true, atlasVisible = false, compareColorMap, gradientColorMap, onMapReady }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const readyRef = useRef(false);
@@ -276,8 +280,11 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
   const atlasVisibleRef = useRef(atlasVisible);
   atlasVisibleRef.current = atlasVisible;
 
+  const lastPlaneRef = useRef<{ kind: PlaneRadial; center: string } | null>(null);
   const pureBlackRef = useRef(pureBlack);
   pureBlackRef.current = pureBlack;
+  const planeRef = useRef<PlaneModeConfig | null>(plane ?? null);
+  planeRef.current = plane ?? null;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -309,6 +316,7 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
     // 只在低 zoom 的全球總覽限制中心緯度；經度不設 bounds，地球仍可跨換日線完整旋轉。
     let clampingGlobeLatitude = false;
     const clampGlobeLatitude = () => {
+      if (planeRef.current) return; // 平面投影模式的 center 是假經緯度，不適用
       if (clampingGlobeLatitude || map.getZoom() >= GLOBE_OVERVIEW_ZOOM) return;
       const center = map.getCenter();
       const lat = Math.max(-GLOBE_OVERVIEW_MAX_LAT, Math.min(GLOBE_OVERVIEW_MAX_LAT, center.lat));
@@ -346,6 +354,9 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
       if (readyRef.current) {
         onMapReadyRef.current?.(map);
       }
+
+      // 平面投影模式期間換底圖：新 style 的圖層要重新藏、自畫底圖要補回
+      if (planeRef.current) applyPlaneMode(map, planeRef.current, isDarkThemeRef.current);
     });
 
     map.on("load", () => {
@@ -402,6 +413,8 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
 
+    // 平面投影模式：機場＝投影中心，鏡頭由下面的 plane effect 處理
+    if (planeRef.current) return;
     map.flyTo({
       center: preset.center,
       zoom: preset.zoom,
@@ -410,6 +423,52 @@ export function MapView({ preset, styleUrl, pureBlack = false, flights, renderMo
       duration: 2000,
     });
   }, [preset]);
+
+  // 平面方位投影模式：進入／換中心／換投影種類／離開
+  const planeKind = plane?.kind;
+  const planeLat = plane?.lat;
+  const planeLng = plane?.lng;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    const cfg = planeRef.current;
+    if (!cfg) {
+      if (isPlaneModeActive(map)) {
+        exitPlaneMode(map, () => setupTerrain(map));
+        // 平面模式的 center 是假經緯度，離開後沒有可沿用的位置。觸發離開的操作若已經在飛
+        //（套用組合、選事件…）就交給它；否則回到機場預設視角，不要停在 (0,0)。
+        if (!map.isEasing()) {
+          const p = presetRef.current;
+          map.jumpTo({ center: p.center, zoom: p.zoom, pitch: p.pitch, bearing: p.bearing });
+        }
+      }
+      return;
+    }
+    const run = () => {
+      const prev = isPlaneModeActive(map) ? lastPlaneRef.current : null;
+      lastPlaneRef.current = { kind: cfg.kind, center: `${cfg.lat}|${cfg.lng}` };
+      const center = `${cfg.lat}|${cfg.lng}`;
+      // 剛進入：從地球正面展開成圓盤；同一個中心換投影種類：兩種投影之間漸變；
+      // 換中心（換機場，資料也在重載）或只改選項：不做動畫
+      let animateFrom: PlaneRadial | undefined;
+      if (!prev) animateFrom = "ortho";
+      else if (prev.center === center && prev.kind !== cfg.kind) animateFrom = prev.kind;
+      applyPlaneMode(map, cfg, isDarkThemeRef.current, { animateFrom });
+      // 鏡頭一律對到「整個圓盤入鏡」：進入與換中心直接跳，換種類（圓盤大小不同）跟著動畫滑過去；
+      // 主題與選項變動不動鏡頭
+      if (!prev || prev.center !== center) map.jumpTo(planeFitCamera(map, cfg));
+      else if (prev.kind !== cfg.kind) map.easeTo({ ...planeFitCamera(map, cfg), duration: PLANE_MORPH_MS });
+    };
+    if (map.isStyleLoaded()) {
+      run();
+      return;
+    }
+    // style 還在忙（剛離開模式、剛換底圖、source 載入中）：等 idle 再套，不然這次切換會靜默失效。
+    // 換底圖的情況 style.load 也會補套一次，applyPlaneMode 是冪等的。
+    map.once("idle", run);
+    return () => { map.off("idle", run); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planeKind, planeLat, planeLng, plane?.options, plane?.destinations, isDarkTheme]);
 
   // 2D/3D 渲染模式切換：更新軌跡資料，3D 模式由 zoom handler 控制透明度
   useEffect(() => {

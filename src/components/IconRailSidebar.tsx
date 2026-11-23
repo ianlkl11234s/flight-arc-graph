@@ -10,6 +10,8 @@ import type { FlightFilters } from "../data/classify";
 import type { AirportManifestEntry } from "../data/flightLoader";
 import type { AirportMeta } from "../data/airportMeta";
 import type { AtlasColorMode } from "../map/atlasGlowLayer";
+import type { PlaneKind } from "../map/planeProjection";
+import type { PlaneOptions } from "../map/planeMode";
 import { useTheme } from "../styles/ThemeContext";
 import { FONT, LAYOUT, RADIUS, SIZE, SPACE, Z } from "../styles/tokens";
 import { Chip, Panel, PanelBody, PanelHeader, Section, Segmented } from "../ui";
@@ -58,6 +60,13 @@ export interface IconRailSidebarProps {
   displayMode: DisplayMode;
   farView: boolean;
   farViewBoost: number;
+  /** 平面方位投影（null = 標準）；planeAvailable=false 時設定保留但不生效 */
+  planeKind: PlaneKind | null;
+  planeAvailable: boolean;
+  onPlaneKindChange: (v: PlaneKind | null) => void;
+  /** 平面投影的底圖選項（亮度、距離圈間距、陸地填色、目的地標籤） */
+  planeOptions: PlaneOptions;
+  onPlaneOptionsChange: (patch: Partial<PlaneOptions>) => void;
   mapStyleId: string;
   // Slider values
   altExaggeration: number;

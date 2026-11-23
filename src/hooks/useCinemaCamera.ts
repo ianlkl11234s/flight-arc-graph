@@ -35,6 +35,11 @@ export interface CameraKeyframe {
   bearing: number;
   duration: number;
   easing: EasingType;
+  /**
+   * 取這一格時鏡頭所在的座標系。沒有＝真實經緯度；平面方位投影下是「種類|中心機場」
+   * （那時 center 是投影平面上的假經緯度，換了投影或回到標準地圖就不是同一個地方）
+   */
+  space?: string;
   hold?: {
     type: "still" | "orbit";
     duration: number;
@@ -46,6 +51,8 @@ export interface CameraKeyframe {
 interface UseCinemaCameraOptions {
   map: MapboxMap | null;
   active: boolean;
+  /** 目前鏡頭的座標系（見 CameraKeyframe.space）；真實經緯度給空字串 */
+  space?: string;
 }
 
 interface UseCinemaCameraReturn {
@@ -58,6 +65,8 @@ interface UseCinemaCameraReturn {
   // Keyframe system
   keyframes: CameraKeyframe[];
   cinemaPhase: CinemaPhase;
+  /** 有關鍵幀是在別的座標系（別的投影）下取的 → 不能播放／錄影 */
+  spaceMismatch: boolean;
   addKeyframe: () => void;
   removeKeyframe: (id: string) => void;
   updateKeyframe: (id: string, updates: Partial<CameraKeyframe>) => void;
@@ -201,7 +210,7 @@ export function computeCameraAtTime(
 
 // --- Hook ---
 
-export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCinemaCameraReturn {
+export function useCinemaCamera({ map, active, space = "" }: UseCinemaCameraOptions): UseCinemaCameraReturn {
   const [cinemaMode, setCinemaMode] = useState<CinemaMode>("off");
   const [orbitSpeed, setOrbitSpeed] = useState(2);
   const [orbitDirection, setOrbitDirection] = useState<1 | -1>(1);
@@ -265,9 +274,10 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
       bearing: map.getBearing(),
       duration: 3,
       easing: "ease-in-out",
+      ...(space ? { space } : {}),
     };
     setKeyframes(prev => [...prev, kf]);
-  }, [map]);
+  }, [map, space]);
 
   const removeKeyframe = useCallback((id: string) => {
     setKeyframes(prev => prev.filter(k => k.id !== id));
@@ -285,8 +295,9 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
       zoom: map.getZoom(),
       pitch: map.getPitch(),
       bearing: map.getBearing(),
+      space: space || undefined,
     });
-  }, [map, updateKeyframe]);
+  }, [map, updateKeyframe, space]);
 
   const moveKeyframe = useCallback((id: string, direction: -1 | 1) => {
     setKeyframes(prev => {
@@ -503,6 +514,7 @@ export function useCinemaCamera({ map, active }: UseCinemaCameraOptions): UseCin
     setPingpong,
     totalDuration,
     // Save/Load
+    spaceMismatch: keyframes.some(k => (k.space ?? "") !== space),
     savedSequences,
     saveSequence,
     loadSequence,

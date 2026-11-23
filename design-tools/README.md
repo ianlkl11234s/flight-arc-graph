@@ -8,6 +8,7 @@
 |---|---|---|
 | `design-system.html` | http://localhost:5199/design-tools/design-system.html | 活元件頁：`src/ui/` 所有元件暗／淡並排（規格見 `docs/design-system/spec.md`） |
 | `boot-tuner.html` | http://localhost:5199/design-tools/boot-tuner.html | 開場雷達調整頁：調好按「複製設定」貼回 `src/components/boot/bootLayout.ts` |
+| `projection-lab.html` | http://localhost:5199/design-tools/projection-lab.html | 投影預覽頁：同一批真實軌跡（預設 RCTP 2026-02-18，讀本機 `public/tracks/`）在 5 種方位投影與 5 種世界投影下的樣子，可換中心機場；海岸線是 Natural Earth 110m（公有領域，`projection-lab/`） |
 | `color-preview.html` | 直接用瀏覽器開檔案即可 | 2026-02 早期的軌跡配色預覽（靜態頁，歷史參考） |
 
 ## 規則
